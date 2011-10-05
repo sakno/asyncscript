@@ -1,0 +1,25 @@
+DynamicScript - imperative script programming language with lambdas, dynamic typing, code polymorphism.
+
+=====Requirements=====
+WINDOWS
+	.NET Framework 4.0 Client Profile
+
+LINUX
+	Mono 2.10.x
+
+=====Building=====
+WINDOWS
+	1. Open Windows Command Line processor;
+	2. Change the current directory to the 'csharp' directory;
+		cd D:\git_repos\DynamicScript\csharp
+	3. Execute 'make.cmd' command file;
+	4. Examine 'csharp\bin' folder
+LINUX
+	1. Open Terminal;
+	2. Change the current directory to the 'csharp' directory;
+		cd ~/git_repos/DynamicScript/csharp
+	3. Specify path to the XBUILD tool;
+		export XBUILD=/opt/mono/bin/xbuild
+	4. Execute make.sh file;
+		sh make.sh;
+	5. Examine 'csharp/bin' folder;
