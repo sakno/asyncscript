@@ -101,22 +101,22 @@ namespace DynamicScript.Runtime.Environment
             get { return Value != null ? Value.Slots : new string[0]; }
         }
 
+        [MethodImpl(MethodImplOptions.Synchronized)]
         private void SetValueFast(IScriptObject value, InterpreterState state)
         {
             var theSame = default(bool);
-            lock (this)
-                if (ScriptObject.IsVoid(value))
-                    SetValueFast(ContractBinding.FromVoid(state), state);
-                else if (value is IRuntimeSlot)
-                    SetValueFast(((IRuntimeSlot)value).GetValue(state), state);
-                else if (value is IScriptProxyObject)
-                    Value = value;
-                else if (ContractBinding.IsCompatible(value, out theSame))
-                    Value = theSame ? value : ContractBinding.Convert(Conversion.Implicit, value, state);
-                else if (state.Context == InterpretationContext.Unchecked)
-                    Value = ContractBinding.FromVoid(state);
-                else
-                    throw new ContractBindingException(value, ContractBinding, state);
+            if (ScriptObject.IsVoid(value))
+                Value = ContractBinding.FromVoid(state);
+            else if (value is IRuntimeSlot)
+                SetValueFast(((IRuntimeSlot)value).GetValue(state), state);
+            else if (value is IScriptProxyObject)
+                Value = value;
+            else if (ContractBinding.IsCompatible(value, out theSame))
+                Value = theSame ? value : ContractBinding.Convert(Conversion.Implicit, value, state);
+            else if (state.Context == InterpretationContext.Unchecked)
+                Value = ContractBinding.FromVoid(state);
+            else
+                throw new ContractBindingException(value, ContractBinding, state);
             HasValue = true;
         }
 
@@ -141,20 +141,19 @@ namespace DynamicScript.Runtime.Environment
         /// value from unassigned slot in the checked context.</exception>
         public override IScriptObject GetValue(InterpreterState state)
         {
-            lock (this)
-                switch (HasValue)
-                {
-                    case true:
-                        if (Value is IScriptProxyObject)
-                        {
-                            SetValue(((IScriptProxyObject)Value).Unwrap(), state);
-                            return GetValue(state);
-                        }
-                        else return Value ?? ContractBinding.FromVoid(state);
-                    default:
-                        if (state.Context == InterpretationContext.Unchecked) return ContractBinding.FromVoid(state);
-                        else throw new UnassignedSlotReadingException(state);
-                }
+            switch (HasValue)
+            {
+                case true:
+                    if (Value is IScriptProxyObject)
+                    {
+                        SetValue(((IScriptProxyObject)Value).Unwrap(), state);
+                        return GetValue(state);
+                    }
+                    else return Value ?? ContractBinding.FromVoid(state);
+                default:
+                    if (state.Context == InterpretationContext.Unchecked) return ContractBinding.FromVoid(state);
+                    else throw new UnassignedSlotReadingException(state);
+            }
         }
 
         /// <summary>

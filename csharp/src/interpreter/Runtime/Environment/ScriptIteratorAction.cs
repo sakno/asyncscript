@@ -25,6 +25,7 @@ namespace DynamicScript.Runtime.Environment
         #endregion
 
         private readonly IEnumerable m_enumerable;
+        private readonly IScriptContract m_elementContract;
 
         /// <summary>
         /// Initializes a new script object that produces an iterator.
@@ -32,11 +33,12 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="collection"></param>
         /// <param name="elementContract"></param>
         /// <param name="this"></param>
-        public ScriptIteratorAction(IEnumerable collection, IScriptContract elementContract, IScriptObject @this=null)
-            : base(elementContract, @this)
+        public ScriptIteratorAction(IEnumerable collection, IScriptContract elementContract, IScriptObject @this = null)
+            : base(GetContractBinding(elementContract).ReturnValueContract, @this)
         {
             if (collection == null) throw new ArgumentNullException("collection");
             m_enumerable = collection;
+            m_elementContract = elementContract;
         }
 
         /// <summary>
@@ -66,7 +68,7 @@ namespace DynamicScript.Runtime.Environment
         /// <returns></returns>
         protected override IScriptObject Invoke(InvocationContext ctx)
         {
-            return new ScriptIterator(m_enumerable, ContractBinding.ReturnValueContract);
+            return new ScriptIterator(m_enumerable, m_elementContract);
         }
     }
 }

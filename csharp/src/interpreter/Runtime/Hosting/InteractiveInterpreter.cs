@@ -65,6 +65,11 @@ namespace DynamicScript.Runtime.Hosting
                 Out.WriteLine(sourceCode);
             }
 
+            private void SetArguments(string args)
+            {
+                Arguments = args.Split(new[] { Lexeme.Comma }, StringSplitOptions.RemoveEmptyEntries);
+            }
+
             private void ExecuteMacro(string command)
             {
                 switch (command)
@@ -81,6 +86,8 @@ namespace DynamicScript.Runtime.Hosting
                             SaveSourceCode(command.Replace(SaveCommand, string.Empty).TrimStart());
                         else if (command.StartsWith(InsertCommand, Comparison))
                             InsertSourceCode(command.Replace(InsertCommand, string.Empty).TrimStart());
+                        else if (command.StartsWith(SetArgumentsCommand, Comparison))
+                            SetArguments(command.Replace(SetArgumentsCommand, string.Empty).TrimStart());
                         return;
                 }
             }
@@ -92,7 +99,8 @@ namespace DynamicScript.Runtime.Hosting
                     var command = In.ReadLine();
                     if (command.Length > 0 && command[0] == Lexeme.Diez)    //handle interpreter command
                         ExecuteMacro(command);
-                    else SourceCode.AppendLine(command);    //append script code
+                    else
+                        SourceCode.AppendLine(command);    //append script code
                 }
             }
         }

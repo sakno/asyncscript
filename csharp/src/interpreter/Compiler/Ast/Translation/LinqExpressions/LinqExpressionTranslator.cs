@@ -886,12 +886,11 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             implementation.Add(Expression.Assign(accumulator, ScriptIterator.LoopHelpers.CombineResult(currentScope.Result, accumulator, TranslateGrouping(grouping, context), currentScope.StateHolder)));
             //while(condition)
             Expression cond = RuntimeHelpers.BindIsTrue(Translate(condition, context), currentScope.StateHolder);
-            expressions.Add(Expression.Loop(Expression.IfThenElse(currentScope.EmitContinueFlag ? Expression.AndAlso(currentScope.ContinueFlag, cond) : cond, Expression.Block(currentScope.Locals.Values, implementation), Expression.Block(Expression.Assign(currentScope.Result, ScriptObject.Null), Expression.Goto(context.Scope.EndOfScope))), context.Scope.EndOfScope));
+            expressions.Add(Expression.Loop(Expression.IfThenElse(currentScope.EmitContinueFlag ? Expression.AndAlso(currentScope.ContinueFlag, cond) : cond, Expression.Block(implementation), Expression.Block(Expression.Assign(currentScope.Result, ScriptObject.Null), Expression.Goto(context.Scope.EndOfScope))), context.Scope.EndOfScope));
             //end of loop
             expressions.Add(accumulator);
-            var variables = new List<ParameterExpression> { accumulator, currentScope.Result };
+            var variables = new List<ParameterExpression>(currentScope.Locals.Values) { accumulator, currentScope.Result };
             if (currentScope.EmitContinueFlag) variables.Add(currentScope.ContinueFlag);
-            if (variable.Temporary) variables.Add(loopVar);
             var loop = Expression.Block(variables, expressions);
             context.Pop();
             return loop;
@@ -923,11 +922,10 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                 expressions.Add(Expression.Assign(currentScope.ContinueFlag, Expression.Constant(true)));   //continue = true;
             //while(condition)
             Expression cond = RuntimeHelpers.BindIsTrue(Translate(condition, context), currentScope.StateHolder);
-            expressions.Add(Expression.Loop(Expression.IfThenElse(currentScope.EmitContinueFlag ? Expression.AndAlso(currentScope.ContinueFlag, cond) : cond, Expression.Block(currentScope.Locals.Values, implementation), Expression.Goto(context.Scope.EndOfScope)), context.Scope.EndOfScope, context.Scope.BeginOfScope));
+            expressions.Add(Expression.Loop(Expression.IfThenElse(currentScope.EmitContinueFlag ? Expression.AndAlso(currentScope.ContinueFlag, cond) : cond, Expression.Block( implementation), Expression.Goto(context.Scope.EndOfScope)), context.Scope.EndOfScope, context.Scope.BeginOfScope));
             expressions.Add(currentScope.Result);
-            var variables = new List<ParameterExpression> { currentScope.Result };
+            var variables = new List<ParameterExpression>(currentScope.Locals.Values) { currentScope.Result };
             if (currentScope.EmitContinueFlag) variables.Add(currentScope.ContinueFlag);
-            if (variable.Temporary) variables.Add(loopVar);
             var loop = Expression.Block(variables, expressions);
             context.Pop();
             return loop;
@@ -982,12 +980,11 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             implementation.Add(ScriptIterator.LoopHelpers.CombineResult(currentScope.Result, accumulator, TranslateGrouping(grouping, context), currentScope.StateHolder));
             //while(Has Next)
             Expression cond = ScriptIterator.LoopHelpers.HasNext(enumerator, currentScope.StateHolder);
-            expressions.Add(Expression.Loop(Expression.IfThenElse(currentScope.EmitContinueFlag ? Expression.AndAlso(currentScope.ContinueFlag, cond) : cond, Expression.Block(currentScope.Locals.Values, implementation), Expression.Block(Expression.Assign(currentScope.Result, ScriptObject.Null), Expression.Goto(context.Scope.EndOfScope))), context.Scope.EndOfScope));
+            expressions.Add(Expression.Loop(Expression.IfThenElse(currentScope.EmitContinueFlag ? Expression.AndAlso(currentScope.ContinueFlag, cond) : cond, Expression.Block(implementation), Expression.Block(Expression.Assign(currentScope.Result, ScriptObject.Null), Expression.Goto(context.Scope.EndOfScope))), context.Scope.EndOfScope));
             //end of loop
             expressions.Add(accumulator);
-            var variables = new List<ParameterExpression> { accumulator, currentScope.Result, enumerator };
+            var variables = new List<ParameterExpression>(currentScope.Locals.Values) { accumulator, currentScope.Result, enumerator };
             if (currentScope.EmitContinueFlag) variables.Add(currentScope.ContinueFlag);
-            if (variable.Temporary) variables.Add(loopVar);
             var loop = Expression.Block(variables, expressions);
             context.Pop();
             return loop;
@@ -1024,12 +1021,11 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                 expressions.Add(Expression.Assign(currentScope.ContinueFlag, Expression.Constant(true)));   //continue = true;
             //while(Has next)
             Expression cond = ScriptIterator.LoopHelpers.HasNext(enumerator, currentScope.StateHolder);
-            expressions.Add(Expression.Loop(Expression.IfThenElse(currentScope.EmitContinueFlag ? Expression.AndAlso(currentScope.ContinueFlag, cond) : cond, Expression.Block(currentScope.Locals.Values, implementation),  Expression.Goto(context.Scope.EndOfScope)), context.Scope.EndOfScope, context.Scope.BeginOfScope));
+            expressions.Add(Expression.Loop(Expression.IfThenElse(currentScope.EmitContinueFlag ? Expression.AndAlso(currentScope.ContinueFlag, cond) : cond, Expression.Block(implementation),  Expression.Goto(context.Scope.EndOfScope)), context.Scope.EndOfScope, context.Scope.BeginOfScope));
             //end of loop
             expressions.Add(currentScope.Result);
-            var variables = new List<ParameterExpression> { currentScope.Result, enumerator };
+            var variables = new List<ParameterExpression>(currentScope.Locals.Values) { currentScope.Result, enumerator };
             if (currentScope.EmitContinueFlag) variables.Add(currentScope.ContinueFlag);
-            if (variable.Temporary) variables.Add(loopVar);
             var loop = Expression.Block(variables, expressions);
             context.Pop();
             return loop;
