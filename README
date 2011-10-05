@@ -8,21 +8,33 @@ LINUX
 	Mono 2.10.x
 
 =====Building=====
+Clone GIT repository from GITHUB:
+	1. Create GITHUB account;
+	2. Create repository clone;
+		git clone https://ACCOUNT@github.com/sakno/DynamicScript.git
+		-or- (using SSH key)
+		git clone git@github.com:sakno/DynamicScript.git
+
 WINDOWS
 	1. Open Windows Command Line processor;
 	2. Change the current directory to the 'csharp' directory;
 		cd D:\git_repos\DynamicScript\csharp
-	3. Execute 'make.cmd' command file;
-	4. Examine 'csharp\bin' folder
+	3. Specify output directory;
+		SET OUTDIR=bin
+	4. Execute 'make.cmd' command file;
+		make.cmd %OUTDIR%
+	5. Examine output directory.
 LINUX
 	1. Open Terminal;
 	2. Change the current directory to the 'csharp' directory;
 		cd ~/git_repos/DynamicScript/csharp
-	3. Specify path to the XBUILD tool;
+	3. Specify output directory;
+		export OUTDIR=bin
+	4. Specify path to the XBUILD tool;
 		export XBUILD=/opt/mono/bin/xbuild
-	4. Execute make.sh file;
-		sh make.sh;
-	5. Examine 'csharp/bin' folder;
+	5. Execute make.sh file;
+		sh make.sh $OUTDIR;
+	6. Examine output directory;
 
 =====License=====
 Copyright 2011 Roman Sakno

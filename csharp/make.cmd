@@ -1,2 +1,2 @@
 CALL sysvars.cmd
-%MSBUILD% src\DynamicScript.sln /p:Configuration=Release /p:Platform="Any CPU" /t:Clean,Build
+%MSBUILD% src\interpreter\Interpreter.csproj /p:Configuration=Release /p:Platform="Any CPU" /p:OutputPath=%1 /t:Clean,Build

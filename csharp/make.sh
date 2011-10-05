@@ -1,1 +1,1 @@
-$XBUILD src/DynamicScript.sln /p:Configuration=Release /p:Platform="Any CPU" /t:Clean,Build
+$XBUILD src/interpreter/Interpreter.csproj /p:Configuration=Release /p:Platform="Any CPU" /p:OutputPath=$1 /t:Clean,Build
