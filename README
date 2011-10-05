@@ -9,11 +9,7 @@ LINUX
 
 =====Building=====
 Clone GIT repository from GITHUB:
-	1. Create GITHUB account;
-	2. Create repository clone;
-		git clone https://ACCOUNT@github.com/sakno/DynamicScript.git
-		-or- (using SSH key)
-		git clone git@github.com:sakno/DynamicScript.git
+		git clone git://github.com/sakno/DynamicScript.git
 
 WINDOWS
 	1. Open Windows Command Line processor;
