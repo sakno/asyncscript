@@ -1,0 +1,1 @@
+$XBUILD src/DynamicScript.sln /p:Configuration=Release /p:Platform="Any CPU" /t:Clean,Build
