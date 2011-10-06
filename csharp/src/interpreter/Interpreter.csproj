@@ -93,6 +93,7 @@
     <Compile Include="Compiler\Ast\ScriptCodeBooleanExpression.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeBreakLexicalScopeStatement.cs" />
     <Compile Include="Compiler\Ast\ICodeFlowControlInstruction.cs" />
+    <Compile Include="Compiler\Ast\ScriptCodeComplexExpression.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeConditionalExpression.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeContextExpression.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeContinueStatement.cs" />
