@@ -1,13 +1,15 @@
 DynamicScript - imperative script programming language with lambdas, dynamic typing, code polymorphism.
 
-=====Requirements=====
+1. Requirements
+==================
 WINDOWS
 	.NET Framework 4.0 Client Profile
 
 LINUX
 	Mono 2.10.x
 
-=====Building=====
+2. Building
+==================
 Clone GIT repository from GITHUB:
 		git clone git://github.com/sakno/DynamicScript.git
 
@@ -32,7 +34,8 @@ LINUX
 		sh make.sh $OUTDIR;
 	6. Examine output directory;
 
-=====License=====
+3. License
+==================
 Copyright 2011 Roman Sakno
 
    Licensed under the Apache License, Version 2.0 (the "License");
