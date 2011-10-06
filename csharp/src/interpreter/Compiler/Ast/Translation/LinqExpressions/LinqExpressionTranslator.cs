@@ -376,14 +376,15 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
 
         private Expression TranslateContractBinding(ScriptCodeExpression contractBinding, TranslationContext context)
         {
-            var result = ScriptContract.Extract(Translate(contractBinding, context));
+            var result = Translate(contractBinding, context);
             switch (contractBinding is ScriptCodePrimitiveExpression)
             {
-                case true: return result;
+                case true: return ScriptContract.Extract(result);
                 default:
                     result = Expression.Block(
                         Expression.Label(context.Scope.BeginOfScope),
-                        Expression.Label(context.Scope.EndOfScope, result));
+                        Expression.Label(context.Scope.EndOfScope, AsRightSide(result, context)));
+                    result = ScriptContract.Extract(result);
                     result = Expression.Lambda<Func<InterpreterState, IScriptContract>>(result, context.Scope.StateHolder);
                     return result;
             }

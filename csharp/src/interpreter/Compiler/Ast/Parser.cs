@@ -203,6 +203,8 @@ namespace DynamicScript.Compiler.Ast
                     expression = new ScriptCodeRealExpression((RealLiteral)lexer.Current.Value);
                 else if (lexer.Current.Value == Keyword.Callable)
                     expression = ScriptCodeCallableContractExpression.Instance;
+                else if (lexer.Current.Value is PlaceholderID)
+                    expression = new ScriptCodePlaceholderExpression((PlaceholderID)lexer.Current.Value);
                 else if (lexer.Current.Value == Punctuation.LeftBrace)      //parse object
                     expression = ScriptCodeObjectExpression.Parse(lexer, terminator);
                 else if (lexer.Current.Value.OneOf(Keyword.Checked, Keyword.Unchecked)) //parse context
@@ -274,8 +276,6 @@ namespace DynamicScript.Compiler.Ast
                                 return expression;
                         }
                 }
-                else if (lexer.Current.Value is PlaceholderID)
-                expression = new ScriptCodePlaceholderExpression((PlaceholderID)lexer.Current.Value); 
                 else throw CodeAnalysisException.InvalidExpressionTerm(lexer.Current); //Invalid expression term
                 if (!lexer.MoveNext())
                     throw CodeAnalysisException.InvalidPunctuation(terminator[0], lexer.Current); //end of expression expected

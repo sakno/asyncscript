@@ -35,6 +35,48 @@ namespace DynamicScript.Runtime.Environment
     {
         #region Nested Types
         /// <summary>
+        /// Represents slot searcher that iterates through properties of implemented interfaces
+        /// in parallel manner.
+        /// This class cannot be inherited.
+        /// </summary>
+        [ComVisible(false)]
+        private sealed class SlotSearcher : ParallelSearch<string, PropertyInfo, PropertyInfo>
+        {
+            private SlotSearcher(string slotName)
+                : base(slotName)
+            {
+            }
+
+            protected override bool Match(PropertyInfo element, string slotName, out PropertyInfo result)
+            {
+                switch (StringEqualityComparer.Equals(slotName, element.Name))
+                {
+                    case true:
+                        result = element;
+                        return true;
+                    default:
+                        result = null;
+                        return false;
+                }
+            }
+
+            public static IEnumerable<PropertyInfo> GetSlotHolders(object owner)
+            {
+                return from iface in owner.GetType().GetInterfaces()
+                       where Attribute.IsDefined(iface, typeof(SlotStoreAttribute))
+                       from prop in iface.GetProperties()
+                       select prop;
+            }
+
+            public static IRuntimeSlot Find(object owner, string slotName)
+            {
+                var searcher = new SlotSearcher(slotName);
+                searcher.Find(GetSlotHolders(owner));
+                return searcher.Success ? searcher.Result.GetValue(owner, null) as IRuntimeSlot : null;
+            }
+        }
+
+        /// <summary>
         /// Represents an abstract runtime slot.
         /// </summary>
         [ComVisible(false)]
@@ -2154,23 +2196,7 @@ namespace DynamicScript.Runtime.Environment
         {
             get
             {
-                return Enumerable.ToArray(from p in SlotHolders select p.Name);
-            }
-        }
-
-        private static bool IsSlotHolder(MemberInfo m, object filterCriteria)
-        {
-            return Attribute.IsDefined(m, typeof(SlotStoreAttribute));
-        }
-
-        private IEnumerable<PropertyInfo> SlotHolders
-        {
-            get
-            {
-                foreach (var iface in GetType().GetInterfaces())
-                    if (Attribute.IsDefined(iface, typeof(SlotStoreAttribute)))
-                        foreach (var prop in iface.GetProperties())
-                            yield return prop;
+                return Enumerable.ToArray(Enumerable.Select(SlotSearcher.GetSlotHolders(this), p => p.Name));
             }
         }
 
@@ -2235,8 +2261,7 @@ namespace DynamicScript.Runtime.Environment
         {
             get
             {
-                var member = Enumerable.FirstOrDefault(SlotHolders, p => StringEqualityComparer.Equals(p.Name, slotName));
-                var slotHolder = member != null ? (IRuntimeSlot)member.GetValue(this, null) : null;
+                var slotHolder = SlotSearcher.Find(this, slotName);
                 if (slotHolder != null)
                     return slotHolder;
                 else if (state.Context == InterpretationContext.Unchecked)

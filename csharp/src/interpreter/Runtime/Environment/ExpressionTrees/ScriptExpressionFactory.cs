@@ -134,23 +134,6 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             {
             }
 
-            private static IScriptObject Parse(CodeStatement stmt)
-            {
-                return stmt is ScriptCodeExpressionStatement ? Convert(((ScriptCodeExpressionStatement)stmt).Expression) : Convert(stmt);
-            }
-
-            private static IScriptObject Parse(string sourceCode)
-            {
-                var result = new ScriptCodeActionImplementationExpression();
-                SyntaxAnalyzer.Parse(sourceCode, result.Body);
-                switch (result.Body.Count)
-                {
-                    case 0: return null;
-                    case 1: return Parse(result.Body[0]);
-                    default: return Convert(result);
-                }
-            }
-
             protected override IScriptObject Invoke(InvocationContext ctx, ScriptString sourceCode)
             {
                 return Parse(sourceCode);
@@ -402,6 +385,28 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         public static IScriptExpression<ScriptCodePrimitiveExpression> MakeConstant(string value)
         {
             return new ScriptConstantExpression(new ScriptCodeStringExpression(value ?? string.Empty));
+        }
+
+        private static IScriptObject Parse(ScriptCodeStatement stmt)
+        {
+            return stmt is IScriptExpressionStatement ? Convert(((IScriptExpressionStatement)stmt).Expression) : Convert(stmt);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sourceCode"></param>
+        /// <returns></returns>
+        public static IScriptObject Parse(string sourceCode)
+        {
+            var result = new ScriptCodeActionImplementationExpression();
+            SyntaxAnalyzer.Parse(sourceCode, result.Body);
+            switch (result.Body.Count)
+            {
+                case 0: return Void;
+                case 1: return Parse(result.Body[0]);
+                default: return Convert(result);
+            }
         }
 
         /// <summary>

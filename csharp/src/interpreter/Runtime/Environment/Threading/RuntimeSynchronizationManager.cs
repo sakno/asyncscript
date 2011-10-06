@@ -31,6 +31,28 @@ namespace DynamicScript.Runtime.Environment.Threading
             return synchronizable.Await(ar.AsyncWaitHandle, timeout);
         }
 
+        private static bool RtlAwait(ISynchronizable taskToSynchronize, IAsyncResult synchronizer)
+        {
+            switch (synchronizer != null)
+            {
+                case true: return Await(taskToSynchronize, synchronizer, InfiniteTimeout);
+                default:
+                    using (var handle = new ManualResetEvent(false))
+                        return taskToSynchronize.Await(handle, InfiniteTimeout);
+            }
+        }
+
+        private static bool RtlAwait(IAsyncResult taskToSynchronize, IAsyncResult synchronizer)
+        {
+            switch(synchronizer!=null)
+            {
+                case true: return WaitHandle.WaitAll(new[]{taskToSynchronize.AsyncWaitHandle, synchronizer.AsyncWaitHandle});
+                default:
+                    using(var handle=new ManualResetEvent(false))
+                        return WaitHandle.WaitAll(new[]{taskToSynchronize.AsyncWaitHandle, handle});
+            }
+        }
+
         /// <summary>
         /// 
         /// </summary>
@@ -41,18 +63,11 @@ namespace DynamicScript.Runtime.Environment.Threading
         [CLSCompliant(false)]
         public static ScriptBoolean RtlAwait(IScriptObject taskToSynchronize, IAsyncResult synchronizer)
         {
-            return (ScriptBoolean)RtlAwait(taskToSynchronize as ISynchronizable, synchronizer);
-        }
-
-        private static bool RtlAwait(ISynchronizable taskToSynchronize, IAsyncResult synchronizer)
-        {
-            switch (synchronizer != null)
-            {
-                case true: return taskToSynchronize.Await(synchronizer, InfiniteTimeout);
-                default:
-                    using (var handle = new ManualResetEvent(false))
-                        return taskToSynchronize.Await(handle, InfiniteTimeout);
-            }
+            if (taskToSynchronize is ISynchronizable)
+                return RtlAwait(taskToSynchronize as ISynchronizable, synchronizer);
+            else if (taskToSynchronize is IAsyncResult)
+                return RtlAwait((IAsyncResult)taskToSynchronize, synchronizer);
+            else return ScriptBoolean.True;
         }
 
         internal static MethodCallExpression BindAwait(Expression asyncObj, Expression synchronizer)

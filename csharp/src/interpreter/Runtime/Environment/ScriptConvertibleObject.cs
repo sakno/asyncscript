@@ -20,9 +20,6 @@ namespace DynamicScript.Runtime.Environment
         where TContract: ScriptBuiltinContract
         where TValue: IConvertible, IEquatable<TValue>, IComparable<TValue>
     {
-        //protected QScriptConvertibleObject(SerializationInfo info, StreamingContext context)
-        //    :base(inf
-
         internal ScriptConvertibleObject(TContract contractBinding, TValue value, IEqualityComparer<TValue> comparer = null)
             : base(contractBinding, value, comparer)
         {

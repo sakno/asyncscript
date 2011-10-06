@@ -95,7 +95,7 @@ namespace DynamicScript.Runtime.Environment
         {
             if (slot == null)
             {
-                slot = new ScriptVariable(value??ScriptObject.Void, contractBinding is ScriptContractProvider ? ((ScriptContractProvider)contractBinding).Invoke(state) : contractBinding as IScriptContract, state);
+                slot = new ScriptVariable(value, contractBinding is ScriptContractProvider ? ((ScriptContractProvider)contractBinding).Invoke(state) : contractBinding as IScriptContract, state);
                 //Register variable at the current stack frame.
                 if (!string.IsNullOrEmpty(variableName) && CallStack.Current != null)
                     CallStack.Current.RegisterStorage(variableName, slot);

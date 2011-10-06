@@ -9,6 +9,7 @@ namespace DynamicScript.Runtime.Environment
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
     using SystemConverter = System.Convert;
     using InterpretationContext = Compiler.Ast.InterpretationContext;
+    using CultureInfo = System.Globalization.CultureInfo;
 
     /// <summary>
     /// Represents DynamicScript-compliant representation of the integer.
@@ -761,6 +762,18 @@ namespace DynamicScript.Runtime.Environment
         public bool IsInt32
         {
             get { return Value.Between(int.MinValue, int.MaxValue); }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="formatProvider"></param>
+        /// <returns></returns>
+        public static ScriptInteger TryParse(string value, CultureInfo formatProvider)
+        {
+            var result = default(long);
+            return long.TryParse(value, System.Globalization.NumberStyles.Any, formatProvider, out result) ? new ScriptInteger(result) : null;
         }
     }
 }

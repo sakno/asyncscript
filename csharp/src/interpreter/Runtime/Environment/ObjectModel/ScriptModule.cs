@@ -20,6 +20,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
     using ScriptDebugger = Debugging.ScriptDebugger;
     using TransparentActionAttribute = Debugging.TransparentActionAttribute;
     using Enumerable = System.Linq.Enumerable;
+    using CultureInfo = System.Globalization.CultureInfo;
 
     /// <summary>
     /// Represents an object that holds basic routines for DynamicScript programs.
@@ -165,6 +166,47 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             protected override IScriptObject Invoke(InvocationContext ctx, ScriptCompositeObject obj)
             {
                 return new ScriptIterable(obj != null ? obj.Split() : Enumerable.Empty<ScriptCompositeObject>());
+            }
+        }
+
+        [ComVisible(false)]
+        private sealed class ParseAction : ScriptFunc<ScriptString, IScriptContract, ScriptString>
+        {
+            private const string FirstParamName = "value";
+            private const string SecondParamName = "t";
+            private const string ThirdParamName = "lang";
+            public const string Name = "parse";
+
+            public ParseAction()
+                : base(FirstParamName, ScriptStringContract.Instance, SecondParamName, ScriptMetaContract.Instance, ThirdParamName, ScriptStringContract.Instance, ScriptSuperContract.Instance)
+            {
+            }
+
+            private static IScriptObject Invoke(ScriptString value, IScriptContract type, CultureInfo formatProvider)
+            {
+                if (type is ScriptIntegerContract)
+                    return ScriptInteger.TryParse(value, formatProvider);
+                else if (type is ScriptStringContract || type is ScriptSuperContract)
+                    return value;
+                else if (type is ScriptRealContract)
+                    return ScriptRealContract.TryParse(value, formatProvider);
+                else if (type is ScriptBooleanContract)
+                    return ScriptBooleanContract.TryParse(value);
+                else if (type is ExpressionTrees.ScriptExpressionFactory)
+                    return ExpressionTrees.ScriptExpressionFactory.Parse(value);
+                else if (type is ScriptVoid)
+                    return Void;
+                else return Void;
+            }
+
+            private static IScriptObject Invoke(ScriptString value, IScriptContract type, string language)
+            {
+                return Invoke(value, type, string.IsNullOrWhiteSpace(language) ? CultureInfo.InvariantCulture : CultureInfo.GetCultureInfoByIetfLanguageTag(language));
+            }
+
+            public override IScriptObject Invoke(InvocationContext ctx, ScriptString value, IScriptContract type, ScriptString language)
+            {
+                return Invoke(value, type, language);
             }
         }
 
@@ -442,6 +484,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                 AddConstant<ReflectAction>(ReflectAction.Name);
                 AddConstant<AdjustAction>(AdjustAction.Name);
                 AddConstant<WeakRefAction>(WeakRefAction.Name);
+                AddConstant<ParseAction>(ParseAction.Name);
             }
         }
         #endregion

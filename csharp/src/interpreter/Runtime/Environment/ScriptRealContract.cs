@@ -11,6 +11,7 @@ namespace DynamicScript.Runtime.Environment
     using Keyword = Compiler.Keyword;
     using InterpretationContext = Compiler.Ast.InterpretationContext;
     using SystemMath = System.Math;
+    using CultureInfo = System.Globalization.CultureInfo;
 
     /// <summary>
     /// Represents real number contract.
@@ -228,17 +229,13 @@ namespace DynamicScript.Runtime.Environment
         /// Tries to parse script real value.
         /// </summary>
         /// <param name="value">The value to parse.</param>
+        /// <param name="formatProvider"></param>
         /// <returns>The parsed real value; or <see langword="null"/> if parsing fails.</returns>
         [CLSCompliant(false)]
-        public static ScriptReal TryParse(string value)
+        public static ScriptReal TryParse(string value, CultureInfo formatProvider)
         {
-            switch (Keyword.Void.Equals(value))
-            {
-                case true: return Void;
-                default:
-                    var result = default(double);
-                    return double.TryParse(value, out result) ? (ScriptReal)result : null;
-            }
+            var result = default(double);
+            return double.TryParse(value, System.Globalization.NumberStyles.Any, formatProvider, out result) ? new ScriptReal(result) : null;
         }
 
         /// <summary>

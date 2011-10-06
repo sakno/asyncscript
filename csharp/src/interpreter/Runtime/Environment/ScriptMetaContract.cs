@@ -39,11 +39,7 @@ namespace DynamicScript.Runtime.Environment
         /// <returns>The void object according with the current contract.</returns>
         internal protected override ScriptObject FromVoid(InterpreterState state)
         {
-            switch (state.Context)
-            {
-                case InterpretationContext.Unchecked: return Void;
-                default: throw new UnsupportedOperationException(state);
-            }
+            return Void;
         }
 
         internal static LinqExpression Expression

@@ -105,7 +105,9 @@ namespace DynamicScript.Runtime.Environment
         private void SetValueFast(IScriptObject value, InterpreterState state)
         {
             var theSame = default(bool);
-            if (ScriptObject.IsVoid(value))
+            if (value == null)
+                HasValue = false;
+            else if (value is ScriptVoid)
                 Value = ContractBinding.FromVoid(state);
             else if (value is IRuntimeSlot)
                 SetValueFast(((IRuntimeSlot)value).GetValue(state), state);
@@ -118,6 +120,15 @@ namespace DynamicScript.Runtime.Environment
             else
                 throw new ContractBindingException(value, ContractBinding, state);
             HasValue = true;
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether this runtime slot holds a script object.
+        /// </summary>
+        public override bool HasValue
+        {
+            get { return base.HasValue && Value != null; }
+            protected set { base.HasValue = value; }
         }
 
         /// <summary>

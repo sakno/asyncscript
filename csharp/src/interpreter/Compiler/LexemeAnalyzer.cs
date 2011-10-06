@@ -290,11 +290,11 @@ namespace DynamicScript.Compiler
             column++;
             hasNext = false;
             var builder = new StringBuilder();
-            while (hasNext = characters.MoveNext() && char.IsDigit(characters.Current))
-            {
-                builder.Append(characters.Current);
-                column++;
-            }
+            while ((hasNext = characters.MoveNext()) && char.IsDigit(characters.Current))
+                {
+                    builder.Append(characters.Current);
+                    column++;
+                }
             return new PlaceholderID(builder);
         }
 

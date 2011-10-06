@@ -9,6 +9,7 @@ namespace DynamicScript.Runtime.Environment
     using LinqExpression = System.Linq.Expressions.Expression;
     using SystemConverter = System.Convert;
     using Keyword = Compiler.Keyword;
+    using CultureInfo = System.Globalization.CultureInfo;
 
     /// <summary>
     /// Represents boolean contract.
@@ -118,13 +119,8 @@ namespace DynamicScript.Runtime.Environment
         [CLSCompliant(false)]
         public static ScriptBoolean TryParse(string value)
         {
-            switch (Keyword.Void.Equals(value))
-            {
-                case true: return Void;
-                default:
-                    var result = default(bool);
-                    return bool.TryParse(value, out result) ? (ScriptBoolean)result : null;
-            }
+            var result = default(bool);
+            return bool.TryParse(value, out result) ? (ScriptBoolean)result : null;
         }
     }
 }

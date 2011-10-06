@@ -10,7 +10,7 @@ namespace DynamicScript.Runtime.Environment.Threading
     /// This class cannot be inherited.
     /// </summary>
     [ComVisible(false)]
-    sealed class ScriptAsyncResult: ScriptCompositeObject, ISynchronizable
+    sealed class ScriptAsyncResult: ScriptCompositeObject, ISynchronizable, IAsyncResult
     {
         #region Nested Types
         [ComVisible(false)]
@@ -115,17 +115,37 @@ namespace DynamicScript.Runtime.Environment.Threading
         }
         #endregion
 
-        private readonly WaitHandle m_handle;
+        private readonly IScriptAsyncResult m_ar;
 
         public ScriptAsyncResult(IScriptAsyncResult ar, IScriptContract contract)
             : base(new Slots(ar, contract))
         {
-            m_handle = ar.AsyncWaitHandle;
+            m_ar = ar;
         }
 
         bool ISynchronizable.Await(WaitHandle handle, TimeSpan timeout)
         {
-            return WaitHandle.WaitAny(new[] { m_handle, handle }, timeout) == 0;
+            return WaitHandle.WaitAny(new[] { m_ar.AsyncWaitHandle, handle }, timeout) == 0;
+        }
+
+        object IAsyncResult.AsyncState
+        {
+            get { return m_ar.AsyncState; }
+        }
+
+        WaitHandle IAsyncResult.AsyncWaitHandle
+        {
+            get { return m_ar.AsyncWaitHandle; }
+        }
+
+        bool IAsyncResult.CompletedSynchronously
+        {
+            get { return m_ar.CompletedSynchronously; }
+        }
+
+        bool IAsyncResult.IsCompleted
+        {
+            get { return m_ar.IsCompleted; }
         }
     }
 }
