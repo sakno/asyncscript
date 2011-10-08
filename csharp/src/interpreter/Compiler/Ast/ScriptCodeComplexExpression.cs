@@ -48,6 +48,27 @@ namespace DynamicScript.Compiler.Ast
         }
 
         /// <summary>
+        /// Simplifies this expression.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        public override ScriptCodeExpression Reduce(InterpretationContext context)
+        {
+            return CanReduce ? ((IScriptExpressionStatement)Body[0]).Expression : this;
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether this expression can be simplified.
+        /// </summary>
+        public override bool CanReduce
+        {
+            get
+            {
+                return Body.Count == 1 && Body[0] is IScriptExpressionStatement;
+            }
+        }
+
+        /// <summary>
         /// Determines whether this complex expression contains the same collection
         /// of statements as other.
         /// </summary>

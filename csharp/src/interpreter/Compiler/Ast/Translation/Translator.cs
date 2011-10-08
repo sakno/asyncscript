@@ -734,6 +734,8 @@ namespace DynamicScript.Compiler.Ast.Translation
                 return Translate((ScriptCodeContextExpression)expression, context);
             else if (expression is ScriptCodeCurrentActionExpression)
                 return Translate((ScriptCodeCurrentActionExpression)expression, context);
+            else if (expression is ScriptCodeComplexExpression)
+                return Translate((ScriptCodeComplexExpression)expression, context);
             else if (expression is ScriptCodeForEachLoopExpression)
                 return Translate((ScriptCodeForEachLoopExpression)expression, context);
             else if (expression is ScriptCodeForLoopExpression)
@@ -790,6 +792,14 @@ namespace DynamicScript.Compiler.Ast.Translation
                 return Translate((ScriptCodePlaceholderExpression)expression, context);
             else return null;
         }
+
+        /// <summary>
+        /// Translates complex expression.
+        /// </summary>
+        /// <param name="complex"></param>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        protected abstract TResult Translate(ScriptCodeComplexExpression complex, TranslationContext context);
 
         /// <summary>
         /// Translates placeholder expression.

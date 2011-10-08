@@ -169,6 +169,21 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         }
 
         /// <summary>
+        /// Translates complex expression.
+        /// </summary>
+        /// <param name="complex"></param>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        protected override Expression Translate(ScriptCodeComplexExpression complex, TranslationContext context)
+        {
+            var currentScope = context.Push(parent => GenericScope.Create(parent, true));
+            IList<Expression> block = new List<Expression>(complex.Body.Count);
+            Translate(complex, context, GotoExpressionKind.Goto, ref block);
+            context.Pop();
+            return Expression.Block(currentScope.Locals.Values, block);
+        }
+
+        /// <summary>
         /// 
         /// </summary>
         /// <param name="expression"></param>
