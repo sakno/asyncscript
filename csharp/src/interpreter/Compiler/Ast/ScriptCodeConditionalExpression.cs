@@ -19,37 +19,26 @@ namespace DynamicScript.Compiler.Ast
         /// <summary>
         /// Represents if-true branch.
         /// </summary>
-        public readonly ScriptCodeStatementCollection ThenBranch;
+        private ScriptCodeExpression m_then;
 
         /// <summary>
         /// Represents if-false branche
         /// </summary>
-        public readonly ScriptCodeStatementCollection ElseBranch;
+        private ScriptCodeExpression m_else;
 
-        private ScriptCodeConditionalExpression(ScriptCodeStatementCollection thenBranch, ScriptCodeStatementCollection elseBranch)
-        {
-            ThenBranch = thenBranch ?? new ScriptCodeStatementCollection();
-            ElseBranch = elseBranch ?? new ScriptCodeStatementCollection();
-        }
-
-        /// <summary>
-        /// Initializes a new conditional expression.
-        /// </summary>
-        public ScriptCodeConditionalExpression()
-            : this(new ScriptCodeStatementCollection(), new ScriptCodeStatementCollection())
-        {
-        }
+        private ScriptCodeExpression m_condition;
 
         /// <summary>
         /// Initializes a new conditional expression.
         /// </summary>
         /// <param name="condition"></param>
-        /// <param name="thenBranch"></param>
-        /// <param name="elseBranch"></param>
-        public ScriptCodeConditionalExpression(ScriptCodeExpression condition, ScriptCodeStatement[] thenBranch, ScriptCodeStatement[] elseBranch)
-            : this(new ScriptCodeStatementCollection(thenBranch), new ScriptCodeStatementCollection(elseBranch))
+        /// <param name="thenValue"></param>
+        /// <param name="elseValue"></param>
+        public ScriptCodeConditionalExpression(ScriptCodeExpression condition = null, ScriptCodeExpression thenValue = null, ScriptCodeExpression elseValue = null)
         {
-            Condition = condition;
+            m_condition = condition;
+            m_then = thenValue;
+            m_else = elseValue;
         }
 
         /// <summary>
@@ -57,13 +46,31 @@ namespace DynamicScript.Compiler.Ast
         /// </summary>
         public ScriptCodeExpression Condition
         {
-            get;
-            set;
+            get { return m_condition ?? ScriptCodeVoidExpression.Instance; }
+            set { m_condition = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets a value returned from the conditional expression if it is True.
+        /// </summary>
+        public ScriptCodeExpression ThenBranch
+        {
+            get { return m_then ?? ScriptCodeVoidExpression.Instance; }
+            set { m_then = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets a value returned from the conditional expression if it is False.
+        /// </summary>
+        public ScriptCodeExpression ElseBranch
+        {
+            get { return m_else ?? ScriptCodeVoidExpression.Instance; }
+            set { m_else = value; }
         }
 
         internal override bool Completed
         {
-            get { return Condition != null && (ThenBranch.Count + ElseBranch.Count > 0); }
+            get { return true; }
         }
 
         /// <summary>
@@ -78,9 +85,10 @@ namespace DynamicScript.Compiler.Ast
                     var result = new StringBuilder();
                     result.Append(string.Concat(Keyword.If, Lexeme.WhiteSpace, Condition, Lexeme.WhiteSpace));
                     //if-then branch output
-                    if (ThenBranch.Count > 0) result.Append(string.Concat(Keyword.Then, Lexeme.WhiteSpace, ThenBranch));
+                    result.Append(string.Concat(Keyword.Then, Lexeme.WhiteSpace, ThenBranch));
                     //if-else branch
-                    if (ElseBranch.Count > 0) result.Append(string.Concat(Punctuation.WhiteSpace, Keyword.Else, Lexeme.WhiteSpace, ElseBranch));
+                    if (!(ElseBranch is ScriptCodeVoidExpression))
+                        result.Append(string.Concat(Punctuation.WhiteSpace, Keyword.Else, Lexeme.WhiteSpace, ElseBranch));
                     return result.ToString();
                 default:
                     return ErrorMessages.IncompletedExpression;
@@ -96,25 +104,9 @@ namespace DynamicScript.Compiler.Ast
                 Condition = Parser.ParseExpression(lexer, Keyword.Then)  //parse condition expression
             };
             lexer.MoveNext(true);    //pass through then keyword
-            switch (lexer.Current.Value == Punctuation.LeftBrace)
-            {
-                case true:
-                    Parser.ParseStatements(lexer, conditional.ThenBranch, Punctuation.RightBrace);
-                    break;
-                default:
-                    conditional.ThenBranch.Add(Parser.ParseExpression, lexer, terminator + Keyword.Else);
-                    break;
-            }
+            conditional.ThenBranch = Parser.ParseExpression(lexer, terminator + Keyword.Else);
             if (lexer.Current.Value == Keyword.Else)
-                switch (lexer.MoveNext(true) == Punctuation.LeftBrace) //pass through else keyword
-                {
-                    case true:
-                        Parser.ParseStatements(lexer, conditional.ElseBranch, Punctuation.RightBrace);
-                        break;
-                    default:
-                        conditional.ElseBranch.Add(Parser.ParseExpression, lexer, terminator);
-                        break;
-                }
+                conditional.ElseBranch = Parser.ParseExpression(lexer, terminator);
             return conditional;
         }
 
@@ -133,10 +125,7 @@ namespace DynamicScript.Compiler.Ast
         /// </summary>
         public override bool CanReduce
         {
-            get
-            {
-                return Condition != null && Condition.CanReduce;
-            }
+            get { return Condition.CanReduce || ThenBranch.CanReduce || ElseBranch.CanReduce; }
         }
 
         /// <summary>
@@ -146,7 +135,7 @@ namespace DynamicScript.Compiler.Ast
         /// <returns>A new reduced conditional expression.</returns>
         public override ScriptCodeExpression Reduce(InterpretationContext context)
         {
-            return new ScriptCodeConditionalExpression(ThenBranch, ElseBranch) { Condition = Condition != null ? Condition.Reduce(context) : null };
+            return new ScriptCodeConditionalExpression(Condition.Reduce(context), ThenBranch.Reduce(context), ElseBranch.Reduce(context));
         }
 
         /// <summary>
@@ -158,8 +147,8 @@ namespace DynamicScript.Compiler.Ast
         {
             return other != null &&
                 Equals(Condition, other.Condition) &&
-                ScriptCodeStatementCollection.TheSame(ThenBranch, other.ThenBranch) &&
-                ScriptCodeStatementCollection.TheSame(ElseBranch, other.ElseBranch);
+                Equals(ThenBranch, other.ThenBranch) &&
+                Equals(ElseBranch, other.ElseBranch);
         }
 
         /// <summary>
@@ -178,8 +167,8 @@ namespace DynamicScript.Compiler.Ast
         /// <returns></returns>
         protected override Expression Restore()
         {
-            var ctor = LinqHelpers.BodyOf<ScriptCodeExpression, ScriptCodeStatement[], ScriptCodeStatement[], ScriptCodeConditionalExpression, NewExpression>((cond, then, @else) => new ScriptCodeConditionalExpression(cond, then, @else));
-            return ctor.Update(new[] { LinqHelpers.Restore(Condition), ThenBranch.NewArray(), ElseBranch.NewArray() });
+            var ctor = LinqHelpers.BodyOf<ScriptCodeExpression, ScriptCodeExpression, ScriptCodeExpression, ScriptCodeConditionalExpression, NewExpression>((cond, then, @else) => new ScriptCodeConditionalExpression(cond, then, @else));
+            return ctor.Update(new[] { LinqHelpers.Restore(Condition), LinqHelpers.Restore(ThenBranch), LinqHelpers.Restore(ElseBranch) });
         }
 
         internal override void Verify()

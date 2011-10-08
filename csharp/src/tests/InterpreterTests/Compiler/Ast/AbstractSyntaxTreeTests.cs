@@ -236,16 +236,17 @@ namespace DynamicScript.Compiler.Ast
         [Test(Description = "Test for conditional expression tree.")]
         public void ConditionalTest()
         {
-            var conditional = new ScriptCodeConditionalExpression();
-            conditional.Condition = new ScriptCodeIntegerExpression(10);
-            conditional.ThenBranch.Add(new ScriptCodeVariableDeclaration { Name = "a", InitExpression = new ScriptCodeIntegerExpression(2) });
-            conditional.ThenBranch.Add((ScriptCodeExpressionStatement)new ScriptCodeBinaryOperatorExpression
+            var thenBranch = new ScriptCodeComplexExpression();
+            var elseBranch = new ScriptCodeComplexExpression();
+            var conditional = new ScriptCodeConditionalExpression(new ScriptCodeIntegerExpression(10), thenBranch, elseBranch);
+            thenBranch.Add(new ScriptCodeVariableDeclaration { Name = "a", InitExpression = new ScriptCodeIntegerExpression(2) });
+            elseBranch.Add((ScriptCodeExpressionStatement)new ScriptCodeBinaryOperatorExpression
             {
                 Left = new ScriptCodeVariableReference { VariableName = "a" },
                 Operator = ScriptCodeBinaryOperatorType.Assign,
                 Right = new ScriptCodeIntegerExpression(10)
             });
-            conditional.ElseBranch.Add((ScriptCodeExpressionStatement)new ScriptCodeIntegerExpression(20));
+            elseBranch.Add((ScriptCodeExpressionStatement)new ScriptCodeIntegerExpression(20));
             AreEqual(conditional, "if 10 then {\r\nvar a=2;\r\na=10;\r\n}\r\n else 20");
         }
 

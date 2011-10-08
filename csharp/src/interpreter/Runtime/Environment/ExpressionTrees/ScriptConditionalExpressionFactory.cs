@@ -15,17 +15,12 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         [ComVisible(false)]
         private sealed class ModifyAction : ModifyActionBase
         {
-            private const string FirstParamName = "condition";
-            private const string SecondParamName = "thenBranch";
-            private const string ThirdParamName = "elseBranch";
-
-            private ModifyAction(ScriptArrayContract branchContract)
-                : base(Instance, new ScriptActionContract.Parameter(FirstParamName, ScriptExpressionFactory.Instance), new ScriptActionContract.Parameter(SecondParamName, branchContract), new ScriptActionContract.Parameter(ThirdParamName, branchContract))
-            {
-            }
+            private const string SecondParamName = "condition";
+            private const string ThirdParamName = "thenBranch";
+            private const string FourthParamName = "elseBranch";
 
             public ModifyAction()
-                : this(new ScriptArrayContract(ScriptStatementFactory.Instance))
+                : base(Instance, new ScriptActionContract.Parameter(SecondParamName, ScriptExpressionFactory.Instance), new ScriptActionContract.Parameter(ThirdParamName, ScriptExpressionFactory.Instance), new ScriptActionContract.Parameter(FourthParamName, ScriptExpressionFactory.Instance))
             {
             }
         }
@@ -45,30 +40,30 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class GetThenBranchAction : CodeElementPartProvider<IScriptArray>
+        private sealed class GetThenBranchAction : CodeElementPartProvider<IScriptCodeElement<ScriptCodeExpression>>
         {
             public GetThenBranchAction()
                 : base(Instance, new ScriptArrayContract(ScriptStatementFactory.Instance))
             {
             }
 
-            protected override IScriptArray Invoke(ScriptCodeConditionalExpression element, InterpreterState state)
+            protected override IScriptCodeElement<ScriptCodeExpression> Invoke(ScriptCodeConditionalExpression element, InterpreterState state)
             {
-                return ScriptStatementFactory.CreateStatements(element.ThenBranch, state);
+                return Convert(element.ThenBranch) as IScriptCodeElement<ScriptCodeExpression>;
             }
         }
 
         [ComVisible(false)]
-        private sealed class GetElseBranchAction : CodeElementPartProvider<IScriptArray>
+        private sealed class GetElseBranchAction : CodeElementPartProvider<IScriptCodeElement<ScriptCodeExpression>>
         {
             public GetElseBranchAction()
                 : base(Instance, new ScriptArrayContract(ScriptStatementFactory.Instance))
             {
             }
 
-            protected override IScriptArray Invoke(ScriptCodeConditionalExpression element, InterpreterState state)
+            protected override IScriptCodeElement<ScriptCodeExpression> Invoke(ScriptCodeConditionalExpression element, InterpreterState state)
             {
-                return ScriptStatementFactory.CreateStatements(element.ElseBranch, state);
+                return Convert(element.ElseBranch) as IScriptCodeElement<ScriptCodeExpression>;
             }
         }
         #endregion
@@ -90,18 +85,17 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
         public static readonly ScriptConditionalExpressionFactory Instance = new ScriptConditionalExpressionFactory();
 
-        public static ScriptConditionalExpression CreateExpression(IScriptObject condition, IEnumerable<IScriptObject> thenBranch, IEnumerable<IScriptObject> elseBranch = null)
+        public static ScriptConditionalExpression CreateExpression(IScriptObject condition, IScriptObject thenBranch, IScriptObject elseBranch = null)
         {
-            var expr = ScriptConditionalExpression.CreateExpression(condition, thenBranch, elseBranch);
-            return expr != null ? new ScriptConditionalExpression(expr) : null;
+            return new ScriptConditionalExpression(ScriptConditionalExpression.CreateExpression(condition, thenBranch, elseBranch));
         }
 
         public override ScriptConditionalExpression CreateCodeElement(IList<IScriptObject> args, InterpreterState state)
         {
             switch (args.Count)
             {
-                case 2: return CreateExpression(args[0], args[1] as IEnumerable<IScriptObject>);
-                case 3: return CreateExpression(args[0], args[1] as IEnumerable<IScriptObject>, args[2] as IEnumerable<IScriptObject>);
+                case 2: return CreateExpression(args[0], args[1]);
+                case 3: return CreateExpression(args[0], args[1], args[2]);
                 default: return null;
             }
         }

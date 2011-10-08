@@ -162,12 +162,10 @@
     <Compile Include="Compiler\Ast\Translation\LinqExpressions\FinallyScope.cs" />
     <Compile Include="Compiler\Ast\Translation\LinqExpressions\ForkScope.cs" />
     <Compile Include="Compiler\Ast\Translation\LinqExpressions\ForLoopScope.cs" />
-    <Compile Include="Compiler\Ast\Translation\LinqExpressions\IfElseBranchScope.cs" />
     <Compile Include="Compiler\Ast\Translation\LinqExpressions\LoopScope.cs" />
     <Compile Include="Compiler\Ast\Translation\LinqExpressions\ObjectScope.cs" />
     <Compile Include="Compiler\Ast\Translation\LinqExpressions\SourceCodeInfo.cs" />
     <Compile Include="Compiler\Ast\Translation\LinqExpressions\RoutineScope.cs" />
-    <Compile Include="Compiler\Ast\Translation\LinqExpressions\IfThenBranchScope.cs" />
     <Compile Include="Compiler\Ast\Translation\ErrorMode.cs" />
     <Compile Include="Compiler\Ast\Translation\LinqExpressions\GlobalScope.cs" />
     <Compile Include="Compiler\Ast\Translation\LinqExpressions\LexicalScope.cs" />

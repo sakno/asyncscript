@@ -413,8 +413,8 @@ namespace DynamicScript.Compiler.Ast
             switch (lexer.Current.Value == Punctuation.Colon)
             {
                 case true:
-                    if (lexer.MoveNext()) return new ScriptCodeQuoteExpression(signature) { Body = ParseExpression(lexer, terminator) };
-                    else throw CodeAnalysisException.IdentifierExpected(lexer.Current.Key);
+                    lexer.MoveNext(true);   //pass through colon
+                    return new ScriptCodeQuoteExpression(signature) { Body = ParseExpression(lexer, terminator) };
                 default: throw CodeAnalysisException.InvalidPunctuation(Punctuation.Colon, lexer.Current);
             }
         }
@@ -449,8 +449,8 @@ namespace DynamicScript.Compiler.Ast
             switch (lexer.Current.Value == Punctuation.Colon)
             {
                 case true:
-                    if (lexer.MoveNext()) return new ScriptCodeActionImplementationExpression(actionContract) { Body = ParseExpression(lexer, terminator) };
-                    else throw CodeAnalysisException.IdentifierExpected(lexer.Current.Key);
+                    lexer.MoveNext(true);   //pass through colon
+                    return new ScriptCodeActionImplementationExpression(actionContract) { Body = ParseExpression(lexer, terminator) };
                 default: return actionContract;
             }
         }

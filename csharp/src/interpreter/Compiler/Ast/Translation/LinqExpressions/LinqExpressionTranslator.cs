@@ -1069,12 +1069,23 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         protected override Expression Translate(ScriptCodeContextExpression interpretationContext, TranslationContext context)
         {
             var currentScope = context.Push<ContextScope>(parent => ContextScope.Create(parent, interpretationContext.Context));
-            IList<Expression> body = new List<Expression>(interpretationContext.Body.Count);
-            body.Label(currentScope.BeginOfScope, Expression.Assign(context.Scope.StateHolder, InterpreterState.Update(currentScope.Parent.StateHolder, interpretationContext.Context)));
-            Translate(interpretationContext.Body, context, GotoExpressionKind.Goto, ref body);
-            body.Label(currentScope.EndOfScope, ScriptObject.MakeVoid());
+            var stateHolder = Expression.Assign(currentScope.StateHolder, InterpreterState.Update(currentScope.Parent.StateHolder, interpretationContext.Context));
+            var result = default(Expression);
+            switch (interpretationContext.Body is ScriptCodeComplexExpression)
+            {
+                case true:
+                    IList<Expression> body = new List<Expression>(10);
+                    body.Label(currentScope.BeginOfScope, stateHolder);
+                    Translate((ScriptCodeComplexExpression)interpretationContext.Body, context, GotoExpressionKind.Goto, ref body);
+                    body.Label(currentScope.EndOfScope, ScriptObject.MakeVoid());
+                    result = Expression.Block(currentScope.Locals.Values, body);
+                    break;
+                default:
+                    result = Expression.Block(stateHolder, Translate(interpretationContext.Body, context));
+                    break;
+            }
             context.Pop();
-            return Expression.Block(currentScope.Locals.Values, body);
+            return result;
         }
 
         /// <summary>
@@ -1087,25 +1098,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         {
             //Parse test expression
             var test = RuntimeHelpers.BindIsTrue(Translate(conditional.Condition, context), context.Scope.StateHolder);
-            //Parse if-then branch
-            LexicalScope currentScope = context.Push(IfThenBranchScope.Create);
-            IList<Expression> thenBranch = new List<Expression>(conditional.ThenBranch.Count + 1);
-            //Marks beginning of the if-then branch
-            thenBranch.Label(currentScope.BeginOfScope);
-            //Iterates through statements and emit
-            Translate(conditional.ThenBranch, context, GotoExpressionKind.Goto, ref thenBranch);
-            thenBranch.Label(context.Scope.EndOfScope, ScriptObject.MakeVoid());   //marks end of the if-then branch.
-            context.Pop();
-            //Parse if-else branch
-            currentScope = context.Push(IfElseBranchScope.Create);
-            IList<Expression> elseBranch = new List<Expression>(conditional.ElseBranch.Count);
-            //Marks beginning of the if-else branch
-            elseBranch.Label(currentScope.BeginOfScope);
-            //Iterates through statements and emit
-            Translate(conditional.ElseBranch, context, GotoExpressionKind.Goto, ref elseBranch);
-            elseBranch.Label(context.Scope.EndOfScope, ScriptObject.MakeVoid());   //marks end of the if-else branch.
-            context.Pop();
-            return Expression.Condition(test, Expression.Block(thenBranch), Expression.Block(elseBranch), typeof(IScriptObject));
+            return Expression.Condition(test, Translate(conditional.ThenBranch, context), Translate(conditional.ElseBranch, context), typeof(IScriptObject));
         }
 
         /// <summary>

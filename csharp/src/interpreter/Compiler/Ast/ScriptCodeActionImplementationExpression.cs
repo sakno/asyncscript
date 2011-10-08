@@ -166,5 +166,23 @@ namespace DynamicScript.Compiler.Ast
         {
             return Body is IList<ScriptCodeStatement> ? (IList<ScriptCodeStatement>)Body : new[] { new ScriptCodeExpressionStatement(Body) };
         }
+
+        /// <summary>
+        /// Gets a value indicating whether this expression can be reduced.
+        /// </summary>
+        public override bool CanReduce
+        {
+            get { return Body.CanReduce; }
+        }
+
+        /// <summary>
+        /// Simplifies the current expression.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        public override ScriptCodeExpression Reduce(InterpretationContext context)
+        {
+            return CanReduce ? new ScriptCodeActionImplementationExpression(Signature, Body.Reduce(context)) : this;
+        }
     }
 }

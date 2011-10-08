@@ -150,7 +150,11 @@ namespace DynamicScript.Compiler.Ast
             return GetEnumerator();
         }
 
-        void ICollection<ScriptCodeStatement>.Add(ScriptCodeStatement stmt)
+        /// <summary>
+        /// Adds a new statement to the complex expression.
+        /// </summary>
+        /// <param name="stmt"></param>
+        public void Add(ScriptCodeStatement stmt)
         {
             Body.Add(stmt);
         }

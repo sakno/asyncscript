@@ -15,38 +15,38 @@ namespace DynamicScript.Compiler.Ast
     [Serializable]
     public sealed class ScriptCodeContextExpression: ScriptCodeExpression, IEquatable<ScriptCodeContextExpression>
     {
-        /// <summary>
-        /// Represents body of this complex expression.
-        /// </summary>
-        public readonly ScriptCodeStatementCollection Body;
+        private ScriptCodeExpression m_body;
         
         /// <summary>
         /// Represents interpretation context.
         /// </summary>
         public InterpretationContext Context;
 
-        private ScriptCodeContextExpression(InterpretationContext context, ScriptCodeStatementCollection statements)
-        {
-            Context = context;
-            Body = statements ?? new ScriptCodeStatementCollection();
-        }
-
         /// <summary>
-        /// Initializes a new instance of the expression.
+        /// Initializes a new interpretation context block.
         /// </summary>
         /// <param name="context"></param>
-        /// <param name="statements"></param>
-        public ScriptCodeContextExpression(InterpretationContext context = InterpretationContext.Default, params ScriptCodeStatement[] statements)
-            : this(context, new ScriptCodeStatementCollection(statements))
+        /// <param name="body"></param>
+        public ScriptCodeContextExpression(InterpretationContext context, ScriptCodeExpression body = null)
         {
+            Context = context;
+            m_body = body;
         }
 
         private ScriptCodeContextExpression(Lexeme ctxToken)
-            : this()
         {
             if (ctxToken == Keyword.Checked) Context = InterpretationContext.Checked;
             else if (ctxToken == Keyword.Unchecked) Context = InterpretationContext.Unchecked;
             else Context = InterpretationContext.Default;
+        }
+
+        /// <summary>
+        /// Gets or sets body of the interpretation context.
+        /// </summary>
+        public ScriptCodeExpression Body
+        {
+            get { return m_body ?? ScriptCodeVoidExpression.Instance; }
+            set { m_body = value; }
         }
 
         internal override bool Completed
@@ -54,19 +54,39 @@ namespace DynamicScript.Compiler.Ast
             get { return true; }
         }
 
+        /// <summary>
+        /// Returns a string representation of the context expression.
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return string.Concat(Context == InterpretationContext.Unchecked ? Keyword.Unchecked : Keyword.Checked, Punctuation.Colon, Body);
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether this expression can be simplified.
+        /// </summary>
+        public override bool CanReduce
+        {
+            get { return Body.CanReduce; }
+        }
+
+        /// <summary>
+        /// Simplifies this expression.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        public override ScriptCodeExpression Reduce(InterpretationContext context)
+        {
+            return CanReduce ? new ScriptCodeContextExpression(Context, Body.Reduce(Context)) : this;
+        }
+
         internal static ScriptCodeContextExpression Parse(IEnumerator<KeyValuePair<Lexeme.Position, Lexeme>> lexer, params Lexeme[] terminator)
         {
             var expr = new ScriptCodeContextExpression(lexer.Current.Value);
-            lexer.MoveNext(true);   //pass through checked or unchecked keyword
-            switch (lexer.Current.Value == Punctuation.LeftBrace)
-            {
-                case true:
-                    Parser.ParseStatements(lexer, expr.Body, null, Punctuation.RightBrace);
-                    break;
-                default:
-                    expr.Body.Add(Parser.ParseExpression, lexer, terminator);
-                    break;
-            }
+            lexer.MoveNext(Punctuation.Colon, true);  //Pass through check or unchecked keyword
+            lexer.MoveNext(true);   //pass through colon
+            expr.Body = Parser.ParseExpression(lexer, terminator);
             return expr;
         }
 
@@ -89,7 +109,7 @@ namespace DynamicScript.Compiler.Ast
         {
             return other != null &&
                 Context == other.Context &&
-                ScriptCodeStatementCollection.TheSame(Body, other.Body);
+                Equals(Body, other.Body);
         }
 
         /// <summary>
@@ -108,8 +128,8 @@ namespace DynamicScript.Compiler.Ast
         /// <returns></returns>
         protected override Expression Restore()
         {
-            var ctor = LinqHelpers.BodyOf<InterpretationContext, ScriptCodeStatement[], ScriptCodeContextExpression, NewExpression>((ctx, stmts) => new ScriptCodeContextExpression(ctx, stmts));
-            return ctor.Update(new Expression[] { LinqHelpers.Constant(Context), Body.NewArray() });
+            var ctor = LinqHelpers.BodyOf<InterpretationContext, ScriptCodeExpression, ScriptCodeContextExpression, NewExpression>((ctx, stmts) => new ScriptCodeContextExpression(ctx, stmts));
+            return ctor.Update(new Expression[] { LinqHelpers.Constant(Context), LinqHelpers.Restore(Body) });
         }
 
         internal override void Verify()

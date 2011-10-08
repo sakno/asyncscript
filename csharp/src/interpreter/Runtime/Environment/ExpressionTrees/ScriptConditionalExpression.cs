@@ -26,17 +26,20 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             return DynamicScriptInterpreter.Run(Expression, state);
         }
 
-        public static ScriptCodeConditionalExpression CreateExpression(IScriptObject condition, IEnumerable<IScriptObject> thenBranch, IEnumerable<IScriptObject> elseBranch = null)
+        public static ScriptCodeConditionalExpression CreateExpression(IScriptObject condition, IScriptObject thenBranch, IScriptObject elseBranch = null)
         {
-            var result = new ScriptCodeConditionalExpression
-            {
-                Condition = condition is IScriptExpression<ScriptCodeExpression> ?
-                ((IScriptExpression<ScriptCodeExpression>)condition).CodeObject :
-                ScriptConstantExpression.CreateExpression(condition)
-            };
-            ScriptStatementFactory.CreateStatements(thenBranch, result.ThenBranch);
-            ScriptStatementFactory.CreateStatements(elseBranch, result.ElseBranch);
-            return result.Completed ? result : null;
+            return new ScriptCodeConditionalExpression
+             {
+                 Condition = condition is IScriptCodeElement<ScriptCodeExpression> ?
+                 ((IScriptCodeElement<ScriptCodeExpression>)condition).CodeObject :
+                 ScriptConstantExpression.CreateExpression(condition),
+                 ThenBranch = thenBranch is IScriptCodeElement<ScriptCodeExpression> ?
+                 ((IScriptCodeElement<ScriptCodeExpression>)thenBranch).CodeObject :
+                 ScriptConstantExpression.CreateExpression(thenBranch),
+                 ElseBranch = elseBranch is IScriptCodeElement<ScriptCodeExpression> ?
+                 ((IScriptCodeElement<ScriptCodeExpression>)elseBranch).CodeObject :
+                 ScriptConstantExpression.CreateExpression(elseBranch)
+             };
         }
 
         protected override ScriptCodeConditionalExpression CreateExpression(IList<IScriptObject> args, InterpreterState state)
@@ -45,9 +48,9 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             switch (args.Count)
             {
                 case 2:
-                    return CreateExpression(args[0], args[1] as IEnumerable<IScriptObject>);
+                    return CreateExpression(args[0], args[1]);
                 case 3:
-                    return CreateExpression(args[0], args[1] as IEnumerable<IScriptObject>, args[2] as IEnumerable<IScriptObject>);
+                    return CreateExpression(args[0], args[1], args[2]);
                 default:
                     return null;
             }
