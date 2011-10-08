@@ -14,7 +14,7 @@ namespace DynamicScript.Compiler.Ast
     /// </summary>
     [ComVisible(false)]
     [Serializable]
-    public sealed class ScriptCodeStatementCollection: CodeStatementCollection, ICollection<ScriptCodeStatement>, ISyntaxTreeNode
+    public sealed class ScriptCodeStatementCollection: CodeStatementCollection, IList<ScriptCodeStatement>, ISyntaxTreeNode
     {
         /// <summary>
         /// Initializes a new collection of script statements.
@@ -103,9 +103,14 @@ namespace DynamicScript.Compiler.Ast
             get { return LinqHelpers.IsTrue(this, stmt => stmt.Completed); }
         }
 
-        void ISyntaxTreeNode.Verify()
+        internal void Verify()
         {
             LinqHelpers.ForEach(this, stmt => stmt.Verify());
+        }
+
+        void ISyntaxTreeNode.Verify()
+        {
+            Verify();
         }
 
         internal ISyntaxTreeNode Visit(ISyntaxTreeNode parent, Converter<ISyntaxTreeNode, ISyntaxTreeNode> visitor)
@@ -154,7 +159,7 @@ namespace DynamicScript.Compiler.Ast
                     result.AppendLine(Punctuation.LeftBrace);
                     foreach (var s in statements)
                         result.AppendLine(Convert.ToString(s));
-                    result.AppendLine(Punctuation.RightBrace);
+                    result.Append((string)Punctuation.RightBrace);
                     break;
             }
             return result.ToString();
@@ -192,6 +197,16 @@ namespace DynamicScript.Compiler.Ast
                     return true;
                 default: return false;
             }
+        }
+
+        int IList<ScriptCodeStatement>.IndexOf(ScriptCodeStatement stmt)
+        {
+            return IndexOf(stmt);
+        }
+
+        void IList<ScriptCodeStatement>.Insert(int index, ScriptCodeStatement stmt)
+        {
+            Insert(index, stmt);
         }
     }
 }

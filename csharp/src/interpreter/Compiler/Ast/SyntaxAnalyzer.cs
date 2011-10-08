@@ -13,10 +13,10 @@ namespace DynamicScript.Compiler.Ast
     /// </summary>
     [Serializable]
     [ComVisible(false)]
-    sealed class SyntaxAnalyzer : IEnumerator<CodeStatement>
+    sealed class SyntaxAnalyzer : IEnumerator<ScriptCodeStatement>
     {
         private readonly IEnumerator<KeyValuePair<Lexeme.Position, Lexeme>> m_lexer;
-        private CodeStatement m_current;
+        private ScriptCodeStatement m_current;
         private bool m_disposed;
         private readonly string m_sourceFile;
 
@@ -50,14 +50,14 @@ namespace DynamicScript.Compiler.Ast
         {
         }
 
-        public static IEnumerable<CodeStatement> Parse(IEnumerable<char> sourceCode)
+        public static IEnumerable<ScriptCodeStatement> Parse(IEnumerable<char> sourceCode)
         {
             using (var analyzer = new SyntaxAnalyzer(sourceCode))
                 while (analyzer.MoveNext())
                     yield return analyzer.Current;
         }
 
-        public static void Parse(IEnumerable<char> sourceCode, CodeStatementCollection statements)
+        public static void Parse(IEnumerable<char> sourceCode, ICollection<ScriptCodeStatement> statements)
         {
             foreach (var stmt in Parse(sourceCode))
                 statements.Add(stmt);
@@ -66,7 +66,7 @@ namespace DynamicScript.Compiler.Ast
         /// <summary>
         /// Gets currently parsed statement or expression.
         /// </summary>
-        public CodeStatement Current
+        public ScriptCodeStatement Current
         {
             get 
             {

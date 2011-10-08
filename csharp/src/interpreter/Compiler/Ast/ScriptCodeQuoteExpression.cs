@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace DynamicScript.Compiler.Ast
 {
@@ -15,32 +16,24 @@ namespace DynamicScript.Compiler.Ast
     [Serializable]
     public sealed class ScriptCodeQuoteExpression : ScriptCodeExpression, IEquatable<ScriptCodeQuoteExpression>
     {
-        /// <summary>
-        /// Represents body of the quoted action.
-        /// </summary>
-        public readonly ScriptCodeStatementCollection Body;
+        private ScriptCodeExpression m_body;
 
         /// <summary>
         /// Represents signature of the quoted action.
         /// </summary>
         public readonly ScriptCodeActionContractExpression Signature;
 
-        private ScriptCodeQuoteExpression(ScriptCodeActionContractExpression signature, ScriptCodeStatementCollection body)
-        {
-            Body = body ?? new ScriptCodeStatementCollection();
-            Signature = signature ?? new ScriptCodeActionContractExpression();
-        }
-
         /// <summary>
-        /// Initializes a new expression.
+        /// Initializes a new quoted expression.
         /// </summary>
         /// <param name="signature"></param>
         /// <param name="body"></param>
-        public ScriptCodeQuoteExpression(ScriptCodeActionContractExpression signature = null, params ScriptCodeStatement[] body)
-            : this(signature, new ScriptCodeStatementCollection(body))
+        public ScriptCodeQuoteExpression(ScriptCodeActionContractExpression signature = null, ScriptCodeExpression body = null)
         {
+            m_body = body;
             Signature = signature ?? new ScriptCodeActionContractExpression();
         }
+
 
         internal ScriptCodeQuoteExpression(ScriptCodeActionImplementationExpression actionImplementation)
             :this(actionImplementation.Signature, actionImplementation.Body)
@@ -50,6 +43,20 @@ namespace DynamicScript.Compiler.Ast
         internal override bool Completed
         {
             get { return Signature.Completed; }
+        }
+
+        /// <summary>
+        /// Gets or sets body of the quoted expression.
+        /// </summary>
+        public ScriptCodeExpression Body
+        {
+            get { return m_body ?? ScriptCodeVoidExpression.Instance; }
+            set { m_body = value; }
+        }
+
+        internal bool IsComplexBody
+        {
+            get { return Body is ICollection<ScriptCodeStatement>; }
         }
 
         /// <summary>
@@ -71,7 +78,7 @@ namespace DynamicScript.Compiler.Ast
         {
             return other != null &&
                 Equals(Signature, other.Signature) &&
-                ScriptCodeStatement.Equals(Body, other.Body);
+                Equals(Body, other.Body);
         }
 
         /// <summary>
@@ -100,7 +107,7 @@ namespace DynamicScript.Compiler.Ast
         internal override ScriptCodeExpression Visit(ISyntaxTreeNode parent, Converter<ISyntaxTreeNode, ISyntaxTreeNode> visitor)
         {
             Signature.Visit(this, visitor);
-            Body.Visit(this, visitor);
+            if (Body != null) Body = Body.Visit(this, visitor) as ScriptCodeExpression;
             return visitor.Invoke(this) as ScriptCodeExpression ?? this;
         }
 

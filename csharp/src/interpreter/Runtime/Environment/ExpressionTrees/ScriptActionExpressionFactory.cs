@@ -21,22 +21,22 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
             public ModifyAction()
                 : base(Instance, new ScriptActionContract.Parameter(SecondParamName, ScriptActionContractExpressionFactory.Instance),
-                new ScriptActionContract.Parameter(ThirdParamName, new ScriptArrayContract(ScriptStatementFactory.Instance)))
+                new ScriptActionContract.Parameter(ThirdParamName, ScriptExpressionFactory.Instance))
             {
             }
         }
 
         [ComVisible(false)]
-        private sealed class GetBodyAction : CodeElementPartProvider<IScriptArray>
+        private sealed class GetBodyAction : CodeElementPartProvider<IScriptCodeElement<ScriptCodeExpression>>
         {
             public GetBodyAction()
                 :base(Instance, new ScriptArrayContract(ScriptStatementFactory.Instance))
             {
             }
 
-            protected override IScriptArray Invoke(ScriptCodeActionImplementationExpression element, InterpreterState state)
+            protected override IScriptCodeElement<ScriptCodeExpression> Invoke(ScriptCodeActionImplementationExpression element, InterpreterState state)
             {
-                return ScriptStatementFactory.CreateStatements(element.Body, state);
+                return Convert(element.Body) as IScriptCodeElement<ScriptCodeExpression>;
             }
         }
 
@@ -73,14 +73,14 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
         public static readonly ScriptActionExpressionFactory Instance = new ScriptActionExpressionFactory();
 
-        public static ScriptActionExpression CreateExpression(IScriptCodeElement<ScriptCodeActionContractExpression> signature, IEnumerable<IScriptObject> body)
+        public static ScriptActionExpression CreateExpression(IScriptCodeElement<ScriptCodeActionContractExpression> signature, IScriptCodeElement<ScriptCodeExpression> body)
         {
             return new ScriptActionExpression(ScriptActionExpression.CreateExpression(signature, body));
         }
 
         public override ScriptActionExpression CreateCodeElement(IList<IScriptObject> args, InterpreterState state)
         {
-            return args.Count == 2 ? CreateExpression(args[0] as IScriptCodeElement<ScriptCodeActionContractExpression>, args[1] as IEnumerable<IScriptObject>) : null;
+            return args.Count == 2 ? CreateExpression(args[0] as IScriptCodeElement<ScriptCodeActionContractExpression>, args[1] as IScriptCodeElement<ScriptCodeExpression>) : null;
         }
 
         public override void Clear()

@@ -21,6 +21,9 @@ namespace DynamicScript.Runtime.Hosting
         [LoaderOptimization(LoaderOptimization.SingleDomain)]
         private static int Main(string[] args)
         {
+            using (var p = new Compiler.Ast.SyntaxAnalyzer("@void->void: {var a=2; leave a;};"))
+                while (p.MoveNext())
+                    Console.WriteLine(p.Current.ToString());
             return Execute(new CommandLineParser(Console.Out, Console.In), args);
         }
     }

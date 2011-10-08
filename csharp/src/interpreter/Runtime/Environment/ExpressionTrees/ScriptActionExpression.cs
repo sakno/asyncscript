@@ -26,16 +26,14 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             return DynamicScriptInterpreter.Run(Expression, state) as IScriptAction;
         }
 
-        public static ScriptCodeActionImplementationExpression CreateExpression(IScriptCodeElement<ScriptCodeActionContractExpression> signature, IEnumerable<IScriptObject> body)
+        public static ScriptCodeActionImplementationExpression CreateExpression(IScriptCodeElement<ScriptCodeActionContractExpression> signature, IScriptCodeElement<ScriptCodeExpression> body)
         {
-            var result = new ScriptCodeActionImplementationExpression(signature != null ? signature.CodeObject : null);
-            ScriptStatementFactory.CreateStatements(body, result.Body);
-            return result;
+            return signature != null && body != null ? new ScriptCodeActionImplementationExpression(signature.CodeObject, body.CodeObject) : null;
         }
 
         protected override ScriptCodeActionImplementationExpression CreateExpression(IList<IScriptObject> args, InterpreterState state)
         {
-            return args.Count == 2 ? CreateExpression(args[0] as IScriptCodeElement<ScriptCodeActionContractExpression>, args[1] as IEnumerable<IScriptObject>) : null;
+            return args.Count == 2 ? CreateExpression(args[0] as IScriptCodeElement<ScriptCodeActionContractExpression>, args[1] as IScriptCodeElement<ScriptCodeExpression>) : null;
         }
     }
 }

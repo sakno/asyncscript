@@ -1,6 +1,7 @@
 ﻿using System;
 using System.CodeDom;
 using System.Linq.Expressions;
+using System.Collections.Generic;
 
 namespace DynamicScript.Compiler.Ast
 {
@@ -12,12 +13,11 @@ namespace DynamicScript.Compiler.Ast
     /// </summary>
     [ComVisible(false)]
     [Serializable]
-    public sealed class ScriptCodeActionImplementationExpression : ScriptCodeExpression, IStaticContractBinding<ScriptCodeActionContractExpression>, IEquatable<ScriptCodeActionImplementationExpression>
+    public sealed class ScriptCodeActionImplementationExpression : ScriptCodeExpression, 
+        IStaticContractBinding<ScriptCodeActionContractExpression>, 
+        IEquatable<ScriptCodeActionImplementationExpression>
     {
-        /// <summary>
-        /// Represents body of the action.
-        /// </summary>
-        public readonly ScriptCodeStatementCollection Body;
+        private ScriptCodeExpression m_body;
 
         /// <summary>
         /// Represents signature of the action.
@@ -29,15 +29,19 @@ namespace DynamicScript.Compiler.Ast
         /// </summary>
         /// <param name="signature"></param>
         /// <param name="body"></param>
-        public ScriptCodeActionImplementationExpression(ScriptCodeActionContractExpression signature = null, params ScriptCodeStatement[] body)
-            : this(signature, new ScriptCodeStatementCollection(body))
-        {
-        }
-
-        private ScriptCodeActionImplementationExpression(ScriptCodeActionContractExpression signature, ScriptCodeStatementCollection body)
+        public ScriptCodeActionImplementationExpression(ScriptCodeActionContractExpression signature = null, ScriptCodeExpression body = null)
         {
             Signature = signature ?? new ScriptCodeActionContractExpression();
-            Body = body ?? new ScriptCodeStatementCollection();
+            Body = body;
+        }
+
+        /// <summary>
+        /// Gets or sets body of the action.
+        /// </summary>
+        public ScriptCodeExpression Body
+        {
+            get { return m_body ?? ScriptCodeVoidExpression.Instance; }
+            set { m_body = value; }
         }
 
         /// <summary>
@@ -54,15 +58,20 @@ namespace DynamicScript.Compiler.Ast
         /// <returns>The string representation of the action implementation.</returns>
         public override string ToString()
         {
-            switch (Body.Count)
+            return string.Concat(Signature, Punctuation.Colon, Body); 
+        }
+
+        /// <summary>
+        /// Returns a string representation of the action implementation.
+        /// </summary>
+        /// <param name="style"></param>
+        /// <returns></returns>
+        public override string ToString(FormattingStyle style)
+        {
+            switch (style)
             {
-                case 0:
-                    return String.Concat(Punctuation.LeftBracket, Signature.ToString(false), Punctuation.LeftBrace, Punctuation.RightBracket);
-                case 1:
-                    var stmt = Body[0] as ScriptCodeExpressionStatement;
-                    return String.Concat(Punctuation.LeftBracket, Signature.ToString(false), Punctuation.Colon, stmt != null ? stmt.Expression : null, Punctuation.RightBracket);
-                default:
-                    return String.Concat(Punctuation.LeftBracket, Signature.ToString(false), Punctuation.LeftBrace, Body, Punctuation.RightBrace, Punctuation.RightBracket);
+                case FormattingStyle.Parenthesize: return string.Concat(Punctuation.LeftBracket, ToString(), Punctuation.RightBracket);
+                default: return ToString();
             }
         }
 
@@ -76,7 +85,7 @@ namespace DynamicScript.Compiler.Ast
 
         internal override bool Completed
         {
-            get { return Signature != null && Signature.Completed; }
+            get { return Signature.Completed && Body.Completed; }
         }
 
         /// <summary>
@@ -100,7 +109,7 @@ namespace DynamicScript.Compiler.Ast
                 Completed &&
                 other.Completed &&
                 Equals(Signature, other.Signature) &&
-                ScriptCodeStatementCollection.TheSame(Body, other.Body);
+                Equals(Body, Body);
         }
 
         /// <summary>
@@ -113,10 +122,10 @@ namespace DynamicScript.Compiler.Ast
             return Equals(other as ScriptCodeActionImplementationExpression);
         }
 
-        internal static InvocationExpression Restore(ScriptCodeActionContractExpression signature, ScriptCodeStatementCollection body)
+        internal static InvocationExpression Restore(ScriptCodeActionContractExpression signature, ScriptCodeExpression body)
         {
-            var ctor = LinqHelpers.BodyOf<ScriptCodeActionContractExpression, ScriptCodeStatement[], ScriptCodeActionImplementationExpression, NewExpression>((sig, b) => new ScriptCodeActionImplementationExpression(sig, b));
-            return Expression.Invoke(Expression.Lambda(ctor.Update(new[] { LinqHelpers.Restore(signature), body.NewArray() })));
+            var ctor = LinqHelpers.BodyOf<ScriptCodeActionContractExpression, ScriptCodeExpression, ScriptCodeActionImplementationExpression, NewExpression>((sig, b) => new ScriptCodeActionImplementationExpression(sig, b));
+            return Expression.Invoke(Expression.Lambda(ctor.Update(new[] { LinqHelpers.Restore(signature), LinqHelpers.Restore(body) })));
         }
 
         /// <summary>
@@ -130,7 +139,7 @@ namespace DynamicScript.Compiler.Ast
 
         internal bool IsPrimitive
         {
-            get { return ScriptCodeExpressionStatement<ScriptCodePrimitiveExpression>.IsPrimitive(Body); }
+            get { return Body is ScriptCodePrimitiveExpression; }
         }
 
         internal override void Verify()
@@ -140,7 +149,7 @@ namespace DynamicScript.Compiler.Ast
         internal override ScriptCodeExpression Visit(ISyntaxTreeNode parent, Converter<ISyntaxTreeNode, ISyntaxTreeNode> visitor)
         {
             Signature.Visit(this, visitor);
-            Body.Visit(this, visitor);
+            if (Body != null) Body = Body.Visit(this, visitor) as ScriptCodeExpression;
             return visitor.Invoke(this) as ScriptCodeExpression;
         }
 
@@ -151,6 +160,11 @@ namespace DynamicScript.Compiler.Ast
         protected override ScriptCodeExpression Clone()
         {
             return new ScriptCodeActionImplementationExpression(Extensions.Clone(Signature), Extensions.Clone(Body));
+        }
+
+        internal IList<ScriptCodeStatement> GetBody()
+        {
+            return Body is IList<ScriptCodeStatement> ? (IList<ScriptCodeStatement>)Body : new[] { new ScriptCodeExpressionStatement(Body) };
         }
     }
 }

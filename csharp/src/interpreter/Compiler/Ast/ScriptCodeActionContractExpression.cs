@@ -375,15 +375,10 @@ namespace DynamicScript.Compiler.Ast
         }
 
         /// <summary>
-        /// Returns a string representation of the action signature,
+        /// Returns a string representation of the action signature.
         /// </summary>
-        /// <returns>The string representation of the action signature,</returns>
+        /// <returns>The string representation of the action signature.</returns>
         public override string ToString()
-        {
-            return ToString(true);
-        }
-
-        internal string ToString(bool parenthesize)
         {
             var signature = new string[ParamList.Count > 0 ? ParamList.Count : 1];
             switch (ParamList.Count)
@@ -395,8 +390,21 @@ namespace DynamicScript.Compiler.Ast
                         signature[i] = String.Concat(ParamList[i]);
                     break;
             }
-            var result = String.Concat(Punctuation.Dog, string.Join(Punctuation.Comma, signature), Punctuation.Arrow, ReturnType ?? ScriptCodeVariableDeclaration.DefaultVariableType);
-            return parenthesize ? String.Concat(Punctuation.LeftBracket, result, Punctuation.RightBracket) : result;
+            return String.Concat(Punctuation.Dog, string.Join(Punctuation.Comma, signature), Punctuation.Arrow, ReturnType ?? ScriptCodeVariableDeclaration.DefaultVariableType);
+        }
+
+        /// <summary>
+        /// Returns a string representation of the action signature.
+        /// </summary>
+        /// <param name="style"></param>
+        /// <returns></returns>
+        public override string ToString(FormattingStyle style)
+        {
+            switch (style)
+            {
+                case FormattingStyle.Parenthesize: return string.Concat(Punctuation.LeftBracket, ToString(), Punctuation.RightBracket);
+                default: return ToString();
+            }
         }
 
         /// <summary>

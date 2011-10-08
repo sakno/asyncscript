@@ -399,8 +399,8 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         /// <returns></returns>
         public static IScriptObject Parse(string sourceCode)
         {
-            var result = new ScriptCodeActionImplementationExpression();
-            SyntaxAnalyzer.Parse(sourceCode, result.Body);
+            var result = new ScriptCodeComplexExpression();
+            SyntaxAnalyzer.Parse(sourceCode, result);
             switch (result.Body.Count)
             {
                 case 0: return Void;

@@ -119,6 +119,11 @@ namespace DynamicScript
         /// <summary>
         /// It is not possible to return from FINALLY block.
         /// </summary>
-        ReturnFromFinally = 21
+        ReturnFromFinally = 21,
+
+        /// <summary>
+        /// The action body is described in wrong way.
+        /// </summary>
+        InvalidActionBody = 22,
     }
 }

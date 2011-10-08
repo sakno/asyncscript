@@ -189,6 +189,8 @@ namespace DynamicScript.Compiler.Ast
                     expression = ScriptCodeExpressionContractExpression.Instance;
                 else if (lexer.Current.Value == Keyword.Stmt)
                     expression = ScriptCodeStatementContractExpression.Instance;
+                else if (lexer.Current.Value == Punctuation.LeftBrace)
+                { expression = ScriptCodeComplexExpression.Parse(lexer); continue; }
                 else if (lexer.Current.Value == Keyword.Await)
                 { expression = ScriptCodeAwaitExpression.Parse(lexer, terminator); continue; }
                 else if (lexer.Current.Value is IntegerLiteral)
@@ -384,10 +386,10 @@ namespace DynamicScript.Compiler.Ast
 
         private static ScriptCodeExpression ParseQuoteExpression(IEnumerator<KeyValuePair<Lexeme.Position, Lexeme>> lexer, Lexeme[] terminator)
         {
-            var quoted = new ScriptCodeQuoteExpression();
+            var signature = new ScriptCodeActionContractExpression();
             if (lexer.Current.Value == Keyword.Void)    //handles empty parameter list
             {
-                quoted.Signature.ParamList.Clear();
+                signature.ParamList.Clear();
                 lexer.MoveNext();
             }
             else if (lexer.Current.Value is NameToken)  //handles non-empty parameter list
@@ -398,22 +400,23 @@ namespace DynamicScript.Compiler.Ast
                     var paramBinding = default(ScriptCodeExpression);
                     //Parameter is a syntax slot
                     ParseSlot(lexer, false, out paramName, out paramDefVal, out paramBinding, Punctuation.Arrow, Punctuation.Comma);
-                    if (quoted.Signature.ParamList.Contains(paramName))
+                    if (signature.ParamList.Contains(paramName))
                         throw CodeAnalysisException.DuplicateIdentifier(paramName, lexer.Current.Key);
-                    else quoted.Signature.ParamList.Add(paramName, paramDefVal, paramBinding);
+                    else signature.ParamList.Add(paramName, paramDefVal, paramBinding);
                     if (lexer.Current.Value == Punctuation.Comma && !lexer.MoveNext()) throw CodeAnalysisException.InvalidPunctuation(Punctuation.Arrow, lexer.Current);
                 }
             else return ScriptCodeCurrentQuoteExpression.Instance;
             //Handles -> punctuation token because it separates parameter list and return type.
             if (lexer.Current.Value != Punctuation.Arrow || !lexer.MoveNext()) throw CodeAnalysisException.InvalidPunctuation(Punctuation.Arrow, lexer.Current);
             //Parse return type expression
-            quoted.Signature.ReturnType = Parse(lexer, int.MinValue, terminator + Punctuation.Colon + Punctuation.LeftBrace);
-            if (lexer.Current.Value == Punctuation.Colon && lexer.MoveNext(true) != null)
-                quoted.Body.Add(ParseExpression, lexer, terminator);
-            else if (lexer.Current.Value == Punctuation.LeftBrace)
-                ParseStatements(lexer, quoted.Body, Punctuation.RightBrace);
-            else throw CodeAnalysisException.InvalidPunctuation(Punctuation.Colon, lexer.Current);
-            return quoted;
+            signature.ReturnType = Parse(lexer, int.MinValue, terminator + Punctuation.Colon + Punctuation.LeftBrace);
+            switch (lexer.Current.Value == Punctuation.Colon)
+            {
+                case true:
+                    if (lexer.MoveNext()) return new ScriptCodeQuoteExpression(signature) { Body = ParseExpression(lexer, terminator) };
+                    else throw CodeAnalysisException.IdentifierExpected(lexer.Current.Key);
+                default: throw CodeAnalysisException.InvalidPunctuation(Punctuation.Colon, lexer.Current);
+            }
         }
 
         private static ScriptCodeExpression ParseAction(IEnumerator<KeyValuePair<Lexeme.Position, Lexeme>> lexer, Lexeme[] terminator)
@@ -443,21 +446,13 @@ namespace DynamicScript.Compiler.Ast
             //Parse return type expression
             actionContract.ReturnType = Parse(lexer, int.MinValue, terminator + Punctuation.Colon + Punctuation.LeftBrace);
             //The expression represents action implementation, not contract
-            if (lexer.Current.Value == Punctuation.Colon && lexer.MoveNext(true) != null)
+            switch (lexer.Current.Value == Punctuation.Colon)
             {
-                //Replaces action contract with action expression
-                var actionExpression = new ScriptCodeActionImplementationExpression(actionContract);
-                actionExpression.Body.Add(ParseExpression, lexer, terminator);
-                return actionExpression;
+                case true:
+                    if (lexer.MoveNext()) return new ScriptCodeActionImplementationExpression(actionContract) { Body = ParseExpression(lexer, terminator) };
+                    else throw CodeAnalysisException.IdentifierExpected(lexer.Current.Key);
+                default: return actionContract;
             }
-            else if (lexer.Current.Value == Punctuation.LeftBrace)
-            {
-                //Replaces action contract with action expression
-                var actionExpression = new ScriptCodeActionImplementationExpression(actionContract);
-                ParseStatements(lexer, actionExpression.Body, Punctuation.RightBrace);
-                return actionExpression;
-            }
-            return actionContract;
         }
 
         public static void ParseStatements(IEnumerator<KeyValuePair<Lexeme.Position, Lexeme>> lexer, ScriptCodeStatementCollection statements, params Punctuation[] terminator)
@@ -478,7 +473,7 @@ namespace DynamicScript.Compiler.Ast
         /// <param name="lexer"></param>
         /// <param name="terminator">An array of the statement terminators.</param>
         /// <returns></returns>
-        public static CodeStatement ParseStatement(IEnumerator<KeyValuePair<Lexeme.Position, Lexeme>> lexer, params Punctuation[] terminator)
+        public static ScriptCodeStatement ParseStatement(IEnumerator<KeyValuePair<Lexeme.Position, Lexeme>> lexer, params Punctuation[] terminator)
         {
             if (terminator == null) terminator = new Punctuation[0];
             switch (lexer.MoveNext() && (terminator.LongLength > 0L ? !lexer.Current.Value.OneOf(terminator) : true))

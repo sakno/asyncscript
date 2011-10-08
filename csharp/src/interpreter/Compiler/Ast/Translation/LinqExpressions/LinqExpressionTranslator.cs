@@ -165,17 +165,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns></returns>
         protected override Expression Translate(ScriptCodeQuoteExpression expression, TranslationContext context)
         {
-            if (expression.Signature.IsEmpty)
-                switch (expression.Body.Count)
-                {
-                    case 0: return ScriptObject.MakeConverter(ScriptCodeVoidExpression.Instance);
-                    case 1:
-                        var stmt = expression.Body[0];
-                        return stmt is ScriptCodeExpressionStatement ?
-                            ScriptObject.MakeConverter(((ScriptCodeExpressionStatement)stmt).Expression) :
-                            LinqHelpers.Restore(stmt);
-                }
-            return ScriptObject.MakeConverter(expression);
+            return ScriptObject.MakeConverter(LinqHelpers.Restore(expression.Signature.IsEmpty ? expression.Body : expression));
         }
 
         /// <summary>
@@ -472,7 +462,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         }
 
 
-        private BlockExpression TranslatePreWhile(CodeStatementCollection loopBody, ScriptCodeExpression condition, ScriptCodeWhileLoopExpression.YieldGrouping grouping, TranslationContext context)
+        private BlockExpression TranslatePreWhile(ScriptCodeStatementCollection loopBody, ScriptCodeExpression condition, ScriptCodeWhileLoopExpression.YieldGrouping grouping, TranslationContext context)
         {
             //Declares a variable that holds loop result.
             var accumulator = Expression.Variable(typeof(IScriptObject), "result");
@@ -500,7 +490,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             return loop;
         }
 
-        private BlockExpression TranslatePostWhile(CodeStatementCollection loopBody, ScriptCodeExpression condition, ScriptCodeWhileLoopExpression.YieldGrouping grouping, TranslationContext context)
+        private BlockExpression TranslatePostWhile(ScriptCodeStatementCollection loopBody, ScriptCodeExpression condition, ScriptCodeWhileLoopExpression.YieldGrouping grouping, TranslationContext context)
         {
             //Declares a variable that holds loop result.
             var accumulator = Expression.Variable(typeof(IScriptObject), "result");
@@ -529,12 +519,12 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             return loop;
         }
 
-        private BlockExpression TranslateWhile(CodeStatementCollection loopBody, ScriptCodeExpression condition, ScriptCodeWhileLoopExpression.LoopStyle style, ScriptCodeWhileLoopExpression.YieldGrouping grouping, TranslationContext context)
+        private BlockExpression TranslateWhile(ScriptCodeStatementCollection loopBody, ScriptCodeExpression condition, ScriptCodeWhileLoopExpression.LoopStyle style, ScriptCodeWhileLoopExpression.YieldGrouping grouping, TranslationContext context)
         {
             return style == ScriptCodeWhileLoopExpression.LoopStyle.EvaluateConditionBeforeBody ? TranslatePreWhile(loopBody, condition, grouping, context) : TranslatePostWhile(loopBody, condition, grouping, context);
         }
 
-        private BlockExpression TranslatePreWhile(CodeStatementCollection loopBody, ScriptCodeExpression condition, TranslationContext context, bool suppressCollection)
+        private BlockExpression TranslatePreWhile(ScriptCodeStatementCollection loopBody, ScriptCodeExpression condition, TranslationContext context, bool suppressCollection)
         {
             ICollection<Expression> expressions = new LinkedList<Expression>();
             var currentScope = context.Push(parent => new WhileLoopScope(parent, false, suppressCollection));
@@ -555,7 +545,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             return loop;
         }
 
-        private BlockExpression TranslatePostWhile(CodeStatementCollection loopBody, ScriptCodeExpression condition, TranslationContext context, bool suppressCollection)
+        private BlockExpression TranslatePostWhile(ScriptCodeStatementCollection loopBody, ScriptCodeExpression condition, TranslationContext context, bool suppressCollection)
         {
             ICollection<Expression> expressions = new LinkedList<Expression>();
             var currentScope = context.Push(parent => new WhileLoopScope(parent, false, suppressCollection));
@@ -579,7 +569,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             return loop;
         }
 
-        private BlockExpression TranslateWhile(CodeStatementCollection loopBody, ScriptCodeExpression condition, ScriptCodeWhileLoopExpression.LoopStyle style, TranslationContext context, bool suppressCollection)
+        private BlockExpression TranslateWhile(ScriptCodeStatementCollection loopBody, ScriptCodeExpression condition, ScriptCodeWhileLoopExpression.LoopStyle style, TranslationContext context, bool suppressCollection)
         {
             return style == ScriptCodeWhileLoopExpression.LoopStyle.EvaluateConditionBeforeBody ? TranslatePreWhile(loopBody, condition, context, suppressCollection) : TranslatePostWhile(loopBody, condition, context, suppressCollection);
         }
@@ -854,7 +844,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             return ScriptObject.BindIndexer(Translate(indexer.Target, context), from ScriptCodeExpression expr in indexer.ArgList select Translate(expr, context), context.Scope.StateHolder);
         }
 
-        private Expression TranslateFor(CodeStatementCollection forBody, ScriptCodeForLoopExpression.LoopVariable variable, ScriptCodeExpression condition, ScriptCodeForLoopExpression.YieldGrouping grouping, TranslationContext context)
+        private Expression TranslateFor(IList<ScriptCodeStatement> forBody, ScriptCodeForLoopExpression.LoopVariable variable, ScriptCodeExpression condition, ScriptCodeForLoopExpression.YieldGrouping grouping, TranslationContext context)
         {
             var loopVar = default(ParameterExpression);
             //Declares a variable that holds loop result.
@@ -897,7 +887,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             return loop;
         }
 
-        private Expression TranslateFor(CodeStatementCollection forBody, ScriptCodeForLoopExpression.LoopVariable variable, ScriptCodeExpression condition, TranslationContext context, bool suppressCollection)
+        private Expression TranslateFor(IList<ScriptCodeStatement> forBody, ScriptCodeForLoopExpression.LoopVariable variable, ScriptCodeExpression condition, TranslationContext context, bool suppressCollection)
         {
             var loopVar = default(ParameterExpression);
             ICollection<Expression> expressions = new LinkedList<Expression>();
@@ -943,7 +933,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             return forLoop.Grouping != null ? TranslateFor(forLoop.Body, forLoop.Variable, forLoop.Condition, forLoop.Grouping, context) : TranslateFor(forLoop.Body, forLoop.Variable, forLoop.Condition, context, forLoop.SuppressResult);
         }
 
-        private Expression TranslateForEach(CodeStatementCollection forEachBody, ScriptCodeForEachLoopExpression.LoopVariable variable, ScriptCodeExpression iterator, ScriptCodeForEachLoopExpression.YieldGrouping grouping, TranslationContext context)
+        private Expression TranslateForEach(IList<ScriptCodeStatement> forEachBody, ScriptCodeForEachLoopExpression.LoopVariable variable, ScriptCodeExpression iterator, ScriptCodeForEachLoopExpression.YieldGrouping grouping, TranslationContext context)
         {
             var loopVar = default(ParameterExpression);
             //Declares the variable that holds enumerator
@@ -991,7 +981,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             return loop;
         }
 
-        private Expression TranslateForEach(CodeStatementCollection forEachBody, ScriptCodeForEachLoopExpression.LoopVariable variable, ScriptCodeExpression iterator, TranslationContext context, bool suppressCollection)
+        private Expression TranslateForEach(IList<ScriptCodeStatement> forEachBody, ScriptCodeForEachLoopExpression.LoopVariable variable, ScriptCodeExpression iterator, TranslationContext context, bool suppressCollection)
         {
             var loopVar = default(ParameterExpression);
             //Declares the variable that holds enumerator
@@ -1182,7 +1172,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             return ScriptActionContract.Bind(args, actionContract.ReturnType != null ? AsRightSide(Translate(actionContract.ReturnType, context), context) : ScriptObject.MakeVoid());
         }
 
-        private void Translate(CodeStatementCollection statements, TranslationContext context, GotoExpressionKind exitKind, Func<Expression, Expression> exitTransform, ref IList<Expression> output)
+        private void Translate(IList<ScriptCodeStatement> statements, TranslationContext context, GotoExpressionKind exitKind, Func<Expression, Expression> exitTransform, ref IList<Expression> output)
         {
             if (output == null) output = new List<Expression>(statements.Count > 0 ? statements.Count : 1);
             if (exitTransform == null) exitTransform = expr => typeof(IScriptObject).IsAssignableFrom(expr.Type) ? Expression.MakeGoto(exitKind, context.Scope.EndOfScope, AsRightSide(expr, context), typeof(IScriptObject)) : expr;
@@ -1210,7 +1200,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             }
         }
 
-        private void Translate(CodeStatementCollection statements, TranslationContext context, GotoExpressionKind exitKind, ref IList<Expression> output)
+        private void Translate(IList<ScriptCodeStatement> statements, TranslationContext context, GotoExpressionKind exitKind, ref IList<Expression> output)
         {
             Translate(statements, context, exitKind, null, ref output);
         }
@@ -1237,14 +1227,14 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             {
                 case true:
                     //Action has a trivial body consists of the returning value.
-                    actionExpr = Expression.Lambda(Translate(action.Body[0] as ScriptCodeExpressionStatement, context), false, parameters);
+                    actionExpr = Expression.Lambda(Translate(action.Body, context), false, parameters);
                     break;
                 default:
                     body.Add(Expression.Label(currentScope.BeginOfScope));
                     //state = ctx.RuntimeState
                     body.Add(Expression.Assign(currentScope.StateHolder, Expression.Field(currentScope.Context, InvocationContext.StateField)));
                     //Iterates through statements and emit
-                    Translate(action.Body, context, GotoExpressionKind.Return, ref body);
+                    Translate(action.GetBody(), context, GotoExpressionKind.Return, ref body);
                     body.Label(context.Scope.EndOfScope, ScriptObject.MakeVoid());   //marks end of the lexical scope.
                     //Local variables translated to the block variables
                     actionExpr = Expression.Lambda(Expression.Block(Enumerable.Concat(currentScope.Locals.Values, new[] { currentScope.StateHolder }), body), false, parameters);
