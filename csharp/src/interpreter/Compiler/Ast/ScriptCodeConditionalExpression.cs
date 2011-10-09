@@ -106,7 +106,10 @@ namespace DynamicScript.Compiler.Ast
             lexer.MoveNext(true);    //pass through then keyword
             conditional.ThenBranch = Parser.ParseExpression(lexer, terminator + Keyword.Else);
             if (lexer.Current.Value == Keyword.Else)
+            {
+                lexer.MoveNext(true);    //pass through else keyword
                 conditional.ElseBranch = Parser.ParseExpression(lexer, terminator);
+            }
             return conditional;
         }
 
@@ -177,8 +180,9 @@ namespace DynamicScript.Compiler.Ast
 
         internal override ScriptCodeExpression Visit(ISyntaxTreeNode parent, Converter<ISyntaxTreeNode, ISyntaxTreeNode> visitor)
         {
-            ThenBranch.Visit(this, visitor);
-            ElseBranch.Visit(this, visitor);
+            Condition = Condition.Visit(this, visitor) as ScriptCodeExpression;
+            ThenBranch = ThenBranch.Visit(this, visitor) as ScriptCodeExpression;
+            ElseBranch = ElseBranch.Visit(this, visitor) as ScriptCodeExpression;
             return visitor.Invoke(this) as ScriptCodeExpression ?? this;
         }
 

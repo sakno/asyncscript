@@ -15,17 +15,12 @@ namespace DynamicScript.Compiler.Ast
     [Serializable]
     public sealed class ScriptCodeForEachLoopExpression : ScriptCodeLoopWithVariableExpression, IEquatable<ScriptCodeForEachLoopExpression>
     {
-        private ScriptCodeForEachLoopExpression(ScriptCodeStatementCollection body)
-            : base(body)
-        {
-        }
-
         /// <summary>
-        /// Initializes a new 'for-each' loop expression.
+        /// Initializes a new 'for-each' loop.
         /// </summary>
         /// <param name="body"></param>
-        public ScriptCodeForEachLoopExpression(params ScriptCodeStatement[] body)
-            : this(new ScriptCodeStatementCollection(body))
+        public ScriptCodeForEachLoopExpression(ScriptCodeExpression body = null)
+            : base(body)
         {
         }
 
@@ -37,7 +32,7 @@ namespace DynamicScript.Compiler.Ast
         /// <param name="grouping"></param>
         /// <param name="suppressResult"></param>
         /// <param name="body"></param>
-        public ScriptCodeForEachLoopExpression(LoopVariable loopVar, ScriptCodeExpression iterator, YieldGrouping grouping, bool suppressResult, ScriptCodeStatement[] body)
+        public ScriptCodeForEachLoopExpression(LoopVariable loopVar, ScriptCodeExpression iterator, YieldGrouping grouping, bool suppressResult, ScriptCodeExpression body)
             : this(body)
         {
             Variable = loopVar;
@@ -78,7 +73,7 @@ namespace DynamicScript.Compiler.Ast
             result.Append(String.Concat(Variable.Name, WhiteSpace, Keyword.In, WhiteSpace, Iterator, WhiteSpace));
             if (Grouping != null) result.Append(String.Concat(Keyword.GroupBy, WhiteSpace, Grouping, WhiteSpace));
             result.Append(String.Concat(Keyword.Do, WhiteSpace));
-            result.Append(Body.ToString(true));
+            result.Append(Body);
             result.Append((char)Punctuation.RightBracket);
             return result.ToString();
         }
@@ -93,7 +88,7 @@ namespace DynamicScript.Compiler.Ast
             return other != null &&
                 Equals(Grouping, other.Grouping) &&
                 Equals(Variable, other.Variable) &&
-                ScriptCodeStatementCollection.TheSame(Body, other.Body);
+                Equals(Body, other.Body);
         }
 
         /// <summary>
@@ -112,8 +107,8 @@ namespace DynamicScript.Compiler.Ast
         /// <returns></returns>
         protected override Expression Restore()
         {
-            var ctor = LinqHelpers.BodyOf<LoopVariable, ScriptCodeExpression, YieldGrouping, bool, ScriptCodeStatement[], ScriptCodeForEachLoopExpression, NewExpression>((loopvar, iter, gr, sup, body) => new ScriptCodeForEachLoopExpression(loopvar, iter, gr, sup, body));
-            return ctor.Update(new[] { LinqHelpers.Restore(Variable), LinqHelpers.Restore(Iterator), LinqHelpers.Restore(Grouping), LinqHelpers.Constant(SuppressResult), Body.NewArray() });
+            var ctor = LinqHelpers.BodyOf<LoopVariable, ScriptCodeExpression, YieldGrouping, bool, ScriptCodeExpression, ScriptCodeForEachLoopExpression, NewExpression>((loopvar, iter, gr, sup, body) => new ScriptCodeForEachLoopExpression(loopvar, iter, gr, sup, body));
+            return ctor.Update(new[] { LinqHelpers.Restore(Variable), LinqHelpers.Restore(Iterator), LinqHelpers.Restore(Grouping), LinqHelpers.Constant(SuppressResult), LinqHelpers.Restore(Body) });
         }
 
         internal override void Verify()
@@ -122,7 +117,7 @@ namespace DynamicScript.Compiler.Ast
 
         internal override ScriptCodeExpression Visit(ISyntaxTreeNode parent, Converter<ISyntaxTreeNode, ISyntaxTreeNode> visitor)
         {
-            Body.Visit(this, visitor);
+            Body = Body.Visit(this, visitor);
             if (Grouping != null) Grouping = Grouping.Visit(this, visitor);
             if (Iterator != null) Iterator = Iterator.Visit(this, visitor);
             if (Variable != null) Variable = Variable.Visit(this, visitor) as LoopVariable;

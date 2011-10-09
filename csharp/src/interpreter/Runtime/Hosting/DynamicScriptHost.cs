@@ -21,7 +21,7 @@ namespace DynamicScript.Runtime.Hosting
         [LoaderOptimization(LoaderOptimization.SingleDomain)]
         private static int Main(string[] args)
         {
-            using (var p = new Compiler.Ast.SyntaxAnalyzer("checked: 2+3;"))
+            using (var p = new Compiler.Ast.SyntaxAnalyzer("if true then 2 else 3;"))
                 while (p.MoveNext())
                     Console.WriteLine(p.Current.ToString());
             return Execute(new CommandLineParser(Console.Out, Console.In), args);

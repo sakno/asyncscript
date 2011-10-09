@@ -35,16 +35,12 @@ namespace DynamicScript.Compiler.Ast
         }
         #endregion
 
-        private ScriptCodeWhileLoopExpression(ScriptCodeStatementCollection body)
-            :base(body)
-        {
-        }
-
         /// <summary>
-        /// Initializes a new 'while-loop' expression.
+        /// Initializes a new 'while' loop expression.
         /// </summary>
-        public ScriptCodeWhileLoopExpression()
-            : this(null)
+        /// <param name="body"></param>
+        public ScriptCodeWhileLoopExpression(ScriptCodeExpression body = null)
+            :base(body)
         {
         }
 
@@ -56,8 +52,8 @@ namespace DynamicScript.Compiler.Ast
         /// <param name="style"></param>
         /// <param name="suppressResult"></param>
         /// <param name="body"></param>
-        public ScriptCodeWhileLoopExpression(ScriptCodeExpression condition, YieldGrouping grouping, LoopStyle style, bool suppressResult, ScriptCodeStatement[] body)
-            : base(new ScriptCodeStatementCollection(body))
+        public ScriptCodeWhileLoopExpression(ScriptCodeExpression condition, YieldGrouping grouping, LoopStyle style, bool suppressResult, ScriptCodeExpression body)
+            : base(body)
         {
             Condition = condition;
             Grouping = grouping;

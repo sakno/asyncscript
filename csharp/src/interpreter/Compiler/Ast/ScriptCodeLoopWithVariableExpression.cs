@@ -144,7 +144,7 @@ namespace DynamicScript.Compiler.Ast
 
         #endregion
 
-        internal ScriptCodeLoopWithVariableExpression(ScriptCodeStatementCollection body)
+        internal ScriptCodeLoopWithVariableExpression(ScriptCodeExpression body)
             :base(body)
         {
         }

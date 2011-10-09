@@ -16,16 +16,12 @@ namespace DynamicScript.Compiler.Ast
     {
         private ScriptCodeExpression m_condition;
 
-        private ScriptCodeForLoopExpression(ScriptCodeStatementCollection body)
-            : base(body)
-        {
-        }
-
         /// <summary>
-        /// Initializes a new 'for-loop' expression.
+        /// Initializes a new 'for' loop.
         /// </summary>
-        public ScriptCodeForLoopExpression(params ScriptCodeStatement[] body)
-            : this(new ScriptCodeStatementCollection(body))
+        /// <param name="body"></param>
+        public ScriptCodeForLoopExpression(ScriptCodeExpression body)
+            : base(body)
         {
         }
 
@@ -37,7 +33,7 @@ namespace DynamicScript.Compiler.Ast
         /// <param name="grouping"></param>
         /// <param name="suppressResult"></param>
         /// <param name="body"></param>
-        public ScriptCodeForLoopExpression(LoopVariable loopVar, ScriptCodeExpression condition, YieldGrouping grouping, bool suppressResult, ScriptCodeStatement[] body)
+        public ScriptCodeForLoopExpression(LoopVariable loopVar, ScriptCodeExpression condition, YieldGrouping grouping, bool suppressResult, ScriptCodeExpression body)
             : this(body)
         {
             Variable = loopVar;
@@ -52,19 +48,11 @@ namespace DynamicScript.Compiler.Ast
         /// <remarks>This is a required part of the expression.</remarks>
         public ScriptCodeExpression Condition
         {
-            get { return m_condition; }
+            get { return m_condition ?? ScriptCodeVoidExpression.Instance; }
             set
             {
                 m_condition = value;
                 OnPropertyChanged("Condition");
-            }
-        }
-
-        internal override bool Completed
-        {
-            get
-            {
-                return base.Completed && Condition != null;
             }
         }
 
@@ -78,7 +66,7 @@ namespace DynamicScript.Compiler.Ast
             return other != null &&
                 Equals(Grouping, other.Grouping) &&
                 Equals(Condition, other.Condition) &&
-                ScriptCodeStatementCollection.TheSame(Body, other.Body);
+                Equals(Body, other.Body);
         }
 
         /// <summary>
@@ -97,8 +85,8 @@ namespace DynamicScript.Compiler.Ast
         /// <returns></returns>
         protected override Expression Restore()
         {
-            var ctor = LinqHelpers.BodyOf<LoopVariable, ScriptCodeExpression, YieldGrouping, bool, ScriptCodeStatement[], ScriptCodeForLoopExpression, NewExpression>((loopvar, cond, grp, sup, body) => new ScriptCodeForLoopExpression(loopvar, cond, grp, sup, body));
-            return ctor.Update(new[] { LinqHelpers.Restore(Variable), LinqHelpers.Restore(Condition), LinqHelpers.Restore(Grouping), LinqHelpers.Constant(SuppressResult), Body.NewArray() });
+            var ctor = LinqHelpers.BodyOf<LoopVariable, ScriptCodeExpression, YieldGrouping, bool, ScriptCodeExpression, ScriptCodeForLoopExpression, NewExpression>((loopvar, cond, grp, sup, body) => new ScriptCodeForLoopExpression(loopvar, cond, grp, sup, body));
+            return ctor.Update(new[] { LinqHelpers.Restore(Variable), LinqHelpers.Restore(Condition), LinqHelpers.Restore(Grouping), LinqHelpers.Constant(SuppressResult), LinqHelpers.Restore(Body) });
         }
 
         internal override void Verify()
@@ -111,6 +99,7 @@ namespace DynamicScript.Compiler.Ast
             if (Grouping != null) Grouping = Grouping.Visit(this, visitor);
             if (Condition != null) Condition = Condition.Visit(this, visitor);
             if (Variable != null) Variable = Variable.Visit(this, visitor) as LoopVariable;
+            Body = Body.Visit(this, visitor) as ScriptCodeExpression;
             return visitor.Invoke(this) as ScriptCodeExpression;
         }
 
@@ -128,5 +117,7 @@ namespace DynamicScript.Compiler.Ast
                 Variable = Extensions.Clone(Variable)
             };
         }
+
+
     }
 }
