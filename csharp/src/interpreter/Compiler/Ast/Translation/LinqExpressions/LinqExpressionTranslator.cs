@@ -1277,8 +1277,8 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
 
         private SwitchCase Translate(ScriptCodeSelectionExpression.SelectionCase @case, TranslationContext context)
         {
-            IList<Expression> body = new List<Expression>(@case.Handler.Count + 1);
-            Translate(@case.Handler, context, GotoExpressionKind.Break, ref body);
+            IList<Expression> body = new List<Expression>(10);
+            Translate(@case.Handler.UnwrapStatements(), context, GotoExpressionKind.Break, ref body);
             return Expression.SwitchCase(Expression.Block(body), from ScriptCodeExpression testValue in @case.Values select Translate(testValue, context));
         }
 
@@ -1292,8 +1292,8 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         {
             context.Push(SelectionScope.Create);
             var cases = from @case in selection.Cases select Translate(@case, context);
-            IList<Expression> @default = new List<Expression>(selection.DefaultHandler.Count + 1);
-            Translate(selection.DefaultHandler, context, GotoExpressionKind.Break, ref @default);
+            IList<Expression> @default = new List<Expression>(10);
+            Translate(selection.DefaultHandler.UnwrapStatements(), context, GotoExpressionKind.Break, ref @default);
             var result = Expression.Block(typeof(IScriptObject), new Expression[]
             {
                 Expression.Label(context.Scope.BeginOfScope),

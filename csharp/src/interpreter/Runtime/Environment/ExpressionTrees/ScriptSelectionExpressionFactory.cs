@@ -27,21 +27,21 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class GetDefaultHandlerAction : CodeElementPartProvider<IScriptArray>
+        private sealed class GetDefaultHandlerAction : CodeElementPartProvider<IScriptCodeElement<ScriptCodeExpression>>
         {
             public GetDefaultHandlerAction()
-                : base(Instance, new ScriptArrayContract(ScriptStatementFactory.Instance))
+                : base(Instance, ScriptExpressionFactory.Instance)
             {
             }
 
-            protected override IScriptArray Invoke(ScriptCodeSelectionExpression element, InterpreterState state)
+            protected override IScriptCodeElement<ScriptCodeExpression> Invoke(ScriptCodeSelectionExpression element, InterpreterState state)
             {
-                return ScriptStatementFactory.CreateStatements(element.DefaultHandler, state);
+                return Convert(element.DefaultHandler.Expression) as IScriptCodeElement<ScriptCodeExpression>;
             }
         }
 
         [ComVisible(false)]
-        private sealed class SetDefaultHandlerAction : ScriptAction<IScriptCodeElement<ScriptCodeSelectionExpression>, IScriptArray>
+        private sealed class SetDefaultHandlerAction : ScriptAction<IScriptCodeElement<ScriptCodeSelectionExpression>, IScriptCodeElement<ScriptCodeExpression>>
         {
             private const string FirstParamName = "sel";
             private const string SecondParamName = "body";
@@ -51,10 +51,9 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             {
             }
 
-            protected override void Invoke(InvocationContext ctx, IScriptCodeElement<ScriptCodeSelectionExpression> sel, IScriptArray body)
+            protected override void Invoke(InvocationContext ctx, IScriptCodeElement<ScriptCodeSelectionExpression> sel, IScriptCodeElement<ScriptCodeExpression> body)
             {
-                sel.CodeObject.DefaultHandler.Clear();
-                ScriptStatementFactory.CreateStatements(body, sel.CodeObject.DefaultHandler);
+                sel.CodeObject.DefaultHandler.Expression = body != null ? body.CodeObject : ScriptCodeVoidExpression.Instance;
             }
         }
 
@@ -110,7 +109,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
             protected override void Invoke(InvocationContext ctx, IScriptCodeElement<ScriptCodeSelectionExpression> sel, ScriptInteger index, IScriptArray values)
             {
-                throw new NotImplementedException();
+                SetCaseValues(sel.CodeObject.Cases, index, values);
             }
         }
         
@@ -125,14 +124,14 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             {
             }
 
-            private static IScriptArray GetCaseBody(IList<ScriptCodeSelectionExpression.SelectionCase> cases, long index, InterpreterState state)
+            private static IScriptCodeElement<ScriptCodeExpression> GetCaseBody(IList<ScriptCodeSelectionExpression.SelectionCase> cases, long index, InterpreterState state)
             {
                 switch (index.Between(0, cases.Count - 1))
                 {
                     case true:
                         var c = cases[(int)index];
-                        return ScriptStatementFactory.CreateStatements(c.Handler, state);
-                    default: return ScriptArray.Empty(ScriptExpressionFactory.Instance);
+                        return Convert(c.Handler.Expression) as IScriptCodeElement<ScriptCodeExpression>;
+                    default: return new ScriptConstantExpression(ScriptCodeVoidExpression.Instance);
                 }
             }
 
@@ -143,7 +142,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class SetCaseBodyAction : ScriptAction<IScriptCodeElement<ScriptCodeSelectionExpression>, ScriptInteger, IScriptArray>
+        private sealed class SetCaseBodyAction : ScriptAction<IScriptCodeElement<ScriptCodeSelectionExpression>, ScriptInteger, IScriptCodeElement<ScriptCodeExpression>>
         {
             private const string FirstParamName = "sel";
             private const string SecondParamName = "idx";
@@ -154,17 +153,14 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             {
             }
 
-            private static void SetCaseBody(IList<ScriptCodeSelectionExpression.SelectionCase> cases, long index, IScriptArray body)
+            private static void SetCaseBody(IList<ScriptCodeSelectionExpression.SelectionCase> cases, long index, IScriptCodeElement<ScriptCodeExpression> body)
             {
                 var c = index.Between(0, cases.Count - 1) ? cases[(int)index] : null;
                 if (c != null)
-                {
-                    c.Handler.Clear();
-                    ScriptStatementFactory.CreateStatements(body, c.Handler);
-                }
+                    c.Handler.Expression = body != null ? body.CodeObject : ScriptCodeVoidExpression.Instance;
             }
 
-            protected override void Invoke(InvocationContext ctx, IScriptCodeElement<ScriptCodeSelectionExpression> sel, ScriptInteger index, IScriptArray body)
+            protected override void Invoke(InvocationContext ctx, IScriptCodeElement<ScriptCodeSelectionExpression> sel, ScriptInteger index, IScriptCodeElement<ScriptCodeExpression> body)
             {
                 SetCaseBody(sel.CodeObject.Cases, index, body);  
             }

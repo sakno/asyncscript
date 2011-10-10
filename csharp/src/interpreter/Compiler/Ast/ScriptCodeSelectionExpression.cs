@@ -34,12 +34,12 @@ namespace DynamicScript.Compiler.Ast
             /// <summary>
             /// Represents a body of the handler.
             /// </summary>
-            public readonly ScriptCodeStatementCollection Handler;
+            public readonly ScriptCodeExpressionStatement Handler;
 
-            private SelectionCase(ScriptCodeExpressionCollection values, ScriptCodeStatementCollection handler)
+            private SelectionCase(ScriptCodeExpressionCollection values, ScriptCodeExpressionStatement handler)
             {
                 Values = values ?? new ScriptCodeExpressionCollection();
-                Handler = handler ?? new ScriptCodeStatementCollection();
+                Handler = handler ?? new ScriptCodeExpressionStatement(ScriptCodeVoidExpression.Instance);
             }
 
             /// <summary>
@@ -47,8 +47,8 @@ namespace DynamicScript.Compiler.Ast
             /// </summary>
             /// <param name="values"></param>
             /// <param name="body"></param>
-            public SelectionCase(ScriptCodeExpression[] values, ScriptCodeStatement[] body)
-                :this(new ScriptCodeExpressionCollection(values), new ScriptCodeStatementCollection(body))
+            public SelectionCase(ScriptCodeExpression[] values, ScriptCodeExpressionStatement body)
+                :this(new ScriptCodeExpressionCollection(values), body)
             {
             }
 
@@ -56,7 +56,7 @@ namespace DynamicScript.Compiler.Ast
             /// Initializes a new case handler.
             /// </summary>
             public SelectionCase()
-                : this(new ScriptCodeExpression[0], new ScriptCodeStatement[0])
+                : this(new ScriptCodeExpression[0], null)
             {
             }
 
@@ -70,13 +70,7 @@ namespace DynamicScript.Compiler.Ast
                             case true: continue;
                             default: return false;
                         }
-                    foreach (var item in Handler)
-                        switch (item is ISyntaxTreeNode)
-                        {
-                            case true: continue;
-                            default: return false;
-                        }
-                    return true;
+                    return Handler.Completed;
                 }
             }
 
@@ -89,8 +83,8 @@ namespace DynamicScript.Compiler.Ast
             public bool Equals(SelectionCase other)
             {
                 return other != null &&
-                    ScriptCodeExpressionCollection. TheSame(Values, other.Values) &&
-                    ScriptCodeStatementCollection.TheSame(Handler, other.Handler);
+                    ScriptCodeExpressionCollection.TheSame(Values, other.Values) &&
+                    Equals(Handler, other.Handler);
             }
 
             internal override ScriptCodeStatement Visit(ISyntaxTreeNode parent, Converter<ISyntaxTreeNode, ISyntaxTreeNode> visitor)
@@ -125,8 +119,8 @@ namespace DynamicScript.Compiler.Ast
             /// <returns></returns>
             protected override Expression Restore()
             {
-                var ctor = LinqHelpers.BodyOf<ScriptCodeExpression[], ScriptCodeStatement[], SelectionCase, NewExpression>((vals, body) => new SelectionCase(vals, body));
-                return ctor.Update(new[] { Values.NewArray(), Handler.NewArray() });
+                var ctor = LinqHelpers.BodyOf<ScriptCodeExpression[], ScriptCodeExpressionStatement, SelectionCase, NewExpression>((vals, body) => new SelectionCase(vals, body));
+                return ctor.Update(new[] { Values.NewArray(), LinqHelpers.Restore(Handler) });
             }
         }
         #endregion
@@ -139,30 +133,12 @@ namespace DynamicScript.Compiler.Ast
         /// <summary>
         /// Represents default handler.
         /// </summary>
-        public readonly ScriptCodeStatementCollection DefaultHandler;
+        public readonly ScriptCodeExpressionStatement DefaultHandler;
 
-        private ScriptCodeSelectionExpression(IEnumerable<SelectionCase> cases, ScriptCodeStatementCollection defaultHandler)
+        private ScriptCodeSelectionExpression(IEnumerable<SelectionCase> cases, ScriptCodeExpressionStatement defaultHandler)
         {
             Cases = new List<SelectionCase>(cases ?? Enumerable.Empty<SelectionCase>());
-            DefaultHandler = defaultHandler ?? new ScriptCodeStatementCollection();
-        }
-
-        /// <summary>
-        /// Initializes a new selection case expression.
-        /// </summary>
-        /// <param name="cases"></param>
-        /// <param name="defaultHandler"></param>
-        public ScriptCodeSelectionExpression(IEnumerable<SelectionCase> cases, params ScriptCodeStatement[] defaultHandler)
-            :this(cases, new ScriptCodeStatementCollection(defaultHandler))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new selection case expression.
-        /// </summary>
-        public ScriptCodeSelectionExpression()
-            : this(Enumerable.Empty<SelectionCase>(), new ScriptCodeStatement[0])
-        {
+            DefaultHandler = defaultHandler ?? new ScriptCodeExpressionStatement(ScriptCodeVoidExpression.Instance);
         }
 
         /// <summary>
@@ -172,11 +148,19 @@ namespace DynamicScript.Compiler.Ast
         /// <param name="comparer">Custom comparer. Can be omitted.</param>
         /// <param name="cases">A collection of cases.</param>
         /// <param name="defaultHandler">Default handler.</param>
-        public ScriptCodeSelectionExpression(ScriptCodeExpression src, ScriptCodeExpression comparer, IEnumerable<SelectionCase> cases, ScriptCodeStatement[] defaultHandler)
+        public ScriptCodeSelectionExpression(ScriptCodeExpression src, ScriptCodeExpression comparer, IEnumerable<SelectionCase> cases, ScriptCodeExpressionStatement defaultHandler)
             : this(cases, defaultHandler)
         {
             Source = src;
             Comparer = comparer;
+        }
+
+        /// <summary>
+        /// Initializes a new selection expression.
+        /// </summary>
+        public ScriptCodeSelectionExpression()
+            : this(null, null, Enumerable.Empty<SelectionCase>(), null)
+        {
         }
 
         /// <summary>
@@ -236,36 +220,14 @@ namespace DynamicScript.Compiler.Ast
                 Parser.ParseExpressions(lexer, @case.Values, Keyword.Then);
                 lexer.MoveNext(true); //pass through then keyword
                 //Parse case handler.
-                switch (lexer.Current.Value == Punctuation.LeftBrace)
-                {
-                    case true:
-                        Parser.ParseStatements(lexer, @case.Handler, Punctuation.RightBrace);
-                        break;
-                    default:
-                        var beginning = lexer.Current.Key;
-                        var expr = Parser.ParseExpression(lexer, terminator + Keyword.Else + Keyword.If);
-                        var ending = lexer.Current.Key;
-                        @case.Handler.Add(expr, beginning, ending);
-                        break;
-                }
+                @case.Handler.SetExpression(Parser.ParseExpression, lexer, terminator + Keyword.Else + Keyword.If);
                 result.Cases.Add(@case);
             }
             if (lexer.Current.Value == Keyword.Else)
             {
                 lexer.MoveNext(true);   //pass through else keyword
                 //Parse default handler.
-                switch (lexer.Current.Value == Punctuation.LeftBrace)
-                {
-                    case true:
-                        Parser.ParseStatements(lexer, result.DefaultHandler, Punctuation.RightBrace);
-                        break;
-                    default:
-                        var beginning = lexer.Current.Key;
-                        var expr = Parser.ParseExpression(lexer, terminator);
-                        var ending = lexer.Current.Key;
-                        result.DefaultHandler.Add(expr, beginning, ending);
-                        break;
-                }
+                result.DefaultHandler.SetExpression(Parser.ParseExpression, lexer, terminator);
             }
             return result;
         }
@@ -280,8 +242,8 @@ namespace DynamicScript.Compiler.Ast
             switch (other != null &&
                 Equals(Source, other.Source) &&
                 Equals(Comparer, other.Comparer) &&
-                ScriptCodeStatementCollection.TheSame(DefaultHandler, other.DefaultHandler)&&
-                Cases.Count==other.Cases.Count)
+                Equals(DefaultHandler, other.DefaultHandler) &&
+                Cases.Count == other.Cases.Count)
             {
                 case true:
                     for (var i = 0; i < Cases.Count; i++)
@@ -308,8 +270,8 @@ namespace DynamicScript.Compiler.Ast
         /// <returns></returns>
         protected override Expression Restore()
         {
-            var ctor = LinqHelpers.BodyOf<ScriptCodeExpression, ScriptCodeExpression, IEnumerable<SelectionCase>, ScriptCodeStatement[], ScriptCodeSelectionExpression, NewExpression>((src, cmp, cases, def) => new ScriptCodeSelectionExpression(src, cmp, cases, def));
-            return Expression.Invoke(Expression.Lambda(ctor.Update(new[] { LinqHelpers.Restore(Source), LinqHelpers.Restore(Comparer), LinqHelpers.NewArray(Cases), DefaultHandler.NewArray() })));
+            var ctor = LinqHelpers.BodyOf<ScriptCodeExpression, ScriptCodeExpression, IEnumerable<SelectionCase>, ScriptCodeExpressionStatement, ScriptCodeSelectionExpression, NewExpression>((src, cmp, cases, def) => new ScriptCodeSelectionExpression(src, cmp, cases, def));
+            return Expression.Invoke(Expression.Lambda(ctor.Update(new[] { LinqHelpers.Restore(Source), LinqHelpers.Restore(Comparer), LinqHelpers.NewArray(Cases), LinqHelpers.Restore(DefaultHandler) })));
         }
 
         internal override void Verify()
