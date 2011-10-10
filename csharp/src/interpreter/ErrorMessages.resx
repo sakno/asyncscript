@@ -133,7 +133,7 @@
     <value>Unknown interpreter error.</value>
   </data>
   <data name="FmtErrorMessage" xml:space="preserve">
-    <value>{0}. Column {1}, Line {2}.</value>
+    <value>{0} Column {1}, Line {2}.</value>
   </data>
   <data name="IdentifierExpected" xml:space="preserve">
     <value>Identifier name expected.</value>
@@ -203,5 +203,8 @@
   </data>
   <data name="ECollectionExpected" xml:space="preserve">
     <value>The specified object is not a collection.</value>
+  </data>
+  <data name="EndOfStatement" xml:space="preserve">
+    <value>End of statement expected. Did you forget ';'?</value>
   </data>
 </root>

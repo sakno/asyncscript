@@ -120,6 +120,11 @@ namespace DynamicScript.Compiler
 
         #region Syntax errors
 
+        internal static CodeAnalysisException EndOfStatementExpected(Lexeme.Position current)
+        {
+            return new CodeAnalysisException(ErrorMessages.EndOfStatement, InterpreterErrorCode.EndOfStatementExpected, current);
+        }
+
         internal static CodeAnalysisException InvalidExpressionTerm(KeyValuePair<Lexeme.Position, Lexeme> current)
         {
             return new CodeAnalysisException(String.Format(ErrorMessages.InvalidExpressionTerm, current.Value), InterpreterErrorCode.InvalidExpressionTerm, current.Key);

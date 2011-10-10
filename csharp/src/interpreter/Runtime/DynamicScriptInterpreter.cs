@@ -560,19 +560,19 @@ namespace DynamicScript.Runtime
             get { return PrepareScript; }
         }
 
-        internal static ScriptInvoker Compile(IEnumerable<CodeStatement> statements)
+        internal static ScriptInvoker Compile(IEnumerable<ScriptCodeStatement> statements)
         {
             var invokerExpr = LinqExpressionTranslator.Inject(statements);
             return invokerExpr.Compile();
         }
 
-        internal static IScriptObject Run(IEnumerable<CodeStatement> statements, InterpreterState state)
+        internal static IScriptObject Run(IEnumerable<ScriptCodeStatement> statements, InterpreterState state)
         {
             var invoker = LinqExpressionTranslator.Inject(statements).Compile();
             return invoker.Invoke(state);
         }
 
-        internal static IScriptObject Run(CodeStatement stmt, InterpreterState state)
+        internal static IScriptObject Run(ScriptCodeStatement stmt, InterpreterState state)
         {
             return Run(new[] { stmt }, state);
         }

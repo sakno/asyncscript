@@ -52,7 +52,7 @@ namespace DynamicScript.Compiler.Ast
 
         internal bool IsComplexExpression
         {
-            get { return Expression is IList<ScriptCodeExpression>; }
+            get { return Expression is IList<ScriptCodeStatement>; }
         }
 
         internal bool IsVoidExpression

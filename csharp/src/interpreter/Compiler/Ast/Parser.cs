@@ -225,7 +225,7 @@ namespace DynamicScript.Compiler.Ast
                 { expression = lexer.MoveNext() ? ParseAction(lexer, terminator) : ScriptCodeCurrentActionExpression.Instance; continue; }
                 else if (lexer.Current.Value == Punctuation.DoubleDog && expression == null) //parse quoted expression list
                 { expression = lexer.MoveNext() ? ParseQuoteExpression(lexer, terminator) : ScriptCodeCurrentQuoteExpression.Instance; continue; }
-                else if (lexer.Current.Value == Punctuation.LeftSquareBracket && expression!=null)//parse indexer or array type or array
+                else if (lexer.Current.Value == Punctuation.LeftSquareBracket)//parse indexer or array type or array
                     switch (expression == null || InterpreterServices.HighestPriority > priority)
                     {
                         case true:
@@ -456,7 +456,8 @@ namespace DynamicScript.Compiler.Ast
                 var stmt = ParseStatement(lexer, terminator);
                 if (stmt != null) statements.Add(stmt); else break;
             }
-            if (terminator.LongLength > 0L) lexer.MoveNext();   //pass through terminator
+            if (terminator.LongLength > 0L && !lexer.MoveNext())
+                throw CodeAnalysisException.EndOfStatementExpected(lexer.Current.Key);
         }
 
         /// <summary>

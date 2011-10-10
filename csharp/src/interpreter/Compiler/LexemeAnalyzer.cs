@@ -122,7 +122,7 @@ namespace DynamicScript.Compiler
                 return MoveNext(characters, ref column, ref line, out state, out nextRequired);
             else
             {
-                state = default(KeyValuePair<Lexeme.Position, Lexeme>);
+                state = new KeyValuePair<Lexeme.Position, Lexeme>(new Lexeme.Position(line, column), lexeme);
                 return false;
             }
         }
@@ -210,6 +210,7 @@ namespace DynamicScript.Compiler
                     column = 1;
                     line++;
                     return null;
+                case Lexeme.CarriageReturn: return null;
                 #endregion
                 default:
                     if (char.IsDigit(characters.Current))

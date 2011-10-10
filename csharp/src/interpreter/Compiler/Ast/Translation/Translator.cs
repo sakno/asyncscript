@@ -266,7 +266,7 @@ namespace DynamicScript.Compiler.Ast.Translation
             }
         }
         #endregion
-        private readonly IEnumerator<CodeStatement> m_statements;
+        private readonly IEnumerator<ScriptCodeStatement> m_statements;
         private bool m_disposed;
         private TResult m_current;
         private readonly ErrorMode m_mode;
@@ -286,7 +286,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="errMode">Type of the strategy that should be applied to the exception situation during analyzing.</param>
         /// <param name="sourceFile">Path to the translated source file.</param>
         /// <exception cref="System.ArgumentNullException"><paramref name="parser"/> is <see langword="null"/>.</exception>
-        protected Translator(IEnumerator<CodeStatement> parser, ErrorMode errMode, string sourceFile = null)
+        protected Translator(IEnumerator<ScriptCodeStatement> parser, ErrorMode errMode, string sourceFile = null)
             : this()
         {
             if (parser == null) throw new ArgumentNullException("parser");
@@ -453,7 +453,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="context">Translation context.</param>
         /// <param name="debugInfo">Debug information about statement.</param>
         /// <returns>Translated statement.</returns>
-        protected TResult Translate(CodeStatement stmt, TranslationContext context, out TResult debugInfo)
+        protected TResult Translate(ScriptCodeStatement stmt, TranslationContext context, out TResult debugInfo)
         {
             debugInfo = null;
             if (stmt is ScriptCodeVariableDeclaration)

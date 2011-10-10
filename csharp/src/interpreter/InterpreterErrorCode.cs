@@ -125,5 +125,10 @@ namespace DynamicScript
         /// The action body is described in wrong way.
         /// </summary>
         InvalidActionBody = 22,
+
+        /// <summary>
+        /// The end of the statement expected.
+        /// </summary>
+        EndOfStatementExpected = 23,
     }
 }

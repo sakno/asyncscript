@@ -35,7 +35,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <param name="parser">An enumerator through code statements. Cannot be <see langword="null"/>.</param>
         /// <param name="errMode">Error mode.</param>
         /// <param name="source">Information about source code.</param>
-        public LinqExpressionTranslator(IEnumerator<CodeStatement> parser, ErrorMode errMode, SourceCodeInfo source = null)
+        public LinqExpressionTranslator(IEnumerator<ScriptCodeStatement> parser, ErrorMode errMode, SourceCodeInfo source = null)
             : base(parser, errMode, source != null ? source.FileName : null)
         {
             m_intern = new Dictionary<long, MethodCallExpression>(300);
@@ -178,7 +178,9 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         {
             var currentScope = context.Push(parent => GenericScope.Create(parent, true));
             IList<Expression> block = new List<Expression>(complex.Body.Count);
+            block.Add(Expression.Label(currentScope.BeginOfScope));
             Translate(complex, context, GotoExpressionKind.Goto, ref block);
+            block.Add(Expression.Label(currentScope.EndOfScope, ScriptObject.MakeVoid()));
             context.Pop();
             return Expression.Block(currentScope.Locals.Values, block);
         }
@@ -1203,7 +1205,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                     output.Add(exitTransform.Invoke(instruction));   //emit return stmt
                     break;
                 default:    //build body consists of the more than one statement
-                    foreach (CodeStatement stmt in statements)
+                    foreach (var stmt in statements)
                     {
                         instruction = Translate(stmt, context, out debugInfo);
                         output.AddIf(Debug && debugInfo != null, debugInfo);
@@ -1458,7 +1460,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                 scope.StateHolder);
         }
 
-        private static Expression<ScriptInvoker> Translate(IEnumerator<CodeStatement> parser, ErrorMode errMode, SourceCodeInfo source, out int capacity)
+        private static Expression<ScriptInvoker> Translate(IEnumerator<ScriptCodeStatement> parser, ErrorMode errMode, SourceCodeInfo source, out int capacity)
         {
             using (var translator = new LinqExpressionTranslator(parser, errMode, source))
             {
@@ -1485,7 +1487,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                 return Translate(lexer, errMode, source, out capacity);
         }
 
-        internal static Expression<ScriptInvoker> Inject(IEnumerable<CodeStatement> statements)
+        internal static Expression<ScriptInvoker> Inject(IEnumerable<ScriptCodeStatement> statements)
         {
             var internPoolSize = 0;
             using (var parser = statements.GetEnumerator())

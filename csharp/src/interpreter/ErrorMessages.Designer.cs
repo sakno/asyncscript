@@ -142,6 +142,15 @@ namespace DynamicScript {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to End of statement expected. Did you forget &apos;;&apos;?.
+        /// </summary>
+        internal static string EndOfStatement {
+            get {
+                return ResourceManager.GetString("EndOfStatement", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Unknown interpreter error..
         /// </summary>
         internal static string FatalError {
@@ -151,7 +160,7 @@ namespace DynamicScript {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0}. Column {1}, Line {2}..
+        ///   Looks up a localized string similar to {0} Column {1}, Line {2}..
         /// </summary>
         internal static string FmtErrorMessage {
             get {

@@ -58,19 +58,6 @@ namespace DynamicScript.Compiler
             }
         }
 
-        public static T MoveNext<T>(this ILexemeAnalyzer lexer, bool throwError)
-            where T: Lexeme
-        {
-            switch (MoveNext(lexer, throwError) is T)
-            {
-                case true:
-                    return (T)lexer.Current.Value;
-                default:
-                    if (throwError) throw CodeAnalysisException.Expected<T>(lexer.Current);
-                    else return null;
-            }
-        }
-
         public const int HighestPriority = 11;
 
         /// <summary>
