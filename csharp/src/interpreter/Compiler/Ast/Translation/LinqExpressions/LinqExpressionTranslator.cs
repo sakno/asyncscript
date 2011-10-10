@@ -598,8 +598,8 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         protected override Expression Translate(ScriptCodeWhileLoopExpression whileLoop, TranslationContext context)
         {
             return whileLoop.Grouping != null ?
-                TranslateWhile(ScriptCodeExpressionStatement.CreateStatements(whileLoop.Body), whileLoop.Condition, whileLoop.Style, whileLoop.Grouping, context) :
-                TranslateWhile(ScriptCodeExpressionStatement.CreateStatements(whileLoop.Body), whileLoop.Condition, whileLoop.Style, context, whileLoop.SuppressResult);
+                TranslateWhile(whileLoop.Body.UnwrapStatements(), whileLoop.Condition, whileLoop.Style, whileLoop.Grouping, context) :
+                TranslateWhile(whileLoop.Body.UnwrapStatements(), whileLoop.Condition, whileLoop.Style, context, whileLoop.SuppressResult);
         }
 
         /// <summary>
@@ -945,7 +945,9 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns>LINQ expression that represents for loop.</returns>
         protected override Expression Translate(ScriptCodeForLoopExpression forLoop, TranslationContext context)
         {
-            return forLoop.Grouping != null ? TranslateFor(forLoop.Body, forLoop.Variable, forLoop.Condition, forLoop.Grouping, context) : TranslateFor(forLoop.Body, forLoop.Variable, forLoop.Condition, context, forLoop.SuppressResult);
+            return forLoop.Grouping != null ? 
+                TranslateFor(forLoop.Body.UnwrapStatements(), forLoop.Variable, forLoop.Condition, forLoop.Grouping, context) : 
+                TranslateFor(forLoop.Body.UnwrapStatements(), forLoop.Variable, forLoop.Condition, context, forLoop.SuppressResult);
         }
 
         private Expression TranslateForEach(IList<ScriptCodeStatement> forEachBody, ScriptCodeForEachLoopExpression.LoopVariable variable, ScriptCodeExpression iterator, ScriptCodeForEachLoopExpression.YieldGrouping grouping, TranslationContext context)
@@ -1046,8 +1048,8 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         protected override Expression Translate(ScriptCodeForEachLoopExpression forEachLoop, TranslationContext context)
         {
             return forEachLoop.Grouping != null ? 
-                TranslateForEach(ScriptCodeExpressionStatement.CreateStatements(forEachLoop.Body), forEachLoop.Variable, forEachLoop.Iterator, forEachLoop.Grouping, context) : 
-                TranslateForEach(ScriptCodeExpressionStatement.CreateStatements(forEachLoop.Body), forEachLoop.Variable, forEachLoop.Iterator, context, forEachLoop.SuppressResult);
+                TranslateForEach(forEachLoop.Body.UnwrapStatements(), forEachLoop.Variable, forEachLoop.Iterator, forEachLoop.Grouping, context) : 
+                TranslateForEach(forEachLoop.Body.UnwrapStatements(), forEachLoop.Variable, forEachLoop.Iterator, context, forEachLoop.SuppressResult);
         }
 
         /// <summary>
@@ -1076,7 +1078,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             switch (interpretationContext.Body.IsComplexExpression)
             {
                 case true:
-                    IList<Expression> body = 
+                    IList<Expression> body = new List<Expression>(10);
                     body.Label(currentScope.BeginOfScope, stateHolder);
                     Translate((ScriptCodeComplexExpression)interpretationContext.Body, context, GotoExpressionKind.Goto, ref body);
                     body.Label(currentScope.EndOfScope, ScriptObject.MakeVoid());

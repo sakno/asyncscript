@@ -28,7 +28,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
         public static ScriptCodeActionImplementationExpression CreateExpression(IScriptCodeElement<ScriptCodeActionContractExpression> signature, IScriptCodeElement<ScriptCodeExpression> body)
         {
-            return signature != null && body != null ? new ScriptCodeActionImplementationExpression(signature.CodeObject, body.CodeObject) : null;
+            return signature != null && body != null ? new ScriptCodeActionImplementationExpression(signature.CodeObject, new ScriptCodeExpressionStatement(body.CodeObject)) : null;
         }
 
         protected override ScriptCodeActionImplementationExpression CreateExpression(IList<IScriptObject> args, InterpreterState state)

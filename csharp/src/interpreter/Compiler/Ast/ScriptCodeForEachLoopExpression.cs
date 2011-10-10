@@ -107,7 +107,7 @@ namespace DynamicScript.Compiler.Ast
         /// <returns></returns>
         protected override Expression Restore()
         {
-            var ctor = LinqHelpers.BodyOf<LoopVariable, ScriptCodeExpression, YieldGrouping, bool, ScriptCodeExpression, ScriptCodeForEachLoopExpression, NewExpression>((loopvar, iter, gr, sup, body) => new ScriptCodeForEachLoopExpression(loopvar, iter, gr, sup, body));
+            var ctor = LinqHelpers.BodyOf<LoopVariable, ScriptCodeExpression, YieldGrouping, bool, ScriptCodeExpressionStatement, ScriptCodeForEachLoopExpression, NewExpression>((loopvar, iter, gr, sup, body) => new ScriptCodeForEachLoopExpression(loopvar, iter, gr, sup, body));
             return ctor.Update(new[] { LinqHelpers.Restore(Variable), LinqHelpers.Restore(Iterator), LinqHelpers.Restore(Grouping), LinqHelpers.Constant(SuppressResult), LinqHelpers.Restore(Body) });
         }
 

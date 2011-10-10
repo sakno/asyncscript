@@ -34,10 +34,10 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
                 Variable = declaration,
                 Iterator = iterator,
                 SuppressResult = false,
-                Grouping = grouping,
-                Body = body is IScriptCodeElement<ScriptCodeExpression> ? ((IScriptCodeElement<ScriptCodeExpression>)body).CodeObject :
-                ScriptConstantExpression.CreateExpression(body)
+                Grouping = grouping
             };
+            result.Body.Expression = body is IScriptCodeElement<ScriptCodeExpression> ? ((IScriptCodeElement<ScriptCodeExpression>)body).CodeObject :
+                ScriptConstantExpression.CreateExpression(body);
             return result.Completed ? result : null;
         }
 

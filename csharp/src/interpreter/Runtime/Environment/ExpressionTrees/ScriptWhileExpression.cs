@@ -33,10 +33,10 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
                 Condition = condition,
                 Style = postEval ? ScriptCodeWhileLoopExpression.LoopStyle.EvaluateConditionAfterBody : ScriptCodeWhileLoopExpression.LoopStyle.EvaluateConditionBeforeBody,
                 Grouping = grouping,
-                SuppressResult = false,
-                Body = body is IScriptCodeElement<ScriptCodeExpression> ? ((IScriptCodeElement<ScriptCodeExpression>)body).CodeObject :
-                ScriptConstantExpression.CreateExpression(body)
+                SuppressResult = false
             };
+            result.Body.Expression = body is IScriptCodeElement<ScriptCodeExpression> ? ((IScriptCodeElement<ScriptCodeExpression>)body).CodeObject :
+                ScriptConstantExpression.CreateExpression(body);
             return result.Completed ? result : null;
         }
 
