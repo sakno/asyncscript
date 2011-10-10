@@ -27,21 +27,18 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             return DynamicScriptInterpreter.Run(Expression, state);
         }
 
-        public static ScriptCodeTryElseFinallyExpression CreateExpression(IEnumerable<IScriptObject> dangerousCode)
+        public static ScriptCodeTryElseFinallyExpression CreateExpression(IScriptObject dangerousCode)
         {
             var result = new ScriptCodeTryElseFinallyExpression();
-            ScriptStatementFactory.CreateStatements(dangerousCode, result.DangerousCode);
-            return result;
+            result.DangerousCode.Expression = dangerousCode is IScriptCodeElement<ScriptCodeExpression> ?
+                ((IScriptCodeElement<ScriptCodeExpression>)dangerousCode).CodeObject :
+                ScriptConstantExpression.CreateExpression(dangerousCode);
+            return result.Completed ? result : null;
         }
 
         protected override ScriptCodeTryElseFinallyExpression CreateExpression(IList<IScriptObject> args, InterpreterState state)
         {
-            switch (args.Count)
-            {
-                case 0: return CreateExpression(Enumerable.Empty<IScriptObject>());
-                case 1: return CreateExpression(args[0] as IEnumerable<IScriptObject> ?? args);
-                default: return CreateExpression(args);
-            }
+            return args.Count == 1 ? CreateExpression(args[0]) : null;
         }
     }
 }

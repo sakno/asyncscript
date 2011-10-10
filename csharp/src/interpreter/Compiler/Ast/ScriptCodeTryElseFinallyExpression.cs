@@ -201,6 +201,26 @@ namespace DynamicScript.Compiler.Ast
             return builder.ToString();
         }
 
+        /// <summary>
+        /// Gets a value indicating whether SEH expression can be reduced.
+        /// </summary>
+        public override bool CanReduce
+        {
+            get { return DangerousCode.Expression is ScriptCodePrimitiveExpression; }
+        }
+
+        /// <summary>
+        /// Simplifies this expression.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        public override ScriptCodeExpression Reduce(InterpretationContext context)
+        {
+            if (DangerousCode.Expression is ScriptCodePrimitiveExpression)
+                return DangerousCode.Expression;
+            else return this;
+        }
+
         internal override bool Completed
         {
             get { return true; }
