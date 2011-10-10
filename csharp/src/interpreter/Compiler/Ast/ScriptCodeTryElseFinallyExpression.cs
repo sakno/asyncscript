@@ -29,20 +29,15 @@ namespace DynamicScript.Compiler.Ast
             /// <summary>
             /// Represents exception handler.
             /// </summary>
-            public readonly ScriptCodeStatementCollection Handler;
+            public readonly ScriptCodeExpressionStatement Handler;
 
-            private FailureTrap(ScriptCodeStatementCollection statements)
-            {
-                Handler = statements ?? new ScriptCodeStatementCollection();
-            }
-            
             /// <summary>
             /// Initializes a new exception handler.
             /// </summary>
-            /// <param name="handler"></param>
-            public FailureTrap(params ScriptCodeStatement[] handler)
-                :this(new ScriptCodeStatementCollection(handler))
+            /// <param name="body"></param>
+            public FailureTrap(ScriptCodeExpressionStatement body = null)
             {
+                Handler = body ?? new ScriptCodeExpressionStatement(ScriptCodeVoidExpression.Instance);
             }
             
             /// <summary>
@@ -50,8 +45,8 @@ namespace DynamicScript.Compiler.Ast
             /// </summary>
             /// <param name="filter"></param>
             /// <param name="handler"></param>
-            public FailureTrap(ScriptCodeVariableDeclaration filter, ScriptCodeStatement[] handler)
-                : this(handler)
+            public FailureTrap(ScriptCodeVariableDeclaration filter, ScriptCodeExpressionStatement body)
+                : this(body)
             {
                 Filter = filter;
             }
@@ -75,7 +70,7 @@ namespace DynamicScript.Compiler.Ast
             {
                 return other != null &&
                     Equals(Filter, other.Filter) &&
-                    ScriptCodeStatementCollection.TheSame(Handler, other.Handler);
+                    Equals(Handler, other.Handler);
             }
 
             /// <summary>
@@ -129,66 +124,44 @@ namespace DynamicScript.Compiler.Ast
             /// <returns></returns>
             protected override Expression Restore()
             {
-                var ctor = LinqHelpers.BodyOf<ScriptCodeVariableDeclaration, ScriptCodeStatement[], FailureTrap, NewExpression>((f, h) => new FailureTrap(f, h));
-                return ctor.Update(new[] { LinqHelpers.Restore(Filter), Handler.NewArray() });
+                var ctor = LinqHelpers.BodyOf<ScriptCodeVariableDeclaration, ScriptCodeExpressionStatement, FailureTrap, NewExpression>((f, h) => new FailureTrap(f, h));
+                return ctor.Update(new[] { LinqHelpers.Restore(Filter), LinqHelpers.Restore(Handler) });
             }
         }
         #endregion
         /// <summary>
         /// Represents a potentially dangerous code.
         /// </summary>
-        public readonly ScriptCodeStatementCollection DangerousCode;
+        public readonly ScriptCodeExpressionStatement DangerousCode;
 
         /// <summary>
         /// Represents a finalization code.
         /// </summary>
-        public readonly ScriptCodeStatementCollection Finally;
+        public readonly ScriptCodeExpressionStatement Finally;
 
         /// <summary>
         /// Represents a collection of exception handlers.
         /// </summary>
         public readonly IList<FailureTrap> Traps;
 
-        private ScriptCodeTryElseFinallyExpression(ScriptCodeStatementCollection dangerousCode, IEnumerable<FailureTrap> traps, ScriptCodeStatementCollection finallyCode)
-        {
-            DangerousCode = dangerousCode ?? new ScriptCodeStatementCollection();
-            Traps = new List<FailureTrap>(traps);
-            Finally = finallyCode ?? new ScriptCodeStatementCollection();
-        }
-
         /// <summary>
-        /// Initializes a new 'try-else-finally' block.
+        /// Initializes a new SEH block.
         /// </summary>
         /// <param name="dangerousCode"></param>
         /// <param name="traps"></param>
-        /// <param name="finally"></param>
-        public ScriptCodeTryElseFinallyExpression(ScriptCodeStatement[] dangerousCode, IEnumerable<FailureTrap> traps, params ScriptCodeStatement[] @finally)
-            :this(new ScriptCodeStatementCollection(dangerousCode), traps, new ScriptCodeStatementCollection(@finally))
+        /// <param name="finallyCode"></param>
+        public ScriptCodeTryElseFinallyExpression(ScriptCodeExpressionStatement dangerousCode = null, IEnumerable<FailureTrap> traps = null, ScriptCodeExpressionStatement finallyCode = null)
         {
-        }
-
-        /// <summary>
-        /// Initializes a new 'try-else-finally' block.
-        /// </summary>
-        public ScriptCodeTryElseFinallyExpression()
-            : this(new ScriptCodeStatement[0], Enumerable.Empty<FailureTrap>())
-        {
+            DangerousCode = dangerousCode ?? new ScriptCodeExpressionStatement(ScriptCodeVoidExpression.Instance);
+            Traps = new List<FailureTrap>(traps ?? Enumerable.Empty<FailureTrap>());
+            Finally = finallyCode ?? new ScriptCodeExpressionStatement(ScriptCodeVoidExpression.Instance);
         }
 
         internal static ScriptCodeTryElseFinallyExpression Parse(IEnumerator<KeyValuePair<Lexeme.Position, Lexeme>> lexer, params Lexeme[] terminator)
         {
             lexer.MoveNext(true);   //pass through try keyword
             var expr = new ScriptCodeTryElseFinallyExpression();
-            switch (lexer.Current.Value == Punctuation.LeftBrace)
-            {
-                case true:
-                    Parser.ParseStatements(lexer, expr.DangerousCode, Punctuation.RightBrace);
-                    break;
-                default:
-                    //parse single try expression
-                    expr.DangerousCode.Add(Parser.ParseExpression, lexer, terminator + Keyword.Else + Keyword.Finally);
-                    break;
-            }
+            expr.DangerousCode.SetExpression(Parser.ParseExpression, lexer, terminator + Keyword.Else + Keyword.Finally);
             //Parse error traps
             while (lexer.Current.Value == Keyword.Else)
             {
@@ -200,30 +173,14 @@ namespace DynamicScript.Compiler.Ast
                     throw CodeAnalysisException.InvalidPunctuation(Punctuation.RightBracket, lexer.Current);
                 lexer.MoveNext(true);   //pass through right bracket
                 //Parse trap body
-                switch (lexer.Current.Value == Punctuation.LeftBrace)
-                {
-                    case true:
-                        Parser.ParseStatements(lexer, trap.Handler, Punctuation.RightBrace);
-                        break;
-                    default:
-                        trap.Handler.Add(Parser.ParseExpression, lexer, terminator + Keyword.Else + Keyword.Finally);//parse single else expression
-                        break;
-                }
+                trap.Handler.SetExpression(Parser.ParseExpression, lexer, terminator + Keyword.Else + Keyword.Finally);
                 expr.Traps.Add(trap);
             }
             if (lexer.Current.Value == Keyword.Finally)
             {
                 lexer.MoveNext(true);   //pass through finally keyword
                 //Parse finalization block.
-                switch (lexer.Current.Value == Punctuation.LeftBrace)
-                {
-                    case true:
-                        Parser.ParseStatements(lexer, expr.Finally, Punctuation.RightBrace);
-                        break;
-                    default:
-                        expr.Finally.Add(Parser.ParseExpression, lexer, terminator);//parse single finally expression   
-                        break;
-                }
+                expr.Finally.SetExpression(Parser.ParseExpression, lexer, terminator);
             }
             return expr;
         }
@@ -266,7 +223,7 @@ namespace DynamicScript.Compiler.Ast
         /// <returns><see langword="true"/> if this expression represents the same tree as other expression; otherwise, <see langword="false"/>.</returns>
         public bool Equals(ScriptCodeTryElseFinallyExpression other)
         {
-            switch (other != null && Traps.Count == other.Traps.Count && ScriptCodeStatementCollection.TheSame(DangerousCode, other.DangerousCode) && ScriptCodeStatementCollection.TheSame(Finally, other.Finally))
+            switch (other != null && Traps.Count == other.Traps.Count && Equals(DangerousCode, other.DangerousCode) && Equals(Finally, other.Finally))
             {
                 case true:
                     for (var i = 0; i < Traps.Count; i++)
@@ -293,8 +250,8 @@ namespace DynamicScript.Compiler.Ast
         /// <returns></returns>
         protected override Expression Restore()
         {
-            var ctor = LinqHelpers.BodyOf<ScriptCodeStatement[], IEnumerable<FailureTrap>, ScriptCodeStatement[], ScriptCodeTryElseFinallyExpression, NewExpression>((d, t, f) => new ScriptCodeTryElseFinallyExpression(d, t, f));
-            return Expression.Invoke(Expression.Lambda(ctor.Update(new[] { DangerousCode.NewArray(), LinqHelpers.NewArray(Traps), Finally.NewArray() }))); 
+            var ctor = LinqHelpers.BodyOf<ScriptCodeExpressionStatement, IEnumerable<FailureTrap>, ScriptCodeExpressionStatement, ScriptCodeTryElseFinallyExpression, NewExpression>((d, t, f) => new ScriptCodeTryElseFinallyExpression(d, t, f));
+            return Expression.Invoke(Expression.Lambda(ctor.Update(new[] { LinqHelpers.Restore(DangerousCode), LinqHelpers.NewArray(Traps), LinqHelpers.Restore(Finally) }))); 
         }
 
         internal override void Verify()
