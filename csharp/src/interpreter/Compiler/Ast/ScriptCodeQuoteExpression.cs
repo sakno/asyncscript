@@ -16,7 +16,10 @@ namespace DynamicScript.Compiler.Ast
     [Serializable]
     public sealed class ScriptCodeQuoteExpression : ScriptCodeExpression, IEquatable<ScriptCodeQuoteExpression>
     {
-        private ScriptCodeExpression m_body;
+        /// <summary>
+        /// Represents body statement.
+        /// </summary>
+        public readonly ScriptCodeExpressionStatement Body;
 
         /// <summary>
         /// Represents signature of the quoted action.
@@ -28,9 +31,9 @@ namespace DynamicScript.Compiler.Ast
         /// </summary>
         /// <param name="signature"></param>
         /// <param name="body"></param>
-        public ScriptCodeQuoteExpression(ScriptCodeActionContractExpression signature = null, ScriptCodeExpression body = null)
+        public ScriptCodeQuoteExpression(ScriptCodeActionContractExpression signature = null, ScriptCodeExpressionStatement body = null)
         {
-            m_body = body;
+            Body = body ?? new ScriptCodeExpressionStatement(ScriptCodeVoidExpression.Instance);
             Signature = signature ?? new ScriptCodeActionContractExpression();
         }
 
@@ -42,21 +45,12 @@ namespace DynamicScript.Compiler.Ast
 
         internal override bool Completed
         {
-            get { return Signature.Completed; }
-        }
-
-        /// <summary>
-        /// Gets or sets body of the quoted expression.
-        /// </summary>
-        public ScriptCodeExpression Body
-        {
-            get { return m_body ?? ScriptCodeVoidExpression.Instance; }
-            set { m_body = value; }
+            get { return Signature.Completed && Body.Completed; }
         }
 
         internal bool IsComplexBody
         {
-            get { return Body is ICollection<ScriptCodeStatement>; }
+            get { return Body.IsComplexExpression; }
         }
 
         /// <summary>
@@ -107,7 +101,7 @@ namespace DynamicScript.Compiler.Ast
         internal override ScriptCodeExpression Visit(ISyntaxTreeNode parent, Converter<ISyntaxTreeNode, ISyntaxTreeNode> visitor)
         {
             Signature.Visit(this, visitor);
-            if (Body != null) Body = Body.Visit(this, visitor) as ScriptCodeExpression;
+            Body.Visit(this, visitor);
             return visitor.Invoke(this) as ScriptCodeExpression ?? this;
         }
 

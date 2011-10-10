@@ -15,16 +15,16 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
     {
         #region Nested Types
         [ComVisible(false)]
-        protected abstract class GetBodyActionBase : CodeElementPartProvider<IScriptArray>
+        protected abstract class GetBodyActionBase : CodeElementPartProvider<IScriptCodeElement<ScriptCodeExpression>>
         {
             protected GetBodyActionBase(ScriptCodeElementFactory<TLoopKind, TRuntimeExpression> firstParam)
                 : base(firstParam, new ScriptArrayContract(ScriptStatementFactory.Instance))
             {
             }
 
-            protected sealed override IScriptArray Invoke(TLoopKind element, InterpreterState state)
+            protected sealed override IScriptCodeElement<ScriptCodeExpression> Invoke(TLoopKind element, InterpreterState state)
             {
-                return ScriptStatementFactory.CreateStatements(element.Body, state);
+                return Convert(element.Body.Expression) as IScriptCodeElement<ScriptCodeExpression>;
             }
         }
 

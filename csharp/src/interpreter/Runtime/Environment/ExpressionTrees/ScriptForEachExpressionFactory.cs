@@ -18,11 +18,13 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             private const string SecondParamName = "loopVar";
             private const string ThirdParamName = "iterator";
             private const string FourthParamName = "grouping";
+            private const string FifthParamName = "body";
 
             public ModifyAction()
                 : base(Instance, new ScriptActionContract.Parameter(SecondParamName, ScriptLoopVariableStatementFactory.Instance),
                 new ScriptActionContract.Parameter(ThirdParamName, ScriptExpressionFactory.Instance),
-                new ScriptActionContract.Parameter(FourthParamName, ScriptSuperContract.Instance))
+                new ScriptActionContract.Parameter(FourthParamName, ScriptExpressionFactory.Instance),
+                new ScriptActionContract.Parameter(FifthParamName, ScriptExpressionFactory.Instance))
             {
             }
         }

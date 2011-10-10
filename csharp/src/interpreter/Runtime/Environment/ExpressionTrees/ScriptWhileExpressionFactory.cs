@@ -25,7 +25,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
                 new ScriptActionContract.Parameter(SecondParamName, ScriptBooleanContract.Instance),
                 new ScriptActionContract.Parameter(ThirdParamName, ScriptExpressionFactory.Instance),
                 new ScriptActionContract.Parameter(FourthParamName, ScriptSuperContract.Instance),
-                new ScriptActionContract.Parameter(FifthParamName, new ScriptArrayContract(ScriptStatementFactory.Instance)))
+                new ScriptActionContract.Parameter(FifthParamName, ScriptExpressionFactory.Instance))
             {
             }
         }
@@ -97,7 +97,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
         public static readonly ScriptWhileExpressionFactory Instance = new ScriptWhileExpressionFactory();
 
-        public static ScriptWhileExpression CreateExpression(ScriptBoolean postEval, IScriptCodeElement<ScriptCodeExpression> condition, IScriptObject grouping, IEnumerable<IScriptObject> body)
+        public static ScriptWhileExpression CreateExpression(ScriptBoolean postEval, IScriptCodeElement<ScriptCodeExpression> condition, IScriptObject grouping, IScriptObject body)
         {
             var expression = ScriptWhileExpression.CreateExpression(postEval, condition, grouping, body);
             return expression != null ? new ScriptWhileExpression(expression) : null;
@@ -105,7 +105,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
         public override ScriptWhileExpression CreateCodeElement(IList<IScriptObject> args, InterpreterState state)
         {
-            return args.Count == 4 ? CreateExpression(args[0] as ScriptBoolean, args[1] as IScriptCodeElement<ScriptCodeExpression>, args[2], args[3] as IEnumerable<IScriptObject>) : null;
+            return args.Count == 4 ? CreateExpression(args[0] as ScriptBoolean, args[1] as IScriptCodeElement<ScriptCodeExpression>, args[2], args[3]) : null;
         }
 
         protected override IRuntimeSlot Modify

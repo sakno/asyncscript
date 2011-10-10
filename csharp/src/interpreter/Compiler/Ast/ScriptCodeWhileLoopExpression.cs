@@ -39,7 +39,7 @@ namespace DynamicScript.Compiler.Ast
         /// Initializes a new 'while' loop expression.
         /// </summary>
         /// <param name="body"></param>
-        public ScriptCodeWhileLoopExpression(ScriptCodeExpression body = null)
+        public ScriptCodeWhileLoopExpression(ScriptCodeExpressionStatement body = null)
             :base(body)
         {
         }
@@ -52,7 +52,7 @@ namespace DynamicScript.Compiler.Ast
         /// <param name="style"></param>
         /// <param name="suppressResult"></param>
         /// <param name="body"></param>
-        public ScriptCodeWhileLoopExpression(ScriptCodeExpression condition, YieldGrouping grouping, LoopStyle style, bool suppressResult, ScriptCodeExpression body)
+        public ScriptCodeWhileLoopExpression(ScriptCodeExpression condition, YieldGrouping grouping, LoopStyle style, bool suppressResult, ScriptCodeExpressionStatement body)
             : base(body)
         {
             Condition = condition;
@@ -92,15 +92,7 @@ namespace DynamicScript.Compiler.Ast
             if (lexer == null) throw new ArgumentNullException("lexer");
             var loop = new ScriptCodeWhileLoopExpression { Style = ScriptCodeWhileLoopExpression.LoopStyle.EvaluateConditionAfterBody };
             lexer.MoveNext(true);   //pass through do keyword.
-            switch (lexer.Current.Value == Punctuation.LeftBrace)   //Parse loop body.
-            {
-                case true:
-                    Parser.ParseStatements(lexer, loop.Body, Punctuation.RightBrace);
-                    break;
-                default:
-                    loop.Body.Add(Parser.ParseExpression, lexer, Keyword.While);
-                    break;
-            }
+            loop.Body.SetExpression(Parser.ParseExpression, lexer, Keyword.While);  //parse loop body
             if (lexer.Current.Value != Keyword.While) throw CodeAnalysisException.InvalidExpressionTerm(lexer.Current); //matches to the while keyword
             lexer.MoveNext(true);   //pass through while keyword
             loop.Condition = Parser.ParseExpression(lexer, terminator + Keyword.GroupBy); //parse conditional expression
@@ -117,7 +109,7 @@ namespace DynamicScript.Compiler.Ast
                         lexer.MoveNext(true);   //pass through operator
                         break;
                     default:
-                        loop.Grouping = Parser.ParseExpression(lexer, Keyword.Do);
+                        loop.Grouping = Parser.ParseExpression(lexer, terminator);
                         break;
                 }
             }
@@ -147,15 +139,7 @@ namespace DynamicScript.Compiler.Ast
                 }
             }
             lexer.MoveNext(true);   //pass through do keyword.
-            switch (lexer.Current.Value == Punctuation.LeftBrace)   //Parse loop body.
-            {
-                case true:
-                    Parser.ParseStatements(lexer, loop.Body, Punctuation.RightBrace);
-                    break;
-                default:
-                    loop.Body.Add(Parser.ParseExpression, lexer, terminator);
-                    break;
-            }
+            loop.Body.SetExpression(Parser.ParseExpression, lexer, terminator);
             return loop;
         }
 
@@ -178,7 +162,7 @@ namespace DynamicScript.Compiler.Ast
         {
             return other != null &&
                 Style == other.Style &&
-                ScriptCodeStatementCollection.TheSame(Body, other.Body) &&
+                Equals(Body, other.Body) &&
                 Equals(Grouping, other.Grouping);
         }
 
@@ -188,8 +172,8 @@ namespace DynamicScript.Compiler.Ast
         /// <returns></returns>
         protected override Expression Restore()
         {
-            var ctor = LinqHelpers.BodyOf<ScriptCodeExpression, YieldGrouping, LoopStyle, bool, ScriptCodeStatement[], ScriptCodeWhileLoopExpression, NewExpression>((cond, grp, style, sup, body) => new ScriptCodeWhileLoopExpression(cond, grp, style, sup, body));
-            return ctor.Update(new[] { LinqHelpers.Restore(Condition), LinqHelpers.Restore(Grouping), LinqHelpers.Constant(Style), Body.NewArray() });
+            var ctor = LinqHelpers.BodyOf<ScriptCodeExpression, YieldGrouping, LoopStyle, bool, ScriptCodeExpressionStatement, ScriptCodeWhileLoopExpression, NewExpression>((cond, grp, style, sup, body) => new ScriptCodeWhileLoopExpression(cond, grp, style, sup, body));
+            return ctor.Update(new[] { LinqHelpers.Restore(Condition), LinqHelpers.Restore(Grouping), LinqHelpers.Constant(Style), LinqHelpers.Restore(Body) });
         }
 
         internal override void Verify()

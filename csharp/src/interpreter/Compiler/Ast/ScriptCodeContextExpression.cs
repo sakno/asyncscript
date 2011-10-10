@@ -15,7 +15,10 @@ namespace DynamicScript.Compiler.Ast
     [Serializable]
     public sealed class ScriptCodeContextExpression: ScriptCodeExpression, IEquatable<ScriptCodeContextExpression>
     {
-        private ScriptCodeExpression m_body;
+        /// <summary>
+        /// Represents body of the context statement.
+        /// </summary>
+        public readonly ScriptCodeExpressionStatement Body;
         
         /// <summary>
         /// Represents interpretation context.
@@ -27,10 +30,10 @@ namespace DynamicScript.Compiler.Ast
         /// </summary>
         /// <param name="context"></param>
         /// <param name="body"></param>
-        public ScriptCodeContextExpression(InterpretationContext context, ScriptCodeExpression body = null)
+        public ScriptCodeContextExpression(InterpretationContext context, ScriptCodeExpressionStatement body = null)
         {
             Context = context;
-            m_body = body;
+            Body = body ?? new ScriptCodeExpressionStatement(ScriptCodeVoidExpression.Instance);
         }
 
         private ScriptCodeContextExpression(Lexeme ctxToken)
@@ -38,20 +41,12 @@ namespace DynamicScript.Compiler.Ast
             if (ctxToken == Keyword.Checked) Context = InterpretationContext.Checked;
             else if (ctxToken == Keyword.Unchecked) Context = InterpretationContext.Unchecked;
             else Context = InterpretationContext.Default;
-        }
-
-        /// <summary>
-        /// Gets or sets body of the interpretation context.
-        /// </summary>
-        public ScriptCodeExpression Body
-        {
-            get { return m_body ?? ScriptCodeVoidExpression.Instance; }
-            set { m_body = value; }
+            Body = new ScriptCodeExpressionStatement(ScriptCodeVoidExpression.Instance);
         }
 
         internal override bool Completed
         {
-            get { return true; }
+            get { return Body.Completed; }
         }
 
         /// <summary>
@@ -60,7 +55,7 @@ namespace DynamicScript.Compiler.Ast
         /// <returns></returns>
         public override string ToString()
         {
-            return string.Concat(Context == InterpretationContext.Unchecked ? Keyword.Unchecked : Keyword.Checked, Punctuation.Colon, Body);
+            return string.Concat(Context == InterpretationContext.Unchecked ? Keyword.Unchecked : Keyword.Checked, Punctuation.Colon, Body.Expression);
         }
 
         /// <summary>
@@ -78,7 +73,14 @@ namespace DynamicScript.Compiler.Ast
         /// <returns></returns>
         public override ScriptCodeExpression Reduce(InterpretationContext context)
         {
-            return CanReduce ? new ScriptCodeContextExpression(Context, Body.Reduce(Context)) : this;
+            switch (CanReduce)
+            {
+                case true:
+                    var result = new ScriptCodeContextExpression(Context, Body);
+                    result.Body.Reduce(context);
+                    return result;
+                default: return this;
+            }
         }
 
         internal static ScriptCodeContextExpression Parse(IEnumerator<KeyValuePair<Lexeme.Position, Lexeme>> lexer, params Lexeme[] terminator)
@@ -86,7 +88,7 @@ namespace DynamicScript.Compiler.Ast
             var expr = new ScriptCodeContextExpression(lexer.Current.Value);
             lexer.MoveNext(Punctuation.Colon, true);  //Pass through check or unchecked keyword
             lexer.MoveNext(true);   //pass through colon
-            expr.Body = Parser.ParseExpression(lexer, terminator);
+            expr.Body.SetExpression(Parser.ParseExpression, lexer, terminator);
             return expr;
         }
 
@@ -128,7 +130,7 @@ namespace DynamicScript.Compiler.Ast
         /// <returns></returns>
         protected override Expression Restore()
         {
-            var ctor = LinqHelpers.BodyOf<InterpretationContext, ScriptCodeExpression, ScriptCodeContextExpression, NewExpression>((ctx, stmts) => new ScriptCodeContextExpression(ctx, stmts));
+            var ctor = LinqHelpers.BodyOf<InterpretationContext, ScriptCodeExpressionStatement, ScriptCodeContextExpression, NewExpression>((ctx, stmts) => new ScriptCodeContextExpression(ctx, stmts));
             return ctor.Update(new Expression[] { LinqHelpers.Constant(Context), LinqHelpers.Restore(Body) });
         }
 

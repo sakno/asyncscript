@@ -27,7 +27,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             return DynamicScriptInterpreter.Run(Expression, state);
         }
 
-        public static ScriptCodeForEachLoopExpression CreateExpression(ScriptCodeForEachLoopExpression.LoopVariable declaration, ScriptCodeExpression iterator, ScriptCodeForEachLoopExpression.YieldGrouping grouping, IEnumerable<IScriptObject> body)
+        public static ScriptCodeForEachLoopExpression CreateExpression(ScriptCodeForEachLoopExpression.LoopVariable declaration, ScriptCodeExpression iterator, ScriptCodeForEachLoopExpression.YieldGrouping grouping, IScriptObject body)
         {
             var result = new ScriptCodeForEachLoopExpression
             {
@@ -35,12 +35,13 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
                 Iterator = iterator,
                 SuppressResult = false,
                 Grouping = grouping,
+                Body = body is IScriptCodeElement<ScriptCodeExpression> ? ((IScriptCodeElement<ScriptCodeExpression>)body).CodeObject :
+                ScriptConstantExpression.CreateExpression(body)
             };
-            ScriptStatementFactory.CreateStatements(body, result.Body);
             return result.Completed ? result : null;
         }
 
-        public static ScriptCodeForEachLoopExpression CreateExpression(ScriptCodeForEachLoopExpression.LoopVariable declaration, ScriptCodeExpression iterator, IScriptObject grouping, IEnumerable<IScriptObject> body)
+        public static ScriptCodeForEachLoopExpression CreateExpression(ScriptCodeForEachLoopExpression.LoopVariable declaration, ScriptCodeExpression iterator, IScriptObject grouping, IScriptObject body)
         {
             if (grouping is IBinaryOperatorInvoker)
                 return CreateExpression(declaration, iterator, new ScriptCodeForEachLoopExpression.OperatorGrouping(((IBinaryOperatorInvoker)grouping).Operator), body);
@@ -54,7 +55,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             else return CreateExpression(declaration, iterator, default(ScriptCodeForEachLoopExpression.YieldGrouping), body);
         }
 
-        public static ScriptCodeForEachLoopExpression CreateExpression(IScriptCodeElement<ScriptCodeLoopWithVariableExpression.LoopVariable> declaration, ScriptCodeExpression iterator, IScriptObject grouping, IEnumerable<IScriptObject> body)
+        public static ScriptCodeForEachLoopExpression CreateExpression(IScriptCodeElement<ScriptCodeLoopWithVariableExpression.LoopVariable> declaration, ScriptCodeExpression iterator, IScriptObject grouping, IScriptObject body)
         {
             return declaration != null && iterator!=null ? CreateExpression(declaration.CodeObject, iterator, grouping, body) : null;
         }
@@ -64,7 +65,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             return CreateExpression(declaration as IScriptCodeElement<ScriptCodeLoopWithVariableExpression.LoopVariable>,
                 iterator is IScriptExpression<ScriptCodeExpression> ? ((IScriptExpression<ScriptCodeExpression>)iterator).CodeObject : ScriptConstantExpression.CreateExpression(iterator),
                 grouping,
-                body as IEnumerable<IScriptObject>);
+                body);
         }
 
         protected override ScriptCodeForEachLoopExpression CreateExpression(IList<IScriptObject> args, InterpreterState state)

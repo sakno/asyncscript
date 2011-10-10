@@ -24,7 +24,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
                 new ScriptActionContract.Parameter(SecondParamName, ScriptLoopVariableStatementFactory.Instance),
                 new ScriptActionContract.Parameter(ThirdParamName, ScriptExpressionFactory.Instance),
                 new ScriptActionContract.Parameter(FourthParamName, ScriptSuperContract.Instance),
-                new ScriptActionContract.Parameter(FifthParamName, new ScriptArrayContract(ScriptStatementFactory.Instance)))
+                new ScriptActionContract.Parameter(FifthParamName, ScriptExpressionFactory.Instance))
             {
             }
         }
@@ -110,7 +110,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
         public static readonly ScriptForExpressionFactory Instance = new ScriptForExpressionFactory();
 
-        public static ScriptForExpression CreateExpression(IScriptCodeElement<ScriptCodeLoopWithVariableExpression.LoopVariable> declaration, IScriptCodeElement<ScriptCodeExpression> condition, IScriptObject grouping, IEnumerable<IScriptObject> body)
+        public static ScriptForExpression CreateExpression(IScriptCodeElement<ScriptCodeLoopWithVariableExpression.LoopVariable> declaration, IScriptCodeElement<ScriptCodeExpression> condition, IScriptObject grouping, IScriptObject body)
         {
             var expression = ScriptForExpression.CreateExpression(declaration, condition, grouping, body);
             return expression != null ? new ScriptForExpression(expression) : null;
@@ -118,7 +118,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
         public override ScriptForExpression CreateCodeElement(IList<IScriptObject> args, InterpreterState state)
         {
-            return args.Count == 4 ? CreateExpression(args[0] as IScriptCodeElement<ScriptCodeLoopWithVariableExpression.LoopVariable>, args[1] as IScriptCodeElement<ScriptCodeExpression>, args[2], args[3] as IEnumerable<IScriptObject>) : null;
+            return args.Count == 4 ? CreateExpression(args[0] as IScriptCodeElement<ScriptCodeLoopWithVariableExpression.LoopVariable>, args[1] as IScriptCodeElement<ScriptCodeExpression>, args[2], args[3]) : null;
         }
 
         public override void Clear()

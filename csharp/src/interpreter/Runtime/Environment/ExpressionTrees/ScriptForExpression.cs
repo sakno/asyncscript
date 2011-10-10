@@ -25,14 +25,21 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             return DynamicScriptInterpreter.Run(Expression, state);
         }
 
-        public static ScriptCodeForLoopExpression CreateExpression(ScriptCodeForLoopExpression.LoopVariable declaration, ScriptCodeExpression condition, ScriptCodeForLoopExpression.YieldGrouping grouping, IEnumerable<IScriptObject> body)
+        public static ScriptCodeForLoopExpression CreateExpression(ScriptCodeForLoopExpression.LoopVariable declaration, ScriptCodeExpression condition, ScriptCodeForLoopExpression.YieldGrouping grouping, IScriptObject body)
         {
-            var result = new ScriptCodeForLoopExpression { Condition = condition, SuppressResult = false, Variable = declaration, Grouping = grouping };
-            ScriptStatementFactory.CreateStatements(body, result.Body);
+            var result = new ScriptCodeForLoopExpression
+            {
+                Condition = condition,
+                SuppressResult = false,
+                Variable = declaration,
+                Grouping = grouping
+            };
+            result.Body.Expression = body is IScriptCodeElement<ScriptCodeExpression> ? ((IScriptCodeElement<ScriptCodeExpression>)body).CodeObject :
+                ScriptConstantExpression.CreateExpression(body);
             return result.Completed ? result : null;
         }
 
-        public static ScriptCodeForLoopExpression CreateExpression(ScriptCodeForLoopExpression.LoopVariable declaration, ScriptCodeExpression condition, IScriptObject grouping, IEnumerable<IScriptObject> body)
+        public static ScriptCodeForLoopExpression CreateExpression(ScriptCodeForLoopExpression.LoopVariable declaration, ScriptCodeExpression condition, IScriptObject grouping, IScriptObject body)
         {
             if (grouping is ScriptString)
             {
@@ -46,14 +53,14 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             else return CreateExpression(declaration, condition, default(ScriptCodeForLoopExpression.YieldGrouping), body);
         }
 
-        public static ScriptCodeForLoopExpression CreateExpression(IScriptCodeElement<ScriptCodeLoopWithVariableExpression.LoopVariable> declaration, IScriptCodeElement<ScriptCodeExpression> condition, IScriptObject grouping, IEnumerable<IScriptObject> body)
+        public static ScriptCodeForLoopExpression CreateExpression(IScriptCodeElement<ScriptCodeLoopWithVariableExpression.LoopVariable> declaration, IScriptCodeElement<ScriptCodeExpression> condition, IScriptObject grouping, IScriptObject body)
         {
             return declaration != null && condition != null ? CreateExpression(declaration.CodeObject, ((IScriptExpression<ScriptCodeExpression>)condition).CodeObject, grouping, body) : null;
         }
 
         protected override ScriptCodeForLoopExpression CreateExpression(IList<IScriptObject> args, InterpreterState state)
         {
-            return args.Count == 4 ? CreateExpression(args[0] as IScriptCodeElement<ScriptCodeLoopWithVariableExpression.LoopVariable>, args[1] as IScriptCodeElement<ScriptCodeExpression>, args[2], args[3] as IEnumerable<IScriptObject>) : null;
+            return args.Count == 4 ? CreateExpression(args[0] as IScriptCodeElement<ScriptCodeLoopWithVariableExpression.LoopVariable>, args[1] as IScriptCodeElement<ScriptCodeExpression>, args[2], args[3]) : null;
         }
     }
 }

@@ -239,23 +239,16 @@ namespace DynamicScript.Compiler.Ast
         }
         #endregion
 
-
-        private ScriptCodeExpression m_body;
+        /// <summary>
+        /// Represents body of the loop.
+        /// </summary>
+        public readonly ScriptCodeExpressionStatement Body;
         private bool m_suppressResult;
 
-        internal ScriptCodeLoopExpression(ScriptCodeExpression body)
+        internal ScriptCodeLoopExpression(ScriptCodeExpressionStatement body = null)
         {
-            m_body = body;
+            Body = body ?? new ScriptCodeExpressionStatement(ScriptCodeVoidExpression.Instance);
             m_suppressResult = false;
-        }
-
-        /// <summary>
-        /// Gets or sets body of the loop.
-        /// </summary>
-        public ScriptCodeExpression Body
-        {
-            get { return m_body ?? ScriptCodeVoidExpression.Instance; }
-            set { m_body = value; }
         }
 
         /// <summary>
@@ -265,6 +258,14 @@ namespace DynamicScript.Compiler.Ast
         {
             get;
             set;
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the loop expression is completed.
+        /// </summary>
+        internal override bool Completed
+        {
+            get { return Body.Completed; }
         }
 
         /// <summary>

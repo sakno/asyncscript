@@ -26,20 +26,21 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             return DynamicScriptInterpreter.Run(Expression, state);
         }
 
-        public static ScriptCodeWhileLoopExpression CreateExpression(bool postEval, ScriptCodeExpression condition, ScriptCodeWhileLoopExpression.YieldGrouping grouping, IEnumerable<IScriptObject> body)
+        public static ScriptCodeWhileLoopExpression CreateExpression(bool postEval, ScriptCodeExpression condition, ScriptCodeWhileLoopExpression.YieldGrouping grouping, IScriptObject body)
         {
-            var result = new ScriptCodeWhileLoopExpression 
-            { 
-                Condition = condition, 
-                Style = postEval ? ScriptCodeWhileLoopExpression.LoopStyle.EvaluateConditionAfterBody : ScriptCodeWhileLoopExpression.LoopStyle.EvaluateConditionBeforeBody, 
-                Grouping = grouping, 
-                SuppressResult = false 
+            var result = new ScriptCodeWhileLoopExpression
+            {
+                Condition = condition,
+                Style = postEval ? ScriptCodeWhileLoopExpression.LoopStyle.EvaluateConditionAfterBody : ScriptCodeWhileLoopExpression.LoopStyle.EvaluateConditionBeforeBody,
+                Grouping = grouping,
+                SuppressResult = false,
+                Body = body is IScriptCodeElement<ScriptCodeExpression> ? ((IScriptCodeElement<ScriptCodeExpression>)body).CodeObject :
+                ScriptConstantExpression.CreateExpression(body)
             };
-            ScriptStatementFactory.CreateStatements(body, result.Body);
             return result.Completed ? result : null;
         }
 
-        public static ScriptCodeWhileLoopExpression CreateExpression(ScriptBoolean postEval, ScriptCodeExpression condition, IScriptObject grouping, IEnumerable<IScriptObject> body)
+        public static ScriptCodeWhileLoopExpression CreateExpression(ScriptBoolean postEval, ScriptCodeExpression condition, IScriptObject grouping, IScriptObject body)
         {
             if (grouping is ScriptString)
             {
@@ -53,14 +54,14 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             else return CreateExpression(postEval, condition, default(ScriptCodeWhileLoopExpression.YieldGrouping), body);
         }
 
-        public static ScriptCodeWhileLoopExpression CreateExpression(ScriptBoolean postEval, IScriptCodeElement<ScriptCodeExpression> condition, IScriptObject grouping, IEnumerable<IScriptObject> body)
+        public static ScriptCodeWhileLoopExpression CreateExpression(ScriptBoolean postEval, IScriptCodeElement<ScriptCodeExpression> condition, IScriptObject grouping, IScriptObject body)
         {
             return condition != null ? CreateExpression(postEval, condition.CodeObject, grouping, body) : null;
         }
 
         protected override ScriptCodeWhileLoopExpression CreateExpression(IList<IScriptObject> args, InterpreterState state)
         {
-            return args.Count == 4 ? CreateExpression(args[0] as ScriptBoolean, args[1] as IScriptCodeElement<ScriptCodeExpression>, args[2], args[3] as IEnumerable<IScriptObject>) : null;
+            return args.Count == 4 ? CreateExpression(args[0] as ScriptBoolean, args[1] as IScriptCodeElement<ScriptCodeExpression>, args[2], args[3]) : null;
         }
     }
 }

@@ -19,7 +19,7 @@ namespace DynamicScript.Compiler.Ast
         /// Initializes a new 'for-each' loop.
         /// </summary>
         /// <param name="body"></param>
-        public ScriptCodeForEachLoopExpression(ScriptCodeExpression body = null)
+        public ScriptCodeForEachLoopExpression(ScriptCodeExpressionStatement body = null)
             : base(body)
         {
         }
@@ -32,7 +32,7 @@ namespace DynamicScript.Compiler.Ast
         /// <param name="grouping"></param>
         /// <param name="suppressResult"></param>
         /// <param name="body"></param>
-        public ScriptCodeForEachLoopExpression(LoopVariable loopVar, ScriptCodeExpression iterator, YieldGrouping grouping, bool suppressResult, ScriptCodeExpression body)
+        public ScriptCodeForEachLoopExpression(LoopVariable loopVar, ScriptCodeExpression iterator, YieldGrouping grouping, bool suppressResult, ScriptCodeExpressionStatement body)
             : this(body)
         {
             Variable = loopVar;
@@ -73,7 +73,7 @@ namespace DynamicScript.Compiler.Ast
             result.Append(String.Concat(Variable.Name, WhiteSpace, Keyword.In, WhiteSpace, Iterator, WhiteSpace));
             if (Grouping != null) result.Append(String.Concat(Keyword.GroupBy, WhiteSpace, Grouping, WhiteSpace));
             result.Append(String.Concat(Keyword.Do, WhiteSpace));
-            result.Append(Body);
+            result.Append(Body.Expression);
             result.Append((char)Punctuation.RightBracket);
             return result.ToString();
         }
@@ -117,7 +117,7 @@ namespace DynamicScript.Compiler.Ast
 
         internal override ScriptCodeExpression Visit(ISyntaxTreeNode parent, Converter<ISyntaxTreeNode, ISyntaxTreeNode> visitor)
         {
-            Body = Body.Visit(this, visitor);
+            Body.Visit(this, visitor);
             if (Grouping != null) Grouping = Grouping.Visit(this, visitor);
             if (Iterator != null) Iterator = Iterator.Visit(this, visitor);
             if (Variable != null) Variable = Variable.Visit(this, visitor) as LoopVariable;

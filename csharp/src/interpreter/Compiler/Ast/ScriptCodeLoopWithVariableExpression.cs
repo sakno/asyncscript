@@ -144,7 +144,7 @@ namespace DynamicScript.Compiler.Ast
 
         #endregion
 
-        internal ScriptCodeLoopWithVariableExpression(ScriptCodeExpression body)
+        internal ScriptCodeLoopWithVariableExpression(ScriptCodeExpressionStatement body = null)
             :base(body)
         {
         }
@@ -162,7 +162,7 @@ namespace DynamicScript.Compiler.Ast
         {
             get
             {
-                return Variable != null;
+                return Variable != null && base.Completed;
             }
         }
     }

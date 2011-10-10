@@ -20,7 +20,7 @@ namespace DynamicScript.Compiler.Ast
         /// Initializes a new 'for' loop.
         /// </summary>
         /// <param name="body"></param>
-        public ScriptCodeForLoopExpression(ScriptCodeExpression body)
+        public ScriptCodeForLoopExpression(ScriptCodeExpressionStatement body = null)
             : base(body)
         {
         }
@@ -33,7 +33,7 @@ namespace DynamicScript.Compiler.Ast
         /// <param name="grouping"></param>
         /// <param name="suppressResult"></param>
         /// <param name="body"></param>
-        public ScriptCodeForLoopExpression(LoopVariable loopVar, ScriptCodeExpression condition, YieldGrouping grouping, bool suppressResult, ScriptCodeExpression body)
+        public ScriptCodeForLoopExpression(LoopVariable loopVar, ScriptCodeExpression condition, YieldGrouping grouping, bool suppressResult, ScriptCodeExpressionStatement body)
             : this(body)
         {
             Variable = loopVar;
@@ -85,7 +85,7 @@ namespace DynamicScript.Compiler.Ast
         /// <returns></returns>
         protected override Expression Restore()
         {
-            var ctor = LinqHelpers.BodyOf<LoopVariable, ScriptCodeExpression, YieldGrouping, bool, ScriptCodeExpression, ScriptCodeForLoopExpression, NewExpression>((loopvar, cond, grp, sup, body) => new ScriptCodeForLoopExpression(loopvar, cond, grp, sup, body));
+            var ctor = LinqHelpers.BodyOf<LoopVariable, ScriptCodeExpression, YieldGrouping, bool, ScriptCodeExpressionStatement, ScriptCodeForLoopExpression, NewExpression>((loopvar, cond, grp, sup, body) => new ScriptCodeForLoopExpression(loopvar, cond, grp, sup, body));
             return ctor.Update(new[] { LinqHelpers.Restore(Variable), LinqHelpers.Restore(Condition), LinqHelpers.Restore(Grouping), LinqHelpers.Constant(SuppressResult), LinqHelpers.Restore(Body) });
         }
 
@@ -95,12 +95,36 @@ namespace DynamicScript.Compiler.Ast
 
         internal override ScriptCodeExpression Visit(ISyntaxTreeNode parent, Converter<ISyntaxTreeNode, ISyntaxTreeNode> visitor)
         {
-            Body.Visit(this, visitor);
             if (Grouping != null) Grouping = Grouping.Visit(this, visitor);
             if (Condition != null) Condition = Condition.Visit(this, visitor);
             if (Variable != null) Variable = Variable.Visit(this, visitor) as LoopVariable;
-            Body = Body.Visit(this, visitor) as ScriptCodeExpression;
+            Body.Visit(this, visitor);
             return visitor.Invoke(this) as ScriptCodeExpression;
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the loop expression can be optimized.
+        /// </summary>
+        public override bool CanReduce
+        {
+            get { return Condition.CanReduce || Body.CanReduce; }
+        }
+
+        /// <summary>
+        /// Simplifies the loop expression.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        public override ScriptCodeExpression Reduce(InterpretationContext context)
+        {
+            switch (CanReduce)
+            {
+                case true:
+                    var result = new ScriptCodeForLoopExpression(Variable, Condition.Reduce(context), Grouping, SuppressResult, Body);
+                    result.Body.Reduce(context);
+                    return result;
+                default: return this;
+            }
         }
 
         /// <summary>

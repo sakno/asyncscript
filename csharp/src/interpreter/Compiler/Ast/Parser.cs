@@ -337,16 +337,8 @@ namespace DynamicScript.Compiler.Ast
                         break;
                 }
             }
-            lexer.MoveNext(true);   //pass through do keyword.
-            switch (lexer.Current.Value == Punctuation.LeftBrace)   //Parse loop body.
-            {
-                case true:
-                    ParseStatements(lexer, loop.Body, null, Punctuation.RightBrace);
-                    break;
-                default:
-                    loop.Body.Add(ParseExpression, lexer, terminator);
-                    break;
-            }
+            lexer.MoveNext(true);   //pass 'do' keyword
+            loop.Body.SetExpression(ParseExpression, lexer, terminator);
             return loop;
         }
         
@@ -414,7 +406,7 @@ namespace DynamicScript.Compiler.Ast
             {
                 case true:
                     lexer.MoveNext(true);   //pass through colon
-                    return new ScriptCodeQuoteExpression(signature) { Body = ParseExpression(lexer, terminator) };
+                    return new ScriptCodeQuoteExpression(signature, new ScriptCodeExpressionStatement(ParseExpression, lexer, terminator));
                 default: throw CodeAnalysisException.InvalidPunctuation(Punctuation.Colon, lexer.Current);
             }
         }
@@ -450,7 +442,7 @@ namespace DynamicScript.Compiler.Ast
             {
                 case true:
                     lexer.MoveNext(true);   //pass through colon
-                    return new ScriptCodeActionImplementationExpression(actionContract) { Body = ParseExpression(lexer, terminator) };
+                    return new ScriptCodeActionImplementationExpression(actionContract, new ScriptCodeExpressionStatement(ParseExpression, lexer, terminator));
                 default: return actionContract;
             }
         }

@@ -17,7 +17,10 @@ namespace DynamicScript.Compiler.Ast
         IStaticContractBinding<ScriptCodeActionContractExpression>, 
         IEquatable<ScriptCodeActionImplementationExpression>
     {
-        private ScriptCodeExpression m_body;
+        /// <summary>
+        /// Represents body statement.
+        /// </summary>
+        public readonly ScriptCodeExpressionStatement Body;
 
         /// <summary>
         /// Represents signature of the action.
@@ -29,19 +32,10 @@ namespace DynamicScript.Compiler.Ast
         /// </summary>
         /// <param name="signature"></param>
         /// <param name="body"></param>
-        public ScriptCodeActionImplementationExpression(ScriptCodeActionContractExpression signature = null, ScriptCodeExpression body = null)
+        public ScriptCodeActionImplementationExpression(ScriptCodeActionContractExpression signature = null, ScriptCodeExpressionStatement body = null)
         {
             Signature = signature ?? new ScriptCodeActionContractExpression();
-            Body = body;
-        }
-
-        /// <summary>
-        /// Gets or sets body of the action.
-        /// </summary>
-        public ScriptCodeExpression Body
-        {
-            get { return m_body ?? ScriptCodeVoidExpression.Instance; }
-            set { m_body = value; }
+            Body = body ?? new ScriptCodeExpressionStatement(ScriptCodeVoidExpression.Instance);
         }
 
         /// <summary>
@@ -122,9 +116,9 @@ namespace DynamicScript.Compiler.Ast
             return Equals(other as ScriptCodeActionImplementationExpression);
         }
 
-        internal static InvocationExpression Restore(ScriptCodeActionContractExpression signature, ScriptCodeExpression body)
+        internal static InvocationExpression Restore(ScriptCodeActionContractExpression signature, ScriptCodeExpressionStatement body)
         {
-            var ctor = LinqHelpers.BodyOf<ScriptCodeActionContractExpression, ScriptCodeExpression, ScriptCodeActionImplementationExpression, NewExpression>((sig, b) => new ScriptCodeActionImplementationExpression(sig, b));
+            var ctor = LinqHelpers.BodyOf<ScriptCodeActionContractExpression, ScriptCodeExpressionStatement, ScriptCodeActionImplementationExpression, NewExpression>((sig, b) => new ScriptCodeActionImplementationExpression(sig, b));
             return Expression.Invoke(Expression.Lambda(ctor.Update(new[] { LinqHelpers.Restore(signature), LinqHelpers.Restore(body) })));
         }
 
@@ -139,7 +133,7 @@ namespace DynamicScript.Compiler.Ast
 
         internal bool IsPrimitive
         {
-            get { return Body is ScriptCodePrimitiveExpression; }
+            get { return Body.Expression is ScriptCodePrimitiveExpression; }
         }
 
         internal override void Verify()
@@ -149,7 +143,7 @@ namespace DynamicScript.Compiler.Ast
         internal override ScriptCodeExpression Visit(ISyntaxTreeNode parent, Converter<ISyntaxTreeNode, ISyntaxTreeNode> visitor)
         {
             Signature.Visit(this, visitor);
-            if (Body != null) Body = Body.Visit(this, visitor) as ScriptCodeExpression;
+            Body.Visit(this, visitor);
             return visitor.Invoke(this) as ScriptCodeExpression;
         }
 
@@ -160,11 +154,6 @@ namespace DynamicScript.Compiler.Ast
         protected override ScriptCodeExpression Clone()
         {
             return new ScriptCodeActionImplementationExpression(Extensions.Clone(Signature), Extensions.Clone(Body));
-        }
-
-        internal IList<ScriptCodeStatement> GetBody()
-        {
-            return Body is IList<ScriptCodeStatement> ? (IList<ScriptCodeStatement>)Body : new[] { new ScriptCodeExpressionStatement(Body) };
         }
 
         /// <summary>
@@ -182,7 +171,14 @@ namespace DynamicScript.Compiler.Ast
         /// <returns></returns>
         public override ScriptCodeExpression Reduce(InterpretationContext context)
         {
-            return CanReduce ? new ScriptCodeActionImplementationExpression(Signature, Body.Reduce(context)) : this;
+            switch (CanReduce)
+            {
+                case true:
+                    var result = new ScriptCodeActionImplementationExpression(Signature, Body);
+                    result.Body.Reduce(context);
+                    return result;
+                default: return this;
+            }
         }
     }
 }

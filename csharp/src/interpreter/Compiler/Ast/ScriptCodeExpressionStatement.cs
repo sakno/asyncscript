@@ -1,6 +1,7 @@
 ﻿using System;
 using System.CodeDom;
 using System.Linq.Expressions;
+using System.Collections.Generic;
 
 namespace DynamicScript.Compiler.Ast
 {
@@ -27,9 +28,36 @@ namespace DynamicScript.Compiler.Ast
             Expression = expression;
         }
 
+        internal ScriptCodeExpressionStatement(Func<IEnumerator<KeyValuePair<Lexeme.Position, Lexeme>>, Lexeme[], ScriptCodeExpression> parser, IEnumerator<KeyValuePair<Lexeme.Position, Lexeme>> lexer, params Lexeme[] terminator)
+        {
+            SetExpression(parser, lexer, terminator);   
+        }
+
+        internal void SetExpression(Func<IEnumerator<KeyValuePair<Lexeme.Position, Lexeme>>, Lexeme[], ScriptCodeExpression> parser, IEnumerator<KeyValuePair<Lexeme.Position, Lexeme>> lexer, params Lexeme[] terminator)
+        {
+            LinePragma = new ScriptDebugInfo { Start = lexer.Current.Key };
+            Expression = parser.Invoke(lexer, terminator);
+            LinePragma.End = lexer.Current.Key;
+        }
+
         ScriptCodeExpression IScriptExpressionStatement.Expression
         {
             get { return Expression; }
+        }
+
+        internal bool CanReduce
+        {
+            get { return Expression != null && Expression.CanReduce; }
+        }
+
+        internal bool IsComplexExpression
+        {
+            get { return Expression is IList<ScriptCodeExpression>; }
+        }
+
+        internal void Reduce(InterpretationContext context)
+        {
+            if (Expression != null) Expression = Expression.Reduce(context);
         }
 
         /// <summary>
@@ -40,7 +68,7 @@ namespace DynamicScript.Compiler.Ast
         {
             return string.Concat(Expression, Punctuation.Semicolon);
         }
-        
+
         /// <summary>
         /// Extracts expression from the statement.
         /// </summary>
@@ -104,6 +132,13 @@ namespace DynamicScript.Compiler.Ast
         {
             if (Expression != null) Expression = Expression.Visit(this, visitor);
             return visitor.Invoke(this) as ScriptCodeStatement ?? this;
+        }
+
+        internal IList<ScriptCodeStatement> UnwrapStatements()
+        {
+            if (Expression == null) return new ScriptCodeStatement[0];
+            else if (IsComplexExpression) return (IList<ScriptCodeStatement>)Expression;
+            else return new[] { this };
         }
     }
 
