@@ -38,7 +38,7 @@ namespace DynamicScript.Compiler
         private LexemeAnalyzer()
         {
             m_disposed = false;
-            m_column = 1;
+            m_column = 0;
             m_line = 1;
             m_next = false;
         }
@@ -110,15 +110,20 @@ namespace DynamicScript.Compiler
             return m_next ? MoveNext(m_characters, ref m_column, ref m_line, out m_current, out m_next) : false;
         }
 
-        private static bool MoveNext(IEnumerator<char> characters, ref int column, ref int line, out KeyValuePair<Lexeme.Position, Lexeme> lxm, out bool nextRequired)
+        private static bool MoveNext(IEnumerator<char> characters, ref int column, ref int line, out KeyValuePair<Lexeme.Position, Lexeme> state, out bool nextRequired)
         {
-            lxm = new KeyValuePair<Lexeme.Position, Lexeme>(new Lexeme.Position(line, column), Parse(characters, ref column, ref line, out nextRequired));
-            switch (lxm.Value != null)
+            var lexeme = Parse(characters, ref column, ref line, out nextRequired);
+            if (lexeme != null)
             {
-                case true:
-                    return true;
-                default:
-                    return characters.MoveNext() ? MoveNext(characters, ref column, ref line, out lxm, out nextRequired) : false;
+                state = new KeyValuePair<Lexeme.Position, Lexeme>(new Lexeme.Position(line, column), lexeme);
+                return true;
+            }
+            else if (characters.MoveNext())
+                return MoveNext(characters, ref column, ref line, out state, out nextRequired);
+            else
+            {
+                state = default(KeyValuePair<Lexeme.Position, Lexeme>);
+                return false;
             }
         }
 
@@ -210,7 +215,10 @@ namespace DynamicScript.Compiler
                     if (char.IsDigit(characters.Current))
                         return ParseNumber(characters, ref column, line, out hasNext);
                     if (char.IsWhiteSpace(characters.Current))
+                    {
+                        column++;
                         return null;
+                    }
                     else if (char.IsLetter(characters.Current) || characters.Current == Lexeme.Line)
                         return ParseToken(characters, ref column, out hasNext);
                     break;

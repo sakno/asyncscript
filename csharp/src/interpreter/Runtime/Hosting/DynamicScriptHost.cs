@@ -21,9 +21,12 @@ namespace DynamicScript.Runtime.Hosting
         [LoaderOptimization(LoaderOptimization.SingleDomain)]
         private static int Main(string[] args)
         {
-            using (var p = new Compiler.Ast.SyntaxAnalyzer("if true then 2 else 3;"))
-                while (p.MoveNext())
-                    Console.WriteLine(p.Current.ToString());
+            using (var an = new Compiler.Ast.SyntaxAnalyzer("throw 2;"))
+                while (an.MoveNext())
+                    Console.WriteLine(an.Current);
+            var r = DynamicScriptInterpreter.Run(@"
+            throw 2;
+");
             return Execute(new CommandLineParser(Console.Out, Console.In), args);
         }
     }

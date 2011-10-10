@@ -1236,22 +1236,18 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             //The collection of the expressions that represents action implementation
             IList<Expression> body = new List<Expression>(DefaultBodySize);
             var actionExpr = default(LambdaExpression);
-            switch (action.IsPrimitive)
+            if (action.IsPrimitive)//Action has a trivial body consists of the returning value.
+                actionExpr = Expression.Lambda(Translate(action.Body, context), false, parameters);
+            else
             {
-                case true:
-                    //Action has a trivial body consists of the returning value.
-                    actionExpr = Expression.Lambda(Translate(action.Body, context), false, parameters);
-                    break;
-                default:
-                    body.Add(Expression.Label(currentScope.BeginOfScope));
-                    //state = ctx.RuntimeState
-                    body.Add(Expression.Assign(currentScope.StateHolder, Expression.Field(currentScope.Context, InvocationContext.StateField)));
-                    //Iterates through statements and emit
-                    Translate(action.Body.UnwrapStatements(), context, GotoExpressionKind.Return, ref body);
-                    body.Label(context.Scope.EndOfScope, ScriptObject.MakeVoid());   //marks end of the lexical scope.
-                    //Local variables translated to the block variables
-                    actionExpr = Expression.Lambda(Expression.Block(Enumerable.Concat(currentScope.Locals.Values, new[] { currentScope.StateHolder }), body), false, parameters);
-                    break;
+                body.Add(Expression.Label(currentScope.BeginOfScope));
+                //state = ctx.RuntimeState
+                body.Add(Expression.Assign(currentScope.StateHolder, Expression.Field(currentScope.Context, InvocationContext.StateField)));
+                //Iterates through statements and emit
+                Translate(action.Body.UnwrapStatements(), context, GotoExpressionKind.Return, ref body);
+                body.Label(context.Scope.EndOfScope, ScriptObject.MakeVoid());   //marks end of the lexical scope.
+                //Local variables translated to the block variables
+                actionExpr = Expression.Lambda(Expression.Block(Enumerable.Concat(currentScope.Locals.Values, new[] { currentScope.StateHolder }), body), false, parameters);
             }
             context.Pop();  //Leave action scope
             return action.IsAsynchronous ?

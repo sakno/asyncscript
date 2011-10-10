@@ -157,75 +157,75 @@ namespace DynamicScript.Compiler.Ast
             ScriptCodeExpression expression = null;
             do
             {
-                if (lexer.Current.Value is NameToken)   //reference to the name slot
+                if (lexer.Current.Value is NameToken && expression==null) 
                     expression = new ScriptCodeVariableReference((NameToken)lexer.Current.Value);
-                else if (lexer.Current.Value == Keyword.Object)
+                else if (lexer.Current.Value == Keyword.Object && expression == null)
                     expression = ScriptCodeSuperContractExpression.Instance;
-                else if (lexer.Current.Value == Keyword.String)
+                else if (lexer.Current.Value == Keyword.String && expression == null)
                     expression = ScriptCodeStringContractExpression.Instance;
-                else if (lexer.Current.Value == Keyword.Dimensional)
+                else if (lexer.Current.Value == Keyword.Dimensional && expression == null)
                     expression = ScriptCodeDimensionalContractExpression.Instance;
-                else if (lexer.Current.Value == Keyword.Type)
+                else if (lexer.Current.Value == Keyword.Type && expression == null)
                     expression = ScriptCodeMetaContractExpression.Instance;
-                else if (lexer.Current.Value == Keyword.Async)
+                else if (lexer.Current.Value == Keyword.Async && expression == null)
                 { expression = ScriptCodeAsyncExpression.Parse(lexer, terminator); continue; }
-                else if (lexer.Current.Value == Keyword.True)
+                else if (lexer.Current.Value == Keyword.True && expression == null)
                     expression = new ScriptCodeBooleanExpression(true);
-                else if (lexer.Current.Value == Keyword.False)
+                else if (lexer.Current.Value == Keyword.False && expression == null)
                     expression = new ScriptCodeBooleanExpression(false);
-                else if (lexer.Current.Value == Keyword.Boolean)
+                else if (lexer.Current.Value == Keyword.Boolean && expression == null)
                     expression = ScriptCodeBooleanContractExpression.Instance;
-                else if (lexer.Current.Value == Keyword.Real)
+                else if (lexer.Current.Value == Keyword.Real && expression == null)
                     expression = ScriptCodeRealContractExpression.Instance;
-                else if (lexer.Current.Value == Keyword.This)
+                else if (lexer.Current.Value == Keyword.This && expression == null)
                     expression = ScriptCodeThisExpression.Instance;
-                else if (lexer.Current.Value == Keyword.Integer)
+                else if (lexer.Current.Value == Keyword.Integer && expression == null)
                     expression = ScriptCodeIntegerContractExpression.Instance;
-                else if (lexer.Current.Value == Keyword.Void)
+                else if (lexer.Current.Value == Keyword.Void && expression == null)
                     expression = ScriptCodeVoidExpression.Instance;
-                else if (lexer.Current.Value == Keyword.FinSet)
+                else if (lexer.Current.Value == Keyword.FinSet && expression == null)
                     expression = ScriptCodeFinSetContractExpression.Instance;
-                else if (lexer.Current.Value == Keyword.Expr)
+                else if (lexer.Current.Value == Keyword.Expr && expression == null)
                     expression = ScriptCodeExpressionContractExpression.Instance;
-                else if (lexer.Current.Value == Keyword.Stmt)
+                else if (lexer.Current.Value == Keyword.Stmt && expression == null)
                     expression = ScriptCodeStatementContractExpression.Instance;
-                else if (lexer.Current.Value == Punctuation.LeftBrace)
+                else if (lexer.Current.Value == Punctuation.LeftBrace && expression == null)
                 { expression = ScriptCodeComplexExpression.Parse(lexer); continue; }
-                else if (lexer.Current.Value == Keyword.Await)
+                else if (lexer.Current.Value == Keyword.Await && expression == null)
                 { expression = ScriptCodeAwaitExpression.Parse(lexer, terminator); continue; }
-                else if (lexer.Current.Value is IntegerLiteral)
+                else if (lexer.Current.Value is IntegerLiteral && expression == null)
                     expression = new ScriptCodeIntegerExpression((IntegerLiteral)lexer.Current.Value);
-                else if (lexer.Current.Value is StringLiteral)
+                else if (lexer.Current.Value is StringLiteral && expression == null)
                     expression = new ScriptCodeStringExpression((StringLiteral)lexer.Current.Value);
-                else if (lexer.Current.Value == Keyword.Caseof)
+                else if (lexer.Current.Value == Keyword.Caseof && expression == null)
                 { expression = ScriptCodeSelectionExpression.Parse(lexer, terminator); continue; }
-                else if (lexer.Current.Value == Keyword.Fork)
+                else if (lexer.Current.Value == Keyword.Fork && expression == null)
                 { expression = ScriptCodeForkExpression.Parse(lexer, terminator); continue; }
-                else if (lexer.Current.Value is RealLiteral)
+                else if (lexer.Current.Value is RealLiteral && expression == null)
                     expression = new ScriptCodeRealExpression((RealLiteral)lexer.Current.Value);
-                else if (lexer.Current.Value == Keyword.Callable)
+                else if (lexer.Current.Value == Keyword.Callable && expression == null)
                     expression = ScriptCodeCallableContractExpression.Instance;
-                else if (lexer.Current.Value is PlaceholderID)
+                else if (lexer.Current.Value is PlaceholderID && expression == null)
                     expression = new ScriptCodePlaceholderExpression((PlaceholderID)lexer.Current.Value);
-                else if (lexer.Current.Value == Punctuation.LeftBrace)      //parse object
+                else if (lexer.Current.Value == Punctuation.LeftBrace && expression == null)      //parse object
                     expression = ScriptCodeObjectExpression.Parse(lexer, terminator);
-                else if (lexer.Current.Value.OneOf(Keyword.Checked, Keyword.Unchecked)) //parse context
+                else if (lexer.Current.Value.OneOf(Keyword.Checked, Keyword.Unchecked) && expression == null) //parse context
                 { expression = ScriptCodeContextExpression.Parse(lexer, terminator); continue; }
-                else if (lexer.Current.Value == Keyword.Try)        //parse SEH
+                else if (lexer.Current.Value == Keyword.Try && expression == null)        //parse SEH
                 { expression = ScriptCodeTryElseFinallyExpression.Parse(lexer, terminator); continue; }
-                else if (lexer.Current.Value == Keyword.Do)         //parse do-while-loop expression
+                else if (lexer.Current.Value == Keyword.Do && expression == null)         //parse do-while-loop expression
                 { expression = ScriptCodeWhileLoopExpression.ParseDoWhileLoop(lexer, terminator); continue; }
-                else if (lexer.Current.Value == Keyword.While)      //parse while-loop expresion
+                else if (lexer.Current.Value == Keyword.While && expression == null)      //parse while-loop expresion
                 { expression = ScriptCodeWhileLoopExpression.ParseWhileLoop(lexer, terminator); continue; }
-                else if (lexer.Current.Value == Keyword.If)         //parse conditional expression
+                else if (lexer.Current.Value == Keyword.If && expression == null)         //parse conditional expression
                 { expression = ScriptCodeConditionalExpression.Parse(lexer, terminator); continue; }
-                else if (lexer.Current.Value == Keyword.For)         //parse for loop
+                else if (lexer.Current.Value == Keyword.For && expression == null)         //parse for loop
                 { expression = ParseForLoop(lexer, terminator); continue; }
-                else if (lexer.Current.Value == Punctuation.Dog)    //parse action
+                else if (lexer.Current.Value == Punctuation.Dog && expression == null)    //parse action
                 { expression = lexer.MoveNext() ? ParseAction(lexer, terminator) : ScriptCodeCurrentActionExpression.Instance; continue; }
-                else if (lexer.Current.Value == Punctuation.DoubleDog) //parse quoted expression list
+                else if (lexer.Current.Value == Punctuation.DoubleDog && expression == null) //parse quoted expression list
                 { expression = lexer.MoveNext() ? ParseQuoteExpression(lexer, terminator) : ScriptCodeCurrentQuoteExpression.Instance; continue; }
-                else if (lexer.Current.Value == Punctuation.LeftSquareBracket)//parse indexer or array type or array
+                else if (lexer.Current.Value == Punctuation.LeftSquareBracket && expression!=null)//parse indexer or array type or array
                     switch (expression == null || InterpreterServices.HighestPriority > priority)
                     {
                         case true:

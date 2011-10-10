@@ -136,6 +136,11 @@ namespace DynamicScript.Compiler.Ast
             get { return Body.Expression is ScriptCodePrimitiveExpression; }
         }
 
+        internal bool IsComplex
+        {
+            get { return Body.IsComplexExpression; }
+        }
+
         internal override void Verify()
         {
         }
