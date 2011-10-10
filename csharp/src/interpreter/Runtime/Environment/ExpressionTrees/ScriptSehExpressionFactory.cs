@@ -18,7 +18,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             private const string SecondParamName = "dangerouseCode";
 
             public ModifyAction()
-                : base(Instance, new ScriptActionContract.Parameter(SecondParamName, new ScriptArrayContract(ScriptStatementFactory.Instance)))
+                : base(Instance, new ScriptActionContract.Parameter(SecondParamName, ScriptExpressionFactory.Instance))
             {
             }
         }
@@ -38,16 +38,16 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class GetFinallyBodyAction : CodeElementPartProvider<IScriptArray>
+        private sealed class GetFinallyBodyAction : CodeElementPartProvider<IScriptCodeElement<ScriptCodeExpression>>
         {
             public GetFinallyBodyAction()
-                : base(Instance, new ScriptArrayContract(ScriptStatementFactory.Instance))
+                : base(Instance, ScriptExpressionFactory.Instance)
             {
             }
 
-            protected override IScriptArray Invoke(ScriptCodeTryElseFinallyExpression element, InterpreterState state)
+            protected override IScriptCodeElement<ScriptCodeExpression> Invoke(ScriptCodeTryElseFinallyExpression element, InterpreterState state)
             {
-                return ScriptStatementFactory.CreateStatements(element.Finally, state);
+                return Convert(element.Finally.Expression) as IScriptCodeElement<ScriptCodeExpression>;
             }
         }
 
@@ -86,17 +86,17 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             private const string SecondParamName = "idx";
 
             public GetTrapBodyAction()
-                : base(FirstParamName, Instance, SecondParamName, ScriptIntegerContract.Instance, new ScriptArrayContract(ScriptStatementFactory.Instance))
+                : base(FirstParamName, Instance, SecondParamName, ScriptIntegerContract.Instance, ScriptExpressionFactory.Instance)
             {
             }
 
-            private static IScriptArray GetTrapBody(IList<ScriptCodeTryElseFinallyExpression.FailureTrap> traps, long index, InterpreterState state)
+            private static IScriptCodeElement<ScriptCodeExpression> GetTrapBody(IList<ScriptCodeTryElseFinallyExpression.FailureTrap> traps, long index, InterpreterState state)
             {
                 switch (index.Between(0, traps.Count - 1))
                 {
                     case true:
                         var v = traps[(int)index];
-                        return v != null ? ScriptStatementFactory.CreateStatements(v.Handler, state) : null;
+                        return v != null ? Convert(v.Handler.Expression) as IScriptCodeElement<ScriptCodeExpression> : null;
                     default: return null;
                 }
             }
@@ -108,46 +108,42 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class SetFinallyBodyAction : ScriptAction<IScriptCodeElement<ScriptCodeTryElseFinallyExpression>, IScriptArray>
+        private sealed class SetFinallyBodyAction : ScriptAction<IScriptCodeElement<ScriptCodeTryElseFinallyExpression>, IScriptCodeElement<ScriptCodeExpression>>
         {
             private const string FirstParamName = "seh";
             private const string SecondParamName = "body";
 
             public SetFinallyBodyAction()
-                : base(FirstParamName, Instance, SecondParamName, new ScriptArrayContract(ScriptStatementFactory.Instance))
+                : base(FirstParamName, Instance, SecondParamName, ScriptExpressionFactory.Instance)
             {
             }
 
-            protected override void Invoke(InvocationContext ctx, IScriptCodeElement<ScriptCodeTryElseFinallyExpression> seh, IScriptArray body)
+            protected override void Invoke(InvocationContext ctx, IScriptCodeElement<ScriptCodeTryElseFinallyExpression> seh, IScriptCodeElement<ScriptCodeExpression> body)
             {
-                seh.CodeObject.Finally.Clear();
-                ScriptStatementFactory.CreateStatements(body, seh.CodeObject.Finally);
+                seh.CodeObject.Finally.Expression = body != null ? body.CodeObject : ScriptCodeVoidExpression.Instance;
             }
         }
 
         [ComVisible(false)]
-        private sealed class SetTrapBodyAction : ScriptAction<IScriptCodeElement<ScriptCodeTryElseFinallyExpression>, ScriptInteger, IScriptArray>
+        private sealed class SetTrapBodyAction : ScriptAction<IScriptCodeElement<ScriptCodeTryElseFinallyExpression>, ScriptInteger, IScriptCodeElement<ScriptCodeExpression>>
         {
             private const string FirstParamName = "seh";
             private const string SecondParamName = "idx";
             private const string ThirdParamName = "body";
 
             public SetTrapBodyAction()
-                : base(FirstParamName, Instance, SecondParamName, ScriptIntegerContract.Instance, ThirdParamName, new ScriptArrayContract(ScriptStatementFactory.Instance))
+                : base(FirstParamName, Instance, SecondParamName, ScriptIntegerContract.Instance, ThirdParamName, ScriptExpressionFactory.Instance)
             {
             }
 
-            private static void SetTrapBody(IList<ScriptCodeTryElseFinallyExpression.FailureTrap> traps, long index, IScriptArray body)
+            private static void SetTrapBody(IList<ScriptCodeTryElseFinallyExpression.FailureTrap> traps, long index, IScriptCodeElement<ScriptCodeExpression> body)
             {
                 var v = index.Between(0, traps.Count - 1) ? traps[(int)index] : null;
                 if (v != null)
-                {
-                    v.Handler.Clear();
-                    ScriptStatementFactory.CreateStatements(body, v.Handler);
-                }
+                    v.Handler.Expression = body != null ? body.CodeObject : ScriptCodeVoidExpression.Instance;
             }
 
-            protected override void Invoke(InvocationContext ctx, IScriptCodeElement<ScriptCodeTryElseFinallyExpression> seh, ScriptInteger idx, IScriptArray body)
+            protected override void Invoke(InvocationContext ctx, IScriptCodeElement<ScriptCodeTryElseFinallyExpression> seh, ScriptInteger idx, IScriptCodeElement<ScriptCodeExpression> body)
             {
                 SetTrapBody(seh.CodeObject.Traps, idx, body);
             }
@@ -176,19 +172,14 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
         public static readonly ScriptSehExpressionFactory Instance = new ScriptSehExpressionFactory();
 
-        public static ScriptSehExpression CreateExpression(IEnumerable<IScriptObject> dangerousCode)
+        public static ScriptSehExpression CreateExpression(IScriptCodeElement<ScriptCodeExpression> dangerousCode)
         {
             return new ScriptSehExpression(ScriptSehExpression.CreateExpression(dangerousCode));
         }
 
         public override ScriptSehExpression CreateCodeElement(IList<IScriptObject> args, InterpreterState state)
         {
-            switch (args.Count)
-            {
-                case 0: return CreateExpression(Enumerable.Empty<IScriptObject>());
-                case 1: return CreateExpression(args[0] as IEnumerable<IScriptObject> ?? args);
-                default: return CreateExpression(args);
-            }
+            return args.Count == 1 ? CreateExpression(args[0] as IScriptCodeElement<ScriptCodeExpression>) : null;
         }
 
         public override void Clear()

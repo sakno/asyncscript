@@ -250,19 +250,19 @@ namespace DynamicScript.Compiler.Ast
             AreEqual(conditional, "if 10 then {\r\nvar a=2;\r\na=10;\r\n}\r\n else 20");
         }
 
-        [Test(Description="Test for SEH expression tree.")]
+        [Test(Description = "Test for SEH expression tree.")]
         public void TryElseFinallyTest()
         {
             var seh = new ScriptCodeTryElseFinallyExpression();
-            seh.DangerousCode.Add(new ScriptCodeFaultStatement { Error = new ScriptCodeIntegerExpression(0) });
+            seh.DangerousCode.Expression = new ScriptCodeComplexExpression { new ScriptCodeFaultStatement { Error = new ScriptCodeIntegerExpression(0) } };
             var trap = new ScriptCodeTryElseFinallyExpression.FailureTrap
             {
                 Filter = new ScriptCodeVariableDeclaration { ContractBinding = ScriptCodeIntegerContractExpression.Instance, Name = "e" }
             };
-            trap.Handler.Add((ScriptCodeExpressionStatement)new ScriptCodeIntegerExpression(10));
+            trap.Handler.Expression = new ScriptCodeIntegerExpression(10);
             seh.Traps.Add(trap);
             trap = new ScriptCodeTryElseFinallyExpression.FailureTrap();
-            trap.Handler.Add((ScriptCodeExpressionStatement)new ScriptCodeStringExpression("str"));
+            trap.Handler.Expression = new ScriptCodeStringExpression("str");
             seh.Traps.Add(trap);
             AreEqual(seh, "try {fault 0;} else (var e:integer)\r\n10 else 'str'");
         }

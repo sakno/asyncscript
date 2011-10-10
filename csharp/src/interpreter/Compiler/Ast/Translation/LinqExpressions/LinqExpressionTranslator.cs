@@ -619,11 +619,11 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             foreach (var t in traps)
             {
                 var currentScope = context.Push(CatchScope.Create);    //begin of catch block
-                IList<Expression> catchBlock = new List<Expression>(t.Handler.Count + 1);
+                IList<Expression> catchBlock = new List<Expression>(10);
                 //declares catch variable
                 var catchVar = default(ParameterExpression);
                 if (t.Filter != null) context.Scope.DeclareVariable(t.Filter.Name, out catchVar);
-                Translate(t.Handler, context, GotoExpressionKind.Goto, ref catchBlock);
+                Translate(t.Handler.UnwrapStatements(), context, GotoExpressionKind.Goto, ref catchBlock);
                 catchBlock.Add(Expression.Empty());
                 var filter = catchVar != null ? (Expression)ScriptFault.BindCatch(errorReceiver, catchVar, context.Scope.StateHolder) : Expression.Constant(true);
                 result.Add(Expression.Block(currentScope.Locals.Values, catchVar != null ? BindToVariable(catchVar, t.Filter, context) : Expression.Empty(),
@@ -658,8 +658,8 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         {
             //translates try block
             GenericScope currentScope = context.Push(TryScope.Create);
-            IList<Expression> body = new List<Expression>(tryElseFinally.DangerousCode.Count + 1) { Expression.Label(context.Scope.BeginOfScope) };
-            Translate(tryElseFinally.DangerousCode, context, GotoExpressionKind.Goto, ref body);
+            IList<Expression> body = new List<Expression>(10) { Expression.Label(context.Scope.BeginOfScope) };
+            Translate(tryElseFinally.DangerousCode.UnwrapStatements(), context, GotoExpressionKind.Goto, ref body);
             body.Add(Expression.Label(context.Scope.EndOfScope, ScriptObject.MakeVoid()));
             var @try = Expression.Block(currentScope.Locals.Values, body);
             context.Pop();
@@ -668,20 +668,21 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             switch (tryElseFinally.Traps.Count)
             {
                 case 0:
-                    @catch = tryElseFinally.Finally.Count == 0 ? Expression.Catch(typeof(object), ScriptObject.MakeVoid()) : null;
+                    @catch = tryElseFinally.Finally.IsVoidExpression ? Expression.Catch(typeof(object), ScriptObject.MakeVoid()) : null;
                     break;
                 default:
                     @catch = Translate(tryElseFinally.Traps, context);
                     break;
             }
+            var finallyBlock = tryElseFinally.Finally.UnwrapStatements();
             //translates finally block
-            switch (tryElseFinally.Finally.Count)
+            switch (finallyBlock.Count)
             {
                 case 0: return Expression.TryCatch(@try, @catch);
                 default:
                     currentScope = context.Push(FinallyScope.Create);
-                    body = new List<Expression>(tryElseFinally.Finally.Count + 1) { Expression.Label(context.Scope.BeginOfScope) };
-                    Translate(tryElseFinally.Finally, context, GotoExpressionKind.Goto, ref body);
+                    body = new List<Expression>(finallyBlock.Count + 1) { Expression.Label(context.Scope.BeginOfScope) };
+                    Translate(finallyBlock, context, GotoExpressionKind.Goto, ref body);
                     body.Add(Expression.Label(context.Scope.EndOfScope, ScriptObject.MakeVoid()));
                     var @finally = Expression.Block(currentScope.Locals.Values, body);
                     context.Pop();

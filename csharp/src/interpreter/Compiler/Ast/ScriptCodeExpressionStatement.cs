@@ -55,6 +55,11 @@ namespace DynamicScript.Compiler.Ast
             get { return Expression is IList<ScriptCodeExpression>; }
         }
 
+        internal bool IsVoidExpression
+        {
+            get { return Expression == null || Expression is ScriptCodeVoidExpression; }
+        }
+
         internal void Reduce(InterpretationContext context)
         {
             if (Expression != null) Expression = Expression.Reduce(context);

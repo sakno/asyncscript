@@ -44,7 +44,7 @@ namespace DynamicScript.Compiler.Ast
             /// Initializes a new exception handler.
             /// </summary>
             /// <param name="filter"></param>
-            /// <param name="handler"></param>
+            /// <param name="body"></param>
             public FailureTrap(ScriptCodeVariableDeclaration filter, ScriptCodeExpressionStatement body)
                 : this(body)
             {
