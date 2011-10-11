@@ -22,7 +22,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
     {
         #region Nested Types
         [ComVisible(false)]
-        private sealed class ConcretizeAction : ScriptFunc<IScriptCodeElement<ScriptCodeExpression>, IScriptArray>
+        private sealed class DeduceAction : ScriptFunc<IScriptCodeElement<ScriptCodeExpression>, IScriptArray>
         {
             #region Nested Types
             [ComVisible(false)]
@@ -72,7 +72,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             private const string FirstParamName = "tree";
             private const string SecondParamName = "expressions";
 
-            public ConcretizeAction()
+            public DeduceAction()
                 : base(FirstParamName, Instance, SecondParamName, new ScriptArrayContract(Instance), Instance)
             {
             }
@@ -233,6 +233,8 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
                     result = new ScriptSehExpression((ScriptCodeTryElseFinallyExpression)input);
                 else if (input is ScriptCodePlaceholderExpression)
                     result = new ScriptPlaceholderExpression((ScriptCodePlaceholderExpression)input);
+                else if (input is ScriptCodeComplexExpression)
+                    result = new ScriptComplexExpression((ScriptCodeComplexExpression)input);
                 else result = null;
                 return result != null;
             }
@@ -327,7 +329,8 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         private IRuntimeSlot m_clone;
         private IRuntimeSlot m_visit;
         private IRuntimeSlot m_placeholder;
-        private IRuntimeSlot m_concretize;
+        private IRuntimeSlot m_deduce;
+        private IRuntimeSlot m_cplx;
 
         /// <summary>
         /// Deserializes runtime expression factory.
@@ -754,6 +757,14 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         /// <summary>
+        /// Gets an expression factory that produces a complex expression.
+        /// </summary>
+        public static IScriptExpressionContract<ScriptCodeComplexExpression> Complex
+        {
+            get{return ScriptComplexExpressionFactory.Instance;}
+        }
+
+        /// <summary>
         /// Releases all memory associated with the cached runtime slots.
         /// </summary>
         public void Clear()
@@ -773,9 +784,11 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             m_action =
             m_seh =
             m_clone =
-            m_visit=
-            m_placeholder=m_concretize=
-            m_selection = null;
+            m_visit =
+            m_placeholder = m_deduce =
+            m_selection =
+            m_cplx = null;
+            ScriptComplexExpressionFactory.Instance.Clear();
             ScriptPlaceholderExpressionFactory.Instance.Clear();
             ScriptSelectionExpressionFactory.Instance.Clear();
             ScriptSehExpressionFactory.Instance.Clear();
@@ -803,9 +816,14 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         #region Runtime Slots
-        IRuntimeSlot IExpressionFactorySlots.Concretize
+        IRuntimeSlot IExpressionFactorySlots.Cplx
         {
-            get { return CacheConst<ConcretizeAction>(ref m_concretize); }
+            get { return CacheConst(ref m_cplx, () => Complex); }
+        }
+
+        IRuntimeSlot IExpressionFactorySlots.Deduce
+        {
+            get { return CacheConst<DeduceAction>(ref m_deduce); }
         }
 
         IRuntimeSlot IExpressionFactorySlots.Placeholder

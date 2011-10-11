@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq.Expressions;
+using System.Diagnostics;
 
 namespace DynamicScript.Runtime.Environment
 {
@@ -45,15 +46,31 @@ namespace DynamicScript.Runtime.Environment
             get { return m_fault; }
         }
 
-        internal static NewExpression Bind(Expression faultObj, ParameterExpression stateVar)
+        /// <summary>
+        /// Throws a script-compliant exception.
+        /// </summary>
+        /// <param name="faultObj">An exception object.</param>
+        /// <param name="state">Internal interpreter state.</param>
+        /// <returns>Never returns.</returns>
+#if !DEBUG
+        [DebuggerHidden]
+        [DebuggerNonUserCode]
+#endif
+        public static IScriptObject Throw(IScriptObject faultObj, InterpreterState state)
+        {
+            throw new ScriptFault(faultObj, state);
+        }
+
+        internal static NewExpression New(Expression faultObj, ParameterExpression stateVar)
         {
             var ctor = LinqHelpers.BodyOf<IScriptObject, InterpreterState, ScriptFault, NewExpression>((f, s) => new ScriptFault(f, s));
             return ctor.Update(new Expression[] { faultObj, stateVar });
         }
 
-        internal static UnaryExpression Throw(Expression faultObj, ParameterExpression stateVar)
+        internal static MethodCallExpression Throw(Expression faultObj, ParameterExpression stateVar)
         {
-            return Expression.Throw(Bind(faultObj, stateVar));
+            var @throw = LinqHelpers.BodyOf<IScriptObject, InterpreterState, IScriptObject, MethodCallExpression>((f, s) => Throw(f, s));
+            return @throw.Update(null, new[] { faultObj, stateVar });
         }
 
         private static IScriptObject Unwrap(object e)

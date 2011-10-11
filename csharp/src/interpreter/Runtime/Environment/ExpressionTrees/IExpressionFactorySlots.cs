@@ -70,7 +70,8 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
         IRuntimeSlot Placeholder { get; }   //placeholder expression
 
-        IRuntimeSlot Concretize { get; }    //replace all placeholders in the expression
+        IRuntimeSlot Deduce { get; }    //replace all placeholders in the expression
 
+        IRuntimeSlot Cplx { get; }  //complex expression
     }
 }

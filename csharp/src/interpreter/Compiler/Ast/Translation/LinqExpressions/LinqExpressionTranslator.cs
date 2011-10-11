@@ -267,7 +267,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns>LINQ-ET representation of the fault statemenet.</returns>
         protected override Expression Translate(ScriptCodeFaultStatement fault, TranslationContext context)
         {
-            return Expression.Block(ScriptFault.Throw(Translate(fault.Error, context), context.Scope.StateHolder), ScriptObject.MakeVoid());
+            return ScriptFault.Throw(Translate(fault.Error, context), context.Scope.StateHolder);
         }
 
         /// <summary>

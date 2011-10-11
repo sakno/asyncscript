@@ -139,6 +139,7 @@
     <Compile Include="Runtime\Environment\ExpressionTrees\IForExpressionFactorySlots.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\ILoopExpressionFactorySlots.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\IObjectExpressionFactorySlots.cs" />
+    <Compile Include="Runtime\Environment\ExpressionTrees\IScriptComplexExpressionFactorySlots.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\ISehExpressionFactorySlots.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\ISelectionExpressionFactorySlots.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\IWhileExpressionFactorySlots.cs" />
@@ -146,6 +147,8 @@
     <Compile Include="Runtime\Environment\ExpressionTrees\ScriptActionContractExpressionFactory.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\ScriptActionExpression.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\ScriptActionExpressionFactory.cs" />
+    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptComplexExpression.cs" />
+    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptComplexExpressionFactory.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\ScriptForExpression.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\IComplexExpressionFactorySlots.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\IForEachExpressionFactorySlots.cs" />
