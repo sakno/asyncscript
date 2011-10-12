@@ -1,4 +1,4 @@
-DynamicScript - imperative script programming language with lambdas, dynamic typing, code polymorphism.
+DynamicScript - imperative script programming language with lambdas, dynamic typing, code templating and quotations.
 
 1. Requirements
 ==================
