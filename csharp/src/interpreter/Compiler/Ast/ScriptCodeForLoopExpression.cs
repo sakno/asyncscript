@@ -49,11 +49,7 @@ namespace DynamicScript.Compiler.Ast
         public ScriptCodeExpression Condition
         {
             get { return m_condition ?? ScriptCodeVoidExpression.Instance; }
-            set
-            {
-                m_condition = value;
-                OnPropertyChanged("Condition");
-            }
+            set { m_condition = value; }
         }
 
         /// <summary>

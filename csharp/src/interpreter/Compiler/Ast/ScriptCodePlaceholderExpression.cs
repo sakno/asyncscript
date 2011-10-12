@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq.Expressions;
+using System.Collections.Generic;
 
 namespace DynamicScript.Compiler.Ast
 {
@@ -13,6 +14,36 @@ namespace DynamicScript.Compiler.Ast
     [Serializable]
     public sealed class ScriptCodePlaceholderExpression: ScriptCodeExpression, IEquatable<ScriptCodePlaceholderExpression>
     {
+        #region Nested Types
+        [ComVisible(false)]
+        private sealed class DeductionVisitor
+        {
+            public readonly IList<ScriptCodeExpression> Substitutes;
+
+            public DeductionVisitor(IList<ScriptCodeExpression> substitutes)
+            {
+                Substitutes = substitutes ?? new ScriptCodeExpression[0];
+            }
+
+            private static ScriptCodeExpression Deduce(long placeholderID, IList<ScriptCodeExpression> substitutes)
+            {
+                return placeholderID.Between(0, substitutes.Count - 1) ? substitutes[(int)placeholderID] : null;
+            }
+
+            private ISyntaxTreeNode Visit(ISyntaxTreeNode node)
+            {
+                if (node is ScriptCodePlaceholderExpression)
+                    node = Deduce(((ScriptCodePlaceholderExpression)node).PlaceholderID, Substitutes) ?? node;
+                return node;
+            }
+
+            public static implicit operator Converter<ISyntaxTreeNode, ISyntaxTreeNode>(DeductionVisitor visitor)
+            {
+                return visitor != null ? new Converter<ISyntaxTreeNode, ISyntaxTreeNode>(visitor.Visit) : null;
+            }
+        }
+        #endregion
+
         /// <summary>
         /// Represents placeholder identifier.
         /// </summary>
@@ -92,6 +123,18 @@ namespace DynamicScript.Compiler.Ast
         public override string ToString()
         {
             return string.Concat(Lexeme.Percent, Lexeme.Percent, PlaceholderID);
+        }
+
+        /// <summary>
+        /// Removes all placeholders with the specified expressions.
+        /// </summary>
+        /// <param name="target"></param>
+        /// <param name="substitutes"></param>
+        /// <param name="parent"></param>
+        /// <returns></returns>
+        public static ScriptCodeExpression Expand(ScriptCodeExpression target, IList<ScriptCodeExpression> substitutes, ScriptCodeExpression parent=null)
+        {
+            return target.Visit(parent, new DeductionVisitor(substitutes)) as ScriptCodeExpression ?? target;
         }
     }
 }

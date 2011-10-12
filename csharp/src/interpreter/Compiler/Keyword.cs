@@ -214,5 +214,10 @@ namespace DynamicScript.Compiler
         /// Represents statement contract.
         /// </summary>
         public static readonly Keyword Stmt = new Keyword("stmt");
+
+        /// <summary>
+        /// Represents an operator that expands quouted expression.
+        /// </summary>
+        public static readonly Keyword Expandq = new Keyword("expandq");
     }
 }

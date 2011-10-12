@@ -47,12 +47,8 @@ namespace DynamicScript.Compiler.Ast
         /// </summary>
         public ScriptCodeExpression Target
         {
-            get { return m_target; }
-            set
-            {
-                m_target = value;
-                OnPropertyChanged("Target");
-            }
+            get { return m_target ?? ScriptCodeVoidExpression.Instance; }
+            set{  m_target = value;}
         }
 
         /// <summary>

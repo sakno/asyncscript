@@ -790,8 +790,18 @@ namespace DynamicScript.Compiler.Ast.Translation
                 return Translate((ScriptCodeCurrentQuoteExpression)expression, context);
             else if (expression is ScriptCodePlaceholderExpression)
                 return Translate((ScriptCodePlaceholderExpression)expression, context);
+            else if (expression is ScriptCodeExpandExpression)
+                return Translate((ScriptCodeExpandExpression)expression, context);
             else return null;
         }
+
+        /// <summary>
+        /// Translates expand expression.
+        /// </summary>
+        /// <param name="expandexpr"></param>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        protected abstract TResult Translate(ScriptCodeExpandExpression expandexpr, TranslationContext context);
 
         /// <summary>
         /// Translates complex expression.

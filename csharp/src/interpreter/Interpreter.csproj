@@ -101,6 +101,7 @@
     <Compile Include="Compiler\Ast\ScriptCodeCurrentQuoteExpression.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeDimensionalContractExpression.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeEmptyStatement.cs" />
+    <Compile Include="Compiler\Ast\ScriptCodeExpandExpression.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeExpression.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeExpressionCollection.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeExpressionContractExpression.cs" />
@@ -149,6 +150,8 @@
     <Compile Include="Runtime\Environment\ExpressionTrees\ScriptActionExpressionFactory.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\ScriptComplexExpression.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\ScriptComplexExpressionFactory.cs" />
+    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptExpandExpression.cs" />
+    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptExpandExpressionFactory.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\ScriptForExpression.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\IComplexExpressionFactorySlots.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\IForEachExpressionFactorySlots.cs" />

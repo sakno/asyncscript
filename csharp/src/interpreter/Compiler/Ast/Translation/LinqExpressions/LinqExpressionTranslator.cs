@@ -186,6 +186,17 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         }
 
         /// <summary>
+        /// Translates expand operator.
+        /// </summary>
+        /// <param name="expandexpr"></param>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        protected override Expression Translate(ScriptCodeExpandExpression expandexpr, TranslationContext context)
+        {
+            return ScriptExpressionFactory.Expand(Translate(expandexpr.Target, context), expandexpr.Substitutes, context.Scope.StateHolder);
+        }
+
+        /// <summary>
         /// 
         /// </summary>
         /// <param name="expression"></param>

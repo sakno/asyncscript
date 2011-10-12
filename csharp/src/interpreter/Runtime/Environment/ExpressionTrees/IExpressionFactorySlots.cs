@@ -73,5 +73,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         IRuntimeSlot Deduce { get; }    //replace all placeholders in the expression
 
         IRuntimeSlot Cplx { get; }  //complex expression
+
+        IRuntimeSlot Expand { get; }
     }
 }

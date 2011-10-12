@@ -3,7 +3,6 @@ using System.CodeDom;
 using System.Linq.Expressions;
 using System.Linq;
 using System.Collections.Generic;
-using System.ComponentModel;
 
 namespace DynamicScript.Compiler.Ast
 {
@@ -14,7 +13,7 @@ namespace DynamicScript.Compiler.Ast
     /// </summary>
     [Serializable]
     [ComVisible(false)]
-    public abstract class ScriptCodeExpression : CodeExpression, ISyntaxTreeNode, IEquatable<ScriptCodeExpression>, INotifyPropertyChanged
+    public abstract class ScriptCodeExpression : CodeExpression, ISyntaxTreeNode, IEquatable<ScriptCodeExpression>
     {
         #region Nested Types
         /// <summary>
@@ -36,13 +35,8 @@ namespace DynamicScript.Compiler.Ast
         }
         #endregion
 
-        private int? m_hash;
-        private PropertyChangedEventHandler PropertyChanged;
-
         internal ScriptCodeExpression()
         {
-            m_hash = null;
-            PropertyChanged = null;
         }
 
         /// <summary>
@@ -99,8 +93,7 @@ namespace DynamicScript.Compiler.Ast
         /// <returns>A hash code that uniquely identifies this expression.</returns>
         public sealed override int GetHashCode()
         {
-            if(m_hash==null)m_hash=StringEqualityComparer.GetHashCode(ToString());
-            return m_hash.Value;
+            return StringEqualityComparer.GetHashCode(ToString());
         }
 
         /// <summary>
@@ -158,28 +151,6 @@ namespace DynamicScript.Compiler.Ast
         object ICloneable.Clone()
         {
             return Clone();
-        }
-
-        event PropertyChangedEventHandler INotifyPropertyChanged.PropertyChanged
-        {
-            add { PropertyChanged += value; }
-            remove { PropertyChanged -= value; }
-        }
-
-        private void OnPropertyChanged(PropertyChangedEventArgs e)
-        {
-            if (PropertyChanged != null)
-                PropertyChanged(this, e);
-        }
-
-        /// <summary>
-        /// Changes internal state of this expression.
-        /// </summary>
-        /// <param name="propertyName"></param>
-        protected void OnPropertyChanged(string propertyName)
-        {
-            m_hash = null;
-            OnPropertyChanged(new PropertyChangedEventArgs(propertyName));
         }
     }
 }

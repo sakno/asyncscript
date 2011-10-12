@@ -52,7 +52,8 @@ namespace DynamicScript.Compiler.Ast
             Keyword.String,
             Keyword.True,
             Keyword.False,
-            Keyword.Void
+            Keyword.Void,
+            Keyword.Expandq
         };
 
         private static int GetPriority(Enum @operator)
@@ -221,6 +222,8 @@ namespace DynamicScript.Compiler.Ast
                 { expression = ScriptCodeConditionalExpression.Parse(lexer, terminator); continue; }
                 else if (lexer.Current.Value == Keyword.For && expression == null)         //parse for loop
                 { expression = ParseForLoop(lexer, terminator); continue; }
+                else if (lexer.Current.Value == Keyword.Expandq && expression == null)
+                expression = ScriptCodeExpandExpression.Parse(lexer);
                 else if (lexer.Current.Value == Punctuation.Dog && expression == null)    //parse action
                 { expression = lexer.MoveNext() ? ParseAction(lexer, terminator) : ScriptCodeCurrentActionExpression.Instance; continue; }
                 else if (lexer.Current.Value == Punctuation.DoubleDog && expression == null) //parse quoted expression list
@@ -577,15 +580,15 @@ namespace DynamicScript.Compiler.Ast
         /// <param name="expressions"></param>
         /// <param name="terminator">An array of the expression list terminators.</param>
         /// <remarks>The expression list has the following syntax: [expression`,`]*</remarks>
-        public static void ParseExpressions(IEnumerator<KeyValuePair<Lexeme.Position, Lexeme>> lexer, CodeExpressionCollection expressions, Lexeme terminator)
+        public static void ParseExpressions(IEnumerator<KeyValuePair<Lexeme.Position, Lexeme>> lexer, ScriptCodeExpressionCollection expressions, Lexeme terminator)
         {
             ParseExpressions(lexer, true, expressions, terminator);
         }
 
-        private static void ParseExpressions(IEnumerator<KeyValuePair<Lexeme.Position, Lexeme>> lexer, bool moveLexer, CodeExpressionCollection expressions, Lexeme terminator)
+        private static void ParseExpressions(IEnumerator<KeyValuePair<Lexeme.Position, Lexeme>> lexer, bool moveLexer, ScriptCodeExpressionCollection expressions, Lexeme terminator)
         {
             if (lexer == null) throw new ArgumentNullException("lexer");
-            if (expressions == null) expressions = new CodeExpressionCollection();
+            if (expressions == null) expressions = new ScriptCodeExpressionCollection();
             if (moveLexer && !lexer.MoveNext()) throw CodeAnalysisException.InvalidExpressionTerm(lexer.Current); //Select next token after bracket
             if (lexer.Current.Value != terminator)
             {

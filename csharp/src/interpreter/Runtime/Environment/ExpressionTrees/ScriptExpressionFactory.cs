@@ -235,6 +235,8 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
                     result = new ScriptPlaceholderExpression((ScriptCodePlaceholderExpression)input);
                 else if (input is ScriptCodeComplexExpression)
                     result = new ScriptComplexExpression((ScriptCodeComplexExpression)input);
+                else if (input is ScriptCodeExpandExpression)
+                    result = new ScriptExpandExpression((ScriptCodeExpandExpression)input);
                 else result = null;
                 return result != null;
             }
@@ -331,6 +333,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         private IRuntimeSlot m_placeholder;
         private IRuntimeSlot m_deduce;
         private IRuntimeSlot m_cplx;
+        private IRuntimeSlot m_expand;
 
         /// <summary>
         /// Deserializes runtime expression factory.
@@ -410,6 +413,39 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
                 case 1: return Parse(result.Body[0]);
                 default: return Convert(result);
             }
+        }
+
+        /// <summary>
+        /// Populates quoted expression with the specified array of expressions.
+        /// </summary>
+        /// <param name="target"></param>
+        /// <param name="substitutes"></param>
+        /// <param name="state">Internal interpreter state.</param>
+        /// <returns></returns>
+        public static IScriptObject Expand(ScriptCodeExpression target, ScriptCodeExpression[] substitutes, InterpreterState state)
+        {
+            var result = ScriptCodePlaceholderExpression.Expand(target, substitutes);
+            if (result.CanReduce) result = result.Reduce(state.Context);
+            return Compile(result, state);
+        }
+
+        /// <summary>
+        /// Populates quoted expression with the specified array of expressions.
+        /// </summary>
+        /// <param name="target"></param>
+        /// <param name="substitutes"></param>
+        /// <param name="state">Internal interpreter state.</param>
+        /// <returns></returns>
+        public static IScriptObject Expand(IScriptObject target, ScriptCodeExpression[] substitutes, InterpreterState state)
+        {
+            if (target is IRuntimeSlot) target = ((IRuntimeSlot)target).GetValue(state);
+            return target is IScriptCodeElement<ScriptCodeExpression> ? Expand(((IScriptCodeElement<ScriptCodeExpression>)target).CodeObject, substitutes, state) : target;
+        }
+
+        internal static MethodCallExpression Expand(Expression target, IEnumerable<ScriptCodeExpression> substitutes, ParameterExpression state)
+        {
+            var call = LinqHelpers.BodyOf<IScriptObject, ScriptCodeExpression[], InterpreterState, IScriptObject, MethodCallExpression>((t, s, st) => Expand(t, s, st));
+            return call.Update(null, new[] { target, LinqHelpers.NewArray(substitutes), state });
         }
 
         /// <summary>
@@ -765,6 +801,14 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         /// <summary>
+        /// Gets 
+        /// </summary>
+        public static IScriptExpressionContract<ScriptCodeExpandExpression> Expandq
+        {
+            get { return ScriptExpandExpressionFactory.Instance; }
+        }
+
+        /// <summary>
         /// Releases all memory associated with the cached runtime slots.
         /// </summary>
         public void Clear()
@@ -787,7 +831,9 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             m_visit =
             m_placeholder = m_deduce =
             m_selection =
-            m_cplx = null;
+            m_cplx =
+            m_expand = null;
+            ScriptExpandExpressionFactory.Instance.Clear();
             ScriptComplexExpressionFactory.Instance.Clear();
             ScriptPlaceholderExpressionFactory.Instance.Clear();
             ScriptSelectionExpressionFactory.Instance.Clear();
@@ -816,6 +862,11 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         #region Runtime Slots
+        IRuntimeSlot IExpressionFactorySlots.Expand
+        {
+            get { return CacheConst(ref m_expand, () => Expandq); }
+        }
+
         IRuntimeSlot IExpressionFactorySlots.Cplx
         {
             get { return CacheConst(ref m_cplx, () => Complex); }
