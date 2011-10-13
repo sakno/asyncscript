@@ -280,6 +280,7 @@
     <Compile Include="Runtime\Environment\ExpressionTrees\ScriptWhileExpression.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\ScriptWhileExpressionFactory.cs" />
     <Compile Include="Runtime\Environment\IBinaryOperatorInvoker.cs" />
+    <Compile Include="Runtime\Environment\IScriptActionContractSlots.cs" />
     <Compile Include="Runtime\Environment\IUnaryOperatorInvoker.cs" />
     <Compile Include="Runtime\Environment\ScriptActionInvoker.cs" />
     <Compile Include="Runtime\Hosting\InteractiveInterpreter.cs" />

@@ -36,6 +36,10 @@
   <PropertyGroup>
     <AssemblyOriginatorKeyFile>public.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject>
+    </StartupObject>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.Scripting">
       <HintPath>..\interpreter\DlrIntegration\Microsoft.Scripting.dll</HintPath>

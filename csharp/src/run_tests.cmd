@@ -1,0 +1,1 @@
+%1 tests\bin\debug\InterpreterTests.dll /noshadow /framework:net-4.0

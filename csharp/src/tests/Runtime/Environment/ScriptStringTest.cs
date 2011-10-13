@@ -41,8 +41,8 @@ namespace DynamicScript.Runtime.Environment
         {
             Array result = Run("return 'abc' / 2;");
             Assert.AreEqual(2L, result.GetLength(0));
-            Assert.AreEqual(new ScriptString("ab"), result.GetValue(0));
-            Assert.AreEqual(new ScriptString("c"), result.GetValue(1));
+            Assert.IsTrue(Equals(new ScriptString("ab"), result.GetValue(0)));
+            Assert.IsTrue(Equals(new ScriptString("c"), result.GetValue(1)));
         }
 
         [Test(Description = "String comparison test.")]

@@ -6,6 +6,5 @@ namespace DynamicScript.Runtime.Environment
     interface IScriptActionSlots
     {
         IRuntimeSlot Owner { get; }
-        IRuntimeSlot Ret { get; }
     }
 }

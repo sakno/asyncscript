@@ -68,7 +68,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             var r = Run("const tree= expr.binop(expr.binop(expr.constant(2), '+', expr.constant(3)), '*', expr.constant(5)); return expr.compile(tree);");
             Assert.AreEqual(25, r);
             r = Run("const tree = expr.binop(2, '/', 5); return expr.binop.operator(tree);");
-            Assert.AreEqual(new ScriptString("/"), r);
+            Assert.IsTrue(Equals(new ScriptString("/"), r));
         }
 
         [Test(Description = "Test for unary operation contract.")]

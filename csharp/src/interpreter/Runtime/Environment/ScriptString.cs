@@ -363,8 +363,15 @@ namespace DynamicScript.Runtime.Environment
 
         private new IEnumerator<IScriptObject> GetEnumerator()
         {
-            foreach (var c in Value)
-                yield return new ScriptString(new string(new[] { c }));
+            switch (Value.Length)
+            {
+                case 0: yield break;
+                case 1: yield return this; break;
+                default:
+                    foreach (var c in Value)
+                        yield return new ScriptString(new string(new[] { c }));
+                    break;
+            }
         }
 
         IEnumerator<IScriptObject> IEnumerable<IScriptObject>.GetEnumerator()

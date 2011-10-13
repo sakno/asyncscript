@@ -32,8 +32,8 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             Assert.IsTrue(result);
             Array match = Run(@"var r = regex(); r.ignoreCase = true; const m = r.match('http://www.contoso.com:8080/letters/readme.html', '^(?<proto>\w+)://[^/]+?(?<port>:\d+)?/'); return [m['proto'].value, m['port'].value];");
             Assert.AreEqual(2L, match.GetLength(0));
-            Assert.AreEqual(new ScriptString("http"), match.GetValue(0));
-            Assert.AreEqual(new ScriptString(":8080"), match.GetValue(1));
+            Assert.IsTrue(Equals(new ScriptString("http"), match.GetValue(0)));
+            Assert.IsTrue(Equals(new ScriptString(":8080"), match.GetValue(1)));
         }
     }
 }

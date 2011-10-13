@@ -270,13 +270,12 @@ namespace DynamicScript.Runtime.Environment
         /// </summary>
         public readonly IScriptObject This;
         internal readonly bool VoidReturn;
+        private IRuntimeSlot m_owner;
 
         /// <summary>
         /// Indicates that the current action is not visible from call stack.
         /// </summary>
         public readonly bool IsTransparent;
-        private IRuntimeSlot m_owner;
-        private IRuntimeSlot m_ret;
 
         /// <summary>
         /// Initializes a new action.
@@ -579,24 +578,10 @@ namespace DynamicScript.Runtime.Environment
         }
 
         #region Runtime Slots
-        private IRuntimeSlot MakeOwnerSlot()
-        {
-            return new WeakRuntimeSlot<ScriptActionBase>(this, ScriptSuperContract.Instance, obj => obj.This);
-        }
 
         IRuntimeSlot IScriptActionSlots.Owner
         {
-            get { return Cache(ref m_owner, MakeOwnerSlot); }
-        }
-
-        private IRuntimeSlot MakeRetSlot()
-        {
-            return new WeakRuntimeSlot<ScriptActionBase>(this, ScriptSuperContract.Instance, obj => obj.ReturnValueContract);
-        }
-
-        IRuntimeSlot IScriptActionSlots.Ret
-        {
-            get { return Cache(ref m_ret, MakeRetSlot); }
+            get { return CacheConst(ref m_owner, () => This); }
         }
         #endregion
 
@@ -769,7 +754,18 @@ namespace DynamicScript.Runtime.Environment
         {
             get { return IsStandardAction(this); }
         }
-    }
 
-    
+        /// <summary>
+        /// Returns parameter metadata.
+        /// </summary>
+        /// <param name="slotName">The name of the parameter.</param>
+        /// <param name="state">Internal interpreter state.</param>
+        /// <returns></returns>
+        protected sealed override IScriptObject GetSlotMetadata(string slotName, InterpreterState state)
+        {
+            return string.IsNullOrWhiteSpace(slotName) ?
+            Void :
+            ContractBinding[new[] { new ScriptString(slotName) }, state].GetValue(state);
+        }
+    }
 }

@@ -21,10 +21,6 @@ namespace DynamicScript.Runtime.Hosting
         [LoaderOptimization(LoaderOptimization.SingleDomain)]
         private static int Main(string[] args)
         {
-            var result = DynamicScriptInterpreter.Run(@"
-const a = @i: integer, b: integer, x: integer->integer: i + b + x; 
-return(a & {{i=4, x=5}})(0);
-");
             return Execute(new CommandLineParser(Console.Out, Console.In), args);
         }
     }

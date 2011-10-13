@@ -33,7 +33,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         public void GetErrorActionTest()
         {
             var error = Run("const f = stmt.faultdef('script exception'); return expr.compile(stmt.faultdef.error(f));");
-            Assert.AreEqual(new ScriptString("script exception"), error);
+            Assert.IsTrue(Equals(new ScriptString("script exception"), error));
         }
 
         [Test(Description = "Test for CONTINUE statement contract.")]
@@ -46,7 +46,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         public void ContinueArgsActionTest()
         {
             var arg0 = Run("const f = stmt.continuedef(['Hello, world!']); return expr.compile(stmt.continuedef.args(f)[0]);");
-            Assert.AreEqual(new ScriptString("Hello, world!"), arg0);
+            Assert.IsTrue(Equals(new ScriptString("Hello, world!"), arg0));
         }
 
         [Test(Description = "Test for LEAVE statement contract.")]
@@ -59,7 +59,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         public void LeaveArgsActionTest()
         {
             var arg0 = Run("const f = stmt.leavedef(['Hello, world!']); return expr.compile(stmt.leavedef.args(f)[0]);");
-            Assert.AreEqual(new ScriptString("Hello, world!"), arg0);
+            Assert.IsTrue(Equals(new ScriptString("Hello, world!"), arg0));
         }
 
         [Test(Description = "Test for RETURN statement contract.")]
@@ -72,7 +72,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         public void ReturnGetValueActionTest()
         {
             var arg0 = Run("const f = stmt.returndef('Hello, world!'); return expr.compile(stmt.returndef.value(f));");
-            Assert.AreEqual(new ScriptString("Hello, world!"), arg0);
+            Assert.IsTrue(Equals(new ScriptString("Hello, world!"), arg0));
         }
     }
 }

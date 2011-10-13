@@ -14,13 +14,14 @@ namespace DynamicScript.Runtime.Environment
     using LinqExpression = System.Linq.Expressions.Expression;
     using StringBuilder = System.Text.StringBuilder;
     using InterpretationContext = Compiler.Ast.InterpretationContext;
+    using Enumerable = System.Linq.Enumerable;
     
     /// <summary>
     /// Represents action signature.
     /// </summary>
     [ComVisible(false)]
     [Serializable]
-    public class ScriptActionContract : ScriptContract, ISerializable, IEquatable<ScriptActionContract>
+    public class ScriptActionContract : ScriptContract, ISerializable, IEquatable<ScriptActionContract>, IScriptActionContractSlots
     {
         #region Nested Types
 
@@ -193,6 +194,8 @@ namespace DynamicScript.Runtime.Environment
         private const string SignatureHolder = "Signature";
         private readonly Signature m_signature;
         private ReadOnlyCollection<Parameter> m_parameters;
+        
+        private IRuntimeSlot m_ret;
 
         private ScriptActionContract(Signature sig)
         {
@@ -482,6 +485,31 @@ namespace DynamicScript.Runtime.Environment
         public sealed override ScriptObject CreateObject(IList<IScriptObject> args, InterpreterState state)
         {
             return ScriptRuntimeAction.CreateEmptyImplementation(this);
+        }
+
+        IRuntimeSlot IScriptActionContractSlots.Ret
+        {
+            get { return CacheConst(ref m_ret, () => ReturnValueContract); }
+        }
+
+        private RuntimeSlotBase GetParameterByName(ScriptString paramName, InterpreterState state)
+        {
+            var p = GetParameterByName(paramName);
+            return p != null ? new ScriptConstant(p.ContractBinding, state) : RuntimeSlotBase.Missing(paramName);
+        }
+
+        /// <summary>
+        /// Returns type of the parameter.
+        /// </summary>
+        /// <param name="args"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public sealed override RuntimeSlotBase this[IScriptObject[] args, InterpreterState state]
+        {
+            get
+            {
+                return args.LongLength == 1L && args[0] is ScriptString ? GetParameterByName((ScriptString)args[0], state) : base[args, state];
+            }
         }
     }
 }

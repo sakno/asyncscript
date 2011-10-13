@@ -7,7 +7,7 @@ namespace DynamicScript.Runtime
     using SemanticTestAttribute = DynamicScript.Testing.SemanticTestAttribute;
 
     [SemanticTest]
-    abstract class SemanticTestBase
+    public abstract class SemanticTestBase
     {
         public static dynamic Run(IEnumerable<char> sourceCode, params string[] args)
         {
