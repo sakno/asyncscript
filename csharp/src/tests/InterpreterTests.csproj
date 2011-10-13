@@ -60,6 +60,7 @@
     <Compile Include="Runtime\Environment\ExpressionTrees\ScriptStatementFactoryTest.cs" />
     <Compile Include="Runtime\Environment\ObjectModel\ScriptModuleTest.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\ScriptExpressionFactoryTest.cs" />
+    <Compile Include="Runtime\Environment\ScriptActionContractTest.cs" />
     <Compile Include="Runtime\Environment\ScriptActionTest.cs" />
     <Compile Include="Runtime\Environment\ScriptArrayContractTest.cs" />
     <Compile Include="Runtime\Environment\ScriptArrayTest.cs" />

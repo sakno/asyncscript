@@ -6,7 +6,7 @@ namespace DynamicScript.Runtime.Environment
 {
     [TestClass(typeof(ScriptRuntimeAction))]
     [SemanticTest]
-    public sealed class ScriptActionTest: SemanticTestBase
+    sealed class ScriptActionTest: SemanticTestBase
     {
         [Test(Description = "Unsupported operations for the lambdas.")]
         [ExpectedException(typeof(UnsupportedOperationException))]

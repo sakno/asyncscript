@@ -197,10 +197,10 @@ namespace DynamicScript.Runtime.Environment
         
         private IRuntimeSlot m_ret;
 
-        private ScriptActionContract(Signature sig)
+        private ScriptActionContract(Signature sig, bool copy = false)
         {
             if (sig == null) throw new ArgumentNullException("sig");
-            m_signature = sig;
+            m_signature = copy ? new Signature(sig, sig.ReturnValueContract) : sig;
         }
 
         /// <summary>
@@ -332,15 +332,9 @@ namespace DynamicScript.Runtime.Environment
         /// <returns><see langword="true"/> if the current contract is equal to another; otherwise, <see langword="false"/>.</returns>
         public bool Equals(ScriptActionContract other)
         {
-            switch (other != null && ReturnValueContract.Equals(other.ReturnValueContract))
-            {
-                case true:
-                    foreach (var c1 in Parameters.Select(p => p.ContractBinding))
-                        foreach (var c2 in Parameters.Select(p => p.ContractBinding))
-                            if (!c1.Equals(c2)) return false;
-                    return true;
-                default: return false;
-            }
+            return other != null && 
+                Equals(ReturnValueContract, other.ReturnValueContract) && 
+                Enumerable.SequenceEqual(Parameters, other.Parameters);
         }
 
         /// <summary>
@@ -510,6 +504,38 @@ namespace DynamicScript.Runtime.Environment
             {
                 return args.LongLength == 1L && args[0] is ScriptString ? GetParameterByName((ScriptString)args[0], state) : base[args, state];
             }
+        }
+
+        /// <summary>
+        /// Creates a new signature and removes the parameter.
+        /// </summary>
+        /// <param name="parameterName"></param>
+        /// <returns></returns>
+        public ScriptActionContract RemoveParameter(string parameterName)
+        {
+            switch (m_signature.Contains(parameterName))
+            {
+                case true:
+                    var result = new ScriptActionContract(m_signature, true);
+                    result.m_signature.Remove(parameterName);
+                    return result;
+                default: return this;
+            }
+        }
+
+        /// <summary>
+        /// Removes the parameter from the signature.
+        /// </summary>
+        /// <param name="right"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        protected sealed override IScriptObject Modulo(IScriptObject right, InterpreterState state)
+        {
+            if (right is ScriptString)
+                return RemoveParameter((ScriptString)right);
+            else if (state.Context == InterpretationContext.Unchecked)
+                return Void;
+            else throw new UnsupportedOperationException(state);
         }
     }
 }
