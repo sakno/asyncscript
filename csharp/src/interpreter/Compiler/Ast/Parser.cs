@@ -208,7 +208,7 @@ namespace DynamicScript.Compiler.Ast
                     expression = ScriptCodeCallableContractExpression.Instance;
                 else if (lexer.Current.Value is PlaceholderID && expression == null)
                     expression = new ScriptCodePlaceholderExpression((PlaceholderID)lexer.Current.Value);
-                else if (lexer.Current.Value == Punctuation.LeftBrace && expression == null)      //parse object
+                else if (lexer.Current.Value == Punctuation.DoubleLeftBrace && expression == null)      //parse object
                     expression = ScriptCodeObjectExpression.Parse(lexer, terminator);
                 else if (lexer.Current.Value.OneOf(Keyword.Checked, Keyword.Unchecked) && expression == null) //parse context
                 { expression = ScriptCodeContextExpression.Parse(lexer, terminator); continue; }

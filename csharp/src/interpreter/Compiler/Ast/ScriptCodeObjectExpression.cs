@@ -303,7 +303,7 @@ namespace DynamicScript.Compiler.Ast
                 var slotName = default(string);
                 var initExpr = default(ScriptCodeExpression);
                 var contractBinding = default(ScriptCodeExpression);
-                if (!Parser.ParseSlot(lexer, out slotName, out initExpr, out contractBinding, Punctuation.RightBrace, Punctuation.Comma))
+                if (!Parser.ParseSlot(lexer, out slotName, out initExpr, out contractBinding, Punctuation.DoubleRightBrace, Punctuation.Comma))
                     return expr;
                 if (expr.Contains(slotName))
                     throw CodeAnalysisException.DuplicateIdentifier(slotName, lexer.Current.Key);

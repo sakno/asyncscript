@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual C# Express 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Interpreter", "interpreter\Interpreter.csproj", "{CB2658EE-09CE-461D-AA07-B5D9102C6977}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InterpreterTests", "tests\InterpreterTests\InterpreterTests.csproj", "{D053DD8B-133D-4305-BDEE-3C98C1B1E9F2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InterpreterTests", "tests\InterpreterTests.csproj", "{D053DD8B-133D-4305-BDEE-3C98C1B1E9F2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

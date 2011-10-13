@@ -42,9 +42,19 @@ namespace DynamicScript.Compiler
         public static readonly new Punctuation LeftBrace = new Punctuation(Lexeme.LeftBrace);
 
         /// <summary>
+        /// Represents double left brace.
+        /// </summary>
+        public static readonly Punctuation DoubleLeftBrace = new Punctuation(Lexeme.LeftBrace, Lexeme.LeftBrace);
+
+        /// <summary>
         /// Represents right brace.
         /// </summary>
         public static readonly new Punctuation RightBrace = new Punctuation(Lexeme.RightBrace);
+
+        /// <summary>
+        /// Represents double right brace.
+        /// </summary>
+        public static readonly Punctuation DoubleRightBrace = new Punctuation(Lexeme.RightBrace, Lexeme.RightBrace);
 
         /// <summary>
         /// Represents left bracket.
