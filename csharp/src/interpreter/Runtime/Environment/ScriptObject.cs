@@ -47,16 +47,16 @@ namespace DynamicScript.Runtime.Environment
             {
             }
 
-            protected override bool Match(PropertyInfo element, string slotName, out PropertyInfo result)
+            protected override PropertyInfo Match(PropertyInfo element, string slotName, out bool result)
             {
                 switch (StringEqualityComparer.Equals(slotName, element.Name))
                 {
                     case true:
-                        result = element;
-                        return true;
+                        result = true;
+                        return element;
                     default:
-                        result = null;
-                        return false;
+                        result = false;
+                        return null;
                 }
             }
 

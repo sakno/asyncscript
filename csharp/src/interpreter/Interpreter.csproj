@@ -135,6 +135,8 @@
     <Compile Include="Compiler\Macro.cs" />
     <Compile Include="Compiler\PlaceholderID.cs" />
     <Compile Include="ParallelSearch.cs" />
+    <Compile Include="ParallelSwitch.cs" />
+    <Compile Include="ParallelSwitchCase.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\IActionContractExpressionFactorySlots.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\IActionExpressionFactorySlots.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\IForExpressionFactorySlots.cs" />
