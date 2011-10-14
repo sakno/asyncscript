@@ -47,7 +47,6 @@ const a = @i: real -> real;
 return a % 'i';
 ");
             Assert.IsTrue(Equals(new ScriptActionContract(new ScriptActionContract.Parameter[0], ScriptRealContract.Instance), r));
-
         }
     }
 }
