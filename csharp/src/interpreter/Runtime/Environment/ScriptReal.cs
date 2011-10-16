@@ -79,6 +79,21 @@ namespace DynamicScript.Runtime.Environment
         /// </summary>
         public static readonly ScriptReal Epsilon = double.Epsilon;
 
+        internal static Expression New(double value)
+        {
+            if (value == 0.0)
+                return LinqHelpers.BodyOf<Func<ScriptReal>, MemberExpression>(() => Zero);
+            else if (value == double.MaxValue)
+                return LinqHelpers.BodyOf<Func<ScriptReal>, MemberExpression>(() => MaxValue);
+            else if (value == double.MinValue)
+                return LinqHelpers.BodyOf<Func<ScriptReal>, MemberExpression>(() => MinValue);
+            else if (value == double.Epsilon)
+                return LinqHelpers.BodyOf<Func<ScriptReal>, MemberExpression>(() => Epsilon);
+            else if (value == double.NaN)
+                return LinqHelpers.BodyOf<Func<ScriptReal>, MemberExpression>(() => NaN);
+            else return LinqHelpers.BodyOf<double, ScriptReal, NewExpression>(v => new ScriptReal(v)).Update(new[] { LinqHelpers.Constant(value) });
+        }
+
         /// <summary>
         /// Provides conversion from <see cref="System.Double"/> object to DynamicScript-compliant representation.
         /// </summary>

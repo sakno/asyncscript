@@ -31,8 +31,19 @@ namespace DynamicScript.Runtime.Environment
         [Test(Description = "Array instantiation.")]
         public void ApplicationOperatorTest()
         {
-            IScriptArray array = Run("return integer[](2);");
-            Assert.AreEqual(2L, array.GetLength(0));
+            IScriptArray array = Run("return integer[](4);");
+            Assert.AreEqual(4L, array.GetLength(0));
+            for (var i = 0L; i < 4L; i++)
+                Assert.AreEqual(ScriptInteger.Zero, array[new[] { i }, InterpreterState.Initial]);
+        }
+
+        [Test(Description = "Fill array elements")]
+        public void ArrayFillTest()
+        {
+            IScriptArray r = Run("return [0, 1, 2];");
+            Assert.AreEqual(3L, r.GetLength(0));
+            for (var i = 1L; i < r.GetLength(0); i++)
+                Assert.AreEqual(new ScriptInteger(i), r[new[] { i }, InterpreterState.Initial]);
         }
     }
 }

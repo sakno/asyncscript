@@ -67,6 +67,20 @@ namespace DynamicScript.Runtime.Environment
         public static readonly ScriptString Empty = new ScriptString(String.Empty);
 
         /// <summary>
+        /// Represents white space.
+        /// </summary>
+        public static readonly ScriptString WhiteSpace = new ScriptString(" ");
+
+        internal static Expression New(string value)
+        {
+            if (value == null || value.Length == 0)
+                return LinqHelpers.BodyOf<Func<ScriptString>, MemberExpression>(() => Empty);
+            else if (string.Equals(value, " "))
+                return LinqHelpers.BodyOf<Func<ScriptString>, MemberExpression>(() => WhiteSpace);
+            else return LinqHelpers.BodyOf<string, ScriptString, NewExpression>(s => new ScriptString(s)).Update(new[] { LinqHelpers.Constant(value) });
+        }
+
+        /// <summary>
         /// Provides conversion from <see cref="System.String"/> object to DynamicScript-compliant representation.
         /// </summary>
         /// <param name="value">String value to be converted.</param>

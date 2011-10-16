@@ -86,8 +86,7 @@ namespace DynamicScript.Compiler.Ast
         internal static ScriptCodeContextExpression Parse(IEnumerator<KeyValuePair<Lexeme.Position, Lexeme>> lexer, params Lexeme[] terminator)
         {
             var expr = new ScriptCodeContextExpression(lexer.Current.Value);
-            lexer.MoveNext(Punctuation.Colon, true);  //Pass through check or unchecked keyword
-            lexer.MoveNext(true);   //pass through colon
+            lexer.MoveNext(true);   //Pass through check or unchecked keyword
             expr.Body.SetExpression(Parser.ParseExpression, lexer, terminator);
             return expr;
         }
