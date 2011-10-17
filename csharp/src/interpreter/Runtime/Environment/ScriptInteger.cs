@@ -208,7 +208,14 @@ namespace DynamicScript.Runtime.Environment
         /// <returns>Conversion result.</returns>
         public static implicit operator ScriptInteger(long value)
         {
-            return new ScriptInteger(value);
+            switch (value)
+            {
+                case 0L: return Zero;
+                case 1L: return One;
+                case long.MaxValue: return MaxValue;
+                case long.MinValue: return MinValue;
+                default: return new ScriptInteger(value);
+            }
         }
      
         /// <summary>
@@ -238,23 +245,6 @@ namespace DynamicScript.Runtime.Environment
         private ScriptBoolean Equals(long right, InterpreterState state)
         {
             return Value == right;
-        }
-
-        internal static Expression New(long value)
-        {
-            switch (value)
-            {
-                case 0L:
-                    return LinqHelpers.BodyOf<Func<ScriptInteger>, MemberExpression>(() => Zero);
-                case 1L:
-                    return LinqHelpers.BodyOf<Func<ScriptInteger>, MemberExpression>(() => One);
-                case long.MaxValue:
-                    return LinqHelpers.BodyOf<Func<ScriptInteger>, MemberExpression>(() => MaxValue);
-                case long.MinValue:
-                    return LinqHelpers.BodyOf<Func<ScriptInteger>, MemberExpression>(() => MinValue);
-                default:
-                    return LinqHelpers.BodyOf<long, ScriptInteger, NewExpression>(v => new ScriptInteger(v)).Update(new[] { LinqHelpers.Constant(value) });
-            }
         }
 
         /// <summary>

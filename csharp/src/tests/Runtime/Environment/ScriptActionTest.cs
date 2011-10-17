@@ -48,6 +48,17 @@ return c(10, 15, 'ab');
             Assert.IsTrue(Equals(new ScriptString("25ab"), r));
         }
 
+        [Test(Description="Unsupported composition test.")]
+        public void UnsupportedCompositionTest()
+        {
+            var r = Run(@"
+const a = @i: integer -> string: i to string;
+const b = @i: integer -> string: i to string;
+return unchecked a * b;
+");
+            Assert.AreSame(ScriptVoid.Instance, r);
+        }
+
         [Test(Description = "Runtime overloading.")]
         public void CombinationTest()
         {

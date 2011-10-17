@@ -22,7 +22,7 @@ namespace DynamicScript.Runtime.Hosting
         private static int Main(string[] args)
         {
             var r = DynamicScriptInterpreter.Run(@"
-return unchecked integer.min - 10;
+return 23.2 % 10;
 ");
             return Execute(new CommandLineParser(Console.Out, Console.In), args);
         }

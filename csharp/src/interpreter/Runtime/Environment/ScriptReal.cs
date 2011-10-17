@@ -79,20 +79,15 @@ namespace DynamicScript.Runtime.Environment
         /// </summary>
         public static readonly ScriptReal Epsilon = double.Epsilon;
 
-        internal static Expression New(double value)
-        {
-            if (value == 0.0)
-                return LinqHelpers.BodyOf<Func<ScriptReal>, MemberExpression>(() => Zero);
-            else if (value == double.MaxValue)
-                return LinqHelpers.BodyOf<Func<ScriptReal>, MemberExpression>(() => MaxValue);
-            else if (value == double.MinValue)
-                return LinqHelpers.BodyOf<Func<ScriptReal>, MemberExpression>(() => MinValue);
-            else if (value == double.Epsilon)
-                return LinqHelpers.BodyOf<Func<ScriptReal>, MemberExpression>(() => Epsilon);
-            else if (value == double.NaN)
-                return LinqHelpers.BodyOf<Func<ScriptReal>, MemberExpression>(() => NaN);
-            else return LinqHelpers.BodyOf<double, ScriptReal, NewExpression>(v => new ScriptReal(v)).Update(new[] { LinqHelpers.Constant(value) });
-        }
+        /// <summary>
+        /// Represents positive infinity.
+        /// </summary>
+        public static readonly ScriptReal PositiveInfinity = double.PositiveInfinity;
+
+        /// <summary>
+        /// Represents negative infinity.
+        /// </summary>
+        public static readonly ScriptReal NegativeInfinity = double.NegativeInfinity;
 
         /// <summary>
         /// Provides conversion from <see cref="System.Double"/> object to DynamicScript-compliant representation.
@@ -101,7 +96,21 @@ namespace DynamicScript.Runtime.Environment
         /// <returns>DynamicScript-compliant representation of <see cref="System.Double"/> object.</returns>
         public static implicit operator ScriptReal(double value)
         {
-            return new ScriptReal(value);
+            if (value == double.NaN)
+                return NaN;
+            else if (double.IsPositiveInfinity(value))
+                return PositiveInfinity;
+            else if (double.IsNegativeInfinity(value))
+                return NegativeInfinity;
+            else if (double.IsNaN(value))
+                return NaN;
+            else if (value == default(double))
+                return Zero;
+            else if (value == double.MaxValue)
+                return MaxValue;
+            else if (value == double.MinValue)
+                return MinValue;
+            else return new ScriptReal(value);
         }
 
         /// <summary>
@@ -113,17 +122,17 @@ namespace DynamicScript.Runtime.Environment
         protected override IScriptObject Add(IScriptObject right, InterpreterState state)
         {
             if (right.OneOf<ScriptBoolean, ScriptInteger, ScriptReal>())
-                return Add(Convert(right), state);
+                return Add(Convert(right));
             else if (IsVoid(right))
-                return Add(Zero, state);
+                return Add(Zero);
             else if (state.Context == InterpretationContext.Unchecked)
                 return ScriptObject.Void;
             else throw new UnsupportedOperationException(state);
         }
 
-        private ScriptReal Add(double right, InterpreterState state)
+        private ScriptReal Add(double right)
         {
-            return state.Context == InterpretationContext.Unchecked ? unchecked(Value + right) : checked(Value + right);
+            return Value + right;
         }
 
         /// <summary>
@@ -301,17 +310,17 @@ namespace DynamicScript.Runtime.Environment
         protected override IScriptObject Multiply(IScriptObject right, InterpreterState state)
         {
             if (right.OneOf<ScriptBoolean, ScriptInteger, ScriptReal>())
-                return Multiply(Convert(right), state);
+                return Multiply(Convert(right));
             else if (IsVoid(right))
-                return Multiply(Zero, state);
+                return Multiply(Zero);
             else if (state.Context == InterpretationContext.Unchecked)
                 return ScriptObject.Void;
             else throw new UnsupportedOperationException(state);
         }
 
-        private ScriptReal Multiply(double right, InterpreterState state)
+        private ScriptReal Multiply(double right)
         {
-            return state.Context == InterpretationContext.Unchecked ? unchecked(Value * right) : checked(Value * right);
+            return Value * right;
         }
 
         /// <summary>
@@ -323,17 +332,17 @@ namespace DynamicScript.Runtime.Environment
         protected override IScriptObject Subtract(IScriptObject right, InterpreterState state)
         {
             if (right.OneOf<ScriptBoolean, ScriptInteger, ScriptReal>())
-                return Subtract(Convert(right), state);
+                return Subtract(Convert(right));
             else if (IsVoid(right))
-                return Subtract(Zero, state);
+                return Subtract(Zero);
             else if (state.Context == InterpretationContext.Unchecked)
                 return ScriptObject.Void;
             else throw new UnsupportedOperationException(state);
         }
 
-        private ScriptReal Subtract(double right, InterpreterState state)
+        private ScriptReal Subtract(double right)
         {
-            return state.Context == InterpretationContext.Unchecked ? unchecked(Value - right) : checked(Value - right);
+            return Value - right;
         }
 
         /// <summary>
@@ -425,7 +434,7 @@ namespace DynamicScript.Runtime.Environment
         /// <returns>The operation result</returns>
         protected override IScriptObject PostSquareAssign(InterpreterState state)
         {
-            return new ScriptReal(state.Context == InterpretationContext.Unchecked ? unchecked(Value * Value) : checked(Value * Value));
+            return (ScriptReal)(Value * Value);
         }
 
         /// <summary>

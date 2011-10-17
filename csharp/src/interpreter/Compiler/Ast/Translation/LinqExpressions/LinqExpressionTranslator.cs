@@ -750,7 +750,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         {
             return realLiteral.IsInterned ?
                 InterpreterState.FromInternPool<ScriptReal>(context.Scope.StateHolder, Intern(context, realLiteral.Value)) :
-                ScriptReal.New(realLiteral.Value);
+                ConverterOf(realLiteral.Value);
         }
 
         /// <summary>
@@ -848,7 +848,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         {
             return integerLiteral.IsInterned ?
                 InterpreterState.FromInternPool<ScriptInteger>(context.Scope.StateHolder, Intern(context, integerLiteral.Value)) :
-                ScriptInteger.New(integerLiteral.Value);
+                ConverterOf(integerLiteral.Value);
         }
 
         /// <summary>
