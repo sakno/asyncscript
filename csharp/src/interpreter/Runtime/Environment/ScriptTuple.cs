@@ -23,30 +23,31 @@ namespace DynamicScript.Runtime.Environment
         
         [ComVisible(false)]
         [Serializable]
-        private sealed class QCartesianContract : ScriptContract, ISerializable, IEnumerable<IScriptContract>, IScriptCartesianProduct
+        private sealed class ScriptCartesianContract : ScriptContract, ISerializable, IEnumerable<IScriptContract>, IScriptCartesianProduct
         {
             private const string ContractsSerializationSlot = "Contracts";
 
+            public static readonly ScriptArrayContract ContractBinding = new ScriptArrayContract();
             private readonly ReadOnlyCollection<IScriptContract> m_contracts;
 
-            private QCartesianContract(SerializationInfo info, StreamingContext context)
+            private ScriptCartesianContract(SerializationInfo info, StreamingContext context)
             {
                 m_contracts = (ReadOnlyCollection<IScriptContract>)info.GetValue(ContractsSerializationSlot, typeof(ReadOnlyCollection<IScriptContract>));
             }
 
-            internal QCartesianContract(IEnumerable<IScriptContract> contracts)
+            public ScriptCartesianContract(IEnumerable<IScriptContract> contracts)
             {
                 m_contracts = contracts is ReadOnlyCollection<IScriptContract> ? (ReadOnlyCollection<IScriptContract>)contracts : Array.AsReadOnly<IScriptContract>(Enumerable.ToArray(contracts));
             }
 
             private static IEnumerable<IScriptContract> GetContracts(IScriptContract left, IScriptContract right, IEnumerable<IScriptContract> contracts)
             {
-                IEnumerable<IScriptContract> result = left is QCartesianContract ? ((QCartesianContract)left).Contracts : new[] { left };
-                result = Enumerable.Concat(result, right is QCartesianContract ? ((QCartesianContract)right).Contracts : new[] { right });
+                IEnumerable<IScriptContract> result = left is ScriptCartesianContract ? ((ScriptCartesianContract)left).Contracts : new[] { left };
+                result = Enumerable.Concat(result, right is ScriptCartesianContract ? ((ScriptCartesianContract)right).Contracts : new[] { right });
                 return Enumerable.Concat(result, contracts);
             }
 
-            public QCartesianContract(IScriptContract left, IScriptContract right, params IScriptContract[] contracts)
+            public ScriptCartesianContract(IScriptContract left, IScriptContract right, params IScriptContract[] contracts)
                 : this(GetContracts(left, right, contracts))
             {
             }
@@ -73,7 +74,7 @@ namespace DynamicScript.Runtime.Environment
             /// </summary>
             /// <param name="cartesian"></param>
             /// <returns></returns>
-            public ContractRelationshipType GetRelationship(QCartesianContract cartesian)
+            public ContractRelationshipType GetRelationship(ScriptCartesianContract cartesian)
             {
                 for (var i = 0; i < SystemMath.Min(Contracts.Count, cartesian.Contracts.Count); i++)
                     switch (Contracts[i].Equals(cartesian.Contracts[i]))
@@ -88,34 +89,14 @@ namespace DynamicScript.Runtime.Environment
                 }
             }
 
-            public static ScriptArrayContract GetUnderlyingContract()
-            {
-                return new ScriptArrayContract(ScriptSuperContract.Instance);
-            }
-
-            public ContractRelationshipType GetRelationship(ScriptCompositeContract contract)
-            {
-                var underlying = GetUnderlyingContract();
-                switch (underlying.GetRelationship(contract))
-                {
-                    case ContractRelationshipType.Subset:
-                    case ContractRelationshipType.TheSame: return ContractRelationshipType.Subset;
-                    case ContractRelationshipType.Superset:
-                    default:
-                        return ContractRelationshipType.None;
-                }
-            }
-
             public override ContractRelationshipType GetRelationship(IScriptContract contract)
             {
                 if (contract is ScriptSuperContract)
                     return ContractRelationshipType.Subset;
                 else if (IsVoid(contract))
                     return ContractRelationshipType.Superset;
-                if (contract is QCartesianContract)
-                    return GetRelationship((QCartesianContract)contract);
-                else if (contract is ScriptCompositeContract)
-                    return GetRelationship((ScriptCompositeContract)contract);
+                if (contract is ScriptCartesianContract)
+                    return GetRelationship((ScriptCartesianContract)contract);
                 else return ContractRelationshipType.None;
             }
 
@@ -219,7 +200,7 @@ namespace DynamicScript.Runtime.Environment
         /// <returns></returns>
         public static ScriptContract GetContractBinding(IScriptContract left, IScriptContract right, params IScriptContract[] contracts)
         {
-            return new QCartesianContract(left, right, contracts);
+            return new ScriptCartesianContract(left, right, contracts);
         }
 
         private ScriptArray UnderlyingObject
@@ -227,9 +208,7 @@ namespace DynamicScript.Runtime.Environment
             get
             {
                 if (m_underlyingObject == null)
-                {
-                    m_underlyingObject = new ScriptArray(QCartesianContract.GetUnderlyingContract(), (long)Values.Count);
-                }
+                    m_underlyingObject = new ScriptArray(ScriptCartesianContract.ContractBinding, Values.Count);
                 return m_underlyingObject;
             }
         }
@@ -265,7 +244,7 @@ namespace DynamicScript.Runtime.Environment
         /// <returns></returns>
         public override IScriptContract GetContractBinding()
         {
-            return new QCartesianContract(Enumerable.Select(Values, v => v.GetContractBinding()));
+            return new ScriptCartesianContract(Enumerable.Select(Values, v => v.GetContractBinding()));
         }
 
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)

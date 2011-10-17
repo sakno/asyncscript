@@ -16,8 +16,8 @@ namespace DynamicScript.Runtime.Environment
     using CodeAnalysisException = Compiler.CodeAnalysisException;
     using QDebugInfo = Compiler.ScriptDebugInfo;
     using SystemConverter = System.Convert;
-    using QCodeBinaryOperatorType = Compiler.Ast.ScriptCodeBinaryOperatorType;
-    using QCodeUnaryOperatorType = Compiler.Ast.ScriptCodeUnaryOperatorType;
+    using ScriptCodeBinaryOperatorType = Compiler.Ast.ScriptCodeBinaryOperatorType;
+    using ScriptCodeUnaryOperatorType = Compiler.Ast.ScriptCodeUnaryOperatorType;
     using IScopeVariable = Microsoft.Scripting.IScopeVariable;
     using NativeGarbageCollector = System.GC;
     using SystemHelpers = System.Runtime.CompilerServices.RuntimeHelpers;
@@ -329,61 +329,61 @@ namespace DynamicScript.Runtime.Environment
                 return GetValue(state).GetRuntimeDescriptor(slotName, state);
             }
 
-            private IScriptObject BinaryOperation(QCodeBinaryOperatorType @operator, IScriptObject arg, InterpreterState state)
+            private IScriptObject BinaryOperation(ScriptCodeBinaryOperatorType @operator, IScriptObject arg, InterpreterState state)
             {
                 arg = arg.Normalize(state);
                 switch (@operator)
                 {
-                    case QCodeBinaryOperatorType.Assign:
+                    case ScriptCodeBinaryOperatorType.Assign:
                         SetValue(arg, state);
                         return this;
-                    case QCodeBinaryOperatorType.Expansion:
-                        return BinaryOperation(QCodeBinaryOperatorType.Assign, BinaryOperation(QCodeBinaryOperatorType.Union, arg, state), state);
-                    case QCodeBinaryOperatorType.AdditiveAssign:
-                        return BinaryOperation(QCodeBinaryOperatorType.Assign, BinaryOperation(QCodeBinaryOperatorType.Add, arg, state), state);
-                    case QCodeBinaryOperatorType.Reduction:
-                        return BinaryOperation(QCodeBinaryOperatorType.Assign, BinaryOperation(QCodeBinaryOperatorType.Intersection, arg, state), state);
-                    case QCodeBinaryOperatorType.DivideAssign:
-                        return BinaryOperation(QCodeBinaryOperatorType.Assign, BinaryOperation(QCodeBinaryOperatorType.Divide, arg, state), state);
-                    case QCodeBinaryOperatorType.ModuloAssign:
-                        return BinaryOperation(QCodeBinaryOperatorType.Assign, BinaryOperation(QCodeBinaryOperatorType.ModuloAssign, arg, state), state);
-                    case QCodeBinaryOperatorType.MultiplicativeAssign:
-                        return BinaryOperation(QCodeBinaryOperatorType.Assign, BinaryOperation(QCodeBinaryOperatorType.Multiply, arg, state), state);
-                    case QCodeBinaryOperatorType.SubtractiveAssign:
-                        return BinaryOperation(QCodeBinaryOperatorType.Assign, BinaryOperation(QCodeBinaryOperatorType.Subtract, arg, state), state);
+                    case ScriptCodeBinaryOperatorType.Expansion:
+                        return BinaryOperation(ScriptCodeBinaryOperatorType.Assign, BinaryOperation(ScriptCodeBinaryOperatorType.Union, arg, state), state);
+                    case ScriptCodeBinaryOperatorType.AdditiveAssign:
+                        return BinaryOperation(ScriptCodeBinaryOperatorType.Assign, BinaryOperation(ScriptCodeBinaryOperatorType.Add, arg, state), state);
+                    case ScriptCodeBinaryOperatorType.Reduction:
+                        return BinaryOperation(ScriptCodeBinaryOperatorType.Assign, BinaryOperation(ScriptCodeBinaryOperatorType.Intersection, arg, state), state);
+                    case ScriptCodeBinaryOperatorType.DivideAssign:
+                        return BinaryOperation(ScriptCodeBinaryOperatorType.Assign, BinaryOperation(ScriptCodeBinaryOperatorType.Divide, arg, state), state);
+                    case ScriptCodeBinaryOperatorType.ModuloAssign:
+                        return BinaryOperation(ScriptCodeBinaryOperatorType.Assign, BinaryOperation(ScriptCodeBinaryOperatorType.ModuloAssign, arg, state), state);
+                    case ScriptCodeBinaryOperatorType.MultiplicativeAssign:
+                        return BinaryOperation(ScriptCodeBinaryOperatorType.Assign, BinaryOperation(ScriptCodeBinaryOperatorType.Multiply, arg, state), state);
+                    case ScriptCodeBinaryOperatorType.SubtractiveAssign:
+                        return BinaryOperation(ScriptCodeBinaryOperatorType.Assign, BinaryOperation(ScriptCodeBinaryOperatorType.Subtract, arg, state), state);
                     default:
                         return GetValue(state).BinaryOperation(@operator, arg, state);
                 }
 
             }
 
-            private IScriptObject UnaryOperation(QCodeUnaryOperatorType @operator, InterpreterState state)
+            private IScriptObject UnaryOperation(ScriptCodeUnaryOperatorType @operator, InterpreterState state)
             {
                 switch (@operator)
                 {
-                    case QCodeUnaryOperatorType.DecrementPrefix:
-                        var value = GetValue(state).UnaryOperation(QCodeUnaryOperatorType.DecrementPrefix, state);
-                        SetValue(value, state);
+                    case ScriptCodeUnaryOperatorType.DecrementPrefix:
+                        var value = GetValue(state).UnaryOperation(ScriptCodeUnaryOperatorType.DecrementPrefix, state);
+                        TrySetValue(value, state);
                         return value;
-                    case QCodeUnaryOperatorType.IncrementPrefix:
-                        value = GetValue(state).UnaryOperation(QCodeUnaryOperatorType.IncrementPrefix, state);
-                        SetValue(value, state);
-                        return this;
-                    case QCodeUnaryOperatorType.SquarePrefix:
-                        value = GetValue(state).UnaryOperation(QCodeUnaryOperatorType.SquarePrefix, state);
-                        SetValue(value, state);
-                        return this;
-                    case QCodeUnaryOperatorType.DecrementPostfix:
-                        value = GetValue(state);
-                        SetValue(value.UnaryOperation(QCodeUnaryOperatorType.DecrementPostfix, state), state);
+                    case ScriptCodeUnaryOperatorType.IncrementPrefix:
+                        value = GetValue(state).UnaryOperation(ScriptCodeUnaryOperatorType.IncrementPrefix, state);
+                        TrySetValue(value, state);
                         return value;
-                    case QCodeUnaryOperatorType.IncrementPostfix:
-                        value = GetValue(state);
-                        SetValue(value.UnaryOperation(QCodeUnaryOperatorType.IncrementPostfix, state), state);
+                    case ScriptCodeUnaryOperatorType.SquarePrefix:
+                        value = GetValue(state).UnaryOperation(ScriptCodeUnaryOperatorType.SquarePrefix, state);
+                        TrySetValue(value, state);
                         return value;
-                    case QCodeUnaryOperatorType.SquarePostfix:
+                    case ScriptCodeUnaryOperatorType.DecrementPostfix:
                         value = GetValue(state);
-                        SetValue(value.UnaryOperation(QCodeUnaryOperatorType.SquarePostfix, state), state);
+                        TrySetValue(value.UnaryOperation(ScriptCodeUnaryOperatorType.DecrementPostfix, state), state);
+                        return value;
+                    case ScriptCodeUnaryOperatorType.IncrementPostfix:
+                        value = GetValue(state);
+                        TrySetValue(value.UnaryOperation(ScriptCodeUnaryOperatorType.IncrementPostfix, state), state);
+                        return value;
+                    case ScriptCodeUnaryOperatorType.SquarePostfix:
+                        value = GetValue(state);
+                        TrySetValue(value.UnaryOperation(ScriptCodeUnaryOperatorType.SquarePostfix, state), state);
                         return value;
                     default:
                         return GetValue(state).UnaryOperation(@operator, state);
@@ -397,12 +397,12 @@ namespace DynamicScript.Runtime.Environment
 
             #region IScriptObject Members
 
-            IScriptObject IScriptObject.BinaryOperation(QCodeBinaryOperatorType @operator, IScriptObject right, InterpreterState state)
+            IScriptObject IScriptObject.BinaryOperation(ScriptCodeBinaryOperatorType @operator, IScriptObject right, InterpreterState state)
             {
                 return BinaryOperation(@operator, right, state);
             }
 
-            IScriptObject IScriptObject.UnaryOperation(QCodeUnaryOperatorType @operator, InterpreterState state)
+            IScriptObject IScriptObject.UnaryOperation(ScriptCodeUnaryOperatorType @operator, InterpreterState state)
             {
                 return UnaryOperation(@operator, state);
             }
@@ -453,6 +453,21 @@ namespace DynamicScript.Runtime.Environment
             /// <param name="value">The value to store.</param>
             /// <param name="state">Internal interpreter state.</param>
             public abstract void SetValue(IScriptObject value, InterpreterState state);
+
+            /// <summary>
+            /// Attempts to save value into this runtime slot.
+            /// </summary>
+            /// <param name="value"></param>
+            /// <param name="state"></param>
+            /// <returns></returns>
+            protected bool TrySetValue(IScriptObject value, InterpreterState state)
+            {
+                switch ((Attributes & RuntimeSlotAttributes.Immutable) == 0)
+                {
+                    case true: SetValue(value, state); return true;
+                    default: return false;
+                }
+            }
 
             /// <summary>
             /// Gets static contract binding of the slot.
@@ -1416,72 +1431,72 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="arg"></param>
         /// <param name="state"></param>
         /// <returns></returns>
-        public IScriptObject BinaryOperation(QCodeBinaryOperatorType @operator, IScriptObject arg, InterpreterState state)
+        public IScriptObject BinaryOperation(ScriptCodeBinaryOperatorType @operator, IScriptObject arg, InterpreterState state)
         {
             arg = arg.Normalize(state);
             switch (@operator)
             {
-                case QCodeBinaryOperatorType.Add:
+                case ScriptCodeBinaryOperatorType.Add:
                     return Add(arg, state);
-                case QCodeBinaryOperatorType.Intersection:
-                case QCodeBinaryOperatorType.AndAlso:
+                case ScriptCodeBinaryOperatorType.Intersection:
+                case ScriptCodeBinaryOperatorType.AndAlso:
                     return And(arg, state);
-                case QCodeBinaryOperatorType.Union:
-                case QCodeBinaryOperatorType.OrElse:
+                case ScriptCodeBinaryOperatorType.Union:
+                case ScriptCodeBinaryOperatorType.OrElse:
                     return Or(arg, state);
-                case QCodeBinaryOperatorType.Coalesce:
+                case ScriptCodeBinaryOperatorType.Coalesce:
                     return Coalesce(arg, state);
-                case QCodeBinaryOperatorType.Divide:
+                case ScriptCodeBinaryOperatorType.Divide:
                     return Divide(arg, state);
-                case QCodeBinaryOperatorType.InstanceOf:
+                case ScriptCodeBinaryOperatorType.InstanceOf:
                     return InstanceOf(arg, state);
-                case QCodeBinaryOperatorType.ValueEquality:
+                case ScriptCodeBinaryOperatorType.ValueEquality:
                     return Equals(arg, state);
-                case QCodeBinaryOperatorType.ReferenceEquality:
+                case ScriptCodeBinaryOperatorType.ReferenceEquality:
                     return ReferenceEquals(arg, state);
-                case QCodeBinaryOperatorType.ValueInequality:
+                case ScriptCodeBinaryOperatorType.ValueInequality:
                     return NotEquals(arg, state);
-                case QCodeBinaryOperatorType.ReferenceInequality:
+                case ScriptCodeBinaryOperatorType.ReferenceInequality:
                     return ReferenceNotEquals(arg, state);
-                case QCodeBinaryOperatorType.Exclusion:
+                case ScriptCodeBinaryOperatorType.Exclusion:
                     return ExclusiveOr(arg, state);
-                case QCodeBinaryOperatorType.GreaterThan:
+                case ScriptCodeBinaryOperatorType.GreaterThan:
                     return GreaterThan(arg, state);
-                case QCodeBinaryOperatorType.GreaterThanOrEqual:
+                case ScriptCodeBinaryOperatorType.GreaterThanOrEqual:
                     return GreaterThanOrEqual(arg, state);
-                case QCodeBinaryOperatorType.LessThan:
+                case ScriptCodeBinaryOperatorType.LessThan:
                     return LessThan(arg, state);
-                case QCodeBinaryOperatorType.LessThanOrEqual:
+                case ScriptCodeBinaryOperatorType.LessThanOrEqual:
                     return LessThanOrEqual(arg, state);
-                case QCodeBinaryOperatorType.Modulo:
+                case ScriptCodeBinaryOperatorType.Modulo:
                     return Modulo(arg, state);
-                case QCodeBinaryOperatorType.Multiply:
+                case ScriptCodeBinaryOperatorType.Multiply:
                     return Multiply(arg, state);
-                case QCodeBinaryOperatorType.Subtract:
+                case ScriptCodeBinaryOperatorType.Subtract:
                     return Subtract(arg, state);
-                case QCodeBinaryOperatorType.TypeCast:
+                case ScriptCodeBinaryOperatorType.TypeCast:
                     return Convert(arg as IScriptContract, state);
-                case QCodeBinaryOperatorType.PartOf:
+                case ScriptCodeBinaryOperatorType.PartOf:
                     return PartOf(arg, state);
-                case QCodeBinaryOperatorType.MetadataDiscovery:
+                case ScriptCodeBinaryOperatorType.MetadataDiscovery:
                     return GetSlotMetadata(arg, state);
-                case QCodeBinaryOperatorType.MemberAccess:
+                case ScriptCodeBinaryOperatorType.MemberAccess:
                     return GetSlot(arg, state);
-                case QCodeBinaryOperatorType.Assign:
+                case ScriptCodeBinaryOperatorType.Assign:
                     return Assign(arg, state);
-                case QCodeBinaryOperatorType.DivideAssign:
+                case ScriptCodeBinaryOperatorType.DivideAssign:
                     return DivideAssign(arg, state);
-                case QCodeBinaryOperatorType.ExclusionAssign:
+                case ScriptCodeBinaryOperatorType.ExclusionAssign:
                     return ExclusionAssign(arg, state);
-                case QCodeBinaryOperatorType.AdditiveAssign:
+                case ScriptCodeBinaryOperatorType.AdditiveAssign:
                     return AddAssign(arg, state);
-                case QCodeBinaryOperatorType.MultiplicativeAssign:
+                case ScriptCodeBinaryOperatorType.MultiplicativeAssign:
                     return MulAssign(arg, state);
-                case QCodeBinaryOperatorType.Expansion:
+                case ScriptCodeBinaryOperatorType.Expansion:
                     return Expansion(arg, state);
-                case QCodeBinaryOperatorType.Reduction:
+                case ScriptCodeBinaryOperatorType.Reduction:
                     return Reduction(arg, state);
-                case QCodeBinaryOperatorType.SubtractiveAssign:
+                case ScriptCodeBinaryOperatorType.SubtractiveAssign:
                     return SubAssign(arg, state);
                 default:
                     throw new UnsupportedOperationException(state);
@@ -2038,33 +2053,33 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="operator"></param>
         /// <param name="state"></param>
         /// <returns></returns>
-        public IScriptObject UnaryOperation(QCodeUnaryOperatorType @operator, InterpreterState state)
+        public IScriptObject UnaryOperation(ScriptCodeUnaryOperatorType @operator, InterpreterState state)
         {
             switch (@operator)
             {
-                case QCodeUnaryOperatorType.IncrementPrefix:
+                case ScriptCodeUnaryOperatorType.IncrementPrefix:
                     return PreIncrementAssign(state);
-                case QCodeUnaryOperatorType.IncrementPostfix:
+                case ScriptCodeUnaryOperatorType.IncrementPostfix:
                     return PostIncrementAssign(state);
-                case QCodeUnaryOperatorType.DecrementPrefix:
+                case ScriptCodeUnaryOperatorType.DecrementPrefix:
                     return PreDecrementAssign(state);
-                case QCodeUnaryOperatorType.DecrementPostfix:
+                case ScriptCodeUnaryOperatorType.DecrementPostfix:
                     return PostDecrementAssign(state);
-                case QCodeUnaryOperatorType.Plus:
+                case ScriptCodeUnaryOperatorType.Plus:
                     return UnaryPlus(state);
-                case QCodeUnaryOperatorType.Minus:
+                case ScriptCodeUnaryOperatorType.Minus:
                     return UnaryMinus(state);
-                case QCodeUnaryOperatorType.Negate:
+                case ScriptCodeUnaryOperatorType.Negate:
                     return Not(state);
-                case QCodeUnaryOperatorType.SquarePrefix:
+                case ScriptCodeUnaryOperatorType.SquarePrefix:
                     return PreSquareAssign(state);
-                case QCodeUnaryOperatorType.SquarePostfix:
+                case ScriptCodeUnaryOperatorType.SquarePostfix:
                     return PostSquareAssign(state);
-                case QCodeUnaryOperatorType.TypeOf:
+                case ScriptCodeUnaryOperatorType.TypeOf:
                     return GetContractBinding();
-                case QCodeUnaryOperatorType.VoidCheck:
+                case ScriptCodeUnaryOperatorType.VoidCheck:
                     return IsVoid(state);
-                case QCodeUnaryOperatorType.Intern:
+                case ScriptCodeUnaryOperatorType.Intern:
                     return Intern(state);
                 default:
                     throw new UnsupportedOperationException(state);
@@ -2352,26 +2367,26 @@ namespace DynamicScript.Runtime.Environment
 
         internal static MethodCallExpression BindBinaryOperation(Expression left, ConstantExpression @operator, Expression right, ParameterExpression stateVar)
         {
-            var binaryOp = LinqHelpers.BodyOf<IScriptObject, QCodeBinaryOperatorType, IScriptObject, InterpreterState, IScriptObject, MethodCallExpression>((l, op, r, s) => l.BinaryOperation(op, r, s));
+            var binaryOp = LinqHelpers.BodyOf<IScriptObject, ScriptCodeBinaryOperatorType, IScriptObject, InterpreterState, IScriptObject, MethodCallExpression>((l, op, r, s) => l.BinaryOperation(op, r, s));
             Normalize(ref left);
             return binaryOp.Update(left, new Expression[] { @operator, right, stateVar });
         }
 
-        internal static MethodCallExpression BindBinaryOperation(Expression left, QCodeBinaryOperatorType @operator, Expression right, ParameterExpression stateVar)
+        internal static MethodCallExpression BindBinaryOperation(Expression left, ScriptCodeBinaryOperatorType @operator, Expression right, ParameterExpression stateVar)
         {
-            return BindBinaryOperation(left, LinqHelpers.Constant<QCodeBinaryOperatorType>(@operator), right, stateVar);
+            return BindBinaryOperation(left, LinqHelpers.Constant<ScriptCodeBinaryOperatorType>(@operator), right, stateVar);
         }
 
         internal static MethodCallExpression BindUnaryOperation(Expression operand, ConstantExpression @operator, ParameterExpression stateVar)
         {
-            var unaryOp = LinqHelpers.BodyOf<IScriptObject, QCodeUnaryOperatorType, InterpreterState, IScriptObject, MethodCallExpression>((l, op, s) => l.UnaryOperation(op, s));
+            var unaryOp = LinqHelpers.BodyOf<IScriptObject, ScriptCodeUnaryOperatorType, InterpreterState, IScriptObject, MethodCallExpression>((l, op, s) => l.UnaryOperation(op, s));
             Normalize(ref operand);
             return unaryOp.Update(operand, new Expression[] { @operator, stateVar });
         }
 
-        internal static MethodCallExpression BindUnaryOperation(Expression operand, QCodeUnaryOperatorType @operator, ParameterExpression stateVar)
+        internal static MethodCallExpression BindUnaryOperation(Expression operand, ScriptCodeUnaryOperatorType @operator, ParameterExpression stateVar)
         {
-            return BindUnaryOperation(operand, LinqHelpers.Constant<QCodeUnaryOperatorType>(@operator), stateVar);
+            return BindUnaryOperation(operand, LinqHelpers.Constant<ScriptCodeUnaryOperatorType>(@operator), stateVar);
         }
 
         internal static MethodCallExpression BindInvoke(Expression target, IEnumerable<Expression> args, ParameterExpression stateVar)
@@ -2435,7 +2450,7 @@ namespace DynamicScript.Runtime.Environment
         internal static IScriptObject Unite(IEnumerable<IScriptObject> objects, InterpreterState state)
         {
             if (objects == null) objects = Enumerable.Empty<IScriptObject>();
-            return objects.Aggregate((left, right) => left.BinaryOperation(QCodeBinaryOperatorType.Union, right, state));
+            return objects.Aggregate((left, right) => left.BinaryOperation(ScriptCodeBinaryOperatorType.Union, right, state));
         }
 
         internal static IScriptObject Unite(IEnumerable<IScriptObject> set1, IEnumerable<IScriptObject> set2, InterpreterState state)
@@ -2446,7 +2461,7 @@ namespace DynamicScript.Runtime.Environment
         internal static IScriptObject Intersect(IEnumerable<IScriptObject> objects, InterpreterState state)
         {
             if (objects == null) objects = Enumerable.Empty<IScriptObject>();
-            return objects.Aggregate((left, right) => left.BinaryOperation(QCodeBinaryOperatorType.Intersection, right, state));
+            return objects.Aggregate((left, right) => left.BinaryOperation(ScriptCodeBinaryOperatorType.Intersection, right, state));
         }
 
         internal static IScriptObject Intersect(IEnumerable<IScriptObject> set1, IEnumerable<IScriptObject> set2, InterpreterState state)

@@ -184,22 +184,22 @@ namespace DynamicScript.Runtime.Environment
         /// <summary>
         /// Represents zero value.
         /// </summary>
-        public static readonly ScriptInteger Zero = 0L;
+        public static readonly ScriptInteger Zero = new ScriptInteger(0L);
 
         /// <summary>
         /// Represents the smallest possible value.
         /// </summary>
-        public static readonly ScriptInteger MinValue = long.MinValue;
+        public static readonly ScriptInteger MinValue = new ScriptInteger(long.MinValue);
 
         /// <summary>
         /// Represents the largest possible value.
         /// </summary>
-        public static readonly ScriptInteger MaxValue = long.MaxValue;
+        public static readonly ScriptInteger MaxValue = new ScriptInteger(long.MaxValue);
 
         /// <summary>
         /// Represents 1 value.
-        /// </summary>
-        public static readonly ScriptInteger One = 1L;
+        /// </summary>b
+        public static readonly ScriptInteger One = new ScriptInteger(1L);
 
         /// <summary>
         /// Provides implicit conversion from <see cref="System.Int64"/> to its DynamicScript-compliant representation.

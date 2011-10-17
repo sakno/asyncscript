@@ -62,32 +62,32 @@ namespace DynamicScript.Runtime.Environment
         /// <summary>
         /// Represents not a number.
         /// </summary>
-        public static readonly ScriptReal NaN = double.NaN;
+        public static readonly ScriptReal NaN = new ScriptReal(double.NaN);
 
         /// <summary>
         /// Represents largest possible real.
         /// </summary>
-        public static readonly ScriptReal MaxValue = double.MaxValue;
+        public static readonly ScriptReal MaxValue = new ScriptReal(double.MaxValue);
 
         /// <summary>
         /// Represents smallest possible real.
         /// </summary>
-        public static readonly ScriptReal MinValue = double.MinValue;
+        public static readonly ScriptReal MinValue = new ScriptReal(double.MinValue);
 
         /// <summary>
         /// Represents the smallest positive real.
         /// </summary>
-        public static readonly ScriptReal Epsilon = double.Epsilon;
+        public static readonly ScriptReal Epsilon = new ScriptReal(double.Epsilon);
 
         /// <summary>
         /// Represents positive infinity.
         /// </summary>
-        public static readonly ScriptReal PositiveInfinity = double.PositiveInfinity;
+        public static readonly ScriptReal PositiveInfinity = new ScriptReal(double.PositiveInfinity);
 
         /// <summary>
         /// Represents negative infinity.
         /// </summary>
-        public static readonly ScriptReal NegativeInfinity = double.NegativeInfinity;
+        public static readonly ScriptReal NegativeInfinity = new ScriptReal(double.NegativeInfinity);
 
         /// <summary>
         /// Provides conversion from <see cref="System.Double"/> object to DynamicScript-compliant representation.

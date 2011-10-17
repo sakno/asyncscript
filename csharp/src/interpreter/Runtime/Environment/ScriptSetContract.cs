@@ -9,7 +9,8 @@ namespace DynamicScript.Runtime.Environment
     using InterpretationContext = Compiler.Ast.InterpretationContext;
 
     /// <summary>
-    /// Represents unordered finite set of 
+    /// Represents unordered finite set of values.
+    /// This class cannot be inherited.
     /// </summary>
     [ComVisible(false)]
     [Serializable]
@@ -188,7 +189,7 @@ namespace DynamicScript.Runtime.Environment
             //Join two slot set
             var equalSlots = Enumerable.Aggregate(from left in Elements
                                                   from right in contract
-                                                  where left.Equals(right)
+                                                  where Equals(left, right)
                                                   select 1,
                                                   (l, r) => l + r);
             switch (Count == contract.Count)

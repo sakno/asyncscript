@@ -123,6 +123,8 @@ namespace DynamicScript.Runtime.Environment
         private IRuntimeSlot m_sum;
         private IRuntimeSlot m_abs;
         private IRuntimeSlot m_isint;
+        private IRuntimeSlot m_pinf;
+        private IRuntimeSlot m_ninf;
 
         private ScriptRealContract(SerializationInfo info, StreamingContext context)
         {
@@ -262,6 +264,16 @@ namespace DynamicScript.Runtime.Environment
 
         #region Runtime Slots
 
+        IRuntimeSlot IRealContractSlots.PINF
+        {
+            get { return CacheConst(ref m_pinf, () => ScriptReal.PositiveInfinity); }
+        }
+
+        IRuntimeSlot IRealContractSlots.NINF
+        {
+            get { return CacheConst(ref m_ninf, () => ScriptReal.NegativeInfinity); }
+        }
+
         IRuntimeSlot IRealContractSlots.IsInterned
         {
             get { return CacheConst<IsInternedAction>(ref m_isint); }
@@ -303,5 +315,8 @@ namespace DynamicScript.Runtime.Environment
         }
 
         #endregion
+
+
+        
     }
 }

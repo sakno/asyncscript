@@ -70,5 +70,19 @@ namespace DynamicScript.Runtime.Environment
             bool result = Run("return real.isInterned(^5.0);");
             Assert.IsTrue(result);
         }
+
+        [Test(Description="Positive infinity test.")]
+        public void PositiveInfinityTest()
+        {
+            double pinf = Run("return real.pinf;");
+            Assert.AreEqual(double.PositiveInfinity, pinf);
+        }
+
+        [Test(Description="Negative infinity test.")]
+        public void NegativeInfinityTest()
+        {
+            double ninf = Run("return real.ninf;");
+            Assert.AreEqual(double.NegativeInfinity, ninf);
+        }
     }
 }

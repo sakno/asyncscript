@@ -23,5 +23,9 @@ namespace DynamicScript.Runtime.Environment
         IRuntimeSlot Epsilon { get; }
 
         IRuntimeSlot IsInterned { get; }
+
+        IRuntimeSlot PINF { get; }  //positive infinity
+
+        IRuntimeSlot NINF { get; }  //negative infinity
     }
 }
