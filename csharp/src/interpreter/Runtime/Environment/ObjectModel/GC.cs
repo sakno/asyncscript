@@ -124,8 +124,6 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         {
         }
 
-            
-
         /// <summary>
         /// Forces an immediate garbage collection.
         /// </summary>

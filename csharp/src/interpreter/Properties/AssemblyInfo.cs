@@ -21,7 +21,7 @@ using PEFileKinds = System.Reflection.Emit.PEFileKinds;
 #else
 [assembly: AssemblyConfiguration("RETAIL")]
 #endif
-[assembly: AssemblyCompany("MIT License")]
+[assembly: AssemblyCompany("Apache 2.0 License")]
 [assembly: AssemblyProduct("DynamicScript Programming Language")]
 [assembly: AssemblyCulture("")]
 

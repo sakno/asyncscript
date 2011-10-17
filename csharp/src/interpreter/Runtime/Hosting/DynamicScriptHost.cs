@@ -21,11 +21,6 @@ namespace DynamicScript.Runtime.Hosting
         [LoaderOptimization(LoaderOptimization.SingleDomain)]
         private static int Main(string[] args)
         {
-            IScriptObject r = DynamicScriptInterpreter.Run(@"
-return split({{a = 1, b = 2}});
-");
-            var objects = DynamicScript.Runtime.Environment.ScriptIterator.AsEnumerable(r, InterpreterState.Current);
-            var count = System.Linq.Enumerable.LongCount(objects);
             return Execute(new CommandLineParser(Console.Out, Console.In), args);
         }
     }

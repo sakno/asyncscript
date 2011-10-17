@@ -15,6 +15,10 @@ namespace DynamicScript.Runtime.Environment
     public class ScriptRuntimeAction : ScriptActionBase
     {
         private readonly Delegate m_implementation;
+        /// <summary>
+        /// Indicates that the runtime action uses a closure.
+        /// </summary>
+        public readonly bool Closure;
 
         /// <summary>
         /// Initializes a new script action.
@@ -32,6 +36,7 @@ namespace DynamicScript.Runtime.Environment
         {
             if (implementation == null) throw new ArgumentNullException("implementation");
             m_implementation = implementation;
+            Closure = IsClosure(implementation.Method);
         }
 
         /// <summary>
@@ -190,9 +195,21 @@ namespace DynamicScript.Runtime.Environment
         /// <returns>Invocation result.</returns>
         internal protected sealed override IScriptObject Invoke(InvocationContext ctx, IRuntimeSlot[] arguments)
         {
-            var newArgs = new object[arguments.Length + 1];
-            newArgs[0] = ctx;
-            arguments.CopyTo(newArgs, 1);
+            var newArgs = default(object[]);
+            switch (Closure)
+            {
+                case true:
+                    newArgs = new object[arguments.LongLength + 2];
+                    newArgs[0] = m_implementation.Target;
+                    newArgs[1] = ctx;
+                    arguments.CopyTo(newArgs, 2);
+                    break;
+                default:
+                    newArgs = new object[arguments.LongLength + 1];
+                    newArgs[0] = ctx;
+                    arguments.CopyTo(newArgs, 1);
+                    break;
+            }
             return m_implementation.DynamicInvoke(newArgs) as IScriptObject ?? Void;
         }
 

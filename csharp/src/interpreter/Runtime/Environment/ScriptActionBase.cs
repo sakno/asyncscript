@@ -13,6 +13,7 @@ namespace DynamicScript.Runtime.Environment
     using CallStack = Debugging.CallStack;
     using SystemConverter = System.Convert;
     using MethodInfo = System.Reflection.MethodInfo;
+    using Closure = System.Runtime.CompilerServices.Closure;
 
     /// <summary>
     /// Represents action implementation.
@@ -285,7 +286,7 @@ namespace DynamicScript.Runtime.Environment
         protected ScriptActionBase(ScriptActionContract contract, IScriptObject @this = null)
             : base(contract)
         {
-            This = @this ?? Void;
+            This = @this ?? Void; 
             IsTransparent = TransparentActionAttribute.IsDefined(GetType());
             VoidReturn = IsVoid(contract.ReturnValueContract);
         }
@@ -309,6 +310,17 @@ namespace DynamicScript.Runtime.Environment
         public IScriptContract ReturnValueContract
         {
             get { return ContractBinding.ReturnValueContract; }
+        }
+
+        /// <summary>
+        /// Determines whether the specified method uses a closure.
+        /// </summary>
+        /// <param name="m"></param>
+        /// <returns></returns>
+        protected static bool IsClosure(MethodInfo m)
+        {
+            var parameters = m.GetParameters();
+            return parameters.LongLength > 0L && Equals(parameters[0].ParameterType, typeof(Closure));
         }
 
         /// <summary>
