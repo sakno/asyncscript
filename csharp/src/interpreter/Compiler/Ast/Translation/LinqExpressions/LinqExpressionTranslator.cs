@@ -1182,7 +1182,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns>The translated array contract.</returns>
         protected override Expression Translate(ScriptCodeArrayContractExpression arrayContract, TranslationContext context)
         {
-            return ScriptArrayContract.Bind(Translate(arrayContract.ElementContract, context), arrayContract.Rank);
+            return ScriptArrayContract.New(Translate(arrayContract.ElementContract, context), arrayContract.Rank);
         }
 
         /// <summary>

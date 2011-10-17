@@ -101,15 +101,19 @@ namespace DynamicScript.Runtime.Environment
         /// <returns></returns>
         public override ScriptObject CreateObject(IList<IScriptObject> args, InterpreterState state)
         {
-            if (args.Count != 2)
-                throw new ActionArgumentsMistmatchException(state);
-            //The first argument should be contract
-            var elementContract = args[0] as IScriptContract;
-            if (elementContract == null) throw new ContractBindingException(args[0], ScriptMetaContract.Instance, state);
-            //The second argument should contain number of dimensions
-            var dimensions = args[1];
-            if (!ScriptIntegerContract.Convert(ref dimensions)) throw new ContractBindingException(dimensions, ScriptIntegerContract.Instance, state);
-            return new ScriptArrayContract(elementContract, SystemConverter.ToInt32(dimensions));
+            switch (args.Count)
+            {
+                case 1: return new ScriptArray(args[0]);
+                case 2:
+                    //The first argument should be contract
+                    var elementContract = args[0] as IScriptContract;
+                    if (elementContract == null) throw new ContractBindingException(args[0], ScriptMetaContract.Instance, state);
+                    //The second argument should contain number of dimensions
+                    var dimensions = args[1];
+                    if (!ScriptIntegerContract.Convert(ref dimensions)) throw new ContractBindingException(dimensions, ScriptIntegerContract.Instance, state);
+                    return new ScriptArrayContract(elementContract, SystemConverter.ToInt32(dimensions));
+                default: throw new ActionArgumentsMistmatchException(state);
+            }
         }
 
         #region Runtime Slots

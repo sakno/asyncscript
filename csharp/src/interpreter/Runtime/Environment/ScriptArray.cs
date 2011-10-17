@@ -258,6 +258,19 @@ namespace DynamicScript.Runtime.Environment
             return m_elements.GetLongLength(dimension);
         }
 
+        /// <summary>
+        /// Computes a total length of the multidimensional array.
+        /// </summary>
+        /// <param name="elements"></param>
+        /// <returns></returns>
+        public static long GetTotalLength(IScriptArray elements)
+        {
+            var result = 1L;
+            for (var i = 0; i < elements.GetContractBinding().Rank; i++)
+                result *= elements.GetLength(i);
+            return result;
+        }
+
         IScriptArrayContract IScriptArray.GetContractBinding()
         {
             return m_contract;
@@ -343,11 +356,7 @@ namespace DynamicScript.Runtime.Environment
             {
                 case 1: return this;
                 default:
-                    var totalLength = 1L;
-                    //Computes length of single dimensional array
-                    //L = L1 * L2 * L3 * L4 * ... * Ln
-                    for (var i = 0; i < m_elements.Rank; i++) totalLength *= m_elements.GetLongLength(i);
-                    var result = Array.CreateInstance(m_elements.GetType().GetElementType(), totalLength);
+                    var result = Array.CreateInstance(m_elements.GetType().GetElementType(), GetTotalLength(this));
                     ForEach(m_elements, new ArrayCopier(result));
                     return new ScriptArray(result, new ScriptArrayContract(m_contract.ElementContract));
             }
@@ -526,6 +535,47 @@ namespace DynamicScript.Runtime.Environment
         public static ScriptArray Create(string[] elements)
         {
             return new ScriptArray(Array.ConvertAll<string, IScriptObject>(elements ?? new string[0], b => new ScriptString(b)), new ScriptArrayContract(ScriptStringContract.Instance));
+        }
+
+        /// <summary>
+        /// Concatenates a two script arrays.
+        /// </summary>
+        /// <param name="left"></param>
+        /// <param name="right"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public static IScriptArray Concat(IScriptArray left, IScriptArray right, InterpreterState state)
+        {
+            var leftLength = GetTotalLength(left);
+            var rightLength = GetTotalLength(right);
+            var result = new IScriptObject[leftLength + rightLength];
+            var indicies = new long[1];
+            for (var i = 0L; i < leftLength; i++)
+            {
+                indicies[0] = i;
+                result[i] = left[indicies, state];
+            }
+            for (var i = 0L; i < rightLength; i++)
+            {
+                indicies[0] = i;
+                result[i + leftLength] = right[indicies, state];
+            }
+            return new ScriptArray(result);
+        }
+
+        /// <summary>
+        /// Concatenates a two arrays.
+        /// </summary>
+        /// <param name="right"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        protected override IScriptObject Add(IScriptObject right, InterpreterState state)
+        {
+            if (right is IScriptArray)
+                return Concat(this, (IScriptArray)right, state);
+            else if (state.Context == InterpretationContext.Unchecked)
+                return Void;
+            else throw new UnsupportedOperationException(state);
         }
     }
 }

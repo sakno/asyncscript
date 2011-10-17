@@ -165,16 +165,16 @@ namespace DynamicScript.Runtime.Environment
             return new ScriptArray(this, CreateLengths(args, state));
         }
 
-        internal static NewExpression Bind(Expression contractExpr, ConstantExpression rank)
+        internal static NewExpression New(Expression contractExpr, ConstantExpression rank)
         {
             contractExpr = Extract(contractExpr);
             var ctor = LinqHelpers.BodyOf<IScriptContract, int, ScriptArrayContract, NewExpression>((c, r) => new ScriptArrayContract(c, r));
             return ctor.Update(new[] { contractExpr, rank });
         }
 
-        internal static NewExpression Bind(Expression contractExpr, int rank)
+        internal static NewExpression New(Expression contractExpr, int rank)
         {
-            return Bind(contractExpr, LinqHelpers.Constant(rank));
+            return New(contractExpr, LinqHelpers.Constant(rank));
         }
 
         /// <summary>
