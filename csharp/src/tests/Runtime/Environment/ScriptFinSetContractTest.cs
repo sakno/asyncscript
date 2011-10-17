@@ -11,8 +11,8 @@ namespace DynamicScript.Runtime.Environment
         [Test(Description = "FINSET contract hosting using C#/DLR.")]
         public void DlrInterop()
         {
-            object integer = Run("return finset;");
-            Assert.AreEqual(integer, ScriptFinSetContract.Instance);
+            var contract = Run("return finset;");
+            Assert.AreSame(contract, ScriptFinSetContract.Instance);
         }
     }
 }

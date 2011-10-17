@@ -67,6 +67,21 @@ namespace DynamicScript.Runtime.Environment
             else throw new UnsupportedOperationException(state);
         }
 
+        /// <summary>
+        /// Creates a new finite set of values.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public override IScriptObject Convert(IScriptObject value, InterpreterState state)
+        {
+            if (value is IScriptSetFactory)
+                return ((IScriptSetFactory)value).CreateSet(state);
+            else if (state.Context == InterpretationContext.Unchecked)
+                return Void;
+            else throw new UnsupportedOperationException(state);
+        }
+
         internal static LinqExpression Expression
         {
             get { return LinqHelpers.BodyOf<Func<ScriptFinSetContract>, MemberExpression>(() => Instance); }

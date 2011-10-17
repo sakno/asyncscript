@@ -8,7 +8,7 @@ namespace DynamicScript.Runtime.Environment
 
     [SemanticTest]
     [TestClass(typeof(ScriptStringContract))]
-    sealed class StringContractTest: SemanticTestBase
+    sealed class ScriptStringContractTest: SemanticTestBase
     {
         [Test(Description = "EMPTY slot test.")]
         public void EmptySlotTest()

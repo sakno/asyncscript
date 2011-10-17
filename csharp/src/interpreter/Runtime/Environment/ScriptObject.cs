@@ -1505,14 +1505,21 @@ namespace DynamicScript.Runtime.Environment
 
         private IScriptObject PartOf(IScriptCompositeObject collection, InterpreterState state)
         {
-            foreach (var value in collection.GetSlotValues(state))
-                if (Equals(this, value)) return Convert(true);
+            foreach (var slot in collection.GetSlotValues(state))
+                if (Equals(this, slot.Value)) return Convert(true);
             return Convert(false);
         }
 
         private IScriptObject PartOf(IScriptContainer collection, InterpreterState state)
         {
             return Convert(collection.Contains(this, false, state));
+        }
+
+        private IScriptObject PartOf(IScriptSet collection, InterpreterState state)
+        {
+            foreach (var obj in collection)
+                if (Equals(this, obj)) return Convert(true);
+            return Convert(false);
         }
 
         /// <summary>
@@ -1527,6 +1534,8 @@ namespace DynamicScript.Runtime.Environment
                 return PartOf((IScriptContainer)collection, state);
             if (collection is IScriptCompositeObject)
                 return PartOf((IScriptCompositeObject)collection, state);
+            else if (collection is IScriptSet)
+                return PartOf((IScriptSet)collection, state);
             else return Convert(false);
         }
 
@@ -1588,8 +1597,8 @@ namespace DynamicScript.Runtime.Environment
         /// <returns></returns>
         protected IScriptObject InstanceOf(IScriptContract contract, InterpreterState state)
         {
-            var rels = GetContractBinding().GetRelationship(contract);
-            return Convert<bool>(RuntimeHelpers.IsCompatible(contract, this));
+            return contract is IScriptSet ? PartOf((IScriptSet)contract, state) :
+                Convert(RuntimeHelpers.IsCompatible(contract, this));
         }
 
         /// <summary>
@@ -1602,7 +1611,7 @@ namespace DynamicScript.Runtime.Environment
         [EditorBrowsable(EditorBrowsableState.Never)]
         internal virtual IScriptObject InstanceOf(IScriptObject contract, InterpreterState state)
         {
-            return contract is IScriptContract ? InstanceOf((IScriptContract)contract, state) : Convert<bool>(false);
+            return contract is IScriptContract ? InstanceOf((IScriptContract)contract, state) : Convert(false);
         }
 
         /// <summary>

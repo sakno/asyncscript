@@ -22,7 +22,8 @@ namespace DynamicScript.Runtime.Hosting
         private static int Main(string[] args)
         {
             var r = DynamicScriptInterpreter.Run(@"
-const a = 10; return **a;
+const z = {{a = 10, b = 20}} to finset;
+return 10 is z;
 ");
             return Execute(new CommandLineParser(Console.Out, Console.In), args);
         }

@@ -87,8 +87,6 @@ namespace DynamicScript.Runtime.Environment
         {
             if (Mapping(ref value))
                 return value;
-            else if (value is IScriptSetFactory)
-                return ((IScriptSetFactory)value).CreateSet(state);
             else if (state.Context == InterpretationContext.Unchecked)
                 return Void;
             else throw new UnsupportedOperationException(state);
