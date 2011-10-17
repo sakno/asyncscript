@@ -12,15 +12,14 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         public void EnumActionTest()
         {
             var set1 = Run("return enum([1, 2]);");
-            var set2 = Run("return {a=1, b=2} to type;");
+            var set2 = Run("return {{a = 1, b = 2}} to finset;");
             Assert.AreEqual(set1, set2);
         }
 
         [Test(Description = "Test of SPLIT action.")]
         public void SplitActionTest()
         {
-            IScriptObject slots = Run("return split({a=1, b = 2});");
-            Assert.IsInstanceOf<ScriptCompositeObject>(slots);
+            IScriptObject slots = Run("return split({{a = 1, b = 2}});");
             var objects = ScriptIterator.AsEnumerable(slots, InterpreterState.Current);
             Assert.AreEqual(2L, objects.LongCount());
         }

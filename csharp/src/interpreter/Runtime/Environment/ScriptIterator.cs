@@ -312,7 +312,7 @@ namespace DynamicScript.Runtime.Environment
         /// <returns></returns>
         public static ScriptCompositeObject GetIterator(IScriptObject obj, InterpreterState state)
         {
-            var iteratorAct = ScriptIteratorAction.IsIterable(obj) ? obj[IteratorAction, state].GetValue(state) as ScriptRuntimeAction : null;
+            var iteratorAct = ScriptIteratorAction.IsIterable(obj) ? obj[IteratorAction, state].GetValue(state) as ScriptActionBase : null;
             return iteratorAct != null ? iteratorAct.Invoke(new IScriptObject[0], state) as ScriptCompositeObject : null;
         }
 
