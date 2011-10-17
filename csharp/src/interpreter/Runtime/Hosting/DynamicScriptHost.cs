@@ -21,6 +21,10 @@ namespace DynamicScript.Runtime.Hosting
         [LoaderOptimization(LoaderOptimization.SingleDomain)]
         private static int Main(string[] args)
         {
+//            IScriptObject r = DynamicScriptInterpreter.Run(@"
+//const s = @i: integer -> integer: i + 10;
+//puts(s(20));
+//");
             return Execute(new CommandLineParser(Console.Out, Console.In), args);
         }
     }

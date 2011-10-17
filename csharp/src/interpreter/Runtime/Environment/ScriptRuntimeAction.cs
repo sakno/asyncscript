@@ -6,6 +6,8 @@ using System.Linq;
 namespace DynamicScript.Runtime.Environment
 {
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
+    using MethodInfo = System.Reflection.MethodInfo;
+    using Closure = System.Runtime.CompilerServices.Closure;
 
     /// <summary>
     /// Represents script-side implementation of the action.
@@ -15,10 +17,6 @@ namespace DynamicScript.Runtime.Environment
     public class ScriptRuntimeAction : ScriptActionBase
     {
         private readonly Delegate m_implementation;
-        /// <summary>
-        /// Indicates that the runtime action uses a closure.
-        /// </summary>
-        public readonly bool Closure;
 
         /// <summary>
         /// Initializes a new script action.
@@ -35,8 +33,11 @@ namespace DynamicScript.Runtime.Environment
             : base(contract, @this)
         {
             if (implementation == null) throw new ArgumentNullException("implementation");
-            m_implementation = implementation;
-            Closure = IsClosure(implementation.Method);
+            m_implementation = MonoRuntime.Available && IsClosure(implementation.Method) && implementation.Target == null ?
+                Delegate.CreateDelegate(implementation.GetType(),
+                        new Closure(new object[0], new object[0]),
+                        implementation.Method, false) :
+                        implementation;
         }
 
         /// <summary>
@@ -188,6 +189,17 @@ namespace DynamicScript.Runtime.Environment
         }
 
         /// <summary>
+        /// Determines whether the specified method uses a closure.
+        /// </summary>
+        /// <param name="m"></param>
+        /// <returns></returns>
+        public static bool IsClosure(MethodInfo m)
+        {
+            var parameters = m.GetParameters();
+            return parameters.LongLength > 0L && Equals(parameters[0].ParameterType, typeof(Closure));
+        }
+
+        /// <summary>
         /// Invokes script action.
         /// </summary>
         /// <param name="ctx">Action invocation context.</param>
@@ -195,21 +207,9 @@ namespace DynamicScript.Runtime.Environment
         /// <returns>Invocation result.</returns>
         internal protected sealed override IScriptObject Invoke(InvocationContext ctx, IRuntimeSlot[] arguments)
         {
-            var newArgs = default(object[]);
-            switch (Closure)
-            {
-                case true:
-                    newArgs = new object[arguments.LongLength + 2];
-                    newArgs[0] = m_implementation.Target;
-                    newArgs[1] = ctx;
-                    arguments.CopyTo(newArgs, 2);
-                    break;
-                default:
-                    newArgs = new object[arguments.LongLength + 1];
-                    newArgs[0] = ctx;
-                    arguments.CopyTo(newArgs, 1);
-                    break;
-            }
+            var newArgs = new object[arguments.LongLength + 1];
+            newArgs[0] = ctx;
+            arguments.CopyTo(newArgs, 1);
             return m_implementation.DynamicInvoke(newArgs) as IScriptObject ?? Void;
         }
 

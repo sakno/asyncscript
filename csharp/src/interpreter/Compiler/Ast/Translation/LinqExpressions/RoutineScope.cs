@@ -62,7 +62,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                     return result;
                 else if (Parameters.TryGetValue(variableName, out result))
                     return result;
-                else return null;
+                else return Parent != null ? Parent[variableName] : null;
             }
         }
 
