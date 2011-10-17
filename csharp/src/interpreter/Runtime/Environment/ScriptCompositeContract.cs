@@ -11,6 +11,7 @@ namespace DynamicScript.Runtime.Environment
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
     using InterpretationContext = Compiler.Ast.InterpretationContext;
     using Compiler;
+    using Interlocked = System.Threading.Interlocked;
 
     /// <summary>
     /// Represents composite contract with slots.
@@ -94,6 +95,22 @@ namespace DynamicScript.Runtime.Environment
             public bool Equals(SlotMeta other)
             {
                 return IsConstant == other.IsConstant && ContractBinding.Equals(other.ContractBinding);
+            }
+        }
+
+        [ComVisible(false)]
+        [Serializable]
+        private sealed class SlotAggregator : ParallelAggregator<KeyValuePair<string, SlotMeta>, long>
+        {
+            protected override void Aggregate(KeyValuePair<string, SlotMeta> slot1, KeyValuePair<string, SlotMeta> slot2, ref long result)
+            {
+                if (StringEqualityComparer.Equals(slot1.Key, slot2.Key) && slot1.Value.ContractBinding.Equals(slot2.Value.ContractBinding))
+                    Interlocked.Increment(ref result);
+            }
+
+            public static new long Aggregate(IEnumerable<KeyValuePair<string, SlotMeta>> slots1, IEnumerable<KeyValuePair<string, SlotMeta>> slots2)
+            {
+                return Aggregate<SlotAggregator>(slots1, slots2);
             }
         }
         #endregion
@@ -238,16 +255,13 @@ namespace DynamicScript.Runtime.Environment
         public ContractRelationshipType GetRelationship(ScriptCompositeContract contract)
         {
             //Join two slot set
-            var equalSlots = 0;
-            foreach (var slot1 in m_slots)
-                foreach (var slot2 in contract.m_slots)
-                    if (StringEqualityComparer.Equals(slot1.Key, slot2.Key) && slot1.Value.ContractBinding.Equals(slot2.Value.ContractBinding))
-                        equalSlots += 1;
             switch (m_slots.Count == contract.m_slots.Count)
             {
                 case true:
+                    var equalSlots = SlotAggregator.Aggregate(m_slots, contract.m_slots);
                     return equalSlots == m_slots.Count ? ContractRelationshipType.TheSame : ContractRelationshipType.None;
                 default:
+                    equalSlots = SlotAggregator.Aggregate(m_slots, contract.m_slots);
                     if (equalSlots == m_slots.Count)
                         return ContractRelationshipType.Superset;
                     else if (equalSlots == contract.m_slots.Count)

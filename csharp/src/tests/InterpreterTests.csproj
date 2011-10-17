@@ -69,7 +69,7 @@
     <Compile Include="Runtime\Environment\ScriptIntegerTest.cs" />
     <Compile Include="Runtime\Environment\ScriptRealContractTest.cs" />
     <Compile Include="Runtime\Environment\ScriptRealTest.cs" />
-    <Compile Include="Runtime\Environment\ScriptScriptCompositeContractTest.cs" />
+    <Compile Include="Runtime\Environment\ScriptCompositeContractTest.cs" />
     <Compile Include="Runtime\Environment\StringContractTest.cs" />
     <Compile Include="Runtime\Environment\ScriptStringTest.cs" />
     <Compile Include="Runtime\SemanticTestBase.cs" />

@@ -134,6 +134,7 @@
     <Compile Include="Compiler\Ast\Translation\LinqExpressions\GenericScope.cs" />
     <Compile Include="Compiler\Macro.cs" />
     <Compile Include="Compiler\PlaceholderID.cs" />
+    <Compile Include="ParallelAggregator.cs" />
     <Compile Include="ParallelSearch.cs" />
     <Compile Include="ParallelSwitch.cs" />
     <Compile Include="ParallelSwitchCase.cs" />
