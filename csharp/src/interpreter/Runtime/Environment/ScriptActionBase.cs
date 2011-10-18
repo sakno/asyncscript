@@ -163,7 +163,7 @@ namespace DynamicScript.Runtime.Environment
         {
             public readonly IScriptAction Left;
             public readonly IScriptAction Right;
-            private readonly bool NeedCarrying;
+            private readonly bool NeedCurrying;
 
             private static ScriptActionContract ConstructorHelper(IScriptAction left, IScriptAction right, out bool noCarrying)
             {
@@ -178,7 +178,7 @@ namespace DynamicScript.Runtime.Environment
             {
                 Left = left;
                 Right = right;
-                NeedCarrying = !dummy;
+                NeedCurrying = !dummy;
             }
 
             public Composition(IScriptAction left, IScriptAction right)
@@ -189,7 +189,7 @@ namespace DynamicScript.Runtime.Environment
             internal protected override IScriptObject Invoke(InvocationContext ctx, IRuntimeSlot[] arguments)
             {
                 //adjustment is used for arguments array splitting based on the return value carrying
-                var adjustment = SystemConverter.ToInt32(NeedCarrying);
+                var adjustment = SystemConverter.ToInt32(NeedCurrying);
                 //check whether the count of arguments is valid
                 if (arguments.LongLength != Left.SignatureInfo.ArgumentCount + Right.SignatureInfo.ArgumentCount - adjustment)
                     throw new ActionArgumentsMistmatchException(ctx.RuntimeState);
@@ -198,7 +198,7 @@ namespace DynamicScript.Runtime.Environment
                 var result = Left.Invoke(buffer, ctx.RuntimeState);
                 buffer = new IScriptObject[Right.SignatureInfo.ArgumentCount];
                 Array.Copy(arguments, Left.SignatureInfo.ArgumentCount, buffer, adjustment, Right.SignatureInfo.ArgumentCount - adjustment);
-                if (NeedCarrying) buffer[0] = result;
+                if (NeedCurrying) buffer[0] = result;
                 return Right.Invoke(buffer, ctx.RuntimeState);
             }
 
@@ -259,9 +259,13 @@ namespace DynamicScript.Runtime.Environment
                 {
                     case true:
                         var clonedCache = (IScriptObject[])m_cache.Clone();
-                        var j = 0;
-                        for (var i = 0; i < clonedCache.LongLength; i++)
-                            if (clonedCache[i] == null) clonedCache[i] = arguments[j++];
+                        Parallel.For<long>(0L, clonedCache.LongLength, () => 0L,
+                            delegate(long i, ParallelLoopState state, long j)
+                            {
+                                if (clonedCache[i] == null)
+                                    clonedCache[i] = arguments[j++];
+                                return j;
+                            }, j => { });
                         return m_invoker.Invoke(clonedCache, ctx.RuntimeState);
                     default: throw new ActionArgumentsMistmatchException(ctx.RuntimeState);
                 }
