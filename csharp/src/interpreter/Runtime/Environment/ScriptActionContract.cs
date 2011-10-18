@@ -398,18 +398,18 @@ namespace DynamicScript.Runtime.Environment
         /// <summary>
         /// Returns relationship between the current contract and the specified.
         /// </summary>
-        /// <param name="contract">The contract to compare. Cannot be <see langword="null"/>.</param>
-        /// <returns>Relationship between the current contract and <paramref name="contract"/>.</returns>
-        public ContractRelationshipType GetRelationship(ScriptActionContract contract)
+        /// <param name="other">The contract to compare. Cannot be <see langword="null"/>.</param>
+        /// <returns>Relationship between the current contract and <paramref name="other"/>.</returns>
+        public ContractRelationshipType GetRelationship(ScriptActionContract other)
         {
-            switch (Parameters.Count == contract.Parameters.Count)
+            switch (Parameters.Count == other.Parameters.Count)
             {
                 case true:
                     var contravariance = ContractRelationshipType.TheSame;
                     for (var i = 0; i < Parameters.Count; i++)
                     {
                         //contravariance detection. Contravariance inverse morphism direction. For more info, see contravariance in Category Theory
-                        var rels = Inverse(Parameters[i].ContractBinding.GetRelationship(contract.Parameters[i].ContractBinding));
+                        var rels = Inverse(Parameters[i].ContractBinding.GetRelationship(other.Parameters[i].ContractBinding));
                         switch (rels)
                         {
                             case ContractRelationshipType.TheSame: continue;
@@ -420,7 +420,10 @@ namespace DynamicScript.Runtime.Environment
                         }
                     }
                     //covariance detection.
-                    var covariance = Inverse(ReturnValueContract.GetRelationship(contract.ReturnValueContract));
+                    var covariance = ContractRelationshipType.None;
+                    if (IsVoid(ReturnValueContract))
+                        covariance = IsVoid(other.ReturnValueContract) ? ContractRelationshipType.TheSame : ContractRelationshipType.Superset;
+                    else covariance = ReturnValueContract.GetRelationship(other.ReturnValueContract);
                     switch (covariance)
                     {
                         case ContractRelationshipType.TheSame: return contravariance;

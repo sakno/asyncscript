@@ -255,7 +255,7 @@ namespace DynamicScript.Runtime.Environment
         public override IScriptObject Convert(IScriptObject value, InterpreterState state)
         {
             if(value is ScriptInteger)
-                return this;
+                return value;
             if (value is ScriptBoolean)
                 return Convert((ScriptBoolean)value);
             else if (value is ScriptReal)

@@ -118,5 +118,16 @@ return(a & {{i=4, x=5}})(0);
 ");
             Assert.AreEqual(9, result);
         }
+
+        [Test(Description="Covariance test.")]
+        public void CovarianceTest()
+        {
+            IScriptObject r = Run(@"
+var a: @z: integer -> object;
+a = @z -> integer: z to integer;
+return a(10);
+");
+            Assert.IsFalse(ScriptObject.IsVoid(r));
+        }
     }
 }
