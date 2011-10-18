@@ -295,12 +295,11 @@ namespace DynamicScript.Compiler
         private static Punctuation ParseLeftBrace(IEnumerator<char> characters, ref int column, out bool hasNext)
         {
             column++;
-            hasNext = false;
-            switch (characters.MoveNext() && characters.Current == Lexeme.LeftBrace)
+            switch ((hasNext = characters.MoveNext()) && characters.Current == Lexeme.LeftBrace)
             {
                 case true:
+                    hasNext = false;
                     column++;
-                    
                     return Punctuation.DoubleLeftBrace;
                 default: return Punctuation.LeftBrace;
             }
@@ -310,9 +309,10 @@ namespace DynamicScript.Compiler
         {
             column++;
             hasNext = false;
-            switch (characters.MoveNext() && characters.Current == Lexeme.RightBrace)
+            switch ((hasNext = characters.MoveNext()) && characters.Current == Lexeme.RightBrace)
             {
                 case true:
+                    hasNext = false;
                     column++;
                     return Punctuation.DoubleRightBrace;
                 default: return Punctuation.RightBrace;

@@ -26,19 +26,19 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
         public override ScriptFunc Compile(InterpreterState state)
         {
-            return ScriptActionInvoker.Compile(Expression.Body);
+            return ScriptActionInvoker.Compile(Expression);
         }
 
-        public static ScriptCodeForkExpression CreateExpression(IEnumerable<IScriptObject> statements)
+        public static ScriptCodeForkExpression CreateExpression(IScriptCodeElement<ScriptCodeExpression> body)
         {
             var result = new ScriptCodeForkExpression();
-            ScriptStatementFactory.CreateStatements(statements, result.Body);
+            result.Body.Expression = body != null ? body.CodeObject : ScriptCodeVoidExpression.Instance;
             return result;
         }
 
         protected override ScriptCodeForkExpression CreateExpression(IList<IScriptObject> args, InterpreterState state)
         {
-            return args.Count == 1 ? CreateExpression(args as IEnumerable<IScriptObject>) : null;
+            return args.Count == 1 ? CreateExpression(args as IScriptCodeElement<ScriptCodeExpression>) : null;
         }
     }
 }
