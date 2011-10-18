@@ -72,7 +72,7 @@ namespace DynamicScript.Runtime.Environment.Threading
 
         internal static MethodCallExpression BindAwait(Expression asyncObj, Expression synchronizer)
         {
-            return RuntimeHelpers.Invoke<IScriptObject, IAsyncResult, ScriptBoolean>(RtlAwait, asyncObj, synchronizer);
+            return LinqHelpers.Call<IScriptObject, IAsyncResult, ScriptBoolean>((a, s) => RtlAwait(a, s), null, asyncObj, synchronizer);
         }
 
         /// <summary>
@@ -95,7 +95,7 @@ namespace DynamicScript.Runtime.Environment.Threading
 
         internal static MethodCallExpression BindRunSynchronizer(Expression<Action> synchronizer)
         {
-            return RuntimeHelpers.Invoke<Action, IAsyncResult>(RtlRunSynchronizer, synchronizer);
+            return LinqHelpers.Call<Action, IAsyncResult>(a => RtlRunSynchronizer(a), null, synchronizer);
         }
     }
 }

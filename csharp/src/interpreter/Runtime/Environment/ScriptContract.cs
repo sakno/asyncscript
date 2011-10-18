@@ -637,7 +637,7 @@ namespace DynamicScript.Runtime.Environment
 
         internal static LinqExpression Extract(LinqExpression contract)
         {
-            return typeof(IScriptContract).IsAssignableFrom(contract.Type) ? contract : RuntimeHelpers.Invoke<object, IScriptContract>(RtlExtractContract, contract);
+            return typeof(IScriptContract).IsAssignableFrom(contract.Type) ? contract : LinqHelpers.Call<object, IScriptContract>(obj => RtlExtractContract(obj), null, contract);
         }
 
         private static IScriptContract AsIterable(IScriptContract contract)

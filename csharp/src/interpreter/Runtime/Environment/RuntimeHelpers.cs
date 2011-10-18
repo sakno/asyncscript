@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace DynamicScript.Runtime.Environment
 {
@@ -1037,18 +1038,18 @@ namespace DynamicScript.Runtime.Environment
 
         internal static MethodCallExpression BindIsTrue(Expression arg, ParameterExpression stateVar)
         {
-            return RuntimeHelpers.Invoke<IScriptObject, InterpreterState, bool>(RuntimeHelpers.IsTrue, arg, stateVar);
+            return LinqHelpers.Call<IScriptObject, InterpreterState, bool>((ob, state) => IsTrue(ob, state), null, arg, stateVar);
         }
 
         internal static MethodCallExpression BindIsFalse(Expression arg, ParameterExpression stateVar)
         {
-            return RuntimeHelpers.Invoke<IScriptObject, InterpreterState, bool>(RuntimeHelpers.IsFalse, arg, stateVar);
+            return LinqHelpers.Call<IScriptObject, InterpreterState, bool>((ob, state) => IsFalse(ob, state), null, arg, stateVar);
         }
 
         internal static T[] AsArray<T>(this T value, long size)
         {
             var result = new T[size];
-            for (var i = 0L; i < size; i++) result[i] = value;
+            Parallel.For(0L, result.LongLength, i => result[i] = value);
             return result;
         }
 
@@ -1064,24 +1065,6 @@ namespace DynamicScript.Runtime.Environment
             return ScriptObject.RegisterConverter<TConverter>();
         }
 
-        /// <summary>
-        /// This is a simple C# syntax sugar extension for obtaining method reflection information
-        /// in the compiler-controlled manner.
-        /// </summary>
-        /// <typeparam name="TDelegate"></typeparam>
-        /// <param name="expr"></param>
-        /// <returns></returns>
-        internal static MethodInfo MethodOf<TDelegate>(TDelegate expr)
-            where TDelegate : class
-        {
-            return expr is Delegate ? (expr as Delegate).Method : null;
-        }
-
-        internal static MethodInfo MethodOf<T, TResult>(Func<T, TResult> expr)
-        {
-            return MethodOf<Func<T, TResult>>(expr);
-        }
-
         internal static InterpreterState GetState(this CallSiteBinder binder)
         {
             return binder is IScriptRuntimeBinder ? ((IScriptRuntimeBinder)binder).State : InterpreterState.Current;
@@ -1095,264 +1078,6 @@ namespace DynamicScript.Runtime.Environment
         public static bool IsRuntimeVariable(this Expression p)
         {
             return p != null && typeof(IRuntimeSlot).IsAssignableFrom(p.Type);
-        }
-
-        /// <summary>
-        /// Constructs method call expression based on the delegate.
-        /// </summary>
-        /// <typeparam name="TDelegate">Type of the delegate.</typeparam>
-        /// <param name="this">An expression that reference this-pointer for the method.</param>
-        /// <param name="expr">The delegate from which method will be extracted.</param>
-        /// <param name="args">Invocation arguments.</param>
-        /// <returns>Method call expression.</returns>
-        internal static MethodCallExpression Invoke<TDelegate>(TDelegate expr, Expression @this = null, params Expression[] args)
-            where TDelegate : class
-        {
-            return Expression.Call(@this != null ? @this : MakeThis(expr as Delegate),
-                MethodOf<TDelegate>(expr),
-                args);
-        }
-
-        private static Expression MakeThis(Delegate d)
-        {
-            return d != null && d.Target != null ? Expression.Constant(d.Target) : null;
-        }
-
-        /// <summary>
-        /// Constructs call expression for method with two parameters and without returning type.
-        /// </summary>
-        /// <typeparam name="T1">Type of the first parameter.</typeparam>
-        /// <typeparam name="T2">Type of the second parameter.</typeparam>
-        /// <param name="expr">A delegate that references the method. Cannot be <see langword="null"/>.</param>
-        /// <param name="this">An object that references 'this' object.</param>
-        /// <param name="arg0">The first argument.</param>
-        /// <param name="arg1">The second argument.</param>
-        /// <returns>Calling expression.</returns>
-        public static MethodCallExpression Call<T1, T2>(Action<T1, T2> expr, Expression @this, Expression arg0, Expression arg1)
-        {
-            return Invoke<Action<T1, T2>>(expr, @this, arg0, arg1);
-        }
-
-        /// <summary>
-        /// Constructs call expression for method with two parameters and without returning type.
-        /// </summary>
-        /// <typeparam name="T1">Type of the first parameter.</typeparam>
-        /// <typeparam name="T2">Type of the second parameter.</typeparam>
-        /// <param name="expr">A delegate that references the method. Cannot be <see langword="null"/>.</param>
-        /// <param name="arg0">The first argument.</param>
-        /// <param name="arg1">The second argument.</param>
-        /// <returns>Calling expression.</returns>
-        public static MethodCallExpression Call<T1, T2>(Action<T1, T2> expr, Expression arg0, Expression arg1)
-        {
-            return Call<T1, T2>(expr, null, arg0, arg1);
-        }
-
-        /// <summary>
-        /// Constructs call expression for method with three parameters and without returning type.
-        /// </summary>
-        /// <typeparam name="T1">Type of the first parameter.</typeparam>
-        /// <typeparam name="T2">Type of the second parameter.</typeparam>
-        /// <typeparam name="T3">Type of the third parameter.</typeparam>
-        /// <param name="expr">A delegate that references the method. Cannot be <see langword="null"/>.</param>
-        /// <param name="this">An object that references 'this' object.</param>
-        /// <param name="arg0">The first argument.</param>
-        /// <param name="arg1">The second argument.</param>
-        /// <param name="arg2">The third argument.</param>
-        /// <returns>Calling expression.</returns>
-        public static MethodCallExpression Call<T1, T2, T3>(Action<T1, T2, T3> expr, Expression @this, Expression arg0, Expression arg1, Expression arg2)
-        {
-            return Invoke<Action<T1, T2, T3>>(expr, @this, arg0, arg1, arg2);
-        }
-
-        /// <summary>
-        /// Constructs call expression for method with three parameters and without returning type.
-        /// </summary>
-        /// <typeparam name="T1">Type of the first parameter.</typeparam>
-        /// <typeparam name="T2">Type of the second parameter.</typeparam>
-        /// <typeparam name="T3">Type of the third parameter.</typeparam>
-        /// <param name="expr">A delegate that references the method. Cannot be <see langword="null"/>.</param>
-        /// <param name="arg0">The first argument.</param>
-        /// <param name="arg1">The second argument.</param>
-        /// <param name="arg2">The third argument.</param>
-        /// <returns>Calling expression.</returns>
-        public static MethodCallExpression Call<T1, T2, T3>(Action<T1, T2, T3> expr, Expression arg0, Expression arg1, Expression arg2)
-        {
-            return Call<T1, T2, T3>(expr, null, arg0, arg1, arg2);
-        }
-
-        /// <summary>
-        /// Constructs call expression for method with single parameter and with returning type.
-        /// </summary>
-        /// <typeparam name="T">Type of the first parameter.</typeparam>
-        /// <typeparam name="TResult">Type of the returning value.</typeparam>
-        /// <param name="expr">A delegate that references the method. Cannot be <see langword="null"/>.</param>
-        /// <param name="this">An object that references 'this' object.</param>
-        /// <param name="arg0">The first argument.</param>
-        /// <returns>Calling expression.</returns>
-        public static MethodCallExpression Invoke<T, TResult>(Func<T, TResult> expr, Expression @this, Expression arg0)
-        {
-            return Invoke<Func<T, TResult>>(expr, @this, arg0);
-        }
-
-        /// <summary>
-        /// Constructs call expression for method with single parameter and with returning type.
-        /// </summary>
-        /// <typeparam name="T">Type of the first parameter.</typeparam>
-        /// <typeparam name="TResult">Type of the returning value.</typeparam>
-        /// <param name="expr">A delegate that references the method. Cannot be <see langword="null"/>.</param>
-        /// <param name="arg0">The first argument.</param>
-        /// <returns>Calling expression.</returns>
-        public static MethodCallExpression Invoke<T, TResult>(Func<T, TResult> expr, Expression arg0)
-        {
-            return Invoke<T, TResult>(expr, null, arg0);
-        }
-
-        /// <summary>
-        /// Constructs call expression for method with two parameters and with returning type.
-        /// </summary>
-        /// <typeparam name="T1">Type of the first parameter.</typeparam>
-        /// <typeparam name="T2">Type of the second parameter.</typeparam>
-        /// <typeparam name="TResult">Type of the returning value.</typeparam>
-        /// <param name="expr">A delegate that references the method. Cannot be <see langword="null"/>.</param>
-        /// <param name="this">An object that references 'this' object.</param>
-        /// <param name="arg0">The first argument.</param>
-        /// <param name="arg1">The second argument.</param>
-        /// <returns>Calling expression.</returns>
-        public static MethodCallExpression Invoke<T1, T2, TResult>(Func<T1, T2, TResult> expr, Expression @this, Expression arg0, Expression arg1)
-        {
-            return Invoke<Func<T1, T2, TResult>>(expr, @this, arg0, arg1);
-        }
-
-        /// <summary>
-        /// Constructs call expression for method with two parameters and with returning type.
-        /// </summary>
-        /// <typeparam name="T1">Type of the first parameter.</typeparam>
-        /// <typeparam name="T2">Type of the second parameter.</typeparam>
-        /// <typeparam name="TResult">Type of the returning value.</typeparam>
-        /// <param name="expr">A delegate that references the method. Cannot be <see langword="null"/>.</param>
-        /// <param name="arg0">The first argument.</param>
-        /// <param name="arg1">The second argument.</param>
-        /// <returns>Calling expression.</returns>
-        public static MethodCallExpression Invoke<T1, T2, TResult>(Func<T1, T2, TResult> expr, Expression arg0, Expression arg1)
-        {
-            return Invoke<T1, T2, TResult>(expr, null, arg0, arg1);
-        }
-
-        /// <summary>
-        /// Constructs call expression for method with three parameters and with returning type.
-        /// </summary>
-        /// <typeparam name="T1">Type of the first parameter.</typeparam>
-        /// <typeparam name="T2">Type of the second parameter.</typeparam>
-        /// <typeparam name="T3">Type of the third parameter.</typeparam>
-        /// <typeparam name="TResult">Type of the returning value.</typeparam>
-        /// <param name="expr">A delegate that references the method. Cannot be <see langword="null"/>.</param>
-        /// <param name="this">An object that references 'this' object.</param>
-        /// <param name="arg0">The first argument.</param>
-        /// <param name="arg1">The second argument.</param>
-        /// <param name="arg2">The third argument.</param>
-        /// <returns>Calling expression.</returns>
-        public static MethodCallExpression Invoke<T1, T2, T3, TResult>(Func<T1, T2, T3, TResult> expr, Expression @this, Expression arg0, Expression arg1, Expression arg2)
-        {
-            return Invoke<Func<T1, T2, T3, TResult>>(expr, @this, arg0, arg1, arg2);
-        }
-
-        /// <summary>
-        /// Constructs call expression for method with three parameters and with returning type.
-        /// </summary>
-        /// <typeparam name="T1">Type of the first parameter.</typeparam>
-        /// <typeparam name="T2">Type of the second parameter.</typeparam>
-        /// <typeparam name="T3">Type of the third parameter.</typeparam>
-        /// <typeparam name="TResult">Type of the returning value.</typeparam>
-        /// <param name="expr">A delegate that references the method. Cannot be <see langword="null"/>.</param>
-        /// <param name="arg0">The first argument.</param>
-        /// <param name="arg1">The second argument.</param>
-        /// <param name="arg2">The third argument.</param>
-        /// <returns>Calling expression.</returns>
-        public static MethodCallExpression Invoke<T1, T2, T3, TResult>(Func<T1, T2, T3, TResult> expr, Expression arg0, Expression arg1, Expression arg2)
-        {
-            return Invoke<T1, T2, T3, TResult>(expr, null, arg0, arg1, arg2);
-        }
-
-        /// <summary>
-        /// Constructs call expression for method with four parameters and with returning type.
-        /// </summary>
-        /// <typeparam name="T1">Type of the first parameter.</typeparam>
-        /// <typeparam name="T2">Type of the second parameter.</typeparam>
-        /// <typeparam name="T3">Type of the third parameter.</typeparam>
-        /// <typeparam name="T4">Type of the fourth parameter.</typeparam>
-        /// <typeparam name="TResult">Type of the returning value.</typeparam>
-        /// <param name="expr">A delegate that references the method. Cannot be <see langword="null"/>.</param>
-        /// <param name="this">An object that references 'this' object.</param>
-        /// <param name="arg0">The first argument.</param>
-        /// <param name="arg1">The second argument.</param>
-        /// <param name="arg2">The third argument.</param>
-        /// <param name="arg3">The fourth argument.</param>
-        /// <returns>Calling expression.</returns>
-        public static MethodCallExpression Invoke<T1, T2, T3, T4, TResult>(Func<T1, T2, T3, T4, TResult> expr, Expression @this, Expression arg0, Expression arg1, Expression arg2, Expression arg3)
-        {
-            return Invoke<Func<T1, T2, T3, T4, TResult>>(expr, @this, arg0, arg1, arg2, arg3);
-        }
-
-        /// <summary>
-        /// Constructs call expression for method with four parameters and with returning type.
-        /// </summary>
-        /// <typeparam name="T1">Type of the first parameter.</typeparam>
-        /// <typeparam name="T2">Type of the second parameter.</typeparam>
-        /// <typeparam name="T3">Type of the third parameter.</typeparam>
-        /// <typeparam name="T4">Type of the fourth parameter.</typeparam>
-        /// <typeparam name="TResult">Type of the returning value.</typeparam>
-        /// <param name="expr">A delegate that references the method. Cannot be <see langword="null"/>.</param>
-        /// <param name="arg0">The first argument.</param>
-        /// <param name="arg1">The second argument.</param>
-        /// <param name="arg2">The third argument.</param>
-        /// <param name="arg3">The fourth argument.</param>
-        /// <returns>Calling expression.</returns>
-        public static MethodCallExpression Invoke<T1, T2, T3, T4, TResult>(Func<T1, T2, T3, T4, TResult> expr, Expression arg0, Expression arg1, Expression arg2, Expression arg3)
-        {
-            return Invoke<T1, T2, T3, T4, TResult>(expr, null, arg0, arg1, arg2, arg3);
-        }
-
-        /// <summary>
-        /// Constructs call expression for method with fifth parameters and with returning type.
-        /// </summary>
-        /// <typeparam name="T1">Type of the first parameter.</typeparam>
-        /// <typeparam name="T2">Type of the second parameter.</typeparam>
-        /// <typeparam name="T3">Type of the third parameter.</typeparam>
-        /// <typeparam name="T4">Type of the fourth parameter.</typeparam>
-        /// <typeparam name="T5">Type of the fifth parameter.</typeparam>
-        /// <typeparam name="TResult">Type of the returning value.</typeparam>
-        /// <param name="expr">A delegate that references the method. Cannot be <see langword="null"/>.</param>
-        /// <param name="this">An object that references 'this' object.</param>
-        /// <param name="arg0">The first argument.</param>
-        /// <param name="arg1">The second argument.</param>
-        /// <param name="arg2">The third argument.</param>
-        /// <param name="arg3">The fourth argument.</param>
-        /// <param name="arg4">The fifth argument.</param>
-        /// <returns>Calling expression.</returns>
-        public static MethodCallExpression Invoke<T1, T2, T3, T4, T5, TResult>(Func<T1, T2, T3, T4, T5, TResult> expr, Expression @this, Expression arg0, Expression arg1, Expression arg2, Expression arg3, Expression arg4)
-        {
-            return Invoke<Func<T1, T2, T3, T4, T5, TResult>>(expr, @this, arg0, arg1, arg2, arg3, arg4);
-        }
-
-        /// <summary>
-        /// Constructs call expression for method with fifth parameters and with returning type.
-        /// </summary>
-        /// <typeparam name="T1">Type of the first parameter.</typeparam>
-        /// <typeparam name="T2">Type of the second parameter.</typeparam>
-        /// <typeparam name="T3">Type of the third parameter.</typeparam>
-        /// <typeparam name="T4">Type of the fourth parameter.</typeparam>
-        /// <typeparam name="T5">Type of the fifth parameter.</typeparam>
-        /// <typeparam name="TResult">Type of the returning value.</typeparam>
-        /// <param name="expr">A delegate that references the method. Cannot be <see langword="null"/>.</param>
-        /// <param name="arg0">The first argument.</param>
-        /// <param name="arg1">The second argument.</param>
-        /// <param name="arg2">The third argument.</param>
-        /// <param name="arg3">The fourth argument.</param>
-        /// <param name="arg4">The fifth argument.</param>
-        /// <returns>Calling expression.</returns>
-        public static MethodCallExpression Invoke<T1, T2, T3, T4, T5, TResult>(Func<T1, T2, T3, T4, T5, TResult> expr, Expression arg0, Expression arg1, Expression arg2, Expression arg3, Expression arg4)
-        {
-            return Invoke<T1, T2, T3, T4, T5, TResult>(expr, null, arg0, arg1, arg2, arg3, arg4);
         }
 
         /// <summary>
@@ -1396,7 +1121,9 @@ namespace DynamicScript.Runtime.Environment
 
         internal static IScriptObject[] GetValues(this IRuntimeSlot[] slots, InterpreterState state)
         {
-            return Array.ConvertAll(slots, s => s.GetValue(state));
+            var result = new IScriptObject[slots.LongLength];
+            Parallel.For(0, result.LongLength, i => result[i] = slots[i]);
+            return result;
         }
     }
 }
