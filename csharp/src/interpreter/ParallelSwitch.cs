@@ -124,7 +124,7 @@ namespace DynamicScript
         /// <param name="criteria"></param>
         /// <param name="match"></param>
         /// <returns></returns>
-        protected override TResult Match(ParallelSwitchCase<TSource, TResult> element, TSource criteria, out bool match)
+        protected sealed override TResult Match(ParallelSwitchCase<TSource, TResult> element, TSource criteria, out bool match)
         {
             return element.Invoke(criteria, out match);
         }
@@ -132,9 +132,12 @@ namespace DynamicScript
         /// <summary>
         /// Executes a parallel switch.
         /// </summary>
-        public void Do()
+        /// <param name="defaultHandler">Default switch handler.</param>
+        public TResult Do(Converter<TSource, TResult> defaultHandler = null)
         {
+            if (defaultHandler == null) defaultHandler = v => default(TResult);
             Find(this);
+            return Success ? Result : defaultHandler(Criteria);
         }
 
         /// <summary>
@@ -143,13 +146,14 @@ namespace DynamicScript
         /// <param name="src"></param>
         /// <param name="cases"></param>
         /// <param name="success"></param>
+        /// <param name="defaultHandler"></param>
         /// <returns></returns>
-        public static TResult Do(TSource src, IEnumerable<ParallelSwitchCase<TSource, TResult>> cases, out bool success)
+        public static TResult Do(TSource src, IEnumerable<ParallelSwitchCase<TSource, TResult>> cases, out bool success, Converter<TSource, TResult> defaultHandler = null)
         {
             var @switch = new ParallelSwitch<TSource, TResult>(src, cases);
-            @switch.Do();
+            var result = @switch.Do();
             success = @switch.Success;
-            return @switch.Result;
+            return result;
         }
 
         /// <summary>

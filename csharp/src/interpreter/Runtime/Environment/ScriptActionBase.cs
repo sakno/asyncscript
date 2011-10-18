@@ -356,12 +356,6 @@ namespace DynamicScript.Runtime.Environment
                 }
             }
 
-            private ScriptCombinedAction Combine(IScriptAction action, InterpreterState state)
-            {
-                if (action == null) throw new ArgumentNullException("action");
-                return new ScriptCombinedAction(Enumerable.Concat(Actions, new[] { action }), state);
-            }
-
             /// <summary>
             /// Returns contract binding of the action list.
             /// </summary>
