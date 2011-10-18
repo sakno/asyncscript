@@ -102,7 +102,7 @@ namespace DynamicScript.Runtime.Environment
         {
             if (contract is ScriptBooleanContract)
                 return ContractRelationshipType.TheSame;
-            else if (contract.OneOf<ScriptIntegerContract, ScriptRealContract>())
+            else if (contract.OneOf<ScriptSuperContract, ScriptIntegerContract, ScriptRealContract>())
                 return ContractRelationshipType.Subset;
             else if (contract is ScriptVoid)
                 return ContractRelationshipType.Superset;

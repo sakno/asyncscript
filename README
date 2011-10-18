@@ -34,7 +34,11 @@ LINUX
 		sh make.sh $OUTDIR;
 	6. Examine output directory;
 
-3. License
+3. Documentation
+==================
+Look at https://github.com/sakno/DynamicScript/wiki.
+
+4. License
 ==================
 Copyright 2011 Roman Sakno
 

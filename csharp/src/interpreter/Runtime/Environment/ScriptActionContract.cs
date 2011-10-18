@@ -420,7 +420,7 @@ namespace DynamicScript.Runtime.Environment
                         }
                     }
                     //covariance detection.
-                    var covariance = ReturnValueContract.GetRelationship(contract.ReturnValueContract);
+                    var covariance = Inverse(ReturnValueContract.GetRelationship(contract.ReturnValueContract));
                     switch (covariance)
                     {
                         case ContractRelationshipType.TheSame: return contravariance;

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
+using System.IO;
 
 namespace DynamicScript.Runtime.Environment
 {
@@ -15,6 +16,7 @@ namespace DynamicScript.Runtime.Environment
     using CallStack = Debugging.CallStack;
     using SystemConverter = System.Convert;
     using MethodInfo = System.Reflection.MethodInfo;
+    using Encoding = System.Text.Encoding;
 
     /// <summary>
     /// Represents action implementation.
@@ -824,8 +826,15 @@ namespace DynamicScript.Runtime.Environment
             switch (m != null)
             {
                 case true:
-                    var body = m.GetMethodBody();
-                    return body.GetILAsByteArray();
+                    try
+                    {
+                        var body = m.GetMethodBody();
+                        return body.GetILAsByteArray();
+                    }
+                    catch (InvalidOperationException)
+                    {
+                        return BitConverter.GetBytes(m.GetHashCode());
+                    }
                 default: return new byte[0];
             }
         }
