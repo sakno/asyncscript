@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
 
 namespace DynamicScript.Runtime.Environment
 {
@@ -79,13 +80,18 @@ namespace DynamicScript.Runtime.Environment
                 m_error = false;
             }
 
+            [MethodImpl(MethodImplOptions.Synchronized)]
+            private void Complete(ParallelLoopState state, ScriptActionContract.Parameter p, IScriptObject a)
+            {
+                if (state.IsStopped) return;
+                m_error = State == null ? (object)false : new ContractBindingException(a, p.ContractBinding, State);
+            }
+
             protected override void Analyze(ParallelLoopState state, int index, ScriptActionContract.Parameter p, IScriptObject a)
             {
-                if (!IsCompatible(p, a))
-                {
-                    state.Stop();
-                    m_error = State == null ? (object)false : new ContractBindingException(a, p.ContractBinding, State);
-                }
+                if (IsCompatible(p, a) || state.IsStopped) return;
+                state.Stop();
+                Complete(state, p, a);
             }
 
             public new bool Analyze()
@@ -631,8 +637,7 @@ namespace DynamicScript.Runtime.Environment
             {
                 case 0: slots = new IRuntimeSlot[0]; break;
                 case 1:
-                    slots = new IRuntimeSlot[1];
-                    ArgumentConverter.PrepareArgument(Parameters[0], args[0], 0, CreateParameterHolder, IsTransparent ? null : CallStack.Current, slots, state);
+                    ArgumentConverter.PrepareArgument(Parameters[0], args[0], 0, CreateParameterHolder, IsTransparent ? null : CallStack.Current, slots = new IRuntimeSlot[1], state);
                     break;
                 default:
                     var converter = new ArgumentConverter(Parameters, args, state, CreateParameterHolder, IsTransparent ? null : CallStack.Current);
