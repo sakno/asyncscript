@@ -347,6 +347,21 @@ namespace DynamicScript.Runtime.Environment
         }
 
         /// <summary>
+        /// Concatenates a two arrays.
+        /// </summary>
+        /// <param name="right"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        protected override IScriptObject Add(IScriptObject right, InterpreterState state)
+        {
+            if (right is IScriptArray)
+                return ScriptArray.Concat(this, (IScriptArray)right, state);
+            else if (state.Context == InterpretationContext.Unchecked)
+                return Void;
+            else throw new UnsupportedOperationException(state);
+        }
+
+        /// <summary>
         /// Returns a string representation of the list.
         /// </summary>
         /// <returns>The string representation of the list.</returns>

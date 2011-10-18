@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace DynamicScript.Runtime.Debugging
 {
@@ -60,6 +61,7 @@ namespace DynamicScript.Runtime.Debugging
         /// <param name="storageName">The name of the storage. Cannot be <see langword="null"/> or empty.</param>
         /// <param name="storage">The storage to watch. Cannot be <see langword="null"/>.</param>
         /// <exception cref="System.ArgumentNullException"><paramref name="storageName"/> is <see langword="null"/> or empty; or <paramref name="storage"/> is <see langword="null"/>.</exception>
+        [MethodImpl(MethodImplOptions.Synchronized)]
         internal void RegisterStorage(string storageName, IRuntimeSlot storage)
         {
             if (string.IsNullOrEmpty(storageName)) throw new ArgumentNullException("storageName");

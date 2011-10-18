@@ -20,6 +20,10 @@ namespace DynamicScript.Compiler.Ast
         /// </summary>
         public readonly ScriptCodeExpressionStatement Body;
 
+        /// <summary>
+        /// Initializes a new fork expression.
+        /// </summary>
+        /// <param name="body"></param>
         public ScriptCodeForkExpression(ScriptCodeExpressionStatement body = null)
         {
             Body = body ?? new ScriptCodeExpressionStatement(ScriptCodeVoidExpression.Instance);

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 
 namespace DynamicScript.Runtime.Environment
 {
@@ -549,17 +550,8 @@ namespace DynamicScript.Runtime.Environment
             var leftLength = GetTotalLength(left);
             var rightLength = GetTotalLength(right);
             var result = new IScriptObject[leftLength + rightLength];
-            var indicies = new long[1];
-            for (var i = 0L; i < leftLength; i++)
-            {
-                indicies[0] = i;
-                result[i] = left[indicies, state];
-            }
-            for (var i = 0L; i < rightLength; i++)
-            {
-                indicies[0] = i;
-                result[i + leftLength] = right[indicies, state];
-            }
+            Parallel.For(0L, leftLength, i => result[i] = left[new[] { i }, state]);
+            Parallel.For(0L, rightLength, i => result[i + leftLength] = right[new[] { i }, state]);
             return new ScriptArray(result);
         }
 
