@@ -106,7 +106,7 @@ namespace DynamicScript.Runtime.Environment
         {
             var theSame = default(bool);
             if (value == null)
-                HasValue = false;
+                Value = null;
             else if (value is ScriptVoid)
                 Value = ContractBinding.FromVoid(state);
             else if (value is IRuntimeSlot)
@@ -288,7 +288,7 @@ namespace DynamicScript.Runtime.Environment
         public sealed override int GetHashCode()
         {
             var result = ContractBinding.GetHashCode();
-            return HasValue && Value != null ? result ^ Value.GetHashCode() : result;
+            return HasValue ? result ^ Value.GetHashCode() : result;
         }
     }
 }
