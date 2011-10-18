@@ -18,22 +18,22 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             private const string FirstParamName = "stmts";
 
             public ModifyAction()
-                : base(Instance, new ScriptActionContract.Parameter(FirstParamName, new ScriptArrayContract(ScriptStatementFactory.Instance)))
+                : base(Instance, new ScriptActionContract.Parameter(FirstParamName, ScriptExpressionFactory.Instance))
             {
             }
         }
 
         [ComVisible(false)]
-        private sealed class GetStatementsAction : CodeElementPartProvider<IScriptArray>
+        private sealed class GetBodyAction : CodeElementPartProvider<IScriptCodeElement<ScriptCodeExpression>>
         {
-            public GetStatementsAction()
+            public GetBodyAction()
                 : base(Instance, new ScriptArrayContract(ScriptStatementFactory.Instance))
             {
             }
 
-            protected override IScriptArray Invoke(ScriptCodeForkExpression element, InterpreterState state)
+            protected override IScriptCodeElement<ScriptCodeExpression> Invoke(ScriptCodeForkExpression element, InterpreterState state)
             {
-                return ScriptStatementFactory.CreateStatements(element.Body, state);
+                return Convert(element.Body.Expression) as IScriptCodeElement<ScriptCodeExpression>;
             }
         }
         #endregion
@@ -41,7 +41,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         public new const string Name = "forkdef";
 
         private IRuntimeSlot m_modify;
-        private IRuntimeSlot m_getstmts;
+        private IRuntimeSlot m_getbody;
 
         private ScriptForkExpressionFactory(SerializationInfo info, StreamingContext context)
             : base(info, context)
@@ -55,14 +55,14 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
         public static readonly ScriptForkExpressionFactory Instance = new ScriptForkExpressionFactory();
 
-        public static ScriptForkExpression CreateExpression(IEnumerable<IScriptObject> statements)
+        public static ScriptForkExpression CreateExpression(IScriptCodeElement<ScriptCodeExpression> body)
         {
-            return new ScriptForkExpression(ScriptForkExpression.CreateExpression(statements));
+            return new ScriptForkExpression(ScriptForkExpression.CreateExpression(body));
         }
 
         public override ScriptForkExpression CreateCodeElement(IList<IScriptObject> args, InterpreterState state)
         {
-            return args.Count == 1 ? CreateExpression(args[0] as IEnumerable<IScriptObject>) : null;
+            return args.Count == 1 ? CreateExpression(args[0] as IScriptCodeElement<ScriptCodeExpression>) : null;
         }
 
         protected override IRuntimeSlot Modify
@@ -72,12 +72,12 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
         public override void Clear()
         {
-            m_getstmts = m_modify = null;
+            m_getbody = m_modify = null;
         }
 
-        IRuntimeSlot IForkExpressionFactorySlots.GetStmts
+        IRuntimeSlot IForkExpressionFactorySlots.Body
         {
-            get { return CacheConst<GetStatementsAction>(ref m_getstmts); }
+            get { return CacheConst<GetBodyAction>(ref m_getbody); }
         }
     }
 }

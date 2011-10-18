@@ -65,6 +65,22 @@ namespace DynamicScript
             return BodyOf<Func<T1, T2, T3, T4, T5, T6, TResult>, TExpression>(expr);
         }
 
+        public static MethodCallExpression Call<TDelegate>(Expression<TDelegate> method, Expression @this, params Expression[] args)
+            where TDelegate : class
+        {
+            return BodyOf<TDelegate, MethodCallExpression>(method).Update(@this, args);
+        }
+
+        public static MethodCallExpression Call<T1, T2, TResult>(Expression<Func<T1, T2, TResult>> method, Expression @this, Expression arg1, Expression arg2)
+        {
+            return Call<Func<T1, T2, TResult>>(method, @this, arg1, arg2);
+        }
+
+        public static MethodCallExpression Call<T, TResult>(Expression<Func<T, TResult>> method, Expression @this, Expression arg1)
+        {
+            return Call<Func<T, TResult>>(method, @this, arg1);
+        }
+
         public static ConstantExpression Constant<T>(T value)
         {
             return Expression.Constant(value, typeof(T));

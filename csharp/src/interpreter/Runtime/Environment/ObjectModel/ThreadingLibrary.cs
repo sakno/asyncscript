@@ -100,7 +100,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         private static IEnumerable<WaitHandle> GetWaitHandles(IScriptArray handles, InterpreterState state)
         {
             var indicies=new long[1];
-            for (var i = 0L; i < handles.GetLength(0); i++)
+            for (var i = 0L; i < ScriptArray.GetTotalLength(handles); i++)
             {
                 indicies[0] = i;
                 var obj = handles[indicies, state];

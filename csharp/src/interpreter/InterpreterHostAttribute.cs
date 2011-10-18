@@ -10,7 +10,6 @@ namespace DynamicScript
     /// Marks an assembly as DynamicScript interpreter host.
     /// This class cannot be inherited.
     /// </summary>
-    
     [ComVisible(false)]
     [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = false, Inherited = false)]
     public sealed class InterpreterHostAttribute : Attribute
@@ -22,7 +21,7 @@ namespace DynamicScript
         /// Initializes a new instance of the attribute.
         /// </summary>
         /// <param name="hostType">The type of the interpreter host.</param>
-        public InterpreterHostAttribute(PEFileKinds hostType)
+        public InterpreterHostAttribute(PEFileKinds hostType = DefaultHostType)
         {
             m_host = hostType;
         }

@@ -387,7 +387,6 @@
     <Compile Include="Runtime\IScriptStatementContract.cs" />
     <Compile Include="Runtime\Monitoring.cs" />
     <Compile Include="Runtime\InternPool.cs" />
-    <Compile Include="Runtime\Environment\ScriptCombinedAction.cs" />
     <Compile Include="Runtime\Environment\ScriptList.cs" />
     <Compile Include="Runtime\Environment\ScriptFault.cs" />
     <Compile Include="Runtime\Environment\ScriptWrappedException.cs" />

@@ -3,6 +3,8 @@ using System.Runtime.Serialization;
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
 
 namespace DynamicScript.Runtime.Environment
 {
@@ -38,6 +40,121 @@ namespace DynamicScript.Runtime.Environment
         }
 
         /// <summary>
+        /// Represents action signature analyzer that uses automatic parallelism.
+        /// </summary>
+        [ComVisible(false)]
+        private abstract class SignatureAnalyzer
+        {
+            public readonly IList<ScriptActionContract.Parameter> Parameters;
+            public readonly IList<IScriptObject> Arguments;
+            public readonly InterpreterState State;
+
+            protected SignatureAnalyzer(IList<ScriptActionContract.Parameter> @params, IList<IScriptObject> args, InterpreterState s)
+            {
+                Parameters = @params;
+                Arguments = args;
+                State = s;
+            }
+
+            protected abstract void Analyze(ParallelLoopState state, int index, ScriptActionContract.Parameter p, IScriptObject a);
+
+            private void Analyze(int index, ParallelLoopState state)
+            {
+                Analyze(state, index, Parameters[index], Arguments[index]);
+            }
+
+            public void Analyze()
+            {
+                Parallel.For(0, Math.Min(Parameters.Count, Arguments.Count), Analyze);
+            }
+        }
+
+        [ComVisible(false)]
+        private sealed class ParameterCompatibilityAnalyzer : SignatureAnalyzer
+        {
+            private object m_error;
+
+            public ParameterCompatibilityAnalyzer(IList<ScriptActionContract.Parameter> @params, IList<IScriptObject> args, InterpreterState s)
+                : base(@params, args, s)
+            {
+                m_error = false;
+            }
+
+            [MethodImpl(MethodImplOptions.Synchronized)]
+            private void Complete(ParallelLoopState state, ScriptActionContract.Parameter p, IScriptObject a)
+            {
+                if (state.IsStopped) return;
+                m_error = State == null ? (object)false : new ContractBindingException(a, p.ContractBinding, State);
+            }
+
+            protected override void Analyze(ParallelLoopState state, int index, ScriptActionContract.Parameter p, IScriptObject a)
+            {
+                if (IsCompatible(p, a) || state.IsStopped) return;
+                state.Stop();
+                Complete(state, p, a);
+            }
+
+            public new bool Analyze()
+            {
+                base.Analyze();
+                if (m_error == null) return true;
+                else if (m_error is Exception) throw (Exception)m_error;
+                else return false;
+            }
+
+            public static bool IsCompatible(ScriptActionContract.Parameter p, IScriptObject a, InterpreterState state)
+            {
+                switch (IsCompatible(p, a))
+                {
+                    case true: return true;
+                    default: if (state == null) return false;
+                        else throw new ContractBindingException(a, p.ContractBinding, state);
+                }
+            }
+
+            public static bool IsCompatible(ScriptActionContract.Parameter p, IScriptObject a)
+            {
+                return p.ContractBinding.IsCompatible(a);
+            }
+        }
+
+        [ComVisible(false)]
+        private sealed class ArgumentConverter : SignatureAnalyzer
+        {
+            public readonly Converter<ScriptActionContract.Parameter, IRuntimeSlot> HolderFactory;
+            public readonly Debugging.CallStackFrame StackFrame;
+            public readonly IRuntimeSlot[] Holders;
+
+            public ArgumentConverter(IList<ScriptActionContract.Parameter> @params, IList<IScriptObject> args, InterpreterState s, Converter<ScriptActionContract.Parameter, IRuntimeSlot> factory, Debugging.CallStackFrame sf)
+                : base(@params, args, s)
+            {
+                Holders = new IRuntimeSlot[args.Count];
+                HolderFactory = factory;
+                StackFrame = sf;
+            }
+
+            protected override void Analyze(ParallelLoopState state, int index, ScriptActionContract.Parameter p, IScriptObject a)
+            {
+                PrepareArgument(p, a, index, HolderFactory, StackFrame, Holders, State);
+            }
+
+            public static void PrepareArgument(ScriptActionContract.Parameter p, IScriptObject a, int index, Converter<ScriptActionContract.Parameter, IRuntimeSlot> factory, Debugging.CallStackFrame stackFrame, IRuntimeSlot[] output, InterpreterState state)
+            {
+                var holder = factory(p);
+                holder.SetValue(a, state);
+                if (stackFrame != null)
+                    stackFrame.RegisterStorage(p.Name, holder);
+                output[index] = holder;
+            }
+
+            public new IRuntimeSlot[] Analyze()
+            {
+                base.Analyze();
+                return Holders;
+            }
+        }
+
+        /// <summary>
         /// Represents composed action.
         /// This class cannot be inherited.
         /// </summary>
@@ -46,7 +163,7 @@ namespace DynamicScript.Runtime.Environment
         {
             public readonly IScriptAction Left;
             public readonly IScriptAction Right;
-            private readonly bool NeedCarrying;
+            private readonly bool NeedCurrying;
 
             private static ScriptActionContract ConstructorHelper(IScriptAction left, IScriptAction right, out bool noCarrying)
             {
@@ -61,7 +178,7 @@ namespace DynamicScript.Runtime.Environment
             {
                 Left = left;
                 Right = right;
-                NeedCarrying = !dummy;
+                NeedCurrying = !dummy;
             }
 
             public Composition(IScriptAction left, IScriptAction right)
@@ -72,7 +189,7 @@ namespace DynamicScript.Runtime.Environment
             internal protected override IScriptObject Invoke(InvocationContext ctx, IRuntimeSlot[] arguments)
             {
                 //adjustment is used for arguments array splitting based on the return value carrying
-                var adjustment = SystemConverter.ToInt32(NeedCarrying);
+                var adjustment = SystemConverter.ToInt32(NeedCurrying);
                 //check whether the count of arguments is valid
                 if (arguments.LongLength != Left.SignatureInfo.ArgumentCount + Right.SignatureInfo.ArgumentCount - adjustment)
                     throw new ActionArgumentsMistmatchException(ctx.RuntimeState);
@@ -81,7 +198,7 @@ namespace DynamicScript.Runtime.Environment
                 var result = Left.Invoke(buffer, ctx.RuntimeState);
                 buffer = new IScriptObject[Right.SignatureInfo.ArgumentCount];
                 Array.Copy(arguments, Left.SignatureInfo.ArgumentCount, buffer, adjustment, Right.SignatureInfo.ArgumentCount - adjustment);
-                if (NeedCarrying) buffer[0] = result;
+                if (NeedCurrying) buffer[0] = result;
                 return Right.Invoke(buffer, ctx.RuntimeState);
             }
 
@@ -142,9 +259,13 @@ namespace DynamicScript.Runtime.Environment
                 {
                     case true:
                         var clonedCache = (IScriptObject[])m_cache.Clone();
-                        var j = 0;
-                        for (var i = 0; i < clonedCache.LongLength; i++)
-                            if (clonedCache[i] == null) clonedCache[i] = arguments[j++];
+                        Parallel.For<long>(0L, clonedCache.LongLength, () => 0L,
+                            delegate(long i, ParallelLoopState state, long j)
+                            {
+                                if (clonedCache[i] == null)
+                                    clonedCache[i] = arguments[j++];
+                                return j;
+                            }, j => { });
                         return m_invoker.Invoke(clonedCache, ctx.RuntimeState);
                     default: throw new ActionArgumentsMistmatchException(ctx.RuntimeState);
                 }
@@ -181,6 +302,27 @@ namespace DynamicScript.Runtime.Environment
         }
 
         [ComVisible(false)]
+        private sealed class MostRelevantActionSearcher : ParallelSearch<IList<IScriptObject>, IScriptAction, IScriptAction>
+        {
+            public MostRelevantActionSearcher(IList<IScriptObject> arguments)
+                : base(arguments)
+            {
+            }
+
+            protected override IScriptAction Match(IScriptAction target, IList<IScriptObject> a, out bool result)
+            {
+                return (result = target.CanInvoke(a)) ? target : null;
+            }
+
+            public static IScriptAction Find(IEnumerable<IScriptAction> actions, IList<IScriptObject> args)
+            {
+                var searcher = new MostRelevantActionSearcher(args);
+                searcher.Find(actions);
+                return searcher.Result;
+            }
+        }
+
+        [ComVisible(false)]
         private sealed class Combination : ScriptObject, ICombination
         {
             public readonly IEnumerable<IScriptAction> Actions;
@@ -206,16 +348,12 @@ namespace DynamicScript.Runtime.Environment
             /// <exception cref="ActionArgumentsMistmatchException">No one action in the collection can be invoked with specified arguments.</exception>
             public override IScriptObject Invoke(IList<IScriptObject> args, InterpreterState state)
             {
-                foreach (var a in Actions)
-                    if (a.CanInvoke(args))
-                        return a.Invoke(args, state);
-                throw new ActionArgumentsMistmatchException(state);
-            }
-
-            private ScriptCombinedAction Combine(IScriptAction action, InterpreterState state)
-            {
-                if (action == null) throw new ArgumentNullException("action");
-                return new ScriptCombinedAction(Enumerable.Concat(Actions, new[] { action }), state);
+                var target = MostRelevantActionSearcher.Find(Actions, args);
+                switch (target != null)
+                {
+                    case true: return target.Invoke(args, state);
+                    default: throw new ActionArgumentsMistmatchException(state);
+                }
             }
 
             /// <summary>
@@ -345,17 +483,16 @@ namespace DynamicScript.Runtime.Environment
         {
             var @params = Parameters;
             if (@params.Count == args.Count)
-                for (var i = 0; i < args.Count; i++)
-                    if (!@params[i].ContractBinding.IsCompatible(args[i]))
-                        switch (state != null)
-                        {
-                            case true: throw new ContractBindingException(args[i], @params[i].ContractBinding, state);
-                            default: return false;
-                        }
-                    else continue;
+                switch (@params.Count)
+                {
+                    case 0: return true;
+                    case 1: return ParameterCompatibilityAnalyzer.IsCompatible(@params[0], args[0], state);
+                    default:
+                        var analyzer = new ParameterCompatibilityAnalyzer(@params, args, state);
+                        return analyzer.Analyze();
+                }
             else if (state == null) return false;
             else throw new ActionArgumentsMistmatchException(state);
-            return true;
         }
 
         /// <summary>
@@ -515,18 +652,18 @@ namespace DynamicScript.Runtime.Environment
 
         private IRuntimeSlot[] PrepareInvocation(IList<IScriptObject> args, InterpreterState state)
         {
-            //Creates holder for each parameter.
-            var slots = new IRuntimeSlot[args.Count];
-            //Tansform arguments
-            for (var i = 0; i < slots.Length; i++)
+            var slots = default(IRuntimeSlot[]);
+            //Transform each argument 
+            switch (args.Count)
             {
-                var p = Parameters[i];
-                var holder = CreateParameterHolder(p);
-                holder.SetValue(args[i], state);
-                slots[i] = holder;
-                //Save parameters in the current stack frame
-                if (!IsTransparent && CallStack.Current != null)
-                    CallStack.Current.RegisterStorage(p.Name, holder);
+                case 0: slots = new IRuntimeSlot[0]; break;
+                case 1:
+                    ArgumentConverter.PrepareArgument(Parameters[0], args[0], 0, CreateParameterHolder, IsTransparent ? null : CallStack.Current, slots = new IRuntimeSlot[1], state);
+                    break;
+                default:
+                    var converter = new ArgumentConverter(Parameters, args, state, CreateParameterHolder, IsTransparent ? null : CallStack.Current);
+                    slots = converter.Analyze();
+                    break;
             }
             return slots;
         }

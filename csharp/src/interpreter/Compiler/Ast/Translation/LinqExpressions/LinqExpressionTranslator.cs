@@ -289,10 +289,10 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns>Translated fork expression.</returns>
         protected override Expression Translate(ScriptCodeForkExpression forkExpression, TranslationContext context)
         {
-            IList<Expression> body = new List<Expression>(forkExpression.Body.Count);
+            IList<Expression> body = new List<Expression>(10);
             var currentScope = context.Push(ForkScope.Create);
             body.Label(currentScope.BeginOfScope);
-            Translate(forkExpression.Body, context, GotoExpressionKind.Goto, ref body);
+            Translate(forkExpression.Body.UnwrapStatements(), context, GotoExpressionKind.Goto, ref body);
             body.Label(currentScope.EndOfScope, ScriptObject.MakeVoid());
             var result = ScriptAsyncObject.Bind(Expression.Lambda<Func<IScriptObject, InterpreterState, IScriptObject>>(Expression.Block(body), (ParameterExpression)currentScope.ScopeVar, currentScope.StateHolder), AsRightSide(currentScope.Parent.ScopeVar, context), currentScope.Parent.StateHolder);
             context.Pop();

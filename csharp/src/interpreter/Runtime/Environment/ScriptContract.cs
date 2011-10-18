@@ -43,12 +43,12 @@ namespace DynamicScript.Runtime.Environment
         }
 
         [ComVisible(false)]
-        private sealed class QUnion : ScriptContract, IScriptUnionContract
+        private sealed class ScriptUnion : ScriptContract, IScriptUnionContract
         {
             private readonly IScriptContract m_contract1;
             private readonly IScriptContract m_contract2;
 
-            public QUnion(IScriptContract left, IScriptContract right)
+            public ScriptUnion(IScriptContract left, IScriptContract right)
             {
                 if (left == null) throw new ArgumentNullException("left");
                 if (right == null) throw new ArgumentNullException("right");
@@ -58,16 +58,15 @@ namespace DynamicScript.Runtime.Environment
 
             public override ContractRelationshipType GetRelationship(IScriptContract contract)
             {
-                var rels1 = m_contract1.GetRelationship(contract);
-                var rels2 = m_contract2.GetRelationship(contract);
+                var rels1 = m_contract1.GetRelationship(contract);    
                 switch (rels1)
                 {
                     case ContractRelationshipType.Superset:
                         return ContractRelationshipType.Superset;
                     case ContractRelationshipType.Subset:
-                        return rels2 == ContractRelationshipType.Subset ? ContractRelationshipType.Subset : ContractRelationshipType.None;
+                        return m_contract2.GetRelationship(contract) == ContractRelationshipType.Subset ? ContractRelationshipType.Subset : ContractRelationshipType.None;
                     case ContractRelationshipType.TheSame:
-                        return rels2 == ContractRelationshipType.TheSame ? ContractRelationshipType.TheSame : ContractRelationshipType.None;
+                        return m_contract2.GetRelationship(contract) == ContractRelationshipType.TheSame ? ContractRelationshipType.TheSame : ContractRelationshipType.None;
                     default: return ContractRelationshipType.None;
                 }
             }
@@ -111,14 +110,19 @@ namespace DynamicScript.Runtime.Environment
         }
 
         [ComVisible(false)]
-        private sealed class QComplementation : ScriptContract, IScriptComplementation
+        private sealed class ScriptComplementation : ScriptContract, IScriptComplementation
         {
-            private readonly IScriptContract m_negated;
+            public readonly IScriptContract NegatedContract;
 
-            public QComplementation(IScriptContract contract)
+            public ScriptComplementation(IScriptContract contract)
             {
                 if (contract == null) throw new ArgumentNullException("contract");
-                m_negated = contract;
+                NegatedContract = contract;
+            }
+
+            IScriptContract IScriptComplementation.NegatedContract
+            {
+                get { return NegatedContract; }
             }
 
             public override ContractRelationshipType GetRelationship(IScriptContract contract)
@@ -143,15 +147,10 @@ namespace DynamicScript.Runtime.Environment
                 return ScriptMetaContract.Instance;
             }
 
-            public IScriptContract NegatedContract
-            {
-                get { return m_negated; }
-            }
-
             internal override IScriptContract Unite(IScriptContract right, InterpreterState state)
             {
                 if (right is IScriptContract)
-                    return right is IScriptComplementation || NegatedContract.GetRelationship(right) != ContractRelationshipType.TheSame ? (IScriptContract)base.Or(right, state) : ScriptSuperContract.Instance;
+                    return (right is IScriptComplementation || NegatedContract.GetRelationship(right) != ContractRelationshipType.TheSame) ? (IScriptContract)base.Or(right, state) : ScriptSuperContract.Instance;
                 else if (state.Context == InterpretationContext.Unchecked)
                     return Void;
                 else throw new UnsupportedOperationException(state);
@@ -166,7 +165,7 @@ namespace DynamicScript.Runtime.Environment
 
             public override string ToString()
             {
-                return String.Concat(Operator.Negotiation, NegatedContract);
+                return string.Concat(Operator.Negotiation, NegatedContract);
             }
         }
         #endregion
@@ -419,7 +418,7 @@ namespace DynamicScript.Runtime.Environment
                 case ContractRelationshipType.Superset:
                 case ContractRelationshipType.TheSame: return this;
                 case ContractRelationshipType.Subset: return right;
-                case ContractRelationshipType.None: return new QUnion(this, right);
+                case ContractRelationshipType.None: return new ScriptUnion(this, right);
                 default: return Void;
             }
         }
@@ -454,12 +453,12 @@ namespace DynamicScript.Runtime.Environment
         /// <returns></returns>
         protected sealed override IScriptObject Not(InterpreterState state)
         {
-            return this is IScriptComplementation ? ((IScriptComplementation)this).NegatedContract : new QComplementation(this);
+            return this is IScriptComplementation ? ((IScriptComplementation)this).NegatedContract : new ScriptComplementation(this);
         }
 
         internal virtual IScriptObject Complement(InterpreterState state)
         {
-            return this is IScriptComplementation ? ((IScriptComplementation)this).NegatedContract : new QComplementation(this);
+            return this is IScriptComplementation ? ((IScriptComplementation)this).NegatedContract : new ScriptComplementation(this);
         }
 
         private IScriptContract Cartesian(IScriptContract right, InterpreterState state)
@@ -638,7 +637,7 @@ namespace DynamicScript.Runtime.Environment
 
         internal static LinqExpression Extract(LinqExpression contract)
         {
-            return typeof(IScriptContract).IsAssignableFrom(contract.Type) ? contract : RuntimeHelpers.Invoke<object, IScriptContract>(RtlExtractContract, contract);
+            return typeof(IScriptContract).IsAssignableFrom(contract.Type) ? contract : LinqHelpers.Call<object, IScriptContract>(obj => RtlExtractContract(obj), null, contract);
         }
 
         private static IScriptContract AsIterable(IScriptContract contract)

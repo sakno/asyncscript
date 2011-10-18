@@ -40,5 +40,10 @@ namespace DynamicScript.Runtime.Environment
         {
             return Compile(Enumerable.Select(expressions, expr => new ScriptCodeExpressionStatement(expr)));
         }
+
+        public static ScriptActionInvoker Compile(ScriptCodeExpression expression)
+        {
+            return Compile(new[] { expression });
+        }
     }
 }

@@ -18,22 +18,17 @@ namespace DynamicScript.Compiler.Ast
         /// <summary>
         /// Represents body of the asynchronous task.
         /// </summary>
-        public readonly ScriptCodeStatementCollection Body;
-
-        private ScriptCodeForkExpression(ScriptCodeStatementCollection body)
-        {
-            Body = body ?? new ScriptCodeStatementCollection();
-        }
-        
+        public readonly ScriptCodeExpressionStatement Body;
 
         /// <summary>
-        /// Initializes a new FORK expression.
+        /// Initializes a new fork expression.
         /// </summary>
-        /// <param name="statements"></param>
-        public ScriptCodeForkExpression(params ScriptCodeStatement[] statements)
-            :this(new ScriptCodeStatementCollection(statements))
+        /// <param name="body"></param>
+        public ScriptCodeForkExpression(ScriptCodeExpressionStatement body = null)
         {
+            Body = body ?? new ScriptCodeExpressionStatement(ScriptCodeVoidExpression.Instance);
         }
+        
 
         internal override bool Completed
         {
@@ -46,15 +41,7 @@ namespace DynamicScript.Compiler.Ast
             lexer.MoveNext(true);   //pass through fork keyword
             var fork = new ScriptCodeForkExpression();
             //Parse asynchronous task body.
-            switch (lexer.Current.Value == Punctuation.LeftBrace)
-            {
-                case true:
-                    Parser.ParseStatements(lexer, fork.Body, Punctuation.RightBrace);
-                    break;
-                default:
-                    fork.Body.Add(Parser.ParseExpression, lexer, terminator);
-                    break;
-            }
+            fork.Body.SetExpression(Parser.ParseExpression, lexer, terminator);
             return fork;
         }
 
@@ -65,8 +52,7 @@ namespace DynamicScript.Compiler.Ast
         /// <returns><see langword="true"/> if this expression represents the same tree as other expression; otherwise, <see langword="false"/>.</returns>
         public bool Equals(ScriptCodeForkExpression other)
         {
-            return other != null &&
-                ScriptCodeStatementCollection.TheSame(Body, other.Body);
+            return other != null && Equals(Body, other.Body);
         }
 
         /// <summary>
@@ -85,8 +71,8 @@ namespace DynamicScript.Compiler.Ast
         /// <returns></returns>
         protected override Expression Restore()
         {
-            var ctor = LinqHelpers.BodyOf<ScriptCodeStatement[], ScriptCodeForkExpression, NewExpression>(body => new ScriptCodeForkExpression(body));
-            return ctor.Update(new[] { Body.NewArray() });
+            var ctor = LinqHelpers.BodyOf<ScriptCodeExpressionStatement, ScriptCodeForkExpression, NewExpression>(body => new ScriptCodeForkExpression(body));
+            return ctor.Update(new[] { LinqHelpers.Restore(Body) });
         }
 
         internal override void Verify()

@@ -8,6 +8,6 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
     [ScriptObject.SlotStore]
     interface IForkExpressionFactorySlots : ICodeElementFactorySlots
     {
-        IRuntimeSlot GetStmts { get; }
+        IRuntimeSlot Body { get; }
     }
 }
