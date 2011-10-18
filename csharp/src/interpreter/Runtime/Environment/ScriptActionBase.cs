@@ -298,6 +298,27 @@ namespace DynamicScript.Runtime.Environment
         }
 
         [ComVisible(false)]
+        private sealed class MostRelevantActionSearcher : ParallelSearch<IList<IScriptObject>, IScriptAction, IScriptAction>
+        {
+            public MostRelevantActionSearcher(IList<IScriptObject> arguments)
+                : base(arguments)
+            {
+            }
+
+            protected override IScriptAction Match(IScriptAction target, IList<IScriptObject> a, out bool result)
+            {
+                return (result = target.CanInvoke(a)) ? target : null;
+            }
+
+            public static IScriptAction Find(IEnumerable<IScriptAction> actions, IList<IScriptObject> args)
+            {
+                var searcher = new MostRelevantActionSearcher(args);
+                searcher.Find(actions);
+                return searcher.Result;
+            }
+        }
+
+        [ComVisible(false)]
         private sealed class Combination : ScriptObject, ICombination
         {
             public readonly IEnumerable<IScriptAction> Actions;
@@ -323,10 +344,12 @@ namespace DynamicScript.Runtime.Environment
             /// <exception cref="ActionArgumentsMistmatchException">No one action in the collection can be invoked with specified arguments.</exception>
             public override IScriptObject Invoke(IList<IScriptObject> args, InterpreterState state)
             {
-                foreach (var a in Actions)
-                    if (a.CanInvoke(args))
-                        return a.Invoke(args, state);
-                throw new ActionArgumentsMistmatchException(state);
+                var target = MostRelevantActionSearcher.Find(Actions, args);
+                switch (target != null)
+                {
+                    case true: return target.Invoke(args, state);
+                    default: throw new ActionArgumentsMistmatchException(state);
+                }
             }
 
             private ScriptCombinedAction Combine(IScriptAction action, InterpreterState state)
