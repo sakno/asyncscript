@@ -172,11 +172,19 @@ namespace DynamicScript.Runtime.Environment
         public bool DeleteValue(bool forceGarbageCollection)
         {
             if (Value == null || IsConstant) return false;
-            var generation = NativeGarbageCollector.GetGeneration(Value);
-            if (Value is IDisposable) ((IDisposable)Value).Dispose();
-            Value = null;
-            if (forceGarbageCollection) NativeGarbageCollector.Collect(generation);
-            HasValue = false;
+            else if (forceGarbageCollection)
+            {
+                var generation = NativeGarbageCollector.GetGeneration(Value);
+                if (Value is IDisposable) ((IDisposable)Value).Dispose();
+                Value = null;
+                if (forceGarbageCollection) NativeGarbageCollector.Collect(generation);
+                HasValue = false;
+            }
+            else
+            {
+                Value = null;
+                HasValue = false;
+            }
             return true;
         }
 
@@ -186,7 +194,7 @@ namespace DynamicScript.Runtime.Environment
         /// <returns><see langword="true"/> if value erasure is supported by the current type of the slot; otherwise, <see langword="false"/>.</returns>
         public sealed override bool DeleteValue()
         {
-            return DeleteValue(true);
+            return DeleteValue(false);
         }
 
         [MethodImpl(MethodImplOptions.Synchronized)]
