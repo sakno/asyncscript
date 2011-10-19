@@ -444,6 +444,7 @@
     <Compile Include="Compiler\Lexeme.cs" />
     <Compile Include="Compiler\LexemeAnalyzer.cs" />
     <Compile Include="Extensions.cs" />
+    <Compile Include="ParallelEqualityComparer.cs" />
     <Compile Include="StringEqualityComparer.cs" />
     <Compile Include="Compiler\Literal.cs" />
     <Compile Include="Compiler\NameToken.cs" />

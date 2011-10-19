@@ -37,7 +37,11 @@ namespace DynamicScript.Runtime.Environment
 
             public ScriptCartesianContract(IEnumerable<IScriptContract> contracts)
             {
-                m_contracts = contracts is ReadOnlyCollection<IScriptContract> ? (ReadOnlyCollection<IScriptContract>)contracts : Array.AsReadOnly<IScriptContract>(Enumerable.ToArray(contracts));
+                if (contracts is ReadOnlyCollection<IScriptContract>)
+                    m_contracts = (ReadOnlyCollection<IScriptContract>)contracts;
+                if (contracts is IList<IScriptContract>)
+                    m_contracts = new ReadOnlyCollection<IScriptContract>((IList<IScriptContract>)contracts);
+                else m_contracts = Array.AsReadOnly(Enumerable.ToArray(contracts));
             }
 
             private static IEnumerable<IScriptContract> GetContracts(IScriptContract left, IScriptContract right, IEnumerable<IScriptContract> contracts)
@@ -76,17 +80,14 @@ namespace DynamicScript.Runtime.Environment
             /// <returns></returns>
             public ContractRelationshipType GetRelationship(ScriptCartesianContract cartesian)
             {
-                for (var i = 0; i < SystemMath.Min(Contracts.Count, cartesian.Contracts.Count); i++)
-                    switch (Contracts[i].Equals(cartesian.Contracts[i]))
-                    {
-                        case true: continue;
-                        default: return ContractRelationshipType.None;
-                    }
-                switch (Contracts.Count == cartesian.Contracts.Count)
-                {
-                    case true: return ContractRelationshipType.TheSame;
-                    default: return Contracts.Count > cartesian.Contracts.Count ? ContractRelationshipType.Subset : ContractRelationshipType.Superset;
-                }
+                //Compare each member of the cartesian product.
+                if (!ParallelEqualityComparer<IScriptContract, IScriptContract>.MayBeEqual(Contracts, cartesian.Contracts))
+                    return ContractRelationshipType.None;
+                //compare a power of two cartesian products.
+                var cmp = Contracts.Count.CompareTo(cartesian.Contracts.Count);
+                if (cmp < 0) return ContractRelationshipType.Superset;
+                else if (cmp > 0) return ContractRelationshipType.Subset;
+                else return ContractRelationshipType.TheSame;
             }
 
             public override ContractRelationshipType GetRelationship(IScriptContract contract)
