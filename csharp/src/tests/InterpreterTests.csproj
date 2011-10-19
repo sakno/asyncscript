@@ -57,6 +57,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="Runtime\Environment\RuntimeSlotTest.cs" />
     <Compile Include="Runtime\Environment\ContractOperations.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\ScriptStatementFactoryTest.cs" />
     <Compile Include="Runtime\Environment\ObjectModel\ScriptModuleTest.cs" />

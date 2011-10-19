@@ -156,11 +156,8 @@ namespace DynamicScript.Runtime.Environment
             {
                 case true:
                     if (Value is IScriptProxyObject)
-                    {
-                        SetValue(((IScriptProxyObject)Value).Unwrap(), state);
-                        return GetValue(state);
-                    }
-                    else return Value ?? ContractBinding.FromVoid(state);
+                        SetValueFast(((IScriptProxyObject)Value).Unwrap(), state);
+                    return Value;
                 default:
                     if (state.Context == InterpretationContext.Unchecked) return ContractBinding.FromVoid(state);
                     else throw new UnassignedSlotReadingException(state);
@@ -172,19 +169,15 @@ namespace DynamicScript.Runtime.Environment
         /// </summary>
         /// <param name="forceGarbageCollection">Specifies that the garbage collection should be forced after erasure.</param>
         /// <returns><see langword="true"/> if value erasure is supported by the current type of the slot; otherwise, <see langword="false"/>.</returns>
-        public virtual bool DeleteValue(bool forceGarbageCollection)
+        public bool DeleteValue(bool forceGarbageCollection)
         {
-            switch (Value != null)
-            {
-                case true:
-                    var generation = NativeGarbageCollector.GetGeneration(Value);
-                    if (Value is IDisposable) ((IDisposable)Value).Dispose();
-                    Value = null;
-                    if (forceGarbageCollection) NativeGarbageCollector.Collect(generation);
-                    HasValue = false;
-                    return true;
-                default: return false;
-            }
+            if (Value == null || IsConstant) return false;
+            var generation = NativeGarbageCollector.GetGeneration(Value);
+            if (Value is IDisposable) ((IDisposable)Value).Dispose();
+            Value = null;
+            if (forceGarbageCollection) NativeGarbageCollector.Collect(generation);
+            HasValue = false;
+            return true;
         }
 
         /// <summary>
@@ -193,7 +186,7 @@ namespace DynamicScript.Runtime.Environment
         /// <returns><see langword="true"/> if value erasure is supported by the current type of the slot; otherwise, <see langword="false"/>.</returns>
         public sealed override bool DeleteValue()
         {
-            return DeleteValue(false);
+            return DeleteValue(true);
         }
 
         [MethodImpl(MethodImplOptions.Synchronized)]

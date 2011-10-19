@@ -553,7 +553,7 @@ namespace DynamicScript.Runtime.Environment
                         return true;
                     default:
                         value = null;
-                    return false;
+                        return false;
                 }
             }
 

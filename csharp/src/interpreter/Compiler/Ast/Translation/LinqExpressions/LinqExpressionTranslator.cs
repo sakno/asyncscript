@@ -454,18 +454,27 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns>Translated variable reference.</returns>
         protected override Expression Translate(ScriptCodeVariableReference variableRef, TranslationContext context)
         {
-            return Translate(variableRef.VariableName, context);
+            var resolved = default(bool);
+            return Translate(variableRef.VariableName, context, out resolved);
         }
        
-        private Expression Translate(string variableName, TranslationContext context)
+        private Expression Translate(string variableName, TranslationContext context, out bool resolved)
         {
             //The first, try find out a variable through a scope.
             Expression @var = context.Scope[variableName];
-            if (@var != null) return @var;
+            if (@var != null)
+            {
+                resolved = true;
+                return @var;
+            }
             //The second, try to find object slot
             var objscope = context.Lookup<ObjectScope>();
             if (objscope != null && objscope.Expression.Contains(variableName))
+            {
+                resolved = true;
                 return ScriptObject.BindSlotAccess(context.Scope.ScopeVar, variableName, context.Scope.StateHolder);
+            }
+            resolved = false;
             //Variable name cannot be resolved statically, therefore, it should be retreived from the module.
             return ScriptObject.BindSlotAccess(GlobalScope.GetGlobal(context.Scope), variableName, context.Scope.StateHolder);
         }
@@ -1361,6 +1370,15 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             }
         }
 
+        private Expression DeleteValue(string variableName, TranslationContext context)
+        {
+            var resolved = default(bool);
+            var slot = Translate(variableName, context, out resolved);
+            return RuntimeHelpers.IsRuntimeVariable(slot) && resolved ?
+                InterpreterState.DeleteValue(slot, context.Scope.StateHolder) :
+                ScriptObject.MakeVoid();
+        }
+
         /// <summary>
         /// Translates binary operator expression to LINQ expression.
         /// </summary>
@@ -1370,6 +1388,12 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         protected override Expression Translate(ScriptCodeBinaryOperatorExpression expression, TranslationContext context)
         {
             var leftExpression = Translate(expression.Left, context);
+            /*
+             * If binary expression has the following format:
+             * a to void;
+             * then recognize it as variable erasure.
+            */
+            if (expression.Left is ScriptCodeVariableReference && expression.Right is ScriptCodeVoidExpression) return DeleteValue(((ScriptCodeVariableReference)expression.Left).VariableName, context);
             switch (expression.Operator)
             {
                 case ScriptCodeBinaryOperatorType.MemberAccess:
