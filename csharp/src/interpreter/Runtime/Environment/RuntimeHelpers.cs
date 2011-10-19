@@ -1125,5 +1125,12 @@ namespace DynamicScript.Runtime.Environment
             Parallel.For(0, result.LongLength, i => result[i] = slots[i]);
             return result;
         }
+
+        internal static IScriptContract[] GetContractBindings(this IList<IScriptObject> values)
+        {
+            var result = new IScriptContract[values.Count];
+            Parallel.For(0, values.Count, i => result[i] = values[i].GetContractBinding());
+            return result;
+        }
     }
 }

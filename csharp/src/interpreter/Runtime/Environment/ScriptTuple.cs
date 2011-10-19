@@ -20,7 +20,7 @@ namespace DynamicScript.Runtime.Environment
     public sealed class ScriptTuple : ScriptObject, ISerializable
     {
         #region Nested Types
-        
+
         [ComVisible(false)]
         [Serializable]
         private sealed class ScriptCartesianContract : ScriptContract, ISerializable, IEnumerable<IScriptContract>, IScriptCartesianProduct
@@ -157,18 +157,17 @@ namespace DynamicScript.Runtime.Environment
         #endregion
 
         private const string ValuesSerializationSlot = "Values";
-        private readonly ReadOnlyCollection<IScriptObject> m_values;
-        [NonSerialized]
-        private ScriptArray m_underlyingObject;
+        private readonly ScriptList m_values;
+        private IScriptContract m_contract;
 
         private ScriptTuple(SerializationInfo info, StreamingContext context)
         {
-            m_values = (ReadOnlyCollection<IScriptObject>)info.GetValue(ValuesSerializationSlot, typeof(ReadOnlyCollection<IScriptObject>));
+            m_values = (ScriptList)info.GetValue(ValuesSerializationSlot, typeof(ScriptList));
         }
 
         private ScriptTuple(IEnumerable<IScriptObject> values)
         {
-            m_values = values is ReadOnlyCollection<IScriptObject> ? (ReadOnlyCollection<IScriptObject>)values : Array.AsReadOnly<IScriptObject>(Enumerable.ToArray(values));
+            m_values = new ScriptList(10, values);
         }
 
         /// <summary>
@@ -186,7 +185,7 @@ namespace DynamicScript.Runtime.Environment
         /// <summary>
         /// Gets values in the tuple.
         /// </summary>
-        public ICollection<IScriptObject> Values
+        public IList<IScriptObject> Values
         {
             get { return m_values; }
         }
@@ -203,25 +202,12 @@ namespace DynamicScript.Runtime.Environment
             return new ScriptCartesianContract(left, right, contracts);
         }
 
-        private ScriptArray UnderlyingObject
-        {
-            get
-            {
-                if (m_underlyingObject == null)
-                    m_underlyingObject = new ScriptArray(ScriptCartesianContract.ContractBinding, Values.Count);
-                return m_underlyingObject;
-            }
-        }
-
         /// <summary>
         /// Gets collection of object slots.
         /// </summary>
         public override ICollection<string> Slots
         {
-            get
-            {
-                return UnderlyingObject.Slots;
-            }
+            get { return m_values.Slots; }
         }
 
         /// <summary>
@@ -232,10 +218,18 @@ namespace DynamicScript.Runtime.Environment
         /// <returns></returns>
         public override IRuntimeSlot this[string slotName, InterpreterState state]
         {
-            get
-            {
-                return UnderlyingObject[slotName, state];
-            }
+            get { return m_values[slotName, state]; }
+        }
+
+        /// <summary>
+        /// Gets tuple element accessor.
+        /// </summary>
+        /// <param name="args"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public override RuntimeSlotBase this[IScriptObject[] args, InterpreterState state]
+        {
+            get { return m_values[args, state]; }
         }
 
         /// <summary>
@@ -244,7 +238,8 @@ namespace DynamicScript.Runtime.Environment
         /// <returns></returns>
         public override IScriptContract GetContractBinding()
         {
-            return new ScriptCartesianContract(Enumerable.Select(Values, v => v.GetContractBinding()));
+            if (m_contract == null) m_contract = new ScriptCartesianContract(Values.GetContractBindings());
+            return m_contract;
         }
 
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)

@@ -175,6 +175,17 @@ namespace DynamicScript.Runtime.Environment
         }
 
         /// <summary>
+        /// Initializes a new collection with the predefined elements.
+        /// </summary>
+        /// <param name="capacity"></param>
+        /// <param name="elements"></param>
+        public ScriptList(int capacity, IEnumerable<IScriptObject> elements)
+            : this(capacity)
+        {
+            m_elements.AddRange(elements);
+        }
+
+        /// <summary>
         /// Returns contract binding for this list.
         /// </summary>
         /// <returns></returns>
