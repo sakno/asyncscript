@@ -58,16 +58,22 @@ namespace DynamicScript.Runtime.Environment
 
             public override ContractRelationshipType GetRelationship(IScriptContract contract)
             {
-                var rels1 = m_contract1.GetRelationship(contract);    
-                switch (rels1)
+                switch (m_contract1.GetRelationship(contract))
                 {
+                    case ContractRelationshipType.TheSame:
                     case ContractRelationshipType.Superset:
                         return ContractRelationshipType.Superset;
                     case ContractRelationshipType.Subset:
-                        return m_contract2.GetRelationship(contract) == ContractRelationshipType.Subset ? ContractRelationshipType.Subset : ContractRelationshipType.None;
+                        return ContractRelationshipType.None;
+                }
+                switch (m_contract2.GetRelationship(contract))
+                {
                     case ContractRelationshipType.TheSame:
-                        return m_contract2.GetRelationship(contract) == ContractRelationshipType.TheSame ? ContractRelationshipType.TheSame : ContractRelationshipType.None;
-                    default: return ContractRelationshipType.None;
+                    case ContractRelationshipType.Superset:
+                        return ContractRelationshipType.Superset;
+                    case ContractRelationshipType.Subset:
+                    default:
+                        return ContractRelationshipType.None;
                 }
             }
 
