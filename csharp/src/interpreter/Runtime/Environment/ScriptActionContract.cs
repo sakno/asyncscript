@@ -6,6 +6,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.ComponentModel;
 using System.Runtime.Serialization;
+using System.Threading.Tasks;
 
 namespace DynamicScript.Runtime.Environment
 {
@@ -30,7 +31,6 @@ namespace DynamicScript.Runtime.Environment
         /// This class cannot be inherited.
         /// </summary>
         [ComVisible(false)]
-        
         [Serializable]
         public sealed class Parameter: IEquatable<Parameter>, IEquatable<string>
         {
@@ -146,7 +146,6 @@ namespace DynamicScript.Runtime.Environment
         /// Represents action signature.
         /// </summary>
         [ComVisible(false)]
-        
         [Serializable]
         protected class Signature : KeyedCollection<string, Parameter>
         {
@@ -395,6 +394,37 @@ namespace DynamicScript.Runtime.Environment
             else throw new UnsupportedOperationException(state);
         }
 
+        private static ContractRelationshipType ComputeContravariance(IList<Parameter> left, IList<Parameter> right)
+        {
+            var result = ContractRelationshipType.TheSame;
+            for (var i = 0; i < left.Count; i++)
+            {
+                //contravariance detection. Contravariance inverse morphism direction. For more info, see contravariance in Category Theory
+                var rels = Inverse(left[i].ContractBinding.GetRelationship(right[i].ContractBinding));
+                switch (rels)
+                {
+                    case ContractRelationshipType.TheSame: continue;
+                    case ContractRelationshipType.None: return ContractRelationshipType.None;
+                    default: if (result == ContractRelationshipType.TheSame || result == rels) result = rels;
+                        else return ContractRelationshipType.None;
+                        continue;
+                }
+            }
+            return result;
+        }
+
+        private static ContractRelationshipType ComputeContravariance(dynamic twoListOfParams)
+        {
+            return ComputeContravariance(twoListOfParams.Left, twoListOfParams.Right);
+        }
+
+        private static ContractRelationshipType ComputeCovariance(IScriptContract left, IScriptContract right)
+        {
+            if (IsVoid(left))
+                return IsVoid(right) ? ContractRelationshipType.TheSame : ContractRelationshipType.Superset;
+            else return left.GetRelationship(right);
+        }
+
         /// <summary>
         /// Returns relationship between the current contract and the specified.
         /// </summary>
@@ -405,34 +435,20 @@ namespace DynamicScript.Runtime.Environment
             switch (Parameters.Count == other.Parameters.Count)
             {
                 case true:
-                    var contravariance = ContractRelationshipType.TheSame;
-                    for (var i = 0; i < Parameters.Count; i++)
+                    using (var contravariance = Task.Factory.StartNew<ContractRelationshipType>(ComputeContravariance, new { Left = Parameters, Right = other.Parameters }))
                     {
-                        //contravariance detection. Contravariance inverse morphism direction. For more info, see contravariance in Category Theory
-                        var rels = Inverse(Parameters[i].ContractBinding.GetRelationship(other.Parameters[i].ContractBinding));
-                        switch (rels)
+                        var covariance = ComputeCovariance(ReturnValueContract, other.ReturnValueContract);
+                        switch (covariance)
                         {
-                            case ContractRelationshipType.TheSame: continue;
+                            case ContractRelationshipType.TheSame: return contravariance.Result;
                             case ContractRelationshipType.None: return ContractRelationshipType.None;
-                            default: if (contravariance == ContractRelationshipType.TheSame || contravariance == rels) contravariance = rels;
-                                else return ContractRelationshipType.None;
-                                continue;
+                            default:
+                                return contravariance.Result == ContractRelationshipType.TheSame || contravariance.Result == covariance ? covariance : ContractRelationshipType.None;
                         }
-                    }
-                    //covariance detection.
-                    var covariance = ContractRelationshipType.None;
-                    if (IsVoid(ReturnValueContract))
-                        covariance = IsVoid(other.ReturnValueContract) ? ContractRelationshipType.TheSame : ContractRelationshipType.Superset;
-                    else covariance = ReturnValueContract.GetRelationship(other.ReturnValueContract);
-                    switch (covariance)
-                    {
-                        case ContractRelationshipType.TheSame: return contravariance;
-                        case ContractRelationshipType.None: return ContractRelationshipType.None;
-                        default:
-                            return contravariance == ContractRelationshipType.TheSame || contravariance == covariance ? covariance : ContractRelationshipType.None;
                     }
                 default: return ContractRelationshipType.None;
             }
+
         }
 
         /// <summary>
