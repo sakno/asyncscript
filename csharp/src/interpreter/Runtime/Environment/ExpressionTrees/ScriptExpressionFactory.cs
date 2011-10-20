@@ -289,7 +289,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
         static ScriptExpressionFactory()
         {
-            RuntimeHelpers.RegisterConverter<ExpressionConverter>();
+            RegisterConverter<ExpressionConverter>();
         }
 
         /// <summary>

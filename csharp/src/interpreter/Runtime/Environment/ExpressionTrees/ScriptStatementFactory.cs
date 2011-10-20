@@ -108,8 +108,8 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
         static ScriptStatementFactory()
         {
-            RuntimeHelpers.RegisterConverter<StatementConverter>();
-            RuntimeHelpers.RegisterConverter<MiscSlotConverter>();
+            RegisterConverter<StatementConverter>();
+            RegisterConverter<MiscSlotConverter>();
         }
 
         /// <summary>

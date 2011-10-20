@@ -1230,8 +1230,7 @@ namespace DynamicScript.Runtime.Environment
 
         static ScriptObject()
         {
-            m_converters = new HashSet<IRuntimeConverter>();
-            SystemHelpers.RunClassConstructor(typeof(RuntimeConverters).TypeHandle);
+            RuntimeConverters.RegisterConverters(m_converters = new HashSet<IRuntimeConverter>());
         }
 
         /// <summary>
@@ -1240,10 +1239,10 @@ namespace DynamicScript.Runtime.Environment
         /// <typeparam name="TConverter">Type of the converter to register.</typeparam>
         /// <returns><see langword="true"/> if converter is registered at first time; <see langword="false"/> if the specified
         /// converter is already registered.</returns>
-        internal static bool RegisterConverter<TConverter>()
+        public static bool RegisterConverter<TConverter>()
             where TConverter : IRuntimeConverter, new()
         {
-            return m_converters.Add(new TConverter());
+            return RuntimeConverters.RegisterConverter<TConverter>(m_converters);
         }
 
         /// <summary>

@@ -3,26 +3,32 @@
 namespace DynamicScript.Runtime.Environment
 {
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
-    using Compiler.Ast;
+    using IRuntimeConverters = System.Collections.Generic.ISet<IRuntimeConverter>;
 
     [ComVisible(false)]
     static class RuntimeConverters
     {
-        static RuntimeConverters()
+        public static bool RegisterConverter<TConverter>(this IRuntimeConverters converters)
+            where TConverter : IRuntimeConverter, new()
         {
-            RuntimeHelpers.RegisterConverter<ScriptInteger.Int64Converter>();
-            RuntimeHelpers.RegisterConverter<ScriptInteger.Int32Converter>();
-            RuntimeHelpers.RegisterConverter<ScriptInteger.Int16Converter>();
-            RuntimeHelpers.RegisterConverter<ScriptInteger.Int8Converter>();
-            RuntimeHelpers.RegisterConverter<ScriptInteger.UInt8Converter>();
-            RuntimeHelpers.RegisterConverter<ScriptInteger.UInt16Converter>();
-            RuntimeHelpers.RegisterConverter<ScriptInteger.UInt32Converter>();
-            RuntimeHelpers.RegisterConverter<ScriptBoolean.BooleanConverter>();
-            RuntimeHelpers.RegisterConverter<ScriptReal.DoubleConverter>();
-            RuntimeHelpers.RegisterConverter<ScriptReal.SingleConverter>();
-            RuntimeHelpers.RegisterConverter<ScriptSlotMetadata.SlotMetaConverter>();
-            RuntimeHelpers.RegisterConverter<ScriptString.StringConverter>();
-            RuntimeHelpers.RegisterConverter<ScriptIterable.ScriptIterableContractDefConverter>();
+            return converters.Add(new TConverter());
+        }
+
+        public static void RegisterConverters(IRuntimeConverters converters)
+        {
+            RegisterConverter<ScriptInteger.Int64Converter>(converters);
+            RegisterConverter<ScriptInteger.Int32Converter>(converters);
+            RegisterConverter<ScriptInteger.Int16Converter>(converters);
+            RegisterConverter<ScriptInteger.Int8Converter>(converters);
+            RegisterConverter<ScriptInteger.UInt8Converter>(converters);
+            RegisterConverter<ScriptInteger.UInt16Converter>(converters);
+            RegisterConverter<ScriptInteger.UInt32Converter>(converters);
+            RegisterConverter<ScriptBoolean.BooleanConverter>(converters);
+            RegisterConverter<ScriptReal.DoubleConverter>(converters);
+            RegisterConverter<ScriptReal.SingleConverter>(converters);
+            RegisterConverter<ScriptSlotMetadata.SlotMetaConverter>(converters);
+            RegisterConverter<ScriptString.StringConverter>(converters);
+            RegisterConverter<ScriptIterable.ScriptIterableContractDefConverter>(converters);
         }
     }
 }

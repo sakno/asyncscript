@@ -1053,18 +1053,6 @@ namespace DynamicScript.Runtime.Environment
             return result;
         }
 
-        /// <summary>
-        /// Registers a new converter.
-        /// </summary>
-        /// <typeparam name="TConverter">Type of the converter to register.</typeparam>
-        /// <returns><see langword="true"/> if converter is registered at first time; <see langword="false"/> if the specified
-        /// converter is already registered.</returns>
-        public static bool RegisterConverter<TConverter>()
-            where TConverter : IRuntimeConverter, new()
-        {
-            return ScriptObject.RegisterConverter<TConverter>();
-        }
-
         internal static InterpreterState GetState(this CallSiteBinder binder)
         {
             return binder is IScriptRuntimeBinder ? ((IScriptRuntimeBinder)binder).State : InterpreterState.Current;
