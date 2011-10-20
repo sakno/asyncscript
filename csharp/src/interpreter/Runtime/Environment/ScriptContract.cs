@@ -177,7 +177,7 @@ namespace DynamicScript.Runtime.Environment
         #endregion
 
 #if USE_REL_MATRIX
-        internal readonly ContractHandle RuntimeHandle;
+        private ContractHandle? m_handle;
         internal static readonly ContractRelationshipMatrix RelationshipMatrix = new ContractRelationshipMatrix();
 #endif
 
@@ -187,11 +187,20 @@ namespace DynamicScript.Runtime.Environment
         internal ScriptContract()
         {
 #if USE_REL_MATRIX
-            RuntimeHandle = ContractHandle.New();
+            m_handle = null;
 #endif
         }
 
 #if USE_REL_MATRIX
+        internal ContractHandle RuntimeHandle
+        {
+            get
+            {
+                if (m_handle == null) m_handle = ContractHandle.New(this);
+                return m_handle.Value;
+            }
+        }
+
         ContractHandle IScriptContract.RuntimeHandle
         {
             get { return RuntimeHandle; }

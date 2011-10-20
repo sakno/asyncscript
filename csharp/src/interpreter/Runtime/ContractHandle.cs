@@ -3,7 +3,6 @@
 namespace DynamicScript.Runtime
 {
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
-    using Interlocked = System.Threading.Interlocked;
 
 #if USE_REL_MATRIX
     /// <summary>
@@ -13,12 +12,11 @@ namespace DynamicScript.Runtime
     [ComVisible(false)]
     public struct ContractHandle: IEquatable<ContractHandle>
     {
-        private static long m_counter = long.MinValue;
         private readonly long Value;
 
-        private ContractHandle(long v)
+        private ContractHandle(Type contractType, int hashCode)
         {
-            Value = v;
+            Value = contractType.MetadataToken << 32 | hashCode;
         }
 
         /// <summary>
@@ -63,9 +61,10 @@ namespace DynamicScript.Runtime
         /// Generates a new contract handle.
         /// </summary>
         /// <returns>A newly generated handle.</returns>
-        public static ContractHandle New()
+        public static ContractHandle New<TContract>(TContract c)
+            where TContract : class, IScriptObject
         {
-            return new ContractHandle(Interlocked.Increment(ref m_counter));
+            return new ContractHandle(c.GetType(), c.GetHashCode());
         }
     }
 #endif
