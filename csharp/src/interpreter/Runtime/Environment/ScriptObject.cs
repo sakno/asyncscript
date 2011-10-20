@@ -34,6 +34,28 @@ namespace DynamicScript.Runtime.Environment
         ICloneable
     {
         #region Nested Types
+        [ComVisible(false)]
+        private sealed class ParallelConverter : ParallelSearch<object, IRuntimeConverter, IScriptObject>
+        {
+            public ParallelConverter(object valueToConvert)
+                : base(valueToConvert)
+            {
+            }
+
+            protected override bool Match(IRuntimeConverter converter, object valueToConvert, out IScriptObject result)
+            {
+                return converter.Convert(valueToConvert, out result);
+            }
+
+            public static bool TryConvert(object value, IEnumerable<IRuntimeConverter> converters, out IScriptObject result)
+            {
+                var pconv = new ParallelConverter(value);
+                pconv.Find(converters);
+                result = pconv.Result;
+                return pconv.Success;
+            }
+        }
+
         /// <summary>
         /// Represents slot searcher that iterates through properties of implemented interfaces
         /// in parallel manner.
@@ -47,16 +69,16 @@ namespace DynamicScript.Runtime.Environment
             {
             }
 
-            protected override PropertyInfo Match(PropertyInfo element, string slotName, out bool result)
+            protected override bool Match(PropertyInfo element, string slotName, out PropertyInfo prop)
             {
                 switch (StringEqualityComparer.Equals(slotName, element.Name))
                 {
                     case true:
-                        result = true;
-                        return element;
+                        prop = element;
+                        return true;
                     default:
-                        result = false;
-                        return null;
+                        prop = null;
+                        return false;
                 }
             }
 
@@ -1279,14 +1301,11 @@ namespace DynamicScript.Runtime.Environment
             result = null;
             if (value == null)
                 result = Void;
-            else if (value is IRuntimeSlot)
-                result = ((IRuntimeSlot)value).GetValue(InterpreterState.Current);
             if (value is IScriptObject)
                 result = (IScriptObject)value;
             else if (value is DynamicMetaObject)
                 return TryConvert(((DynamicMetaObject)value).Value, out result);
-            else foreach (var conv in m_converters)
-                    if (conv.Convert(value, out result)) return true; else result = null;
+            else return ParallelConverter.TryConvert(value, m_converters, out result);
             return result != null;
         }
 

@@ -311,9 +311,15 @@ namespace DynamicScript.Runtime.Environment
             {
             }
 
-            protected override IScriptAction Match(IScriptAction target, IList<IScriptObject> a, out bool result)
+            protected override bool Match(IScriptAction target, IList<IScriptObject> args, out IScriptAction result)
             {
-                return (result = target.CanInvoke(a)) ? target : null;
+                switch (target.CanInvoke(args))
+                {
+                    case true:
+                        result = target; return true;
+                    default:
+                        result = null; return false;
+                }
             }
 
             public static IScriptAction Find(IEnumerable<IScriptAction> actions, IList<IScriptObject> args)

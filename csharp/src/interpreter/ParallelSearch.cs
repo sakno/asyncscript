@@ -22,7 +22,7 @@ namespace DynamicScript
             Criteria = criteria;
         }
 
-        protected abstract TResult Match(TElement element, TCriteria criteria, out bool result);
+        protected abstract bool Match(TElement element, TCriteria criteria, out TResult result);
 
         [MethodImpl(MethodImplOptions.Synchronized)]
         private void Complete(TResult result, ParallelLoopState state)
@@ -34,12 +34,11 @@ namespace DynamicScript
 
         private void Match(TElement element, ParallelLoopState state)
         {
-            var success = default(bool);
-            var result = Match(element, Criteria, out success);
-            if (success)
+            var result = default(TResult);
+            if (Match(element, Criteria, out result))
             {
-                Complete(result, state);
                 state.Stop();
+                Complete(result, state);
             }
         }
 

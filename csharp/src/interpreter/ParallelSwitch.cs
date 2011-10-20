@@ -122,11 +122,13 @@ namespace DynamicScript
         /// </summary>
         /// <param name="element"></param>
         /// <param name="criteria"></param>
-        /// <param name="match"></param>
+        /// <param name="result"></param>
         /// <returns></returns>
-        protected sealed override TResult Match(ParallelSwitchCase<TSource, TResult> element, TSource criteria, out bool match)
+        protected sealed override bool Match(ParallelSwitchCase<TSource, TResult> element, TSource criteria, out TResult result)
         {
-            return element.Invoke(criteria, out match);
+            var success = default(bool);
+            result = element.Invoke(criteria, out success);
+            return success;
         }
 
         /// <summary>
