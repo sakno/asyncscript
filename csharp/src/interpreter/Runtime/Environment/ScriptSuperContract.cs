@@ -52,20 +52,19 @@ namespace DynamicScript.Runtime.Environment
             get { return LinqHelpers.BodyOf<Func<ScriptSuperContract>, MemberExpression>(() => Instance); }
         }
 
-        /// <summary>
-        /// Unites two contracts.
-        /// </summary>
-        /// <param name="right"></param>
-        /// <param name="state"></param>
-        /// <returns></returns>
+        internal override IScriptObject Complement(InterpreterState state)
+        {
+            return Void;
+        }
+
         internal override IScriptContract Unite(IScriptContract right, InterpreterState state)
         {
             return this;
         }
 
-        internal override IScriptObject Complement(InterpreterState state)
+        internal override IScriptContract Intersect(IScriptContract right, InterpreterState state)
         {
-            return Void;
+            return right;
         }
 
         /// <summary>

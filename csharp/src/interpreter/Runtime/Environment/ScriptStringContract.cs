@@ -264,7 +264,7 @@ namespace DynamicScript.Runtime.Environment
                 return ContractRelationshipType.Superset;
             else if (contract is ScriptSuperContract)
                 return ContractRelationshipType.Subset;
-            else if (contract.OneOf<IScriptComplementation, IScriptUnionContract>())
+            else if (contract.OneOf<IScriptComplementation, IScriptUnionContract, IScriptCartesianProduct>())
                 return Inverse(contract.GetRelationship(this));
             else return ContractRelationshipType.None;
         }

@@ -89,6 +89,11 @@ namespace DynamicScript.Runtime.Environment
             return IsVoid(right) ? Void : right.Add(this, state);
         }
 
+        internal override IScriptObject Complement(InterpreterState state)
+        {
+            return ScriptSuperContract.Instance;
+        }
+
         internal override IScriptContract Intersect(IScriptContract right, InterpreterState state)
         {
             return this;
@@ -97,11 +102,6 @@ namespace DynamicScript.Runtime.Environment
         internal override IScriptContract Unite(IScriptContract right, InterpreterState state)
         {
             return right;
-        }
-
-        internal override IScriptObject Complement(InterpreterState state)
-        {
-            return ScriptSuperContract.Instance;
         }
 
         /// <summary>

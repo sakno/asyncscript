@@ -39,5 +39,29 @@ return a;
 ");
             Assert.AreEqual(new ScriptInteger(10), r);
         }
+
+        [Test(Description="Complex set of operations under the contracts.")]
+        public void IntersectionWithUnion()
+        {
+            var r = Run(@"
+var a = boolean | string;
+a |= boolean;
+return a & boolean;
+");
+            Assert.AreSame(ScriptBooleanContract.Instance, r);
+            r = Run("return integer & string;");
+            Assert.IsTrue(ScriptObject.IsVoid(r));
+        }
+
+        [Test(Description="Tests for complementation operator.")]
+        public void Complementation()
+        {
+            var r = Run("return !integer | string;");
+            Assert.IsTrue(ScriptContract.IsComplementation(r));
+            r = Run("return !void | integer;");
+            Assert.AreSame(ScriptSuperContract.Instance, r);
+            r = Run("return !object | string;");
+            Assert.AreSame(ScriptStringContract.Instance, r);
+        }
     }
 }

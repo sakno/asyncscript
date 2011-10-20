@@ -191,8 +191,10 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         {
             if (contract is ScriptStatementFactory)
                 return ContractRelationshipType.TheSame;
-            else if (contract is ScriptMetaContract || contract is ScriptSuperContract)
+            else if (contract.OneOf<ScriptMetaContract, ScriptSuperContract>())
                 return ContractRelationshipType.Subset;
+            else if (contract.OneOf<IScriptComplementation, IScriptUnionContract, IScriptCartesianProduct>())
+                return Inverse(contract.GetRelationship(this));
             else return ContractRelationshipType.None;
         }
 

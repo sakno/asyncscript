@@ -156,7 +156,7 @@ namespace DynamicScript.Runtime.Environment
             internal override IScriptContract Unite(IScriptContract right, InterpreterState state)
             {
                 if (right is IScriptContract)
-                    return (right is IScriptComplementation || NegatedContract.GetRelationship(right) != ContractRelationshipType.TheSame) ? (IScriptContract)base.Or(right, state) : ScriptSuperContract.Instance;
+                    return (right is IScriptComplementation || NegatedContract.GetRelationship(right) != ContractRelationshipType.TheSame) ? (IScriptContract)base.Unite(right, state) : ScriptSuperContract.Instance;
                 else if (state.Context == InterpretationContext.Unchecked)
                     return Void;
                 else throw new UnsupportedOperationException(state);
@@ -418,8 +418,7 @@ namespace DynamicScript.Runtime.Environment
 
         internal virtual IScriptContract Unite(IScriptContract right, InterpreterState state)
         {
-            var rels = GetRelationship(right);
-            switch (rels)
+            switch (GetRelationship(right))
             {
                 case ContractRelationshipType.Superset:
                 case ContractRelationshipType.TheSame: return this;
@@ -442,10 +441,10 @@ namespace DynamicScript.Runtime.Environment
 
         internal virtual IScriptContract Intersect(IScriptContract right, InterpreterState state)
         {
-            var rels = GetRelationship(right);
-            switch (rels)
+            switch (GetRelationship(right))
             {
                 case ContractRelationshipType.Superset: return right;
+                case ContractRelationshipType.TheSame:
                 case ContractRelationshipType.Subset: return this;
                 case ContractRelationshipType.None:
                 default: return Void;
@@ -459,7 +458,7 @@ namespace DynamicScript.Runtime.Environment
         /// <returns></returns>
         protected sealed override IScriptObject Not(InterpreterState state)
         {
-            return this is IScriptComplementation ? ((IScriptComplementation)this).NegatedContract : new ScriptComplementation(this);
+            return Complement(state);
         }
 
         internal virtual IScriptObject Complement(InterpreterState state)
@@ -669,6 +668,16 @@ namespace DynamicScript.Runtime.Environment
         protected sealed override IScriptObject PreSquareAssign(InterpreterState state)
         {
             return AsIterable(this);
+        }
+
+        /// <summary>
+        /// Determines whether the specified contract is a complementation of another contract.
+        /// </summary>
+        /// <param name="contract"></param>
+        /// <returns></returns>
+        public static bool IsComplementation(IScriptContract contract)
+        {
+            return contract is IScriptComplementation;
         }
     }
 }
