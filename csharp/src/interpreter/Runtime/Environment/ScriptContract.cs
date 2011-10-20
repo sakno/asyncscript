@@ -176,12 +176,27 @@ namespace DynamicScript.Runtime.Environment
         }
         #endregion
 
+#if USE_REL_MATRIX
+        internal readonly ContractHandle RuntimeHandle;
+        internal static readonly ContractRelationshipMatrix RelationshipMatrix = new ContractRelationshipMatrix();
+#endif
+
         /// <summary>
         /// Initializes a new contract.
         /// </summary>
         internal ScriptContract()
         {
+#if USE_REL_MATRIX
+            RuntimeHandle = ContractHandle.New();
+#endif
         }
+
+#if USE_REL_MATRIX
+        ContractHandle IScriptContract.RuntimeHandle
+        {
+            get { return RuntimeHandle; }
+        }
+#endif
 
         /// <summary>
         /// Creates an object that represents void value according with the contract.
@@ -243,6 +258,15 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="contract">The contract to compare. Cannot be <see langword="null"/>.</param>
         /// <returns>Relationship between the current contract and <paramref name="contract"/>.</returns>
         public abstract ContractRelationshipType GetRelationship(IScriptContract contract);
+
+        ContractRelationshipType IScriptContract.GetRelationship(IScriptContract contract)
+        {
+#if USE_REL_MATRIX
+            return RelationshipMatrix.GetRelationship(RuntimeHandle, contract.RuntimeHandle, () => GetRelationship(contract));
+#else
+            return GetRelationship(contract);
+#endif
+        }
 
         /// <summary>
         /// Determines whether the current contract is equal to another.

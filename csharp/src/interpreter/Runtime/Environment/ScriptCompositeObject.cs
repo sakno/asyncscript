@@ -484,6 +484,7 @@ namespace DynamicScript.Runtime.Environment
 
         private const string SlotCollectionHolder = "Slots";
         private readonly ObjectSlotCollection m_slots;
+        private IScriptContract m_contract;
 
         /// <summary>
         /// Deserializes composite object.
@@ -685,7 +686,8 @@ namespace DynamicScript.Runtime.Environment
         /// <returns>The contract binding of the complex object.</returns>
         public sealed override IScriptContract GetContractBinding()
         {
-            return GetContractBinding(m_slots);
+            if (m_contract == null) m_contract = GetContractBinding(m_slots);
+            return m_contract;
         }
 
         /// <summary>

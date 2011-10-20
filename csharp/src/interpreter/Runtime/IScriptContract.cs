@@ -33,5 +33,12 @@ namespace DynamicScript.Runtime
         /// <param name="contract">The contract to compare. Cannot be <see langword="null"/>.</param>
         /// <returns>Relationship between the current contract and <paramref name="contract"/>.</returns>
         ContractRelationshipType GetRelationship(IScriptContract contract);
+
+#if USE_REL_MATRIX
+        /// <summary>
+        /// Gets a value that uniquely identifies this contract.
+        /// </summary>
+        ContractHandle RuntimeHandle { get; }
+#endif
     }
 }

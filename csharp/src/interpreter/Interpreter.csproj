@@ -139,6 +139,8 @@
     <Compile Include="ParallelSearch.cs" />
     <Compile Include="ParallelSwitch.cs" />
     <Compile Include="ParallelSwitchCase.cs" />
+    <Compile Include="Runtime\ContractHandle.cs" />
+    <Compile Include="Runtime\ContractRelationshipHandle.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\IActionContractExpressionFactorySlots.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\IActionExpressionFactorySlots.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\IForExpressionFactorySlots.cs" />
@@ -445,6 +447,7 @@
     <Compile Include="Compiler\LexemeAnalyzer.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="ParallelEqualityComparer.cs" />
+    <Compile Include="Runtime\ContractRelationshipMatrix.cs" />
     <Compile Include="StringEqualityComparer.cs" />
     <Compile Include="Compiler\Literal.cs" />
     <Compile Include="Compiler\NameToken.cs" />
