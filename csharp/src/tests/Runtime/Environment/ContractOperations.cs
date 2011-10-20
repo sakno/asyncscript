@@ -37,7 +37,7 @@ a = {{z = 42, g = 'a'}};
 a = 42;
 return a;
 ");
-            Assert.AreEqual(new ScriptInteger(10), r);
+            Assert.AreEqual(new ScriptInteger(42), r);
         }
 
         [Test(Description="Complex set of operations under the contracts.")]

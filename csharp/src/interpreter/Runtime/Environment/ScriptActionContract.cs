@@ -438,16 +438,14 @@ namespace DynamicScript.Runtime.Environment
             switch (Parameters.Count == other.Parameters.Count)
             {
                 case true:
-                    using (var contravariance = Task.Factory.StartNew<ContractRelationshipType>(ComputeContravariance, new { Left = Parameters, Right = other.Parameters }))
+                    var contravariance = Task.Factory.StartNew<ContractRelationshipType>(ComputeContravariance, new { Left = Parameters, Right = other.Parameters });
+                    var covariance = ComputeCovariance(ReturnValueContract, other.ReturnValueContract);
+                    switch (covariance)
                     {
-                        var covariance = ComputeCovariance(ReturnValueContract, other.ReturnValueContract);
-                        switch (covariance)
-                        {
-                            case ContractRelationshipType.TheSame: return contravariance.Result;
-                            case ContractRelationshipType.None: return ContractRelationshipType.None;
-                            default:
-                                return contravariance.Result == ContractRelationshipType.TheSame || contravariance.Result == covariance ? covariance : ContractRelationshipType.None;
-                        }
+                        case ContractRelationshipType.TheSame: return contravariance.Result;
+                        case ContractRelationshipType.None: return ContractRelationshipType.None;
+                        default:
+                            return contravariance.Result == ContractRelationshipType.TheSame || contravariance.Result == covariance ? covariance : ContractRelationshipType.None;
                     }
                 default: return ContractRelationshipType.None;
             }

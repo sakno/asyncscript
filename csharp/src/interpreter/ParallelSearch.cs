@@ -37,8 +37,8 @@ namespace DynamicScript
             var result = default(TResult);
             if (Match(element, Criteria, out result))
             {
-                state.Stop();
                 Complete(result, state);
+                state.Break();
             }
         }
 

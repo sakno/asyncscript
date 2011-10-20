@@ -85,15 +85,16 @@ namespace DynamicScript.Runtime.Environment
             [MethodImpl(MethodImplOptions.Synchronized)]
             private void Complete(ParallelLoopState state, ScriptActionContract.Parameter p, IScriptObject a)
             {
-                if (state.IsStopped) return;
                 m_error = State == null ? (object)false : new ContractBindingException(a, p.ContractBinding, State);
             }
 
             protected override void Analyze(ParallelLoopState state, int index, ScriptActionContract.Parameter p, IScriptObject a)
             {
-                if (IsCompatible(p, a) || state.IsStopped) return;
-                state.Stop();
-                Complete(state, p, a);
+                if (!IsCompatible(p, a))
+                {
+                    Complete(state, p, a);
+                    state.Break();
+                }
             }
 
             public new bool Analyze()

@@ -101,8 +101,14 @@ namespace DynamicScript.Runtime.Environment
             get { return Value != null ? Value.Slots : new string[0]; }
         }
 
+        /// <summary>
+        /// Stores the specified value directly to the slot.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="state"></param>
+        /// <remarks>This method ignores custom semantic defined in overridden <see cref="SetValue"/> method.</remarks>
         [MethodImpl(MethodImplOptions.Synchronized)]
-        private void SetValueFast(IScriptObject value, InterpreterState state)
+        protected void SetValueFast(IScriptObject value, InterpreterState state)
         {
             var theSame = default(bool);
             if (value == null)
