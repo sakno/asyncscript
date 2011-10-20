@@ -17,6 +17,10 @@ namespace DynamicScript.Runtime.Environment
     [Serializable]
     public abstract class ScriptBuiltinContract: ScriptContract, ISerializable
     {
+#if USE_REL_MATRIX
+        private int? m_hashCode;
+#endif
+
         internal ScriptBuiltinContract()
         {
         }
@@ -80,6 +84,20 @@ namespace DynamicScript.Runtime.Environment
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
         {
             GetObjectData(info, context);   
+        }
+
+        /// <summary>
+        /// Computes a hash code for this contract.
+        /// </summary>
+        /// <returns></returns>
+        public sealed override int GetHashCode()
+        {
+#if USE_REL_MATRIX
+            if (m_hashCode == null) m_hashCode = GetType().MetadataToken;
+            return m_hashCode.Value;
+#else
+            return GetType().MetadataToken;
+#endif
         }
     }
 }

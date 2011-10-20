@@ -75,6 +75,9 @@ namespace DynamicScript.Runtime.Environment
 
         private readonly ScriptIntegerContract[] m_indicies;
         private readonly IScriptContract m_elements;
+#if USE_REL_MATRIX
+        private int? m_hashCode;
+#endif
 
         /// <summary>
         /// Initializes a new array contract.
@@ -224,7 +227,12 @@ namespace DynamicScript.Runtime.Environment
         /// <returns>A hash code of this contract.</returns>
         public override int GetHashCode()
         {
-            return ElementContract.GetHashCode() ^ (int)Rank;
+#if USE_REL_MATRIX
+            if (m_hashCode == null) m_hashCode = ElementContract.GetHashCode() << 1 ^ (int)Rank;
+            return m_hashCode.Value;
+#else
+            return ElementContract.GetHashCode() << 1 ^ (int)Rank;
+#endif
         }
 
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)

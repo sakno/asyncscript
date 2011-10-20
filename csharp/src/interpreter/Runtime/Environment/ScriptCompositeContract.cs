@@ -117,6 +117,9 @@ namespace DynamicScript.Runtime.Environment
         private const string SlotsHolder = "Slots";
 
         private readonly IDictionary<string, SlotMeta> m_slots;
+#if USE_REL_MATRIX
+        private int? m_hashCode;
+#endif
 
         /// <summary>
         /// Deserializes composite object contract.
@@ -353,7 +356,12 @@ namespace DynamicScript.Runtime.Environment
         /// <returns></returns>
         public sealed override int GetHashCode()
         {
+#if USE_REL_MATRIX
+            if (m_hashCode == null) m_hashCode = m_slots.GetHashCode();
+            return m_hashCode.Value;
+#else
             return m_slots.GetHashCode();
+#endif
         }
     }
 }

@@ -193,6 +193,9 @@ namespace DynamicScript.Runtime.Environment
         private const string SignatureHolder = "Signature";
         private readonly Signature m_signature;
         private ReadOnlyCollection<Parameter> m_parameters;
+#if USE_REL_MATRIX
+        private int? m_hashCode;
+#endif
         
         private IRuntimeSlot m_ret;
 
@@ -486,7 +489,12 @@ namespace DynamicScript.Runtime.Environment
         /// <returns></returns>
         public sealed override int GetHashCode()
         {
-            return m_signature.GetHashCode() ^ ReturnValueContract.GetHashCode();
+#if USE_REL_MATRIX
+            if (m_hashCode == null) m_hashCode = m_signature.GetHashCode() << 1 ^ ReturnValueContract.GetHashCode();
+            return m_hashCode.Value;
+#else
+            return m_signature.GetHashCode() << 1 ^ ReturnValueContract.GetHashCode();
+#endif
         }
 
         /// <summary>
