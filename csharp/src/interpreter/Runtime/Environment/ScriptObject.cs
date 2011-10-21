@@ -271,6 +271,24 @@ namespace DynamicScript.Runtime.Environment
             }
 
             /// <summary>
+            /// Sets value to the uninitialized slot.
+            /// </summary>
+            /// <param name="value">The value to set.</param>
+            /// <param name="state">Internal interpreter state.</param>
+            /// <returns>A value used to initialize slot; or the value that is already stored in the slot.</returns>
+            protected IScriptObject Initialize(IScriptObject value, InterpreterState state)
+            {
+                switch (HasValue)
+                {
+                    case true:
+                        return GetValue(state);
+                    default:
+                        SetValue(value, state);
+                        return value;
+                }
+            }
+
+            /// <summary>
             /// Provides implementation for binary operations.
             /// </summary>
             /// <param name="binder">Provides information about the binary operation.</param>
@@ -373,6 +391,8 @@ namespace DynamicScript.Runtime.Environment
                         return BinaryOperation(ScriptCodeBinaryOperatorType.Assign, BinaryOperation(ScriptCodeBinaryOperatorType.Multiply, arg, state), state);
                     case ScriptCodeBinaryOperatorType.SubtractiveAssign:
                         return BinaryOperation(ScriptCodeBinaryOperatorType.Assign, BinaryOperation(ScriptCodeBinaryOperatorType.Subtract, arg, state), state);
+                    case ScriptCodeBinaryOperatorType.Initializer:
+                        return Initialize(arg, state);
                     default:
                         return GetValue(state).BinaryOperation(@operator, arg, state);
                 }
@@ -579,7 +599,7 @@ namespace DynamicScript.Runtime.Environment
                 }
             }
 
-            internal static Expression BindGetValue(Expression slotHolder, ParameterExpression stateVar)
+            internal static Expression GetValue(Expression slotHolder, ParameterExpression stateVar)
             {
                 switch (typeof(IRuntimeSlot).IsAssignableFrom(slotHolder.Type))
                 {
@@ -590,7 +610,7 @@ namespace DynamicScript.Runtime.Environment
                 }
             }
 
-            internal static Expression BindSetValue(Expression slotHolder, Expression value, ParameterExpression stateVar)
+            internal static Expression SetValue(Expression slotHolder, Expression value, ParameterExpression stateVar)
             {
                 switch (typeof(IRuntimeSlot).IsAssignableFrom(slotHolder.Type))
                 {
@@ -599,6 +619,19 @@ namespace DynamicScript.Runtime.Environment
                         return setValueMethod.Update(slotHolder, new Expression[] { value, stateVar });
                     default: return slotHolder;
                 }
+            }
+
+            private static Expression Initialized(Expression slotExpr)
+            {
+                var prop = LinqHelpers.BodyOf<IRuntimeSlot, bool, MemberExpression>(slot => slot.HasValue);
+                return prop.Update(slotExpr);
+            }
+
+            internal static Expression Initialize(Expression slotExpr, Expression initialization, ParameterExpression stateVar)
+            {
+                return RuntimeHelpers.IsRuntimeVariable(slotExpr) ?
+                    Expression.Condition(Initialized(slotExpr), GetValue(slotExpr, stateVar), BindBinaryOperation(slotExpr, ScriptCodeBinaryOperatorType.Assign, initialization, stateVar)) :
+                    slotExpr;
             }
 
             /// <summary>
@@ -1516,6 +1549,8 @@ namespace DynamicScript.Runtime.Environment
                     return Reduction(arg, state);
                 case ScriptCodeBinaryOperatorType.SubtractiveAssign:
                     return SubAssign(arg, state);
+                case ScriptCodeBinaryOperatorType.Initializer:
+                    return this;
                 default:
                     throw new UnsupportedOperationException(state);
             }

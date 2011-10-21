@@ -65,17 +65,28 @@ namespace DynamicScript.Compiler.Ast
             return -1;
         }
 
+        private static Associativity GetAssociativity(ScriptCodeBinaryOperatorType @operator)
+        {
+            switch (@operator)
+            {
+                case ScriptCodeBinaryOperatorType.Assign:
+                case ScriptCodeBinaryOperatorType.AdditiveAssign:
+                case ScriptCodeBinaryOperatorType.SubtractiveAssign:
+                case ScriptCodeBinaryOperatorType.MultiplicativeAssign:
+                case ScriptCodeBinaryOperatorType.Initializer:
+                case ScriptCodeBinaryOperatorType.DivideAssign:
+                case ScriptCodeBinaryOperatorType.ModuloAssign:
+                case ScriptCodeBinaryOperatorType.Expansion:
+                case ScriptCodeBinaryOperatorType.Reduction:
+                case ScriptCodeBinaryOperatorType.ExclusionAssign:
+                    return Associativity.Right;
+                default: return Associativity.Left;
+            }
+        }
+
         private static Associativity GetAssociativity(Enum @operator)
         {
-            return Equals(@operator, ScriptCodeBinaryOperatorType.Assign) ||
-                Equals(@operator, ScriptCodeBinaryOperatorType.AdditiveAssign) ||
-                Equals(@operator, ScriptCodeBinaryOperatorType.SubtractiveAssign) ||
-            Equals(@operator, ScriptCodeBinaryOperatorType.MultiplicativeAssign) ||
-            Equals(@operator, ScriptCodeBinaryOperatorType.DivideAssign) ||
-            Equals(@operator, ScriptCodeBinaryOperatorType.ModuloAssign) ||
-            Equals(@operator, ScriptCodeBinaryOperatorType.Expansion) ||
-            Equals(@operator, ScriptCodeBinaryOperatorType.Reduction) ||
-            Equals(@operator, ScriptCodeBinaryOperatorType.ExclusionAssign) ? Associativity.Right : Associativity.Left;
+            return @operator is ScriptCodeBinaryOperatorType ? GetAssociativity((ScriptCodeBinaryOperatorType)@operator) : Associativity.Left;
         }
 
         public static Enum ParseOperator(string literal, bool lastIsExpression)
@@ -136,6 +147,7 @@ namespace DynamicScript.Compiler.Ast
             else if (@operator == Operator.MetadataDiscovery) return ScriptCodeBinaryOperatorType.MetadataDiscovery;
             else if (@operator == Operator.VoidCheck) return lastIsExpression ? (Enum)ScriptCodeUnaryOperatorType.VoidCheck : null;
             else if (@operator == Operator.Coalesce) return ScriptCodeBinaryOperatorType.Coalesce;
+            else if (@operator == Operator.Initializer) return ScriptCodeBinaryOperatorType.Initializer;
             throw new InvalidOperationException();
         }
 

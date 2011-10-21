@@ -52,7 +52,7 @@ namespace DynamicScript.Runtime.Environment
         {
         }
 
-        internal ScriptVariable(IScriptObject value, IScriptContract contract, InterpreterState state)
+        private ScriptVariable(IScriptObject value, IScriptContract contract, InterpreterState state)
             : base(contract)
         {
             SetValue(value, state);
@@ -100,6 +100,7 @@ namespace DynamicScript.Runtime.Environment
                 if (!string.IsNullOrEmpty(variableName) && CallStack.Current != null)
                     CallStack.Current.RegisterStorage(variableName, slot);
             }
+            else if (value != null) slot.SetValue(value, state);
             return slot;
         }
 

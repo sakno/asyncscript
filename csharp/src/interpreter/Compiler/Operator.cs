@@ -200,5 +200,10 @@ namespace DynamicScript.Compiler
         /// Represents %= operator.
         /// </summary>
         public static readonly Operator ModuloAssign = new Operator(Lexeme.Percent, Lexeme.Assignment);
+
+        /// <summary>
+        /// Represents ?= operator.
+        /// </summary>
+        public static readonly Operator Initializer = new Operator(Lexeme.Question, Lexeme.Assignment);
     }
 }

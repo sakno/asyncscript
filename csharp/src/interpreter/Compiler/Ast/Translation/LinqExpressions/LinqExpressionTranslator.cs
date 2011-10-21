@@ -57,7 +57,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
 
         private Expression AsRightSide(Expression rightSide, TranslationContext context)
         {
-            return RuntimeSlot.BindGetValue(rightSide, context.Scope.StateHolder);
+            return RuntimeSlot.GetValue(rightSide, context.Scope.StateHolder);
         }
 
         /// <summary>
@@ -237,17 +237,17 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             var scope = context.Lookup<ActionScope, LoopScope>();
             if (scope is ActionScope)
             {
-                var action = context.Lookup<ActionScope>();
+                var action = (ActionScope)scope;
                 var result = new List<Expression>(continueStatement.ArgList.Count + 1);
                 var i = 0;
                 foreach (var p in action.Parameters)
                     if (i < continueStatement.ArgList.Count)
-                        result.Add(RuntimeSlot.BindSetValue(p.Value, AsRightSide(Translate((ScriptCodeExpression)continueStatement.ArgList[i++], context), context), action.StateHolder));
+                        result.Add(RuntimeSlot.SetValue(p.Value, AsRightSide(Translate((ScriptCodeExpression)continueStatement.ArgList[i++], context), context), action.StateHolder));
                 result.Add(Expression.Continue(action.BeginOfScope));
                 return Expression.Block(result);
             }
             if (scope is LoopScope)
-                return context.Lookup<LoopScope>().Continue(from ScriptCodeExpression a in continueStatement.ArgList select AsRightSide(Translate(a, context), context));
+                return ((LoopScope)scope).Continue(from ScriptCodeExpression a in continueStatement.ArgList select AsRightSide(Translate(a, context), context));
             else return Expression.Block(Expression.Goto(context.Scope.BeginOfScope), ScriptObject.MakeVoid());
         }
 
@@ -1000,7 +1000,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             //user-define loop body
             IList<Expression> implementation = new List<Expression>(forEachBody.Count + 1);
             if (forEachBody.Count > 1) implementation.Add(Expression.Assign(currentScope.Result, ScriptObject.MakeVoid()));   //optimization rules
-            implementation.Add(RuntimeSlot.BindSetValue(loopVar, ScriptIterator.LoopHelpers.GetNext(enumerator, currentScope.StateHolder), currentScope.StateHolder));
+            implementation.Add(RuntimeSlot.SetValue(loopVar, ScriptIterator.LoopHelpers.GetNext(enumerator, currentScope.StateHolder), currentScope.StateHolder));
             Translate(forEachBody, context, GotoExpressionKind.Continue, expr => typeof(IScriptObject).IsAssignableFrom(expr.Type) ? Expression.Assign(currentScope.Result, AsRightSide(expr, context)) : expr, ref implementation);
             //emit continuation flag if it is necessary
             if (currentScope.EmitContinueFlag)
@@ -1045,7 +1045,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             expressions.Add(Expression.Assign(enumerator, ScriptIterator.LoopHelpers.GetEnumerator(Translate(iterator, context), currentScope.StateHolder)));
             //user-define loop body
             IList<Expression> implementation = new List<Expression>(forEachBody.Count + 1);
-            implementation.Add(RuntimeSlot.BindSetValue(loopVar, ScriptIterator.LoopHelpers.GetNext(enumerator, currentScope.StateHolder), currentScope.StateHolder));
+            implementation.Add(RuntimeSlot.SetValue(loopVar, ScriptIterator.LoopHelpers.GetNext(enumerator, currentScope.StateHolder), currentScope.StateHolder));
             Translate(forEachBody, context, GotoExpressionKind.Continue, expr => typeof(IScriptObject).IsAssignableFrom(expr.Type) && !suppressCollection ? ScriptList.BindAdd(currentScope.Result, AsRightSide(expr, context)) : expr, ref implementation);
             //emit continuation flag if it is necessary
             if (currentScope.EmitContinueFlag)
@@ -1410,6 +1410,8 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                         ConverterOf(true),  //then
                         Translate(expression.Right, context), //else
                         typeof(IScriptObject));
+                case ScriptCodeBinaryOperatorType.Initializer:
+                    return ScriptObject.RuntimeSlotBase.Initialize(Translate(expression.Left, context), Translate(expression.Right, context), context.Scope.StateHolder);
                 default:
                     return ScriptObject.BindBinaryOperation(Translate(expression.Left, context), expression.Operator, Translate(expression.Right, context), context.Scope.StateHolder);
             }

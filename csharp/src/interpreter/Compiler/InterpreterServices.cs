@@ -108,6 +108,7 @@ namespace DynamicScript.Compiler
                 case ScriptCodeBinaryOperatorType.ExclusionAssign:
                 case ScriptCodeBinaryOperatorType.Coalesce:
                 case ScriptCodeBinaryOperatorType.ModuloAssign:
+                case ScriptCodeBinaryOperatorType.Initializer:
                 case ScriptCodeBinaryOperatorType.Assign: return 0;
                 default: return -1;
             }

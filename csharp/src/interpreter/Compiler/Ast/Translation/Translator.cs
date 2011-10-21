@@ -164,8 +164,8 @@ namespace DynamicScript.Compiler.Ast.Translation
                     {
                         case true: return current;
                         default:
+                            transparent = current.Transparent;
                             current = (TScope)current.Parent;
-                            transparent = current != null ? current.Transparent : false;
                             continue;
                     }
                 return null;

@@ -198,6 +198,11 @@ namespace DynamicScript.Compiler.Ast
         /// </summary>
         ModuloAssign = 0xFF10,
 
+        /// <summary>
+        /// Represents ?= operator.
+        /// </summary>
+        Initializer = 0xFF11,
+
         #endregion
 
         /// <summary>

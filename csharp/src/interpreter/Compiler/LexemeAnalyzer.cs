@@ -444,6 +444,8 @@ namespace DynamicScript.Compiler
                 {
                     case Lexeme.Question:
                         return Operator.Coalesce;
+                    case Lexeme.Assignment:
+                        return Operator.Initializer;
                     default:
                         hasNext = true;
                         break;

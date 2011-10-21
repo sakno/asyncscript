@@ -129,5 +129,30 @@ return a(10);
 ");
             Assert.IsFalse(ScriptObject.IsVoid(r));
         }
+
+        [Test(Description = "Tag recursion.")]
+        public void TagRecursionTest()
+        {
+            var r = Run(@"
+const f = @i: integer -> boolean: {
+  var a;
+  a ?= 0;
+  a = a + 1;
+  if i == 0 then {return a;};
+  continue i - 1;
+};
+return f(2);
+");
+            Assert.AreEqual(new ScriptInteger(3), r);
+            r = Run(@"
+const f = @i: integer -> boolean: {
+  var a = 0;
+  a = a + 1;
+  if i == 0 then {return a;};
+  continue i - 1;
+};
+return f(2);");
+            Assert.AreEqual(new ScriptInteger(1), r);
+        }
     }
 }

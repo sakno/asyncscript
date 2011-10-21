@@ -22,5 +22,12 @@ namespace DynamicScript.Runtime.Environment
             var r = Run("const a = @i, g, h -> async real: i + g + h; const r = a(1, 2.3, 4); await r; return r.result;");
             Assert.AreEqual(new ScriptReal(7.3), r);
         }
+
+        [Test(Description="Lazy constant.")]
+        public void LazyConstTest()
+        {
+            var r = Run("const g = 3; const a = fork g + 10; return a;");
+            Assert.AreEqual(new ScriptInteger(13), r);
+        }
     }
 }
