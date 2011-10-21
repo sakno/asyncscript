@@ -139,10 +139,7 @@ namespace DynamicScript.Runtime.Environment
                 {
                     return Value.HasValue;
                 }
-                protected set
-                {
-                    throw new NotSupportedException();
-                }
+                protected set { }
             }
         }
 

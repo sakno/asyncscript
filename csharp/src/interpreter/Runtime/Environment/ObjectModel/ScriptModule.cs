@@ -541,16 +541,29 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             return QScriptIO.ReadLine();
         }
 
-        private static IScriptObject Use(InvocationContext ctx, Uri scriptLocation)
+        private static IScriptObject Use(InvocationContext ctx, IEnumerable<Uri> scriptLocations)
+        {
+            IScriptObject module = Void;
+            foreach (var location in scriptLocations)
+                if (Use(ctx, location, out module)) break;
+            return module;
+        }
+
+        private static bool Use(InvocationContext ctx, Uri scriptLocation, out IScriptObject module)
         {
             //if script file is not existed the return void.
-            if (scriptLocation.IsFile && !File.Exists(scriptLocation.LocalPath)) return Void;
+            if (scriptLocation.IsFile && !File.Exists(scriptLocation.LocalPath))
+            {
+                module = Void;
+                return false;
+            }
             var compiledScript = ctx.RuntimeState.Cache.Cached(scriptLocation) ?
                 ctx.RuntimeState.Cache.Lookup(scriptLocation, DynamicScriptInterpreter.OnFlyCompiler).CompiledScript :
                 InterpreterState.Compile(scriptLocation, DynamicScriptInterpreter.OnFlyCompiler).CompiledScript;
             //trace module loading
             if (ScriptDebugger.CurrentDebugger != null) ScriptDebugger.CurrentDebugger.OnLoadModule(scriptLocation);
-            return compiledScript.Invoke(ctx.RuntimeState);
+            module = compiledScript.Invoke(ctx.RuntimeState);
+            return true;
         }
 
         private static IScriptObject Use(InvocationContext ctx, string scriptFile)
@@ -571,15 +584,28 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             return Use(ctx, (string)scriptFile);
         }
 
-        private static void Prepare(InvocationContext ctx, Uri scriptFile, bool cacheResult)
+        private static bool Prepare(InvocationContext ctx, Uri scriptFile, bool cacheResult)
         {
             var cookie = ctx.RuntimeState.Cache.Lookup(scriptFile, DynamicScriptInterpreter.OnFlyCompiler);
-            if (cacheResult) cookie.ScriptResult = cookie.CompiledScript.Invoke(ctx.RuntimeState);
+            switch (cacheResult && cookie != null)
+            {
+                case true:
+                    cookie.ScriptResult = cookie.CompiledScript.Invoke(ctx.RuntimeState);
+                    return true;
+                default: return false;
+            }
+        }
+
+        private static bool Prepare(InvocationContext ctx, IEnumerable<Uri> scriptFiles, bool cacheResult)
+        {
+            foreach (var f in scriptFiles)
+                if (Prepare(ctx, f, cacheResult)) return true;
+            return false;
         }
 
         private static void Prepare(InvocationContext ctx, string scriptFile, bool cacheResult)
         {
-            Prepare(ctx, string.IsNullOrWhiteSpace(scriptFile) ? null : RuntimeHelpers.PrepareScriptFilePath(scriptFile), cacheResult);
+            Prepare(ctx, RuntimeHelpers.PrepareScriptFilePath(scriptFile), cacheResult);
         }
 
         /// <summary>

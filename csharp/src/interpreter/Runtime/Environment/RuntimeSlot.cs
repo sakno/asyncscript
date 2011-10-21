@@ -108,7 +108,7 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="state"></param>
         /// <remarks>This method ignores custom semantic defined in overridden <see cref="SetValue"/> method.</remarks>
         [MethodImpl(MethodImplOptions.Synchronized)]
-        protected void SetValueFast(IScriptObject value, InterpreterState state)
+        private void SetValueDirect(IScriptObject value, InterpreterState state)
         {
             var theSame = default(bool);
             if (value == null)
@@ -116,7 +116,7 @@ namespace DynamicScript.Runtime.Environment
             else if (value is ScriptVoid)
                 Value = ContractBinding.FromVoid(state);
             else if (value is IRuntimeSlot)
-                SetValueFast(((IRuntimeSlot)value).GetValue(state), state);
+                SetValueDirect(((IRuntimeSlot)value).GetValue(state), state);
             else if (value is IScriptProxyObject)
                 Value = value;
             else if (ContractBinding.IsCompatible(value, out theSame))
@@ -126,6 +126,14 @@ namespace DynamicScript.Runtime.Environment
             else
                 throw new ContractBindingException(value, ContractBinding, state);
             HasValue = true;
+        }
+
+        [MethodImpl(MethodImplOptions.Synchronized)]
+        private IScriptObject GetValueDirect(InterpreterState state)
+        {
+            if (Value is IScriptProxyObject)
+                SetValueDirect(((IScriptProxyObject)Value).Unwrap(), state);
+            return Value;
         }
 
         /// <summary>
@@ -146,7 +154,7 @@ namespace DynamicScript.Runtime.Environment
         /// assignment is located in the checked context.</exception>
         public override void SetValue(IScriptObject value, InterpreterState state)
         {
-            SetValueFast(value, state);
+            SetValueDirect(value, state);
         }
 
         /// <summary>
@@ -160,10 +168,7 @@ namespace DynamicScript.Runtime.Environment
         {
             switch (HasValue)
             {
-                case true:
-                    if (Value is IScriptProxyObject)
-                        SetValueFast(((IScriptProxyObject)Value).Unwrap(), state);
-                    return Value;
+                case true: return GetValueDirect(state);
                 default:
                     if (state.Context == InterpretationContext.Unchecked) return ContractBinding.FromVoid(state);
                     else throw new UnassignedSlotReadingException(state);

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Reflection.Emit;
 using System.Linq;
 using System.Threading.Tasks;
+using System.IO;
 
 namespace DynamicScript.Runtime.Environment
 {
@@ -15,7 +16,7 @@ namespace DynamicScript.Runtime.Environment
     using QCodeBinaryOperatorType = Compiler.Ast.ScriptCodeBinaryOperatorType;
     using InterpretationContext = Compiler.Ast.InterpretationContext;
     using SystemConverter = System.Convert;
-    using Path = System.IO.Path;
+    using SystemEnvironment = System.Environment;
 
     /// <summary>
     /// Represents interpreter internal routines and helper methods.
@@ -870,18 +871,6 @@ namespace DynamicScript.Runtime.Environment
             return IsAssignableForm(contract, obj.GetContractBinding(), out theSame);
         }
 
-        /// <summary>
-        /// Returns byte code of the specified action.
-        /// </summary>
-        /// <param name="action">The script action. Cannot be <see langword="null"/>.</param>
-        /// <returns>An array of bytes that represents action implementation byte code.</returns>
-        /// <exception cref="System.ArgumentNullException"><paramref name="action"/> is <see langword="null"/>.</exception>
-        public static byte[] GetByteCode(this IScriptAction action)
-        {
-            if (action == null) throw new ArgumentNullException("action");
-            return action.Implementation.Method.GetMethodBody().GetILAsByteArray();
-        }
-
         internal static IScriptObject BinaryOperation(this IScriptObject left, ExpressionType @operator, IScriptObject right, InterpreterState state)
         {
             if (left == null) throw new ArgumentNullException("left");
@@ -1089,16 +1078,19 @@ namespace DynamicScript.Runtime.Environment
             }
         }
 
-        internal static Uri PrepareScriptFilePath(string path)
+        internal static Uri[] PrepareScriptFilePath(string path)
         {
-            try
+            if (string.IsNullOrWhiteSpace(path)) return new Uri[0];
+            var result = default(Uri);
+            switch (Uri.TryCreate(path, UriKind.Absolute, out result))
             {
-                return new Uri(path, UriKind.Absolute);
-            }
-            catch (UriFormatException)
-            {
-                var executingDir = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
-                return new Uri(Path.Combine(executingDir, path), UriKind.Absolute);
+                case true: return new[] { result };
+                default:
+                    return new[]
+                        {
+                            new Uri(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), path), UriKind.Absolute),
+                            new Uri(Path.Combine(SystemEnvironment.CurrentDirectory, path), UriKind.Absolute)
+                        };
             }
         }
 
