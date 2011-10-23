@@ -212,10 +212,10 @@ namespace DynamicScript.Runtime.Environment
             return DeleteValue(false);
         }
 
-        [MethodImpl(MethodImplOptions.Synchronized)]
         bool ISynchronizable.Await(WaitHandle handle, TimeSpan timeout)
         {
-            return Value is ISynchronizable ? ((ISynchronizable)Value).Await(handle, timeout) : true;
+            var v = Value;
+            return v is ISynchronizable ? ((ISynchronizable)v).Await(handle, timeout) : true;
         }
 
         /// <summary>
