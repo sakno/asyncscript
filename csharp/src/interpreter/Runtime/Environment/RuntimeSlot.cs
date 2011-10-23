@@ -242,7 +242,7 @@ namespace DynamicScript.Runtime.Environment
         bool IDebuggerEditable.TryGetValue(out string value, InterpreterState state)
         {
             var v = GetValue(state);
-            var converter = TypeDescriptor.GetConverter(GetValue(state), true) as ScriptObjectConverter;
+            var converter = TypeDescriptor.GetConverter(v, true) as ScriptObjectConverter;
             switch (converter != null && converter.CanConvertTo(typeof(string)))
             {
                 case true:
@@ -260,6 +260,7 @@ namespace DynamicScript.Runtime.Environment
         /// </summary>
         /// <param name="other">Other runtime slot to compare.</param>
         /// <returns><see langword="true"/> if the current slot holds the same value as other; otherwise, <see langword="false"/>.</returns>
+        
         public bool Equals(RuntimeSlot other)
         {
             if (other == null) return false;
