@@ -101,39 +101,42 @@ namespace DynamicScript.Runtime.Environment
             get { return Value != null ? Value.Slots : new string[0]; }
         }
 
+        [MethodImpl(MethodImplOptions.Synchronized)]
+        private void SetValueDirect(IScriptObject v)
+        {
+            Value = v;
+            HasValue = true;
+        }
+
         /// <summary>
         /// Stores the specified value directly to the slot.
         /// </summary>
         /// <param name="value"></param>
         /// <param name="state"></param>
         /// <remarks>This method ignores custom semantic defined in overridden <see cref="SetValue"/> method.</remarks>
-        [MethodImpl(MethodImplOptions.Synchronized)]
         private void SetValueDirect(IScriptObject value, InterpreterState state)
         {
             var theSame = default(bool);
             if (value == null)
-                Value = null;
-            else if (value is ScriptVoid)
-                Value = ContractBinding.FromVoid(state);
+                SetValueDirect(null);
             else if (value is IRuntimeSlot)
                 SetValueDirect(((IRuntimeSlot)value).GetValue(state), state);
             else if (value is IScriptProxyObject)
-                Value = value;
+                SetValueDirect(value);
             else if (ContractBinding.IsCompatible(value, out theSame))
-                Value = theSame ? value : ContractBinding.Convert(Conversion.Implicit, value, state);
-            else if (state.Context == InterpretationContext.Unchecked)
-                Value = ContractBinding.FromVoid(state);
+                SetValueDirect(theSame ? value : ContractBinding.Convert(Conversion.Implicit, value, state));
+            else if (value is ScriptVoid || state.Context == InterpretationContext.Unchecked)
+                SetValueDirect(ContractBinding.FromVoid(state));
             else
                 throw new ContractBindingException(value, ContractBinding, state);
-            HasValue = true;
         }
 
-        [MethodImpl(MethodImplOptions.Synchronized)]
         private IScriptObject GetValueDirect(InterpreterState state)
         {
-            if (Value is IScriptProxyObject)
-                SetValueDirect(((IScriptProxyObject)Value).Unwrap(), state);
-            return Value;
+            var v = Value;
+            if (v is IScriptProxyObject)
+                SetValueDirect(((IScriptProxyObject)v).Unwrap(), state);
+            return v;
         }
 
         /// <summary>
@@ -180,6 +183,7 @@ namespace DynamicScript.Runtime.Environment
         /// </summary>
         /// <param name="forceGarbageCollection">Specifies that the garbage collection should be forced after erasure.</param>
         /// <returns><see langword="true"/> if value erasure is supported by the current type of the slot; otherwise, <see langword="false"/>.</returns>
+        [MethodImpl(MethodImplOptions.Synchronized)]
         public bool DeleteValue(bool forceGarbageCollection)
         {
             if (Value == null || IsConstant) return false;

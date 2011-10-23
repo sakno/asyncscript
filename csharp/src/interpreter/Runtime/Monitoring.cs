@@ -37,9 +37,9 @@ namespace DynamicScript.Runtime
                 {
                     return AppDomain.MonitoringIsEnabled;
                 }
-                catch (NotImplementedException e)
+                catch (NotImplementedException)
                 {
-                    Console.Error.WriteLine(e.Message);
+                    return false;
                 }
             }
         }
