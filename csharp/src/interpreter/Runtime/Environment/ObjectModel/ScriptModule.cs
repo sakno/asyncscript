@@ -485,6 +485,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                 AddConstant<AdjustAction>(AdjustAction.Name);
                 AddConstant<WeakRefAction>(WeakRefAction.Name);
                 AddConstant<ParseAction>(ParseAction.Name);
+                AddConstant<RuntimeBehaviorSlots>(RuntimeBehaviorSlots.Name);
             }
         }
         #endregion

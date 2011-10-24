@@ -54,7 +54,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         /// <param name="contractBinding">An underlying contract binding for this object.</param>
         /// <exception cref="System.ArgumentNullException"><paramref name="expression"/> or <paramref name="contractBinding"/> is <see langword="null"/>.</exception>
         protected ScriptExpression(TExpression expression, IScriptExpressionContract<TExpression> contractBinding)
-            : base(RuntimeBehavior.UnwrapSlotValue)
+            : base(ObjectBehavior.UnwrapSlotValue)
         {
             if (expression == null) throw new ArgumentNullException("expression");
             if (contractBinding == null) throw new ArgumentNullException("contractBinding");

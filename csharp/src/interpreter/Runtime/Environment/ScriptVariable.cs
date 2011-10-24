@@ -71,24 +71,6 @@ namespace DynamicScript.Runtime.Environment
             get { return false; }
         }
 
-        /// <summary>
-        /// Returns a value stored in the slot.
-        /// </summary>
-        /// <param name="state">Internal interpreter state.</param>
-        /// <returns></returns>
-        public override IScriptObject GetValue(InterpreterState state)
-        {
-            lock (this)
-                if (HasValue) return base.GetValue(state);
-                else switch (state.Context)
-                    {
-                        case InterpretationContext.Unchecked:
-                            return ContractBinding.FromVoid(state);
-                        default:
-                            throw new UnassignedSlotReadingException(state);
-                    }
-        }
-
         #region Runtime Helpers
 
         private static IRuntimeSlot IntrnlBindToVariable(IRuntimeSlot slot, string variableName, IScriptObject value, object contractBinding, InterpreterState state)

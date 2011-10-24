@@ -107,7 +107,7 @@ namespace DynamicScript.Runtime
             /// <param name="obj">An object to intern.</param>
             /// <returns>An identifier of system reference.</returns>
             public long Intern<TScriptObject>(TScriptObject obj)
-                where TScriptObject : ScriptObject, IConvertible
+                where TScriptObject : ScriptObject
             {
                 if (obj is Environment.ScriptString)
                     return m_strings.Intern(obj as Environment.ScriptString);
@@ -125,7 +125,7 @@ namespace DynamicScript.Runtime
             /// <param name="obj">An object to check.</param>
             /// <returns><see langword="true"/> if <paramref name="obj"/> is interned; otherwise, <see langword="false"/>.</returns>
             public bool IsInterned<TScriptObject>(TScriptObject obj)
-                where TScriptObject : ScriptObject, IConvertible
+                where TScriptObject : ScriptObject
             {
                 if (obj is Environment.ScriptString)
                     return m_strings.IsInterned(obj as Environment.ScriptString);
@@ -137,7 +137,7 @@ namespace DynamicScript.Runtime
             }
 
             public TScriptObject GetInternedObject<TScriptObject>(long id)
-                where TScriptObject : ScriptObject, IConvertible
+                where TScriptObject : ScriptObject
             {
                 if (Equals(typeof(TScriptObject), Environment.IntegerPool.ObjectType))
                     return m_integers[id] as TScriptObject;
@@ -152,6 +152,7 @@ namespace DynamicScript.Runtime
         [ThreadStatic]
         private static InterpreterState m_current;
         private static InterpreterState m_initial;
+
         private readonly InterpretationContext m_context;
         private readonly bool m_debug;
         private readonly IScriptObject m_global;
@@ -171,6 +172,8 @@ namespace DynamicScript.Runtime
             m_cache = cache;
             m_intern = internPool ?? new InternPool(10);
             m_dataSlots = dataSlots ?? new Dictionary<string, object>(StringComparer.Ordinal);
+            if (!m_dataSlots.ContainsKey(RuntimeBehavior.DataSlotName))
+                m_dataSlots.Add(RuntimeBehavior.DataSlotName, new RuntimeBehavior());
         }
 
         /// <summary>
@@ -210,7 +213,7 @@ namespace DynamicScript.Runtime
         /// <param name="obj">An object to intern.</param>
         /// <returns>An identifier of system reference.</returns>
         public long Intern<TScriptObject>(TScriptObject obj)
-            where TScriptObject : ScriptObject, IConvertible
+            where TScriptObject : ScriptObject
         {
             return m_intern.Intern(obj);
         }
@@ -222,7 +225,7 @@ namespace DynamicScript.Runtime
         /// <param name="obj">An object to check.</param>
         /// <returns><see langword="true"/> if <paramref name="obj"/> is interned; otherwise, <see langword="false"/>.</returns>
         public bool IsInterned<TScriptObject>(TScriptObject obj)
-            where TScriptObject : ScriptObject, IConvertible
+            where TScriptObject : ScriptObject
         {
             return obj != null ? m_intern.IsInterned(obj) : false;
         }
@@ -233,7 +236,7 @@ namespace DynamicScript.Runtime
         /// <param name="id">Internal identifier of reference.</param>
         /// <returns>An object associated with the specified identifier.</returns>
         public TScriptObject GetInternedObject<TScriptObject>(long id)
-            where TScriptObject: ScriptObject, IConvertible
+            where TScriptObject: ScriptObject
         {
             return m_intern.GetInternedObject<TScriptObject>(id);
         }
@@ -261,6 +264,14 @@ namespace DynamicScript.Runtime
                 lock (m_dataSlots)
                     m_dataSlots[dataSlotName] = value;
             }
+        }
+
+        /// <summary>
+        /// Gets runtime behavior of the interpreter.
+        /// </summary>
+        public RuntimeBehavior Behavior
+        {
+            get { return this[RuntimeBehavior.DataSlotName] as RuntimeBehavior ?? new RuntimeBehavior(); }
         }
 
         /// <summary>

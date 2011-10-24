@@ -565,10 +565,10 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         {
             ICollection<Expression> expressions = new LinkedList<Expression>();
             var currentScope = context.Push(parent => new WhileLoopScope(parent, false, suppressCollection));
-            expressions.Add(Expression.Assign(currentScope.Result, suppressCollection ? LinqHelpers.Null<ScriptList>() : ScriptList.BindNew())); //var result = new QList();
+            expressions.Add(Expression.Assign(currentScope.Result, suppressCollection ? LinqHelpers.Null<ScriptList>() : ScriptList.New())); //var result = new QList();
             //user-defined loop body
             IList<Expression> implementation = new List<Expression>(loopBody.Count + 1);
-            Translate(loopBody, context, GotoExpressionKind.Continue, expr => typeof(IScriptObject).IsAssignableFrom(expr.Type) && !suppressCollection ? ScriptList.BindAdd(currentScope.Result, AsRightSide(expr, context)) : expr, ref implementation);
+            Translate(loopBody, context, GotoExpressionKind.Continue, expr => typeof(IScriptObject).IsAssignableFrom(expr.Type) && !suppressCollection ? ScriptList.Add(currentScope.Result, expr, currentScope.StateHolder) : expr, ref implementation);
             //emit continuation flag if it is necessary
             if (currentScope.EmitContinueFlag)
                 expressions.Add(Expression.Assign(currentScope.ContinueFlag, Expression.Constant(true)));   //continue = true;
@@ -586,10 +586,10 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         {
             ICollection<Expression> expressions = new LinkedList<Expression>();
             var currentScope = context.Push(parent => new WhileLoopScope(parent, false, suppressCollection));
-            expressions.Add(Expression.Assign(currentScope.Result, suppressCollection?LinqHelpers.Null<ScriptList>(): ScriptList.BindNew())); //var result = new QList();
+            expressions.Add(Expression.Assign(currentScope.Result, suppressCollection?LinqHelpers.Null<ScriptList>(): ScriptList.New())); //var result = new QList();
             //user-define loop body
             IList<Expression> implementation = new List<Expression>(loopBody.Count + 1);
-            Translate(loopBody, context, GotoExpressionKind.Continue, expr => typeof(IScriptObject).IsAssignableFrom(expr.Type) && !suppressCollection ? ScriptList.BindAdd(currentScope.Result, AsRightSide(expr, context)) : expr, ref implementation);
+            Translate(loopBody, context, GotoExpressionKind.Continue, expr => typeof(IScriptObject).IsAssignableFrom(expr.Type) && !suppressCollection ? ScriptList.Add(currentScope.Result, expr, currentScope.StateHolder) : expr, ref implementation);
             //emit continuation flag if it is necessary
             if (currentScope.EmitContinueFlag)
                 expressions.Add(Expression.Assign(currentScope.ContinueFlag, Expression.Constant(true)));   //continue = true;
@@ -941,11 +941,11 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                     if (loopVar == null) { context.Pop(); return SlotNotFoundException.Bind(variable.Name, context.Scope.StateHolder); }
                     break;
             }
-            expressions.Add(Expression.Assign(currentScope.Result, suppressCollection ? LinqHelpers.Null<ScriptList>() : ScriptList.BindNew())); //var result = new QList();
+            expressions.Add(Expression.Assign(currentScope.Result, suppressCollection ? LinqHelpers.Null<ScriptList>() : ScriptList.New())); //var result = new QList();
             expressions.Add(BindToVariable(loopVar, variable, context));   //loopVar = initial;
             //user-define loop body
             IList<Expression> implementation = new List<Expression>(forBody.Count + 1);
-            Translate(forBody, context, GotoExpressionKind.Continue, expr => typeof(IScriptObject).IsAssignableFrom(expr.Type) && !suppressCollection ? ScriptList.BindAdd(currentScope.Result, AsRightSide(expr, context)) : expr, ref implementation);
+            Translate(forBody, context, GotoExpressionKind.Continue, expr => typeof(IScriptObject).IsAssignableFrom(expr.Type) && !suppressCollection ? ScriptList.Add(currentScope.Result, expr, currentScope.StateHolder) : expr, ref implementation);
             //emit continuation flag if it is necessary
             if (currentScope.EmitContinueFlag)
                 expressions.Add(Expression.Assign(currentScope.ContinueFlag, Expression.Constant(true)));   //continue = true;
@@ -1039,14 +1039,14 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                     if (loopVar == null) { context.Pop(); return SlotNotFoundException.Bind(variable.Name, context.Scope.StateHolder); }
                     break;
             }
-            expressions.Add(Expression.Assign(currentScope.Result, suppressCollection ? LinqHelpers.Null<ScriptList>() : ScriptList.BindNew())); //var result = new QList();
+            expressions.Add(Expression.Assign(currentScope.Result, suppressCollection ? LinqHelpers.Null<ScriptList>() : ScriptList.New())); //var result = new QList();
             expressions.Add(BindToVariable(loopVar, variable, context));   //loopVar = initial;
             //var enumerator = collection[ScriptObject.IteratorAction, state].Invoke(new IScriptObject[0], state);
             expressions.Add(Expression.Assign(enumerator, ScriptIterator.LoopHelpers.GetEnumerator(Translate(iterator, context), currentScope.StateHolder)));
             //user-define loop body
             IList<Expression> implementation = new List<Expression>(forEachBody.Count + 1);
             implementation.Add(RuntimeSlot.SetValue(loopVar, ScriptIterator.LoopHelpers.GetNext(enumerator, currentScope.StateHolder), currentScope.StateHolder));
-            Translate(forEachBody, context, GotoExpressionKind.Continue, expr => typeof(IScriptObject).IsAssignableFrom(expr.Type) && !suppressCollection ? ScriptList.BindAdd(currentScope.Result, AsRightSide(expr, context)) : expr, ref implementation);
+            Translate(forEachBody, context, GotoExpressionKind.Continue, expr => typeof(IScriptObject).IsAssignableFrom(expr.Type) && !suppressCollection ? ScriptList.Add(currentScope.Result, expr, currentScope.StateHolder) : expr, ref implementation);
             //emit continuation flag if it is necessary
             if (currentScope.EmitContinueFlag)
                 expressions.Add(Expression.Assign(currentScope.ContinueFlag, Expression.Constant(true)));   //continue = true;

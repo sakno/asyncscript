@@ -256,19 +256,37 @@ namespace DynamicScript.Runtime.Environment
         /// Adds elements to the list.
         /// </summary>
         /// <param name="items">The collection of items to add.</param>
-        public void Add(IEnumerable<IScriptObject> items)
+        /// <param name="state">Specifies that the void result should be omitted.</param>
+        public void RtlAdd(IEnumerable<IScriptObject> items, InterpreterState state)
         {
-            m_elements.AddRange(items ?? Enumerable.Empty<IScriptObject>());
-            lock (SyncRoot) if (Capacity > BufferSize) BufferSize = Capacity;
+            foreach (var i in items ?? Enumerable.Empty<IScriptObject>()) 
+                RtlAdd(i, state);
         }
 
         /// <summary>
         /// Adds a new element to the list.
         /// </summary>
         /// <param name="item">The item to add.</param>
+        /// <param name="state">Internal interpreter state.</param>
+        public bool RtlAdd(IScriptObject item, InterpreterState state)
+        {
+            if (item is IRuntimeSlot)
+                return RtlAdd(((IRuntimeSlot)item).GetValue(state), state);
+            else if (state.Behavior.OmitVoidYieldInLoops && IsVoid(item)) return false;
+            else
+            {
+                Add(item);
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// Adds a new element to the list.
+        /// </summary>
+        /// <param name="item"></param>
         public void Add(IScriptObject item)
         {
-            Add(new[] { item });
+            m_elements.Add(item);
         }
 
         /// <summary>
@@ -341,20 +359,20 @@ namespace DynamicScript.Runtime.Environment
             return GetEnumerator();
         }
 
-        internal static Expression BindNew()
+        internal static Expression New()
         {
             return LinqHelpers.BodyOf<Func<ScriptList>, NewExpression>(() => new ScriptList());
         }
 
-        internal static Expression BindAdd(ParameterExpression list, IEnumerable<Expression> items)
+        internal static Expression Add(ParameterExpression list, IEnumerable<Expression> items, ParameterExpression stateVar)
         {
-            var addMethod = LinqHelpers.BodyOf<Action<ScriptList, IEnumerable<IScriptObject>>, MethodCallExpression>((l, i) => l.Add(i));
-            return addMethod.Update(list, new[] { Expression.NewArrayInit(typeof(IScriptObject), items) });
+            var addMethod = LinqHelpers.BodyOf<Action<ScriptList, IEnumerable<IScriptObject>, InterpreterState>, MethodCallExpression>((l, i, s) => l.RtlAdd(i, s));
+            return addMethod.Update(list, new Expression[] { Expression.NewArrayInit(typeof(IScriptObject), items), stateVar });
         }
 
-        internal static Expression BindAdd(ParameterExpression list, Expression item)
+        internal static Expression Add(ParameterExpression list, Expression item, ParameterExpression stateVar)
         {
-            return BindAdd(list, new[] { item });
+            return Add(list, new[] { item }, stateVar);
         }
 
         /// <summary>

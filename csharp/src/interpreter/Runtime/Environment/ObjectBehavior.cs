@@ -5,12 +5,12 @@ namespace DynamicScript.Runtime.Environment
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
 
     /// <summary>
-    /// Represents runtime behavior of script object.
+    /// Represents runtime behavior of a script object.
     /// </summary>
     [ComVisible(false)]
     [Serializable]
     [Flags]
-    enum RuntimeBehavior : byte
+    enum ObjectBehavior : byte
     {
         /// <summary>
         /// No behavior is defined for script object.

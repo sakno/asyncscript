@@ -1303,12 +1303,12 @@ namespace DynamicScript.Runtime.Environment
         /// <summary>
         /// Represents runtime behavior of this object.
         /// </summary>
-        internal readonly RuntimeBehavior Behavior;
+        internal readonly ObjectBehavior Behavior;
 
         /// <summary>
         /// Initializes a new instance of DynamicScript object.
         /// </summary>
-        internal ScriptObject(RuntimeBehavior behavior = RuntimeBehavior.None)
+        internal ScriptObject(ObjectBehavior behavior = ObjectBehavior.None)
         {
             Behavior = behavior;
         }
@@ -1696,7 +1696,7 @@ namespace DynamicScript.Runtime.Environment
             {
                 case TypeCode.String:
                     var runtimeSlot = GetSlot(SystemConverter.ToString(slotIdentity), state);
-                    return (Behavior & RuntimeBehavior.UnwrapSlotValue) == 0 ? runtimeSlot : runtimeSlot.GetValue(state);
+                    return (Behavior & ObjectBehavior.UnwrapSlotValue) == 0 ? runtimeSlot : runtimeSlot.GetValue(state);
                 default:
                     throw new UnsupportedOperationException(state);
             }

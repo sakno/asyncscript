@@ -287,6 +287,7 @@
     <Compile Include="Runtime\Environment\IBinaryOperatorInvoker.cs" />
     <Compile Include="Runtime\Environment\IScriptActionContractSlots.cs" />
     <Compile Include="Runtime\Environment\IUnaryOperatorInvoker.cs" />
+    <Compile Include="Runtime\Environment\ObjectModel\RuntimeBehaviorSlots.cs" />
     <Compile Include="Runtime\Environment\ScriptActionInvoker.cs" />
     <Compile Include="Runtime\Hosting\InteractiveInterpreter.cs" />
     <Compile Include="Runtime\Hosting\InteractiveModeStrings.Designer.cs">
@@ -325,7 +326,7 @@
     <Compile Include="Runtime\Environment\ExpressionTrees\ScriptUnaryExpressionFactory.cs" />
     <Compile Include="Runtime\Environment\IAggregator.cs" />
     <Compile Include="Runtime\Environment\IScriptMetaContract.cs" />
-    <Compile Include="Runtime\Environment\RuntimeBehavior.cs" />
+    <Compile Include="Runtime\Environment\ObjectBehavior.cs" />
     <Compile Include="Runtime\Environment\RuntimeConverters.cs" />
     <Compile Include="Runtime\Environment\ScriptFunc.cs" />
     <Compile Include="Runtime\IScriptCodeElement.cs" />
@@ -449,6 +450,7 @@
     <Compile Include="Extensions.cs" />
     <Compile Include="ParallelEqualityComparer.cs" />
     <Compile Include="Runtime\ContractRelationshipMatrix.cs" />
+    <Compile Include="Runtime\RuntimeBehavior.cs" />
     <Compile Include="StringEqualityComparer.cs" />
     <Compile Include="Compiler\Literal.cs" />
     <Compile Include="Compiler\NameToken.cs" />

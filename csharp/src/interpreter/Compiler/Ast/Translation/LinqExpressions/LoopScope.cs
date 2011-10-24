@@ -75,7 +75,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                         Expression.Block(Expression.Assign(Result, last), Expression.Assign(ContinueFlag, Expression.Constant(false)), Expression.Break(BeginOfScope)) :
                         Expression.Block(Expression.Assign(ContinueFlag, Expression.Constant(false)), Expression.Break(BeginOfScope));
                 default:
-                    return Expression.Block(Expression.Assign(ContinueFlag, Expression.Constant(false)), SupressCollection?Expression.Empty(): ScriptList.BindAdd(Result, arguments), Expression.Goto(BeginOfScope));
+                    return Expression.Block(Expression.Assign(ContinueFlag, Expression.Constant(false)), SupressCollection ? Expression.Empty() : ScriptList.Add(Result, arguments, StateHolder), Expression.Goto(BeginOfScope));
             }
         }
 
@@ -87,7 +87,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                     var last = arguments.FirstOrDefault();
                     return last != null ? (Expression)Expression.Block(Expression.Assign(Result, last), Expression.Continue(BeginOfScope)) : Expression.Continue(BeginOfScope);
                 default:
-                    return SupressCollection ? (Expression)Expression.Goto(BeginOfScope) : Expression.Block(ScriptList.BindAdd(Result, arguments), Expression.Goto(BeginOfScope));
+                    return SupressCollection ? (Expression)Expression.Goto(BeginOfScope) : Expression.Block(ScriptList.Add(Result, arguments, StateHolder), Expression.Goto(BeginOfScope));
             }
         }
     }
