@@ -1204,7 +1204,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         {
             var args = Expression.NewArrayInit(typeof(ScriptActionContract.Parameter),
                 actionContract.ParamList.Select(p => ScriptActionContract.Parameter.Bind(p.Name, Translate(p.ContractBinding, context))));
-            return ScriptActionContract.Bind(args, actionContract.ReturnType != null ? AsRightSide(Translate(actionContract.ReturnType, context), context) : ScriptObject.MakeVoid());
+            return ScriptActionContract.New(args, actionContract.ReturnType != null ? AsRightSide(Translate(actionContract.ReturnType, context), context) : ScriptObject.MakeVoid());
         }
 
         private void Translate(IList<ScriptCodeStatement> statements, TranslationContext context, GotoExpressionKind exitKind, Func<Expression, Expression> exitTransform, ref IList<Expression> output)

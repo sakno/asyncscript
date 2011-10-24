@@ -290,22 +290,7 @@ namespace DynamicScript.Runtime.Environment
             return Void;
         }
 
-        #region Runtime Helpers
-
-        /// <summary>
-        /// Creates a new action contract.
-        /// </summary>
-        /// <param name="signature">The signature of the action.</param>
-        /// <param name="returnValue">The contract of the returning value.</param>
-        /// <returns>A new action contract.</returns>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static ScriptActionContract RtlCreate(IEnumerable<Parameter> signature, IScriptContract returnValue)
-        {
-            return new ScriptActionContract(signature, returnValue);
-        }
-        #endregion
-
-        internal static NewExpression Bind(NewArrayExpression signature, Expression @return)
+        internal static NewExpression New(NewArrayExpression signature, Expression @return)
         {
             @return = Extract(@return);
             var ctor = LinqHelpers.BodyOf<IEnumerable<Parameter>, IScriptContract, ScriptActionContract, NewExpression>((ps, c) => new ScriptActionContract(ps, c));
