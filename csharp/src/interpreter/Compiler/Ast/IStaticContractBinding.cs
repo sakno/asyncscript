@@ -11,7 +11,7 @@ namespace DynamicScript.Compiler.Ast
     /// <typeparam name="TContract">Contract of the literal value.</typeparam>
     [ComVisible(false)]
     public interface IStaticContractBinding<out TContract>
-        where TContract: CodeExpression
+        where TContract: ScriptCodeExpression
     {
         /// <summary>
         /// Gets contract of the literal value.

@@ -82,6 +82,40 @@ namespace DynamicScript.Compiler.Ast
                     else if (Operand is ScriptCodeIntegerExpression)
                         return ((ScriptCodeIntegerExpression)Operand).Negate();
                     break;
+                case ScriptCodeUnaryOperatorType.SquarePrefix:
+                    if (Operand is ScriptCodeIntegerExpression)
+                        return ((ScriptCodeIntegerExpression)Operand).Square(context);
+                    else if (Operand is ScriptCodeRealExpression)
+                        return ((ScriptCodeRealExpression)Operand).Square();
+                    break;
+                case ScriptCodeUnaryOperatorType.TypeOf:
+                    if (Operand is IStaticContractBinding<ScriptCodeExpression>)
+                        return ((IStaticContractBinding<ScriptCodeExpression>)Operand).Contract;
+                    break;
+                case ScriptCodeUnaryOperatorType.VoidCheck:
+                    if (Operand is ScriptCodeVoidExpression)
+                        return new ScriptCodeBooleanExpression(true);
+                    else if (Operand is ScriptCodePrimitiveExpression)
+                        return new ScriptCodeBooleanExpression(false);
+                    break;
+                case ScriptCodeUnaryOperatorType.IncrementPostfix:
+                case ScriptCodeUnaryOperatorType.SquarePostfix:
+                case ScriptCodeUnaryOperatorType.DecrementPostfix:
+                    if (Operand is ScriptCodeIntegerExpression || Operand is ScriptCodeRealExpression)
+                        return Operand;
+                    break;
+                case ScriptCodeUnaryOperatorType.DecrementPrefix:
+                    if (Operand is ScriptCodeIntegerExpression)
+                        return ((ScriptCodeIntegerExpression)Operand).Decrement(context);
+                    else if (Operand is ScriptCodeRealExpression)
+                        return ((ScriptCodeRealExpression)Operand).Decrement();
+                    break;
+                case ScriptCodeUnaryOperatorType.IncrementPrefix:
+                    if (Operand is ScriptCodeIntegerExpression)
+                        return ((ScriptCodeIntegerExpression)Operand).Increment(context);
+                    else if (Operand is ScriptCodeRealExpression)
+                        return ((ScriptCodeRealExpression)Operand).Increment();
+                    break;
             }
             return base.Reduce(context);
         }
@@ -99,6 +133,15 @@ namespace DynamicScript.Compiler.Ast
                     case ScriptCodeUnaryOperatorType.Minus: return Operand is ScriptCodeIntegerExpression || Operand is ScriptCodeRealExpression;
                     case ScriptCodeUnaryOperatorType.Negate: return Operand is ScriptCodeBooleanExpression || Operand is ScriptCodeIntegerExpression;
                     case ScriptCodeUnaryOperatorType.Plus: return Operand is ScriptCodeIntegerExpression || Operand is ScriptCodeRealExpression;
+                    case ScriptCodeUnaryOperatorType.SquarePrefix:
+                    case ScriptCodeUnaryOperatorType.SquarePostfix: return Operand is ScriptCodeIntegerExpression || Operand is ScriptCodeRealExpression;
+                    case ScriptCodeUnaryOperatorType.TypeOf: return Operand is IStaticContractBinding<ScriptCodeExpression>;
+                    case ScriptCodeUnaryOperatorType.VoidCheck: return Operand is ScriptCodePrimitiveExpression;
+                    case ScriptCodeUnaryOperatorType.DecrementPostfix:
+                    case ScriptCodeUnaryOperatorType.DecrementPrefix:
+                    case ScriptCodeUnaryOperatorType.IncrementPostfix:
+                    case ScriptCodeUnaryOperatorType.IncrementPrefix:
+                        return Operand is ScriptCodeIntegerExpression || Operand is ScriptCodeRealExpression;
                     default: return base.CanReduce;
                 }
             }

@@ -104,5 +104,20 @@ namespace DynamicScript.Compiler.Ast
         {
             return new ScriptCodeIntegerExpression(Value);
         }
+
+        internal ScriptCodeIntegerExpression Square(InterpretationContext context)
+        {
+            return new ScriptCodeIntegerExpression(context == InterpretationContext.Unchecked ? unchecked(Value * Value) : checked(Value * Value));
+        }
+
+        internal ScriptCodeIntegerExpression Decrement(InterpretationContext context)
+        {
+            return new ScriptCodeIntegerExpression(context == InterpretationContext.Unchecked ? unchecked(Value - 1) : checked(Value - 1));
+        }
+
+        internal ScriptCodeIntegerExpression Increment(InterpretationContext context)
+        {
+            return new ScriptCodeIntegerExpression(context == InterpretationContext.Unchecked ? unchecked(Value + 1) : checked(Value + 1));
+        }
     }
 }

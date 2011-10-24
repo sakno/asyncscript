@@ -89,5 +89,20 @@ namespace DynamicScript.Compiler.Ast
         {
             return new ScriptCodeRealExpression(Value);
         }
+
+        internal ScriptCodeRealExpression Square()
+        {
+            return new ScriptCodeRealExpression(Value * Value);
+        }
+
+        internal ScriptCodeRealExpression Decrement()
+        {
+            return new ScriptCodeRealExpression(Value - 1);
+        }
+
+        internal ScriptCodeRealExpression Increment()
+        {
+            return new ScriptCodeRealExpression(Value + 1);
+        }
     }
 }
