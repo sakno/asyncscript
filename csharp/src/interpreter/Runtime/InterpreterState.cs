@@ -107,7 +107,7 @@ namespace DynamicScript.Runtime
             /// <param name="obj">An object to intern.</param>
             /// <returns>An identifier of system reference.</returns>
             public long Intern<TScriptObject>(TScriptObject obj)
-                where TScriptObject : ScriptObject
+                where TScriptObject : class, IScriptObject, IConvertible
             {
                 if (obj is Environment.ScriptString)
                     return m_strings.Intern(obj as Environment.ScriptString);
@@ -125,7 +125,7 @@ namespace DynamicScript.Runtime
             /// <param name="obj">An object to check.</param>
             /// <returns><see langword="true"/> if <paramref name="obj"/> is interned; otherwise, <see langword="false"/>.</returns>
             public bool IsInterned<TScriptObject>(TScriptObject obj)
-                where TScriptObject : ScriptObject
+                where TScriptObject : class, IScriptObject, IConvertible
             {
                 if (obj is Environment.ScriptString)
                     return m_strings.IsInterned(obj as Environment.ScriptString);
@@ -137,7 +137,7 @@ namespace DynamicScript.Runtime
             }
 
             public TScriptObject GetInternedObject<TScriptObject>(long id)
-                where TScriptObject : ScriptObject
+                where TScriptObject : class, IScriptObject, IConvertible
             {
                 if (Equals(typeof(TScriptObject), Environment.IntegerPool.ObjectType))
                     return m_integers[id] as TScriptObject;
@@ -214,7 +214,7 @@ namespace DynamicScript.Runtime
         /// <param name="obj">An object to intern.</param>
         /// <returns>An identifier of system reference.</returns>
         public long Intern<TScriptObject>(TScriptObject obj)
-            where TScriptObject : ScriptObject
+            where TScriptObject : class, IScriptObject, IConvertible
         {
             return m_intern.Intern(obj);
         }
@@ -226,7 +226,7 @@ namespace DynamicScript.Runtime
         /// <param name="obj">An object to check.</param>
         /// <returns><see langword="true"/> if <paramref name="obj"/> is interned; otherwise, <see langword="false"/>.</returns>
         public bool IsInterned<TScriptObject>(TScriptObject obj)
-            where TScriptObject : ScriptObject
+            where TScriptObject : class, IScriptObject, IConvertible
         {
             return obj != null ? m_intern.IsInterned(obj) : false;
         }
@@ -237,7 +237,7 @@ namespace DynamicScript.Runtime
         /// <param name="id">Internal identifier of reference.</param>
         /// <returns>An object associated with the specified identifier.</returns>
         public TScriptObject GetInternedObject<TScriptObject>(long id)
-            where TScriptObject: ScriptObject
+            where TScriptObject : class, IScriptObject, IConvertible
         {
             return m_intern.GetInternedObject<TScriptObject>(id);
         }
