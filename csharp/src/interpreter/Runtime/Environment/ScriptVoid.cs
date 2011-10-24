@@ -114,6 +114,26 @@ namespace DynamicScript.Runtime.Environment
             return contract is ScriptVoid ? ContractRelationshipType.TheSame : ContractRelationshipType.Subset;
         }
 
+        /// <summary>
+        /// Provides implicit mapping.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        protected override bool Mapping(ref IScriptObject value)
+        {
+            return value == null || value is ScriptVoid;
+        }
+
+        /// <summary>
+        /// Converts the specified value to this contract.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public override IScriptObject Convert(IScriptObject value, InterpreterState state)
+        {
+            return Mapping(ref value) ? Instance : value.GetContractBinding().FromVoid(state);
+        }
 
         /// <summary>
         /// Always throws <see cref="VoidException"/> exception.

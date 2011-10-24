@@ -260,6 +260,8 @@ namespace DynamicScript.Runtime.Environment
                 return Convert((ScriptBoolean)value);
             else if (value is ScriptReal)
                 return Convert((ScriptReal)value);
+            else if (IsVoid(value))
+                return Void;
             else return new ScriptInteger(value.GetHashCode());
         }
 

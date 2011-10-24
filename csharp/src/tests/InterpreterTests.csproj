@@ -75,6 +75,7 @@
     <Compile Include="Runtime\Environment\ScriptStringContractTest.cs" />
     <Compile Include="Runtime\Environment\ScriptStringTest.cs" />
     <Compile Include="Runtime\Environment\ThreadingTest.cs" />
+    <Compile Include="Runtime\Environment\VoidTests.cs" />
     <Compile Include="Runtime\SemanticTestBase.cs" />
     <Compile Include="Testing\SyntaxTestAttribute.cs" />
     <Compile Include="Testing\TestClassAttribute.cs" />
