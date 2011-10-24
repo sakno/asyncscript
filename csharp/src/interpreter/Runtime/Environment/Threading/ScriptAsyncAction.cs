@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Linq.Expressions;
 using System.Threading;
+using System.Collections.Generic;
 
 namespace DynamicScript.Runtime.Environment.Threading
 {
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
+    using TransparentActionAttribute = Debugging.TransparentActionAttribute;
 
     /// <summary>
     /// Represents asynchronous action.
@@ -51,19 +53,19 @@ namespace DynamicScript.Runtime.Environment.Threading
                 m_context = executionContext;
             }
 
-
-            protected override void Invoke(InvocationContext progress, ScriptReal asyncState, IScriptObject arg1)
+            protected override void Invoke(ScriptReal progress, IScriptObject asyncState, InterpreterState state)
             {
-                m_context.Notify(asyncState, arg1, progress.RuntimeState);
+                m_context.Notify(progress, asyncState, state);
             }
         }
 
         [ComVisible(false)]
+        [TransparentAction]
         private sealed class WrappedScriptAction : ScriptActionBase, IWrappedScriptActionSlots
         {
             private IRuntimeSlot m_cancelled;
             private IRuntimeSlot m_notify;
-            private readonly ScriptActionBase m_action;
+            private readonly IScriptAction m_action;
             private readonly IScriptAsyncActionExecutionContext m_context;
 
             public WrappedScriptAction(ScriptActionBase action, IScriptAsyncActionExecutionContext executionContext)
@@ -83,21 +85,21 @@ namespace DynamicScript.Runtime.Environment.Threading
                 get { return CacheConst(ref m_notify, () => new NotifyAction(m_context)); }
             }
 
-            protected internal override IScriptObject Invoke(InvocationContext ctx, IRuntimeSlot[] arguments)
+            protected override IScriptObject InvokeCore(IList<IScriptObject> args, InterpreterState state)
             {
-                return m_action.Invoke(ctx, arguments);
+                return m_action.Invoke(args, state);
             }
         }
 
         [ComVisible(false)]
         private sealed class AsyncInvocationContext
         {
-            private readonly IScriptObject[] m_arguments;
+            private readonly IList<IScriptObject> m_arguments;
             private readonly InterpreterState m_state;
             private readonly ScriptActionBase m_action;
             private readonly AsyncCallback m_callback;
 
-            public AsyncInvocationContext(ScriptActionBase action, IScriptObject[] args, InterpreterState state, AsyncCallback callback=null)
+            public AsyncInvocationContext(ScriptActionBase action, IList<IScriptObject> args, InterpreterState state, AsyncCallback callback=null)
             {
                 if (action == null) throw new ArgumentNullException("action");
                 m_action = action;
@@ -195,7 +197,7 @@ namespace DynamicScript.Runtime.Environment.Threading
                 m_context = new AsynchronousFlowControl();
             }
 
-            public static ScriptAsyncResultSlim QueueAction(ScriptActionBase action, IScriptObject[] args, InterpreterState state, AsyncCallback callback = null)
+            public static ScriptAsyncResultSlim QueueAction(ScriptActionBase action, IList<IScriptObject> args, InterpreterState state, AsyncCallback callback = null)
             {
                 var control = new ScriptAsyncResultSlim();
                 ThreadPool.QueueUserWorkItem(control.QueueAction, new AsyncInvocationContext(action, args, state, callback));
@@ -316,12 +318,12 @@ namespace DynamicScript.Runtime.Environment.Threading
         internal static MethodCallExpression Bind(Expression actionContract, Expression @this, LambdaExpression implementation)
         {
             var fromsync = LinqHelpers.BodyOf<ScriptRuntimeAction, ScriptAsyncAction, MethodCallExpression>(a => FromSynchronous(a));
-            return fromsync.Update(null, new[] { ScriptRuntimeAction.Bind(actionContract, @this, implementation) });
+            return fromsync.Update(null, new[] { ScriptRuntimeAction.New(actionContract, @this, implementation) });
         }
 
-        protected internal override IScriptObject Invoke(InvocationContext ctx, IRuntimeSlot[] arguments)
+        protected override IScriptObject InvokeCore(IList<IScriptObject> arguments, InterpreterState state)
         {
-            return new ScriptAsyncResult(ScriptAsyncResultSlim.QueueAction(m_action, arguments, ctx.RuntimeState), m_action.ReturnValueContract);
+            return new ScriptAsyncResult(ScriptAsyncResultSlim.QueueAction(m_action, arguments, state), m_action.ReturnValueContract);
         }
     }
 }

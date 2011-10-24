@@ -31,9 +31,9 @@ namespace DynamicScript.Runtime.Environment
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, IScriptArray arg0)
+            protected override IScriptObject Invoke(IScriptArray array, InterpreterState state)
             {
-                return arg0.ToSingleDimensional();
+                return array.ToSingleDimensional();
             }
         }
         

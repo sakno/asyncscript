@@ -64,9 +64,9 @@ namespace DynamicScript.Runtime.Environment
         /// <summary>
         /// Creates a new script iterator.
         /// </summary>
-        /// <param name="ctx"></param>
+        /// <param name="state"></param>
         /// <returns></returns>
-        protected override IScriptObject Invoke(InvocationContext ctx)
+        protected override IScriptObject Invoke(InterpreterState state)
         {
             return new ScriptIterator(m_enumerable, m_elementContract);
         }

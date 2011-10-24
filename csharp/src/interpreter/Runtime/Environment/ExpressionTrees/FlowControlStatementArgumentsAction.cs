@@ -17,7 +17,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         {
         }
 
-        protected override IScriptObject Invoke(InvocationContext ctx, IScriptStatement<TFlowControl> flowControl)
+        protected override IScriptObject Invoke(IScriptStatement<TFlowControl> flowControl, InterpreterState state)
         {
             switch (flowControl != null)
             {

@@ -19,7 +19,7 @@ namespace DynamicScript.Runtime.Debugging
         {
             public const string Name = "locals";
 
-            protected override void Invoke(InvocationContext ctx)
+            protected override void Invoke(InterpreterState state)
             {
                 if (CallStack.Current != null)
                     foreach (var slot in CallStack.Current)
@@ -28,7 +28,7 @@ namespace DynamicScript.Runtime.Debugging
                         DynamicScriptIO.Output.WriteLine(Resources.StorageSemantics, slot.Value.Attributes);
                         DynamicScriptIO.Output.WriteLine(Resources.StorageContract, slot.Value.GetContractBinding());
                         var value = default(string);
-                        DynamicScriptIO.Output.WriteLine(Resources.StorageValue, slot.Value.TryGetValue(out value, ctx.RuntimeState) ? value : Resources.UnprintableValue);
+                        DynamicScriptIO.Output.WriteLine(Resources.StorageValue, slot.Value.TryGetValue(out value, state) ? value : Resources.UnprintableValue);
                         DynamicScriptIO.Output.WriteLine();
                     }
             }
@@ -45,7 +45,7 @@ namespace DynamicScript.Runtime.Debugging
             {
             }
 
-            protected override void Invoke(InvocationContext ctx)
+            protected override void Invoke(InterpreterState state)
             {
                 foreach (var frame in CallStack.GetSnapshot())
                     DynamicScriptIO.Output.WriteLine(Resources.CallStackFrameFormat, frame.ID, frame.Storages.Count);
@@ -58,7 +58,7 @@ namespace DynamicScript.Runtime.Debugging
         {
             public const string Name = "modules";
 
-            protected override void Invoke(InvocationContext ctx)
+            protected override void Invoke(InterpreterState state)
             {
                 if (ScriptDebugger.CurrentDebugger != null)
                     foreach (var module in ((IScriptDebuggerSession)ScriptDebugger.CurrentDebugger).Modules)
@@ -72,9 +72,9 @@ namespace DynamicScript.Runtime.Debugging
         {
             public const string Name = "getctx";
 
-            protected override void Invoke(InvocationContext ctx)
+            protected override void Invoke(InterpreterState state)
             {
-                switch (ctx.RuntimeState.Context)
+                switch (state.Context)
                 {
                     case InterpretationContext.Checked:
                         DynamicScriptIO.Output.WriteLine(Keyword.Checked);
@@ -92,7 +92,7 @@ namespace DynamicScript.Runtime.Debugging
         {
             public const string Name = "clrscr";
 
-            protected override void Invoke(InvocationContext ctx)
+            protected override void Invoke(InterpreterState state)
             {
                 Console.Clear();
             }

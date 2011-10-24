@@ -36,21 +36,21 @@ namespace DynamicScript.Runtime.Environment
             return ctor.Update(new[] { @operator });
         }
 
-        internal static NewExpression Bind(ScriptCodeBinaryOperatorType @operator)
+        internal static NewExpression New(ScriptCodeBinaryOperatorType @operator)
         {
             return Bind(LinqHelpers.Constant(@operator));
         }
 
         /// <summary>
-        /// Executes binary operator.
+        /// Invokes a binary operator.
         /// </summary>
-        /// <param name="ctx"></param>
         /// <param name="left"></param>
         /// <param name="right"></param>
+        /// <param name="state"></param>
         /// <returns></returns>
-        protected override IScriptObject Invoke(InvocationContext ctx, IScriptObject left, IScriptObject right)
+        protected override IScriptObject Invoke(IScriptObject left, IScriptObject right, InterpreterState state)
         {
-            return left.BinaryOperation(Operator, right, ctx.RuntimeState);
+            return left.BinaryOperation(Operator, right, state);
         }
 
         ScriptCodeBinaryOperatorType IBinaryOperatorInvoker.Operator

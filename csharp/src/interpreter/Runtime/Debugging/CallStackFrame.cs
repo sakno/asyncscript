@@ -69,6 +69,11 @@ namespace DynamicScript.Runtime.Debugging
             m_watchers[storageName] = new RuntimeSlotWatcher(storage);
         }
 
+        internal static bool IsTransparent(IScriptAction action)
+        {
+            return TransparentActionAttribute.IsDefined(action.GetType());
+        }
+
         /// <summary>
         /// Gets collection of variables and constants visible at the current stack frame.
         /// </summary>

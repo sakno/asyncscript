@@ -31,9 +31,9 @@ namespace DynamicScript.Runtime.Environment
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptInteger arg0)
+            protected override IScriptObject Invoke(ScriptInteger value, InterpreterState state)
             {
-                return (ScriptBoolean)IsInterned(ctx, arg0);
+                return (ScriptBoolean)IsInterned(value, state);
             }
         }
 
@@ -47,9 +47,9 @@ namespace DynamicScript.Runtime.Environment
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptInteger @int)
+            protected override IScriptObject Invoke(ScriptInteger arg0, InterpreterState state)
             {
-                return Even(ctx, @int);
+                return Even(arg0);
             }
         }
 
@@ -63,9 +63,9 @@ namespace DynamicScript.Runtime.Environment
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptInteger arg0)
+            protected override IScriptObject Invoke(ScriptInteger arg0, InterpreterState state)
             {
-                return Odd(ctx, arg0);
+                return Odd(arg0);
             }
         }
 
@@ -79,9 +79,9 @@ namespace DynamicScript.Runtime.Environment
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptInteger arg0)
+            protected override IScriptObject Invoke(ScriptInteger arg0, InterpreterState state)
             {
-                return Abs(ctx, arg0);
+                return Abs(arg0);
             }
         }
 
@@ -95,16 +95,16 @@ namespace DynamicScript.Runtime.Environment
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, IScriptArray ints)
+            protected override IScriptObject Invoke(IScriptArray ints, InterpreterState state)
             {
                 if (ints == null) return Void;
                 var result = 0L;
-                var context = ctx.RuntimeState.Context;
+                var context = state.Context;
                 var indicies = new long[1];
                 for (var i = 0L; i < ints.GetLength(0); i++)
                 {
                     indicies[0] = i;
-                    var right = SystemConverter.ToInt64(ints[indicies, ctx.RuntimeState]);
+                    var right = SystemConverter.ToInt64(ints[indicies, state]);
                     result = context == InterpretationContext.Unchecked ? unchecked(result + right) : checked(result + right);
                 }
                 return new ScriptInteger(result);
@@ -121,18 +121,18 @@ namespace DynamicScript.Runtime.Environment
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, IScriptArray ints)
+            protected override IScriptObject Invoke(IScriptArray ints, InterpreterState state)
             {
                 var indicies = new long[1];
-                switch (ints !=null&& ints.GetLength(0)>0L)
+                switch (ints != null && ints.GetLength(0) > 0L)
                 {
                     case true:
-                        var result = SystemConverter.ToInt64(ints[indicies, ctx.RuntimeState]);
-                        var context = ctx.RuntimeState.Context;
+                        var result = SystemConverter.ToInt64(ints[indicies, state]);
+                        var context = state.Context;
                         for (var i = 1L; i < ints.GetLength(0); i++)
                         {
                             indicies[0] = i;
-                            var right = SystemConverter.ToInt64(ints[indicies, ctx.RuntimeState]);
+                            var right = SystemConverter.ToInt64(ints[indicies, state]);
                             result = context == InterpretationContext.Unchecked ? unchecked(result - right) : checked(result - right);
                         }
                         return new ScriptInteger(result);
@@ -303,10 +303,9 @@ namespace DynamicScript.Runtime.Environment
         /// <summary>
         /// Determines whether the specified integer is even.
         /// </summary>
-        /// <param name="ctx">Invocation context.</param>
         /// <param name="int"></param>
         /// <returns></returns>
-        public static ScriptBoolean Even(InvocationContext ctx, ScriptInteger @int)
+        public static ScriptBoolean Even(ScriptInteger @int)
         {
             return @int % 2 == 0;
         }
@@ -314,10 +313,9 @@ namespace DynamicScript.Runtime.Environment
         /// <summary>
         /// Determines whether the specified integer is odd.
         /// </summary>
-        /// <param name="ctx">Invocation context.</param>
         /// <param name="int"></param>
         /// <returns></returns>
-        public static ScriptBoolean Odd(InvocationContext ctx, ScriptInteger @int)
+        public static ScriptBoolean Odd(ScriptInteger @int)
         {
             return @int % 2 != 0;
         }
@@ -325,10 +323,9 @@ namespace DynamicScript.Runtime.Environment
         /// <summary>
         /// Returns absolute value.
         /// </summary>
-        /// <param name="ctx"></param>
         /// <param name="int"></param>
         /// <returns></returns>
-        public static ScriptInteger Abs(InvocationContext ctx, ScriptInteger @int)
+        public static ScriptInteger Abs(ScriptInteger @int)
         {
             return SystemMath.Abs(@int);
         }
@@ -344,12 +341,12 @@ namespace DynamicScript.Runtime.Environment
         /// <summary>
         /// Determines whether the specified integer is interned.
         /// </summary>
-        /// <param name="ctx"></param>
         /// <param name="value"></param>
+        /// <param name="state"></param>
         /// <returns></returns>
-        public static bool IsInterned(InvocationContext ctx, ScriptInteger value)
+        public static bool IsInterned(ScriptInteger value, InterpreterState state)
         {
-            return ctx.RuntimeState.IsInterned(value);
+            return state.IsInterned(value);
         }
 
         #region Runtime Slots

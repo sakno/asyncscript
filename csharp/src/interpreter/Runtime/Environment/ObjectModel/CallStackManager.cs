@@ -156,7 +156,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptInteger frameNum)
+            protected override IScriptObject Invoke(ScriptInteger frameNum, InterpreterState state)
             {
                 return CallStack.GetFrame(SystemConverter.ToInt64(frameNum)).Action;
             }

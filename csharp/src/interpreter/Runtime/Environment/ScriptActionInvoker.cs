@@ -21,9 +21,9 @@ namespace DynamicScript.Runtime.Environment
             Invoker = invoker;
         }
 
-        protected override IScriptObject Invoke(InvocationContext ctx)
+        protected override IScriptObject Invoke(InterpreterState state)
         {
-            return Invoker.Invoke(ctx.RuntimeState);
+            return Invoker.Invoke(state);
         }
 
         public static ScriptActionInvoker Compile(IEnumerable<ScriptCodeStatement> statements)

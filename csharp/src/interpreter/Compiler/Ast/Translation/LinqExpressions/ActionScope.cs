@@ -18,10 +18,6 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
     [ComVisible(false)]
     sealed class ActionScope : RoutineScope, IActionLexicalScope
     {
-        /// <summary>
-        /// Represents lambda parameter that holds invocation context.
-        /// </summary>
-        public readonly ParameterExpression Context;
         public readonly ScriptCodeActionImplementationExpression Expression;
         private readonly IScopeVariables m_parameters;
 
@@ -37,7 +33,6 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             if (parent == null) throw new ArgumentNullException("parent");
             if (expression == null) throw new ArgumentNullException("expression");
             Expression = expression;
-            Context = LinqExpression.Parameter(typeof(InvocationContext));
             m_parameters = CreateVariableTable();
         }
 
@@ -51,7 +46,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// </summary>
         public Expression CurrentAction
         {
-            get { return InvocationContext.BindToCurrentAction(Context); }
+            get { return InvocationContext.ActionRef; }
         }
 
         /// <summary>
@@ -78,7 +73,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// </summary>
         public override Expression ScopeVar
         {
-            get { return LinqExpression.Property(Context, InvocationContext.ThisProperty); }
+            get { return InvocationContext.ThisRef; }
         }
 
         ScriptCodeActionImplementationExpression IComplexExpressionScope<ScriptCodeActionImplementationExpression>.Expression

@@ -40,9 +40,9 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, IScriptStatement<ScriptCodeFaultStatement> faultStmt, IScriptCompositeObject obj)
+            protected override IScriptObject Invoke(IScriptStatement<ScriptCodeFaultStatement> faultStmt, IScriptCompositeObject obj, InterpreterState state)
             {
-                return (ScriptBoolean)ScriptFaultStatement.Execute(faultStmt, obj, ctx.RuntimeState);
+                return (ScriptBoolean)ScriptFaultStatement.Execute(faultStmt, obj, state);
             }
         }
 

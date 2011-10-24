@@ -73,7 +73,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
                 }
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, IScriptCodeElement<ScriptCodeTryElseFinallyExpression> seh, ScriptInteger idx)
+            protected override IScriptObject Invoke(IScriptCodeElement<ScriptCodeTryElseFinallyExpression> seh, ScriptInteger idx, InterpreterState state)
             {
                 return GetTrapVar(seh.CodeObject.Traps, idx);
             }
@@ -101,9 +101,9 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
                 }
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, IScriptCodeElement<ScriptCodeTryElseFinallyExpression> seh, ScriptInteger idx)
+            protected override IScriptObject Invoke(IScriptCodeElement<ScriptCodeTryElseFinallyExpression> seh, ScriptInteger idx, InterpreterState state)
             {
-                return GetTrapBody(seh.CodeObject.Traps, idx, ctx.RuntimeState);
+                return GetTrapBody(seh.CodeObject.Traps, idx, state);
             }
         }
 
@@ -118,7 +118,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             {
             }
 
-            protected override void Invoke(InvocationContext ctx, IScriptCodeElement<ScriptCodeTryElseFinallyExpression> seh, IScriptCodeElement<ScriptCodeExpression> body)
+            protected override void Invoke(IScriptCodeElement<ScriptCodeTryElseFinallyExpression> seh, IScriptCodeElement<ScriptCodeExpression> body, InterpreterState state)
             {
                 seh.CodeObject.Finally.Expression = body != null ? body.CodeObject : ScriptCodeVoidExpression.Instance;
             }
@@ -143,7 +143,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
                     v.Handler.Expression = body != null ? body.CodeObject : ScriptCodeVoidExpression.Instance;
             }
 
-            protected override void Invoke(InvocationContext ctx, IScriptCodeElement<ScriptCodeTryElseFinallyExpression> seh, ScriptInteger idx, IScriptCodeElement<ScriptCodeExpression> body)
+            protected override void Invoke(IScriptCodeElement<ScriptCodeTryElseFinallyExpression> seh, ScriptInteger idx, IScriptCodeElement<ScriptCodeExpression> body, InterpreterState state)
             {
                 SetTrapBody(seh.CodeObject.Traps, idx, body);
             }

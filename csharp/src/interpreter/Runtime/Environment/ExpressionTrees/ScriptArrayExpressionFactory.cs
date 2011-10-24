@@ -42,7 +42,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
                     Void;
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, IScriptExpression<ScriptCodeArrayExpression> array, ScriptInteger index)
+            protected override IScriptObject Invoke(IScriptExpression<ScriptCodeArrayExpression> array, ScriptInteger index, InterpreterState state)
             {
                 return index.IsInt32 ? Invoke(array.CodeObject.Elements, index) : Void;
             }

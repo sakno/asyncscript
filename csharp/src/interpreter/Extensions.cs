@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace DynamicScript
 {
@@ -39,6 +40,25 @@ namespace DynamicScript
             for (var i = 0L; i < array.LongLength; i++)
                 array[i] = Clone(array[i]);
             return array;
+        }
+
+        public static void CopyTo<T>(this IList<T> source, int sourceIndex, IList<T> destination, int destinationIndex, int length)
+        {
+            switch (length)
+            {
+                case 0: return;
+                case 1:
+                case 2:
+                case 3:
+                    length += sourceIndex;
+                    while (sourceIndex < length)
+                        destination[destinationIndex++] = source[sourceIndex++];
+                    return;
+                default:
+                    Parallel.For(0, length, i => destination[i + destinationIndex] = source[i + sourceIndex]);
+                    return;
+            }
+            
         }
     }
 }

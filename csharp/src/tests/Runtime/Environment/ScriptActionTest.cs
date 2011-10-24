@@ -134,7 +134,7 @@ return a(10);
         public void TagRecursionTest()
         {
             var r = Run(@"
-const f = @i: integer -> boolean: {
+const f = @i: integer -> integer: {
   var a;
   a ?= 0;
   a = a + 1;
@@ -145,7 +145,7 @@ return f(2);
 ");
             Assert.AreEqual(new ScriptInteger(3), r);
             r = Run(@"
-const f = @i: integer -> boolean: {
+const f = @i: integer -> integer: {
   var a = 0;
   a = a + 1;
   if i == 0 then {return a;};

@@ -152,23 +152,22 @@ namespace DynamicScript.Runtime.Environment
         /// <summary>
         /// Sets item value.
         /// </summary>
-        /// <param name="ctx"></param>
         /// <param name="value">A value to set.</param>
         /// <param name="indicies"></param>
-        protected abstract void SetItem(InvocationContext ctx, IScriptObject value, IScriptObject[] indicies);
+        /// <param name="state">Internal interpreter state.</param>
+        protected abstract void SetItem(IScriptObject value, IScriptObject[] indicies, InterpreterState state);
 
         /// <summary>
-        /// Sets item value.
+        /// 
         /// </summary>
-        /// <param name="ctx"></param>
         /// <param name="arguments"></param>
+        /// <param name="state"></param>
         /// <returns></returns>
-        protected internal sealed override IScriptObject Invoke(InvocationContext ctx, params IRuntimeSlot[] arguments)
+        protected sealed override IScriptObject InvokeCore(IList<IScriptObject> arguments, InterpreterState state)
         {
-            var indicies = new IScriptObject[arguments.LongLength - 1];
-            for (var i = 1; i < arguments.LongLength; i++)
-                indicies[i - 1] = arguments[i].GetValue(ctx.RuntimeState);
-            SetItem(ctx, arguments[0].GetValue(ctx.RuntimeState), indicies);
+            var indicies = new IScriptObject[arguments.Count - 1];
+            arguments.CopyTo(1, indicies, 0, arguments.Count - 1);
+            SetItem(arguments[0], indicies, state);
             return Void;
         }
     }

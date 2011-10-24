@@ -35,9 +35,9 @@ namespace DynamicScript.Runtime.Environment
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptString arg0)
+            protected override IScriptObject Invoke(ScriptString value, InterpreterState state)
             {
-                return (ScriptBoolean)IsInterned(ctx, arg0);
+                return (ScriptBoolean)IsInterned(value, state);
             }
         }
 
@@ -51,7 +51,7 @@ namespace DynamicScript.Runtime.Environment
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, IScriptArray strings)
+            protected override IScriptObject Invoke(IScriptArray strings, InterpreterState state)
             {
                 if (strings == null) return Void;
                 var result = new StringBuilder();
@@ -59,7 +59,7 @@ namespace DynamicScript.Runtime.Environment
                 for (var i = 0L; i < strings.GetLength(0); i++)
                 {
                     indicies[0] = i;
-                    result.Append(strings[indicies, ctx.RuntimeState]);
+                    result.Append(strings[indicies, state]);
                 }
                 return new ScriptString(result);
             }
@@ -127,9 +127,9 @@ namespace DynamicScript.Runtime.Environment
             {
             }
 
-            public override IScriptObject Invoke(InvocationContext ctx, ScriptString str1, ScriptString str2, ScriptString language)
+            public override IScriptObject Invoke(ScriptString a, ScriptString b, ScriptString language, InterpreterState state)
             {
-                return (ScriptBoolean)ScriptStringContract.Equals(ctx, str1, str2, language);
+                return (ScriptBoolean)ScriptStringContract.Equals(a, b, language);
             }
         }
 
@@ -145,9 +145,9 @@ namespace DynamicScript.Runtime.Environment
             {
             }
 
-            public override IScriptObject Invoke(InvocationContext ctx, ScriptString a, ScriptString b, ScriptString lang)
+            public override IScriptObject Invoke(ScriptString a, ScriptString b, ScriptString language, InterpreterState state)
             {
-                return (ScriptInteger)Compare(ctx, a, b, lang);
+                return (ScriptInteger)Compare(a, b, language);
             }
         }
         #endregion
@@ -279,27 +279,26 @@ namespace DynamicScript.Runtime.Environment
         }
 
         /// <summary>
-        /// Determines whether string is interned.
+        /// Determines whether the specified string is interned.
         /// </summary>
-        /// <param name="ctx"></param>
         /// <param name="value"></param>
+        /// <param name="state"></param>
         /// <returns></returns>
-        public static bool IsInterned(InvocationContext ctx, ScriptString value)
+        public static bool IsInterned(ScriptString value, InterpreterState state)
         {
-            return ctx.RuntimeState.IsInterned(value);
+            return state.IsInterned(value);
         }
 
         /// <summary>
         /// Compares two strings.
         /// </summary>
-        /// <param name="ctx"></param>
         /// <param name="a"></param>
         /// <param name="b"></param>
         /// <param name="language"></param>
         /// <returns></returns>
-        public static int Compare(InvocationContext ctx, string a, string b, string language)
+        public static int Compare(string a, string b, string language)
         {
-            switch (string.IsNullOrEmpty(language))
+            switch (string.IsNullOrWhiteSpace(language))
             {
                 case true: return string.CompareOrdinal(a, b);
                 default:
@@ -311,14 +310,13 @@ namespace DynamicScript.Runtime.Environment
         /// <summary>
         /// Determines whether the two strings are equal.
         /// </summary>
-        /// <param name="ctx"></param>
         /// <param name="a"></param>
         /// <param name="b"></param>
         /// <param name="language"></param>
         /// <returns></returns>
-        public static bool Equals(InvocationContext ctx, string a, string b, string language)
+        public static bool Equals(string a, string b, string language)
         {
-            return Compare(ctx, a, b, language) == 0;
+            return Compare(a, b, language) == 0;
         }
 
         #region Runtime Slots

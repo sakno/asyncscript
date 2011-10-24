@@ -38,9 +38,9 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
             protected abstract TOutput Invoke(TCodeObject element, InterpreterState state);
 
-            protected override IScriptObject Invoke(InvocationContext ctx, IScriptCodeElement<TCodeObject> arg0)
+            protected sealed override IScriptObject Invoke(IScriptCodeElement<TCodeObject> arg0, InterpreterState state)
             {
-                IScriptObject result = arg0 != null ? Invoke(arg0.CodeObject, ctx.RuntimeState) : null;
+                IScriptObject result = arg0 != null ? Invoke(arg0.CodeObject, state) : null;
                 return result ?? Void;
             }
         }
@@ -76,34 +76,34 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             {
             }
 
-            private static void Modify(InvocationContext ctx, IRuntimeSlot param0, IRuntimeSlot param1, IRuntimeSlot param2, IRuntimeSlot param3, IRuntimeSlot param4, IRuntimeSlot param5)
+            private static void Modify(InterpreterState state, IRuntimeSlot param0, IRuntimeSlot param1, IRuntimeSlot param2, IRuntimeSlot param3, IRuntimeSlot param4, IRuntimeSlot param5)
             {
-                var element = param0.GetValue(ctx.RuntimeState) as TRuntimeElement;
-                element.Modify(new[] { param1.GetValue(ctx.RuntimeState), param2.GetValue(ctx.RuntimeState), param3.GetValue(ctx.RuntimeState), param4.GetValue(ctx.RuntimeState), param5.GetValue(ctx.RuntimeState) }, ctx.RuntimeState);
+                var element = param0.GetValue(state) as TRuntimeElement;
+                element.Modify(new[] { param1.GetValue(state), param2.GetValue(state), param3.GetValue(state), param4.GetValue(state), param5.GetValue(state) }, state);
             }
 
-            private static void Modify(InvocationContext ctx, IRuntimeSlot param0, IRuntimeSlot param1, IRuntimeSlot param2, IRuntimeSlot param3, IRuntimeSlot param4)
+            private static void Modify(InterpreterState state, IRuntimeSlot param0, IRuntimeSlot param1, IRuntimeSlot param2, IRuntimeSlot param3, IRuntimeSlot param4)
             {
-                var element = param0.GetValue(ctx.RuntimeState) as TRuntimeElement;
-                element.Modify(new[] { param1.GetValue(ctx.RuntimeState), param2.GetValue(ctx.RuntimeState), param3.GetValue(ctx.RuntimeState), param4.GetValue(ctx.RuntimeState) }, ctx.RuntimeState);
+                var element = param0.GetValue(state) as TRuntimeElement;
+                element.Modify(new[] { param1.GetValue(state), param2.GetValue(state), param3.GetValue(state), param4.GetValue(state) }, state);
             }
 
-            private static void Modify(InvocationContext ctx, IRuntimeSlot param0, IRuntimeSlot param1, IRuntimeSlot param2, IRuntimeSlot param3)
+            private static void Modify(InterpreterState state, IRuntimeSlot param0, IRuntimeSlot param1, IRuntimeSlot param2, IRuntimeSlot param3)
             {
-                var element = param0.GetValue(ctx.RuntimeState) as TRuntimeElement;
-                element.Modify(new[] { param1.GetValue(ctx.RuntimeState), param2.GetValue(ctx.RuntimeState), param3.GetValue(ctx.RuntimeState) }, ctx.RuntimeState);
+                var element = param0.GetValue(state) as TRuntimeElement;
+                element.Modify(new[] { param1.GetValue(state), param2.GetValue(state), param3.GetValue(state) }, state);
             }
 
-            private static void Modify(InvocationContext ctx, IRuntimeSlot param0, IRuntimeSlot param1, IRuntimeSlot param2)
+            private static void Modify(InterpreterState state, IRuntimeSlot param0, IRuntimeSlot param1, IRuntimeSlot param2)
             {
-                var element = param0.GetValue(ctx.RuntimeState) as TRuntimeElement;
-                element.Modify(new[] { param1.GetValue(ctx.RuntimeState), param2.GetValue(ctx.RuntimeState) }, ctx.RuntimeState);
-            } 
+                var element = param0.GetValue(state) as TRuntimeElement;
+                element.Modify(new[] { param1.GetValue(state), param2.GetValue(state) }, state);
+            }
 
-            private static void Modify(InvocationContext ctx, IRuntimeSlot param0, IRuntimeSlot param1)
+            private static void Modify(InterpreterState state, IRuntimeSlot param0, IRuntimeSlot param1)
             {
-                var element = param0.GetValue(ctx.RuntimeState) as TRuntimeElement;
-                element.Modify(new[] { param1.GetValue(ctx.RuntimeState) }, ctx.RuntimeState);
+                var element = param0.GetValue(state) as TRuntimeElement;
+                element.Modify(new[] { param1.GetValue(state) }, state);
             }
         }
 

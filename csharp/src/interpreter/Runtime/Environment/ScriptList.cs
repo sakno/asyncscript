@@ -41,7 +41,7 @@ namespace DynamicScript.Runtime.Environment
                 }
             }
 
-            protected override IScriptObject GetItem(InvocationContext ctx, IScriptObject[] indicies)
+            protected override IScriptObject GetItem(IScriptObject[] indicies, InterpreterState state)
             {
                 return indicies.LongLength == 1L ? GetItem(indicies[0] as ScriptInteger) : Void;
             }
@@ -70,7 +70,7 @@ namespace DynamicScript.Runtime.Environment
                 }
             }
 
-            protected override void SetItem(InvocationContext ctx, IScriptObject value, IScriptObject[] indicies)
+            protected override void SetItem(IScriptObject value, IScriptObject[] indicies, InterpreterState state)
             {
                 SetItem(m_elements, value, indicies[0] as ScriptInteger);
             }

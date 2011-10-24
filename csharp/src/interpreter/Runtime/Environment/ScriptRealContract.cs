@@ -32,9 +32,9 @@ namespace DynamicScript.Runtime.Environment
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptReal arg0)
+            protected override IScriptObject Invoke(ScriptReal value, InterpreterState state)
             {
-                return (ScriptBoolean)IsInterned(ctx, arg0);
+                return (ScriptBoolean)IsInterned(value, state);
             }
         }
 
@@ -49,9 +49,9 @@ namespace DynamicScript.Runtime.Environment
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptReal arg0)
+            protected override IScriptObject Invoke(ScriptReal value, InterpreterState state)
             {
-                return Abs(ctx, arg0);
+                return Abs(value);
             }
         }
 
@@ -66,17 +66,15 @@ namespace DynamicScript.Runtime.Environment
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, IScriptArray floats)
+            protected override IScriptObject Invoke(IScriptArray floats, InterpreterState state)
             {
                 if (floats == null) return Void;
                 var result = 0.0;
                 var indicies = new long[1];
-                var context = ctx.RuntimeState.Context;
                 for (var i = 0L; i < floats.GetLength(0); i++)
                 {
                     indicies[0] = i;
-                    var right = SystemConverter.ToDouble(floats[indicies, ctx.RuntimeState]);
-                    result = context == InterpretationContext.Unchecked ? unchecked(result + right) : checked(result + right);
+                    result += SystemConverter.ToDouble(floats[indicies, state]);
                 }
                 return new ScriptReal(result);
             }
@@ -93,7 +91,7 @@ namespace DynamicScript.Runtime.Environment
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, IScriptArray floats)
+            protected override IScriptObject Invoke(IScriptArray floats, InterpreterState state)
             {
                 if (floats == null) return Void;
                 var indicies = new long[1];
@@ -101,13 +99,11 @@ namespace DynamicScript.Runtime.Environment
                 {
                     case 0: return ScriptRealContract.Void;
                     default:
-                        var result = SystemConverter.ToDouble(floats[indicies, ctx.RuntimeState]);
-                        var context = ctx.RuntimeState.Context;
+                        var result = SystemConverter.ToDouble(floats[indicies, state]);
                         for (var i = 1L; i < floats.GetLength(0); i++)
                         {
                             indicies[0] = i;
-                            var right = SystemConverter.ToDouble(floats[indicies, ctx.RuntimeState]);
-                            result = context == InterpretationContext.Unchecked ? unchecked(result - right) : checked(result - right);
+                            result -= SystemConverter.ToDouble(floats[indicies, state]);
                         }
                         return new ScriptReal(result);
                 }
@@ -243,23 +239,22 @@ namespace DynamicScript.Runtime.Environment
         /// <summary>
         /// Returns an absoule value.
         /// </summary>
-        /// <param name="ctx"></param>
         /// <param name="value"></param>
         /// <returns></returns>
-        public static ScriptReal Abs(InvocationContext ctx, ScriptReal value)
+        public static ScriptReal Abs(ScriptReal value)
         {
             return SystemMath.Abs(value);
         }
 
         /// <summary>
-        /// Determines whether the specified object is interned.
+        /// Determines whether the specified value is interned.
         /// </summary>
-        /// <param name="ctx"></param>
         /// <param name="value"></param>
+        /// <param name="state"></param>
         /// <returns></returns>
-        public static bool IsInterned(InvocationContext ctx, ScriptReal value)
+        public static bool IsInterned(ScriptReal value, InterpreterState state)
         {
-            return ctx.RuntimeState.IsInterned(value);
+            return state.IsInterned(value);
         }
 
         #region Runtime Slots

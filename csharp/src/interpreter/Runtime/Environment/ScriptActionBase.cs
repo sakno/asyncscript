@@ -28,11 +28,11 @@ namespace DynamicScript.Runtime.Environment
         /// <summary>
         /// Represents a delegate for native implementation of the action.
         /// </summary>
-        /// <param name="ctx">The invocation context.</param>
+        /// <param name="state">Internal interpreter state.</param>
         /// <param name="args">The arguments of the action.</param>
         /// <returns>The invocation result.</returns>
         [ComVisible(false)]
-        public delegate IScriptObject ActionInvoker(InvocationContext ctx, params IRuntimeSlot[] args);
+        public delegate IScriptObject ActionInvoker(InterpreterState state, params IRuntimeSlot[] args);
 
         [ComVisible(false)]
         internal interface IComposition : IScriptAction
@@ -45,7 +45,7 @@ namespace DynamicScript.Runtime.Environment
         /// Represents action signature analyzer that uses automatic parallelism.
         /// </summary>
         [ComVisible(false)]
-        private abstract class SignatureAnalyzer
+        internal abstract class SignatureAnalyzer
         {
             public readonly IList<ScriptActionContract.Parameter> Parameters;
             public readonly IList<IScriptObject> Arguments;
@@ -121,47 +121,12 @@ namespace DynamicScript.Runtime.Environment
             }
         }
 
-        [ComVisible(false)]
-        private sealed class ArgumentConverter : SignatureAnalyzer
-        {
-            public readonly Converter<ScriptActionContract.Parameter, IRuntimeSlot> HolderFactory;
-            public readonly Debugging.CallStackFrame StackFrame;
-            public readonly IRuntimeSlot[] Holders;
-
-            public ArgumentConverter(IList<ScriptActionContract.Parameter> @params, IList<IScriptObject> args, InterpreterState s, Converter<ScriptActionContract.Parameter, IRuntimeSlot> factory, Debugging.CallStackFrame sf)
-                : base(@params, args, s)
-            {
-                Holders = new IRuntimeSlot[args.Count];
-                HolderFactory = factory;
-                StackFrame = sf;
-            }
-
-            protected override void Analyze(ParallelLoopState state, int index, ScriptActionContract.Parameter p, IScriptObject a)
-            {
-                PrepareArgument(p, a, index, HolderFactory, StackFrame, Holders, State);
-            }
-
-            public static void PrepareArgument(ScriptActionContract.Parameter p, IScriptObject a, int index, Converter<ScriptActionContract.Parameter, IRuntimeSlot> factory, Debugging.CallStackFrame stackFrame, IRuntimeSlot[] output, InterpreterState state)
-            {
-                var holder = factory(p);
-                holder.SetValue(a, state);
-                if (stackFrame != null)
-                    stackFrame.RegisterStorage(p.Name, holder);
-                output[index] = holder;
-            }
-
-            public new IRuntimeSlot[] Analyze()
-            {
-                base.Analyze();
-                return Holders;
-            }
-        }
-
         /// <summary>
         /// Represents composed action.
         /// This class cannot be inherited.
         /// </summary>
         [ComVisible(false)]
+        [TransparentAction]
         private sealed class Composition : ScriptActionBase, IComposition
         {
             public readonly IScriptAction Left;
@@ -189,20 +154,20 @@ namespace DynamicScript.Runtime.Environment
             {
             }
 
-            internal protected override IScriptObject Invoke(InvocationContext ctx, IRuntimeSlot[] arguments)
+            protected override IScriptObject InvokeCore(IList<IScriptObject> arguments, InterpreterState state)
             {
                 //adjustment is used for arguments array splitting based on the return value carrying
                 var adjustment = SystemConverter.ToInt32(NeedCurrying);
                 //check whether the count of arguments is valid
-                if (arguments.LongLength != Left.SignatureInfo.ArgumentCount + Right.SignatureInfo.ArgumentCount - adjustment)
-                    throw new ActionArgumentsMistmatchException(ctx.RuntimeState);
+                if (arguments.Count != Left.SignatureInfo.ArgumentCount + Right.SignatureInfo.ArgumentCount - adjustment)
+                    throw new ActionArgumentsMistmatchException(state);
                 var buffer = new IScriptObject[Left.SignatureInfo.ArgumentCount];
-                Array.Copy(arguments, 0, buffer, 0, buffer.Length);
-                var result = Left.Invoke(buffer, ctx.RuntimeState);
+                arguments.CopyTo(0, buffer, 0, buffer.Length);
+                var result = Left.Invoke(buffer, state);
                 buffer = new IScriptObject[Right.SignatureInfo.ArgumentCount];
-                Array.Copy(arguments, Left.SignatureInfo.ArgumentCount, buffer, adjustment, Right.SignatureInfo.ArgumentCount - adjustment);
+                arguments.CopyTo(Left.SignatureInfo.ArgumentCount, buffer, adjustment, Right.SignatureInfo.ArgumentCount - adjustment);
                 if (NeedCurrying) buffer[0] = result;
-                return Right.Invoke(buffer, ctx.RuntimeState);
+                return Right.Invoke(buffer, state);
             }
 
             IScriptAction IComposition.Left
@@ -217,6 +182,7 @@ namespace DynamicScript.Runtime.Environment
         }
 
         [ComVisible(false)]
+        [TransparentAction]
         private sealed class UnifiedAction : ScriptActionBase
         {
             private readonly IScriptObject[] m_cache;
@@ -256,26 +222,27 @@ namespace DynamicScript.Runtime.Environment
 
             }
 
-            internal protected override IScriptObject Invoke(InvocationContext ctx, IRuntimeSlot[] arguments)
+            protected override IScriptObject InvokeCore(IList<IScriptObject> arguments, InterpreterState state)
             {
-                switch (m_cache.LongLength - m_matchedCount == arguments.LongLength)
+                switch (m_cache.LongLength - m_matchedCount == arguments.Count)
                 {
                     case true:
                         var clonedCache = (IScriptObject[])m_cache.Clone();
-                        Parallel.For<long>(0L, clonedCache.LongLength, () => 0L,
-                            delegate(long i, ParallelLoopState state, long j)
+                        Parallel.For<int>(0, clonedCache.Length, () => 0,
+                            delegate(int i, ParallelLoopState ls, int j)
                             {
                                 if (clonedCache[i] == null)
                                     clonedCache[i] = arguments[j++];
                                 return j;
                             }, j => { });
-                        return m_invoker.Invoke(clonedCache, ctx.RuntimeState);
-                    default: throw new ActionArgumentsMistmatchException(ctx.RuntimeState);
+                        return m_invoker.Invoke(clonedCache, state);
+                    default: throw new ActionArgumentsMistmatchException(state);
                 }
             }
         }
 
         [ComVisible(false)]
+        [TransparentAction]
         private sealed class ConstantProvider : ScriptActionBase
         {
             public readonly IScriptObject Value;
@@ -286,7 +253,7 @@ namespace DynamicScript.Runtime.Environment
                 Value = value;
             }
 
-            internal protected override IScriptObject Invoke(InvocationContext ctx, IRuntimeSlot[] arguments)
+            protected override IScriptObject InvokeCore(IList<IScriptObject> args, InterpreterState state)
             {
                 return Value;
             }
@@ -390,6 +357,7 @@ namespace DynamicScript.Runtime.Environment
         }
 
         [ComVisible(false)]
+        [TransparentAction]
         internal class WrappedAction : ScriptActionBase
         {
             public readonly new ScriptActionBase Implementation;
@@ -400,9 +368,9 @@ namespace DynamicScript.Runtime.Environment
                 Implementation = implementation;
             }
 
-            protected internal sealed override IScriptObject Invoke(InvocationContext ctx, IRuntimeSlot[] arguments)
+            protected override IScriptObject InvokeCore(IList<IScriptObject> args, InterpreterState state)
             {
-                return Implementation.Invoke(ctx, arguments);
+                return Implementation.InvokeCore(args, state);
             }
 
             public override ScriptActionBase ChangeThis(IScriptObject @this)
@@ -476,11 +444,11 @@ namespace DynamicScript.Runtime.Environment
         }
 
         /// <summary>
-        /// Gets a delegate that references implementation of this action.
+        /// Gets implementation of this action.
         /// </summary>
-        public ActionInvoker Implementation
+        public Func<IList<IScriptObject>, InterpreterState, IScriptObject> Implementation
         {
-            get { return new ActionInvoker(Invoke); }
+            get { return new Func<IList<IScriptObject>, InterpreterState, IScriptObject>(InvokeCore); } 
         }
 
         Delegate IScriptAction.Implementation
@@ -488,6 +456,12 @@ namespace DynamicScript.Runtime.Environment
             get { return Implementation; }
         }
 
+        /// <summary>
+        /// Determines whether the action can be executed with the specified set of arguments.
+        /// </summary>
+        /// <param name="args">Set of arguments for action invocation.</param>
+        /// <param name="state">Internal interpreter state.</param>
+        /// <returns><see langword="true"/> if the action can be executed with the specified set of arguments; otherwise, <see langword="false"/>.</returns>
         private bool CanInvoke(IList<IScriptObject> args, InterpreterState state)
         {
             var @params = Parameters;
@@ -504,6 +478,28 @@ namespace DynamicScript.Runtime.Environment
             else throw new ActionArgumentsMistmatchException(state);
         }
 
+        private T Unwrap<T>(IScriptObject a, int index, InterpreterState state)
+            where T : class, IScriptObject
+        {
+            if (a is IRuntimeSlot)
+                a = ((IRuntimeSlot)a).GetValue(state);
+            return Parameters[index].ContractBinding.Convert(Conversion.Implicit, a, state) as T;
+        }
+
+        /// <summary>
+        /// Unwraps an action argument.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="args"></param>
+        /// <param name="index"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        protected T Unwrap<T>(IList<IScriptObject> args, int index, InterpreterState state)
+            where T : class, IScriptObject
+        {
+            return Unwrap<T>(args[index], index, state);
+        }
+
         /// <summary>
         /// Determines whether the action can be executed with the specified set of arguments.
         /// </summary>
@@ -512,6 +508,54 @@ namespace DynamicScript.Runtime.Environment
         public bool CanInvoke(IList<IScriptObject> args)
         {
             return CanInvoke(args, null);
+        }
+
+        private static IScriptObject BindResult(IScriptContract returnContract, IScriptObject returnValue, InterpreterState state)
+        {
+            switch (returnContract.IsCompatible(returnValue))
+            {
+                case true: return returnContract.Convert(Conversion.Implicit, returnValue, state);
+                default: throw new ContractBindingException(returnValue, returnContract, state);
+            }
+        }
+
+        /// <summary>
+        /// Invokes the current action.
+        /// </summary>
+        /// <param name="args"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        protected abstract IScriptObject InvokeCore(IList<IScriptObject> args, InterpreterState state);
+
+        /// <summary>
+        /// Invokes the action.
+        /// </summary>
+        /// <param name="args">Action arguments.</param>
+        /// <param name="state">Internal interpreter state.</param>
+        /// <returns>Invocation result.</returns>
+        /// <exception cref="ContractBindingException">The contract of the argument doesn't match to the parameter restriction.</exception>
+        /// <exception cref="ActionArgumentsMistmatchException">The count of arguments doesn't match to the count of formal parameters.</exception>
+        public sealed override IScriptObject Invoke(IList<IScriptObject> args, InterpreterState state)
+        {
+            CanInvoke(args, state);
+            //Invokes compiled implementation.
+            var result = default(IScriptObject);
+            var previous = InvocationContext.SetCurrent(this);
+            Push(state);  //register the action in the call stack
+            try
+            {
+                result = InvokeCore(args, state) ?? Void;
+            }
+            catch (NullReferenceException)
+            {
+                throw new VoidException(state);
+            }
+            finally
+            {
+                Pop();
+                InvocationContext.Current = previous;
+            }
+            return VoidReturn ? Void : BindResult(ReturnValueContract, result, state);
         }
 
         CallInfo IScriptAction.SignatureInfo
@@ -629,14 +673,23 @@ namespace DynamicScript.Runtime.Environment
             else throw new UnsupportedOperationException(state);
         }
 
+        /// <summary>
+        /// Pushes the current action into the call stack.
+        /// </summary>
+        /// <param name="state">Internal interpreter state.</param>
         private void Push(InterpreterState state)
         {
-            if (!IsTransparent) CallStack.Push(this, state);
+            if (!IsTransparent)
+                CallStack.Push(this, state);
         }
 
+        /// <summary>
+        /// Pops the current action from the call stack.
+        /// </summary>
         private void Pop()
         {
-            if (!IsTransparent) CallStack.Pop();
+            if (!IsTransparent)
+                CallStack.Pop();
         }
 
         /// <summary>
@@ -647,80 +700,6 @@ namespace DynamicScript.Runtime.Environment
         protected virtual IRuntimeSlot CreateParameterHolder(ScriptActionContract.Parameter p)
         {
             return new ScriptVariable(p.ContractBinding);
-        }
-
-        /// <summary>
-        /// Creates a new action invocation context according with the specified interpreter state.
-        /// </summary>
-        /// <param name="state">Internal interpreter state.</param>
-        /// <returns>A new instance of the invocation context.</returns>
-        protected InvocationContext CreateInvocationContext(InterpreterState state)
-        {
-            return new InvocationContext(this, state);
-        }
-
-        private IRuntimeSlot[] PrepareInvocation(IList<IScriptObject> args, InterpreterState state)
-        {
-            var slots = default(IRuntimeSlot[]);
-            //Transform each argument 
-            switch (args.Count)
-            {
-                case 0: slots = new IRuntimeSlot[0]; break;
-                case 1:
-                    ArgumentConverter.PrepareArgument(Parameters[0], args[0], 0, CreateParameterHolder, IsTransparent ? null : CallStack.Current, slots = new IRuntimeSlot[1], state);
-                    break;
-                default:
-                    var converter = new ArgumentConverter(Parameters, args, state, CreateParameterHolder, IsTransparent ? null : CallStack.Current);
-                    slots = converter.Analyze();
-                    break;
-            }
-            return slots;
-        }
-
-        /// <summary>
-        /// Provides implementation of the action.
-        /// </summary>
-        /// <param name="ctx">Action invocation context.</param>
-        /// <param name="arguments">Action invocation arguments.</param>
-        /// <returns></returns>
-        internal protected abstract IScriptObject Invoke(InvocationContext ctx, params IRuntimeSlot[] arguments);
-
-        private static IScriptObject BindResult(IScriptContract returnContract, IScriptObject returnValue, InterpreterState state)
-        {
-            switch(returnContract.IsCompatible(returnValue))
-            {
-                case true: return returnContract.Convert(Conversion.Implicit, returnValue, state);
-                default: throw new ContractBindingException(returnValue, returnContract, state);
-            }
-        }
-
-        /// <summary>
-        /// Invokes the action.
-        /// </summary>
-        /// <param name="args">Action arguments.</param>
-        /// <param name="state">Internal interpreter state.</param>
-        /// <returns>Invocation result.</returns>
-        /// <exception cref="ContractBindingException">The contract of the argument doesn't match to the parameter restriction.</exception>
-        /// <exception cref="ActionArgumentsMistmatchException">The count of arguments doesn't match to the count of formal parameters.</exception>
-        public sealed override IScriptObject Invoke(IList<IScriptObject> args, InterpreterState state)
-        {
-            CanInvoke(args, state);
-            //Invokes compiled implementation.
-            var result = default(IScriptObject);
-            Push(state);  //register the action in the call stack
-            try
-            {
-                result = Invoke(CreateInvocationContext(state), PrepareInvocation(args, state)) ?? Void;
-            }
-            catch (NullReferenceException)
-            {
-                throw new VoidException(state);
-            }
-            finally
-            {
-                Pop();
-            }
-            return VoidReturn ? Void : BindResult(ReturnValueContract, result, state);
         }
 
         #region Runtime Slots

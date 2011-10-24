@@ -128,7 +128,7 @@ namespace DynamicScript.Runtime.Environment
                 m_iterator = iterator;
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx)
+            protected override IScriptObject Invoke(InterpreterState state)
             {
                 return m_iterator.GetNext();
             }

@@ -41,7 +41,7 @@ namespace DynamicScript.Runtime.Environment.Threading
                 m_ar = ar;
             }
 
-            protected override void Invoke(InvocationContext ctx)
+            protected override void Invoke(InterpreterState state)
             {
                 m_ar.Cancel();
             }
@@ -95,7 +95,7 @@ namespace DynamicScript.Runtime.Environment.Threading
                 m_ar = ar;
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptReal timeout)
+            protected override IScriptObject Invoke(ScriptReal timeout, InterpreterState state)
             {
                 return (ScriptBoolean)m_ar.AsyncWaitHandle.WaitOne(TimeSpan.FromMilliseconds(timeout), true);
             }

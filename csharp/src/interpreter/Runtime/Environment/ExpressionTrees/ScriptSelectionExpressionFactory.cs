@@ -51,7 +51,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             {
             }
 
-            protected override void Invoke(InvocationContext ctx, IScriptCodeElement<ScriptCodeSelectionExpression> sel, IScriptCodeElement<ScriptCodeExpression> body)
+            protected override void Invoke(IScriptCodeElement<ScriptCodeSelectionExpression> sel, IScriptCodeElement<ScriptCodeExpression> body, InterpreterState state)
             {
                 sel.CodeObject.DefaultHandler.Expression = body != null ? body.CodeObject : ScriptCodeVoidExpression.Instance;
             }
@@ -79,9 +79,9 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
                 }
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, IScriptCodeElement<ScriptCodeSelectionExpression> sel, ScriptInteger index)
+            protected override IScriptObject Invoke(IScriptCodeElement<ScriptCodeSelectionExpression> sel, ScriptInteger index, InterpreterState state)
             {
-                return GetCaseValues(sel.CodeObject.Cases, index, ctx.RuntimeState);
+                return GetCaseValues(sel.CodeObject.Cases, index, state);
             }
         }
 
@@ -107,7 +107,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
                 }
             }
 
-            protected override void Invoke(InvocationContext ctx, IScriptCodeElement<ScriptCodeSelectionExpression> sel, ScriptInteger index, IScriptArray values)
+            protected override void Invoke(IScriptCodeElement<ScriptCodeSelectionExpression> sel, ScriptInteger index, IScriptArray values, InterpreterState state)
             {
                 SetCaseValues(sel.CodeObject.Cases, index, values);
             }
@@ -135,9 +135,9 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
                 }
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, IScriptCodeElement<ScriptCodeSelectionExpression> sel, ScriptInteger index)
+            protected override IScriptObject Invoke(IScriptCodeElement<ScriptCodeSelectionExpression> sel, ScriptInteger index, InterpreterState state)
             {
-                return GetCaseBody(sel.CodeObject.Cases, index, ctx.RuntimeState);
+                return GetCaseBody(sel.CodeObject.Cases, index, state);
             }
         }
 
@@ -160,7 +160,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
                     c.Handler.Expression = body != null ? body.CodeObject : ScriptCodeVoidExpression.Instance;
             }
 
-            protected override void Invoke(InvocationContext ctx, IScriptCodeElement<ScriptCodeSelectionExpression> sel, ScriptInteger index, IScriptCodeElement<ScriptCodeExpression> body)
+            protected override void Invoke(IScriptCodeElement<ScriptCodeSelectionExpression> sel, ScriptInteger index, IScriptCodeElement<ScriptCodeExpression> body, InterpreterState state)
             {
                 SetCaseBody(sel.CodeObject.Cases, index, body);  
             }

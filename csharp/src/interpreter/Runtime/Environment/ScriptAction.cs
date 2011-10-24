@@ -24,18 +24,18 @@ namespace DynamicScript.Runtime.Environment
         /// <summary>
         /// Invokes an action.
         /// </summary>
-        /// <param name="ctx">Action invocation context.</param>
-        protected abstract void Invoke(InvocationContext ctx);
+        /// <param name="state">Action invocation context.</param>
+        protected abstract void Invoke(InterpreterState state);
 
         /// <summary>
         /// Invokes an action.
         /// </summary>
-        /// <param name="ctx">Action invocation context.</param>
-        /// <param name="arguments">Action invocation arguments.</param>
+        /// <param name="args"></param>
+        /// <param name="state"></param>
         /// <returns></returns>
-        internal protected sealed override IScriptObject Invoke(InvocationContext ctx, IRuntimeSlot[] arguments)
+        protected sealed override IScriptObject InvokeCore(IList<IScriptObject> args, InterpreterState state)
         {
-            Invoke(ctx);
+            Invoke(state);
             return Void;
         }
     }
@@ -66,19 +66,19 @@ namespace DynamicScript.Runtime.Environment
         /// <summary>
         /// Invokes an action.
         /// </summary>
-        /// <param name="ctx">Action invocation context.</param>
         /// <param name="arg0">The first argument of the action.</param>
-        protected abstract void Invoke(InvocationContext ctx, T arg0);
+        /// <param name="state">Internal interpreter state.</param>
+        protected abstract void Invoke(T arg0, InterpreterState state);
 
         /// <summary>
         /// Invokes an action.
         /// </summary>
-        /// <param name="ctx"></param>
-        /// <param name="arguments"></param>
+        /// <param name="args"></param>
+        /// <param name="state"></param>
         /// <returns></returns>
-        internal protected sealed override IScriptObject Invoke(InvocationContext ctx, IRuntimeSlot[] arguments)
+        protected sealed override IScriptObject InvokeCore(IList<IScriptObject> args, InterpreterState state)
         {
-            Invoke(ctx, arguments[0].GetValue(ctx.RuntimeState) as T);
+            Invoke(Unwrap<T>(args,0, state), state);
             return Void;
         }
     }
@@ -110,22 +110,22 @@ namespace DynamicScript.Runtime.Environment
         }
 
         /// <summary>
-        /// 
+        /// Invokes an action.
         /// </summary>
-        /// <param name="ctx"></param>
         /// <param name="arg0"></param>
         /// <param name="arg1"></param>
-        protected abstract void Invoke(InvocationContext ctx, T1 arg0, T2 arg1);
+        /// <param name="state"></param>
+        protected abstract void Invoke(T1 arg0, T2 arg1, InterpreterState state);
 
         /// <summary>
-        /// 
+        /// Invokes an action.
         /// </summary>
-        /// <param name="ctx"></param>
-        /// <param name="arguments"></param>
+        /// <param name="args"></param>
+        /// <param name="state"></param>
         /// <returns></returns>
-        internal protected sealed override IScriptObject Invoke(InvocationContext ctx, IRuntimeSlot[] arguments)
+        protected sealed override IScriptObject InvokeCore(IList<IScriptObject> args, InterpreterState state)
         {
-            Invoke(ctx, arguments[0].GetValue(ctx.RuntimeState) as T1, arguments[1].GetValue(ctx.RuntimeState) as T2);
+            Invoke(Unwrap<T1>(args, 0, state), Unwrap<T2>(args, 1, state), state);
             return Void;
         }
     }
@@ -162,21 +162,21 @@ namespace DynamicScript.Runtime.Environment
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="ctx"></param>
         /// <param name="arg0"></param>
         /// <param name="arg1"></param>
         /// <param name="arg2"></param>
-        protected abstract void Invoke(InvocationContext ctx, T1 arg0, T2 arg1, T3 arg2);
+        /// <param name="state"></param>
+        protected abstract void Invoke(T1 arg0, T2 arg1, T3 arg2, InterpreterState state);
 
         /// <summary>
-        /// 
+        /// Invokes an action.
         /// </summary>
-        /// <param name="ctx"></param>
-        /// <param name="arguments"></param>
+        /// <param name="args"></param>
+        /// <param name="state"></param>
         /// <returns></returns>
-        internal protected sealed override IScriptObject Invoke(InvocationContext ctx, IRuntimeSlot[] arguments)
+        protected sealed override IScriptObject InvokeCore(IList<IScriptObject> args, InterpreterState state)
         {
-            Invoke(ctx, arguments[0].GetValue(ctx.RuntimeState) as T1, arguments[1].GetValue(ctx.RuntimeState) as T2, arguments[2].GetValue(ctx.RuntimeState) as T3);
+            Invoke(Unwrap<T1>(args, 0, state), Unwrap<T2>(args, 1, state), Unwrap<T3>(args, 2, state), state);
             return Void;
         }
     }

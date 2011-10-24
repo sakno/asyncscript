@@ -21,9 +21,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         {
             public const string Name = "collect";
 
-            protected override void Invoke(InvocationContext ctx)
+            protected override void Invoke(InterpreterState state)
             {
-                Collect(ctx);
+                Collect();
             }
         }
 
@@ -32,9 +32,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         {
             public const string Name = "wait";
 
-            protected override void Invoke(InvocationContext ctx)
+            protected override void Invoke(InterpreterState state)
             {
-                Wait(ctx);
+                Wait();
             }
         }
 
@@ -127,8 +127,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// <summary>
         /// Forces an immediate garbage collection.
         /// </summary>
-        /// <param name="ctx">The invocation context.</param>
-        public static void Collect(InvocationContext ctx)
+        public static void Collect()
         {
             NativeGarbageCollector.Collect();
         }
@@ -136,8 +135,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// <summary>
         /// Suspends the current thread until the thread that is processing the queue of finalizers has emptied the queue.
         /// </summary>
-        /// <param name="ctx"></param>
-        public static void Wait(InvocationContext ctx)
+        public static void Wait()
         {
             NativeGarbageCollector.WaitForPendingFinalizers();
         }

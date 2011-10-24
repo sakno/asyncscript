@@ -86,7 +86,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         {
             public const string Name = "enable";
 
-            protected override void Invoke(InvocationContext ctx)
+            protected override void Invoke(InterpreterState state)
             {
                 Monitoring.Enable();
             }
@@ -326,21 +326,21 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptString name)
+            protected override IScriptObject Invoke(ScriptString name, InterpreterState state)
             {
-                switch (CallStack.Current != null && name!=null)
+                switch (CallStack.Current != null && name != null)
                 {
                     case true:
                         var slotHolder = CallStack.Current[name];
                         if (slotHolder != null)
-                            return slotHolder.GetValue(ctx.RuntimeState);
-                        else if (ctx.RuntimeState.Context == InterpretationContext.Unchecked)
+                            return slotHolder.GetValue(state);
+                        else if (state.Context == InterpretationContext.Unchecked)
                             return Void;
-                        else throw new SlotNotFoundException(name, ctx.RuntimeState);
+                        else throw new SlotNotFoundException(name, state);
                     default:
-                        if (ctx.RuntimeState.Context == InterpretationContext.Unchecked)
+                        if (state.Context == InterpretationContext.Unchecked)
                             return Void;
-                        else throw new ScriptFault(Resources.MonitoringNotEnabled, ctx.RuntimeState);
+                        else throw new ScriptFault(Resources.MonitoringNotEnabled, state);
                 }
             }
         }
@@ -358,21 +358,21 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override void Invoke(InvocationContext ctx, ScriptString name, IScriptObject value)
+            protected override void Invoke(ScriptString name, IScriptObject value, InterpreterState state)
             {
                 switch (CallStack.Current != null)
                 {
                     case true:
                         var slotHolder = CallStack.Current[name];
                         if (slotHolder != null)
-                            slotHolder.SetValue(value, ctx.RuntimeState);
-                        else if (ctx.RuntimeState.Context != InterpretationContext.Unchecked)
-                            throw new SlotNotFoundException(name, ctx.RuntimeState);
+                            slotHolder.SetValue(value, state);
+                        else if (state.Context != InterpretationContext.Unchecked)
+                            throw new SlotNotFoundException(name, state);
                         return;
                     default:
-                        if (ctx.RuntimeState.Context == InterpretationContext.Unchecked)
+                        if (state.Context == InterpretationContext.Unchecked)
                             return;
-                        else throw new ScriptFault(Resources.MonitoringNotEnabled, ctx.RuntimeState);
+                        else throw new ScriptFault(Resources.MonitoringNotEnabled, state);
                 }
             }
         }
@@ -389,10 +389,10 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override void Invoke(InvocationContext ctx, ScriptString comment)
+            protected override void Invoke(ScriptString comment, InterpreterState state)
             {
                 if (ScriptDebugger.CurrentDebugger != null)
-                    ScriptDebugger.CurrentDebugger.OnBreakPoint(comment, ctx.RuntimeState);
+                    ScriptDebugger.CurrentDebugger.OnBreakPoint(comment, state);
             }
         }
 
@@ -408,7 +408,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override void Invoke(InvocationContext ctx, ScriptString id)
+            protected override void Invoke(ScriptString id, InterpreterState state)
             {
                 if (CallStack.Current != null) CallStack.Current.ID = id;
             }

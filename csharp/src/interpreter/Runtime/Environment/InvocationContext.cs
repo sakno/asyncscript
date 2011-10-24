@@ -1,14 +1,10 @@
 ﻿using System;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.ComponentModel;
 
 namespace DynamicScript.Runtime.Environment
 {
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
-    using CriticalFinalizerObject = System.Runtime.ConstrainedExecution.CriticalFinalizerObject;
-    using ImmutableObjectAttribute = System.ComponentModel.ImmutableObjectAttribute;
-    using CallInfo = System.Dynamic.CallInfo;
 
     /// <summary>
     /// Represents runtime state of the action during invocation.
@@ -19,79 +15,51 @@ namespace DynamicScript.Runtime.Environment
     /// for action invocation.
     /// </remarks>
     [ComVisible(false)]
-    [ImmutableObject(true)]
-    public sealed class InvocationContext: CriticalFinalizerObject
+    public static class InvocationContext
     {
-        /// <summary>
-        /// Represents runtime state associated with this invocation context.
-        /// </summary>
-        public readonly InterpreterState RuntimeState;
+        [ThreadStatic]
+        private static IScriptAction m_current;
 
         /// <summary>
-        /// Represents an action that is invoked inside of this context.
+        /// Gets current executing action.
         /// </summary>
-        public readonly IScriptAction Action;
-
-        internal InvocationContext(IScriptAction action, InterpreterState state)
+        public static IScriptAction Current
         {
-            if (action == null) throw new ArgumentNullException("action");
-            if (state == null) throw new ArgumentNullException("state");
-            RuntimeState = state;
-            Action = action;
+            get { return m_current; }
+            internal set { m_current = value; }
         }
 
         /// <summary>
-        /// Gets global object passed to the script.
+        /// Sets the currently executing action.
         /// </summary>
-        public IScriptObject Global
+        /// <param name="current"></param>
+        /// <returns>An action located higher in the call stack.</returns>
+        internal static IScriptAction SetCurrent(IScriptAction current)
         {
-            get { return RuntimeState.Global; }
-        }
-
-        /// <summary>
-        /// Gets contract of the returning value.
-        /// </summary>
-        /// <remarks>It can be <see langword="null"/> if action doesn't return any value(void).</remarks>
-        public IScriptContract ReturnValueContract
-        {
-            get { return Action.ReturnValueContract; }
+            var previous = m_current;
+            m_current = current;
+            return previous;
         }
 
         /// <summary>
         /// Gets action owner.
         /// </summary>
-        public IScriptObject This
+        public static IScriptObject This
         {
-            get { return Action.This; }
+            get { return Current.This; }
         }
 
-        internal static PropertyInfo ThisProperty
+        internal static MemberExpression ThisRef
+        {
+            get { return LinqHelpers.BodyOf<Func<IScriptObject>, MemberExpression>(() => This); }
+        }
+
+        internal static MemberExpression ActionRef
         {
             get
             {
-                return (PropertyInfo)LinqHelpers.BodyOf<InvocationContext, IScriptObject, MemberExpression>(ctx => ctx.This).Member;
+                return LinqHelpers.BodyOf<Func<IScriptAction>, MemberExpression>(() => Current);
             }
-        }
-
-        internal static FieldInfo StateField
-        {
-            get
-            {
-                return (FieldInfo)LinqHelpers.BodyOf<InvocationContext, InterpreterState, MemberExpression>(ctx => ctx.RuntimeState).Member;
-            }
-        }
-
-        private static FieldInfo ActionField
-        {
-            get
-            {
-                return (FieldInfo)LinqHelpers.BodyOf<InvocationContext, IScriptAction, MemberExpression>(ctx => ctx.Action).Member;
-            }
-        }
-
-        internal static MemberExpression BindToCurrentAction(ParameterExpression contextVar)
-        {
-            return Expression.Field(contextVar, ActionField);
         }
     }
 }

@@ -19,7 +19,7 @@ namespace DynamicScript.Runtime.Debugging
         /// Represents call stack for the current thread.
         /// </summary>
         [ThreadStatic]
-        private static LinkedList<CallStackFrame> Stack;
+        private static LinkedList<CallStackFrame> m_stack;
 
         /// <summary>
         /// Specifies that the current thread is produced by script program.
@@ -27,16 +27,13 @@ namespace DynamicScript.Runtime.Debugging
         [ThreadStatic]
         private static bool IsScriptThread;
 
-        [ThreadStatic]
-        private static bool IsInitialized;
-
         /// <summary>
         /// Returns call stack snapshot of the current thread.
         /// </summary>
         /// <returns></returns>
         public static Stack<CallStackFrame> GetSnapshot()
         {
-            return Stack != null ? new Stack<CallStackFrame>(Stack) : new Stack<CallStackFrame>();
+            return m_stack != null ? new Stack<CallStackFrame>(m_stack) : new Stack<CallStackFrame>();
         }
 
         /// <summary>
@@ -44,7 +41,7 @@ namespace DynamicScript.Runtime.Debugging
         /// </summary>
         public static CallStackFrame Current
         {
-            get { return Stack != null && Stack.Last != null ? Stack.Last.Value : null; }
+            get { return m_stack != null && m_stack.Last != null ? m_stack.Last.Value : null; }
         }
 
         /// <summary>
@@ -52,7 +49,7 @@ namespace DynamicScript.Runtime.Debugging
         /// </summary>
         public static long Depth
         {
-            get { return Stack != null ? Stack.Count : 0L; }
+            get { return m_stack != null ? m_stack.Count : 0L; }
         }
 
         /// <summary>
@@ -60,21 +57,7 @@ namespace DynamicScript.Runtime.Debugging
         /// </summary>
         private static bool Initialized
         {
-            get { return IsInitialized; }
-            set
-            {
-                switch (IsInitialized = value)
-                {
-                    case true:
-                        if (Monitoring.IsEnabled)
-                            Stack = new LinkedList<CallStackFrame>();
-                        IsScriptThread = Thread.CurrentThread.IsThreadPoolThread;
-                        return;
-                    default:
-                        Stack = null;
-                        return;
-                }
-            }
+            get { return m_stack != null; }
         }
 
         /// <summary>
@@ -82,7 +65,7 @@ namespace DynamicScript.Runtime.Debugging
         /// </summary>
         public static IScriptAction Caller
         {
-            get { return Stack != null && Stack.Last != null && Stack.Last.Previous != null ? Stack.Last.Previous.Value.Action : null; }
+            get { return m_stack != null && m_stack.Last != null && m_stack.Last.Previous != null ? m_stack.Last.Previous.Value.Action : null; }
         }
 
         /// <summary>
@@ -92,10 +75,10 @@ namespace DynamicScript.Runtime.Debugging
         /// <returns>The script action located at the specified stack frame.</returns>
         public static CallStackFrame GetFrame(long frameNumber)
         {
-            switch (Stack != null)
+            switch (m_stack != null)
             {
                 case true:
-                    var frame = Stack.Last;
+                    var frame = m_stack.Last;
                     for (var i = 0L; i <= frameNumber; i++)
                         if (frame != null) frame = frame.Previous; else break;
                     return frame != null ? frame.Value : null;
@@ -106,25 +89,30 @@ namespace DynamicScript.Runtime.Debugging
 
         internal static void Push(CallStackFrame frame)
         {
-            if (!Initialized) Initialized = true;
-            if (Stack != null) Stack.AddLast(frame);
+            if (m_stack == null)
+            {
+                m_stack = new LinkedList<CallStackFrame>();
+                IsScriptThread = Thread.CurrentThread.IsThreadPoolThread;
+            }
+            m_stack.AddLast(frame);
         }
 
         internal static void Push(IScriptAction action, InterpreterState state)
         {
-            Push(new CallStackFrame(action, state));
+            if (Monitoring.IsEnabled)
+                Push(new CallStackFrame(action, state));
         }
 
         internal static void Pop()
         {
-            if (Stack != null)
+            if (m_stack != null && m_stack.Count > 0)
             {
-                Stack.RemoveLast();
-                if (IsScriptThread && Stack.Count == 0)
+                m_stack.RemoveLast();
+                if (IsScriptThread && m_stack.Count == 0)
                 {
                     //Provides call stack cleanup of the script produced thread.
-                    var generation = NativeGarbageCollector.GetGeneration(Stack);
-                    Initialized = false;
+                    var generation = NativeGarbageCollector.GetGeneration(m_stack);
+                    m_stack = null;
                     NativeGarbageCollector.Collect(generation);
                 }
             }

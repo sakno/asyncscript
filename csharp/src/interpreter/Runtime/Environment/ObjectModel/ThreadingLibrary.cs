@@ -30,7 +30,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override void Invoke(InvocationContext ctx, ScriptReal duration)
+            protected override void Invoke(ScriptReal duration, InterpreterState state)
             {
                 Thread.Sleep(TimeSpan.FromMilliseconds(duration));
             }
@@ -53,9 +53,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                 return handles.LongLength > 0L ? WaitHandle.WaitAll(handles, TimeSpan.FromMilliseconds(timeout)) : true;
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, IScriptArray objects, ScriptReal timeout)
+            protected override IScriptObject Invoke(IScriptArray objects, ScriptReal timeout, InterpreterState state)
             {
-                return (ScriptBoolean)(objects != null ? WaitAll(Enumerable.ToArray(GetWaitHandles(objects, ctx.RuntimeState)), timeout ?? ScriptReal.Zero) : false);
+                return (ScriptBoolean)(objects != null ? WaitAll(Enumerable.ToArray(GetWaitHandles(objects, state)), timeout ?? ScriptReal.Zero) : false);
             }
         }
 
@@ -76,9 +76,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                 return handles.LongLength > 0L ? WaitHandle.WaitAny(handles, TimeSpan.FromMilliseconds(timeout)) : -1L;
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, IScriptArray objects, ScriptReal timeout)
+            protected override IScriptObject Invoke(IScriptArray objects, ScriptReal timeout, InterpreterState state)
             {
-                return (ScriptInteger)(objects != null ? WaitAny(Enumerable.ToArray(GetWaitHandles(objects, ctx.RuntimeState)), timeout ?? ScriptReal.Zero) : -1L);
+                return (ScriptInteger)(objects != null ? WaitAny(Enumerable.ToArray(GetWaitHandles(objects, state)), timeout ?? ScriptReal.Zero) : -1L);
             }
         }
 

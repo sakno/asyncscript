@@ -481,7 +481,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
 
         private Expression TranslateGrouping(ScriptCodeLoopExpression.OperatorGrouping grouping, TranslationContext context)
         {
-            return BinaryOperatorInvoker.Bind(grouping.Operator);
+            return BinaryOperatorInvoker.New(grouping.Operator);
         }
 
         private Expression TranslateGrouping(ScriptCodeLoopExpression.CustomGrouping grouping, TranslationContext context)
@@ -1252,7 +1252,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             //Declare all parameters
             var parameters = PopulateActionParameters(action, currentScope);
             //The first parameter of the lambda is invocation context.
-            parameters.Insert(0, currentScope.Context);
+            parameters.Insert(0, currentScope.StateHolder);
             //Construct body
             const int DefaultBodySize = 15;
             //The collection of the expressions that represents action implementation
@@ -1263,13 +1263,11 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             else
             {
                 body.Add(Expression.Label(currentScope.BeginOfScope));
-                //state = ctx.RuntimeState
-                body.Add(Expression.Assign(currentScope.StateHolder, Expression.Field(currentScope.Context, InvocationContext.StateField)));
                 //Iterates through statements and emit
                 Translate(action.Body.UnwrapStatements(), context, GotoExpressionKind.Return, ref body);
                 body.Label(context.Scope.EndOfScope, ScriptObject.MakeVoid());   //marks end of the lexical scope.
                 //Local variables translated to the block variables
-                actionExpr = Expression.Lambda(Expression.Block(Enumerable.Concat(currentScope.Locals.Values, new[] { currentScope.StateHolder }), body), false, parameters);
+                actionExpr = Expression.Lambda(Expression.Block(currentScope.Locals.Values, body), false, parameters);
             }
             context.Pop();  //Leave action scope
             return action.IsAsynchronous ?
@@ -1277,7 +1275,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                 Translate(action.Signature, context),   //action contract
                 context.Scope.ScopeVar,           //'this' reference
                 actionExpr) :                            //lambda that implements the action
-                ScriptRuntimeAction.Bind(
+                ScriptRuntimeAction.New(
                 Translate(action.Signature, context),   //action contract
                 context.Scope.ScopeVar,                //'this' reference
                 actionExpr);                            //lambda that implements the action

@@ -138,9 +138,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                 m_proxy = proxy;
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptString arg0, ScriptString arg1)
+            protected override IScriptObject Invoke(ScriptString a, ScriptString b, InterpreterState state)
             {
-                return ScriptArray.Create(m_proxy.Split(arg0, arg1));
+                return ScriptArray.Create(m_proxy.Split(a, b));
             }
         }
 
@@ -160,7 +160,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                 m_proxy = proxy;
             }
 
-            public override IScriptObject Invoke(InvocationContext ctx, ScriptString input, ScriptString pattern, ScriptString replacement)
+            public override IScriptObject Invoke(ScriptString input, ScriptString pattern, ScriptString replacement, InterpreterState state)
             {
                 return (ScriptString)m_proxy.Replace(input, pattern, replacement);
             }
@@ -181,7 +181,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                 m_proxy = proxy;
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptString input, ScriptString pattern)
+            protected override IScriptObject Invoke(ScriptString input, ScriptString pattern, InterpreterState state)
             {
                 return (ScriptBoolean)m_proxy.IsMatch(input, pattern);
             }
@@ -465,7 +465,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                 return index >= 0 && index < group.Captures.Count ? new ScriptMatchCapture(group.Captures[index]) : null;
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptInteger index)
+            protected override IScriptObject Invoke(ScriptInteger index, InterpreterState state)
             {
                 return index.IsInt32 ? Invoke(m_group, SystemConverter.ToInt32(index)) : null;
             }
@@ -514,7 +514,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                 m_match = match;
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptString groupName)
+            protected override IScriptObject Invoke(ScriptString groupName, InterpreterState state)
             {
                 var group = m_match.Groups[groupName ?? ScriptString.Empty];
                 return group != null ? new ScriptMatchGroup(group) : null;
@@ -556,7 +556,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                 m_proxy = proxy;
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptString input, ScriptString pattern)
+            protected override IScriptObject Invoke(ScriptString input, ScriptString pattern, InterpreterState state)
             {
                 return new ScriptRegexMatch(m_proxy.Match(input, pattern));
             }

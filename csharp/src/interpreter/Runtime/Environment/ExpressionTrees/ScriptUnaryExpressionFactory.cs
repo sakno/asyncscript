@@ -33,7 +33,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptString @operator)
+            protected override IScriptObject Invoke(ScriptString @operator, InterpreterState state)
             {
                 var op = Parser.ParseOperator(@operator ?? ScriptString.Empty, false);
                 IScriptObject result = op is ScriptCodeUnaryOperatorType ? new UnaryOperatorInvoker((ScriptCodeUnaryOperatorType)op) : null;

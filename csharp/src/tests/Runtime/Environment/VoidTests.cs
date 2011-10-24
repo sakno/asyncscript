@@ -36,6 +36,7 @@ namespace DynamicScript.Runtime.Environment
         }
 
         [Test(Description="Converts boolean contract to void.")]
+        [ExpectedException(typeof(UnsupportedOperationException))]
         public void BooleanContractToVoid()
         {
             Run("return boolean to void;");

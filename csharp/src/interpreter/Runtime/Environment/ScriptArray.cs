@@ -40,7 +40,7 @@ namespace DynamicScript.Runtime.Environment
                 return m_elements.GetValue(indicies) as IScriptObject;
             }
 
-            protected override IScriptObject GetItem(InvocationContext ctx, IScriptObject[] indicies)
+            protected override IScriptObject GetItem(IScriptObject[] indicies, InterpreterState state)
             {
                 return GetItem(Array.ConvertAll(indicies, SystemConverter.ToInt64));
             }
@@ -62,7 +62,7 @@ namespace DynamicScript.Runtime.Environment
                 elements.SetValue(value, indicies);
             }
 
-            protected override void SetItem(InvocationContext ctx, IScriptObject value, IScriptObject[] indicies)
+            protected override void SetItem(IScriptObject value, IScriptObject[] indicies, InterpreterState state)
             {
                 SetItem(m_elements, value, Array.ConvertAll(indicies, SystemConverter.ToInt64));
             }
@@ -90,7 +90,7 @@ namespace DynamicScript.Runtime.Environment
                 else return ScriptInteger.Zero;
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptInteger dimension)
+            protected override IScriptObject Invoke(ScriptInteger dimension, InterpreterState state)
             {
                 if (dimension == null) dimension = ScriptInteger.Zero;
                 return dimension.IsInt32 ? GetUpperBound(m_elements, SystemConverter.ToInt32(dimension)) : ScriptInteger.Zero;

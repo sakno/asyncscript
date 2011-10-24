@@ -8,7 +8,6 @@ namespace DynamicScript.Runtime
     /// Represents diagnostics functionality of running scripts.
     /// </summary>
     [ComVisible(false)]
-    
     public static class Monitoring
     {
         /// <summary>
@@ -16,14 +15,8 @@ namespace DynamicScript.Runtime
         /// </summary>
         public static void Enable()
         {
-            try
-            {
+            if (!MonoRuntime.Available)
                 AppDomain.MonitoringIsEnabled = true;
-            }
-            catch (NotImplementedException e)   //Mono stub
-            {
-                Console.Error.WriteLine(e.Message);
-            }
         }
 
         /// <summary>
@@ -31,17 +24,7 @@ namespace DynamicScript.Runtime
         /// </summary>
         public static bool IsEnabled
         {
-            get 
-            {
-                try
-                {
-                    return AppDomain.MonitoringIsEnabled;
-                }
-                catch (NotImplementedException)
-                {
-                    return false;
-                }
-            }
+            get { return MonoRuntime.Available ? false : AppDomain.MonitoringIsEnabled; }
         }
 
         /// <summary>

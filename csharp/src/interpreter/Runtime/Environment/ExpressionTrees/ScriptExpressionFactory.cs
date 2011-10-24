@@ -85,9 +85,9 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
                 return Convert(tree.Visit(null, new SyntaxNodeReplacement(expressions, state)));
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, IScriptCodeElement<ScriptCodeExpression> tree, IScriptArray expressions)
+            protected override IScriptObject Invoke(IScriptCodeElement<ScriptCodeExpression> tree, IScriptArray expressions, InterpreterState state)
             {
-                return Invoke(tree.CodeObject, expressions, ctx.RuntimeState);
+                return Invoke(tree.CodeObject, expressions, state);
             }
         }
 
@@ -102,9 +102,9 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, IScriptCodeElement<ScriptCodeExpression> tree, IScriptAction visitor)
+            protected override IScriptObject Invoke(IScriptCodeElement<ScriptCodeExpression> tree, IScriptAction visitor, InterpreterState state)
             {
-                return Convert(tree.CodeObject.Visit(null, new ScriptSyntaxTreeVisitor(visitor, ctx.RuntimeState)));
+                return Convert(tree.CodeObject.Visit(null, new ScriptSyntaxTreeVisitor(visitor, state)));
             }
         }
 
@@ -118,7 +118,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, IScriptCodeElement<ScriptCodeExpression> tree)
+            protected override IScriptObject Invoke(IScriptCodeElement<ScriptCodeExpression> tree, InterpreterState state)
             {
                 return Convert(Extensions.Clone(tree.CodeObject));
             }
@@ -134,7 +134,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptString sourceCode)
+            protected override IScriptObject Invoke(ScriptString sourceCode, InterpreterState state)
             {
                 return Parse(sourceCode);
             }
@@ -150,9 +150,9 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, IScriptExpression<ScriptCodeExpression> runtimeExpr)
+            protected override IScriptObject Invoke(IScriptExpression<ScriptCodeExpression> runtimeExpr, InterpreterState state)
             {
-                return Reduce(runtimeExpr, ctx.RuntimeState);
+                return Reduce(runtimeExpr, state);
             }
         }
 
@@ -166,9 +166,9 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, IScriptExpression<ScriptCodeExpression> arg0)
+            protected override IScriptObject Invoke(IScriptExpression<ScriptCodeExpression> arg0, InterpreterState state)
             {
-                return Compile(arg0, ctx.RuntimeState);
+                return Compile(arg0, state);
             }
         }
 
@@ -253,7 +253,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, IScriptExpression<ScriptCodeExpression> arg0, IScriptExpression<ScriptCodeExpression> arg1)
+            protected override IScriptObject Invoke(IScriptExpression<ScriptCodeExpression> arg0, IScriptExpression<ScriptCodeExpression> arg1, InterpreterState state)
             {
                 return (ScriptBoolean)ScriptExpressionFactory.Equals(arg0, arg1);
             }
@@ -270,7 +270,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, IScriptExpression<ScriptCodeExpression> arg0, IScriptExpression<ScriptCodeExpression> arg1)
+            protected override IScriptObject Invoke(IScriptExpression<ScriptCodeExpression> arg0, IScriptExpression<ScriptCodeExpression> arg1, InterpreterState state)
             {
                 return (ScriptBoolean)ScriptObject.ReferenceEquals(arg0, arg1);
             }
@@ -280,7 +280,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         private sealed class InitAction : ScriptAction
         {
 
-            protected override void Invoke(InvocationContext ctx)
+            protected override void Invoke(InterpreterState state)
             {
                 Instance.Clear();
             }

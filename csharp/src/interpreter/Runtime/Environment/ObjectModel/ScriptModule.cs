@@ -9,7 +9,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
 {
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
     using Thread = System.Threading.Thread;
-    using QScriptIO = Hosting.DynamicScriptIO;
+    using DScriptIO = Hosting.DynamicScriptIO;
     using SystemConverter = System.Convert;
     using ConstructorInfo = System.Reflection.ConstructorInfo;
     using Process = System.Diagnostics.Process;
@@ -41,7 +41,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, IScriptObject arg0)
+            protected override IScriptObject Invoke(IScriptObject arg0, InterpreterState state)
             {
                 return arg0 is ScriptWeakReference ? arg0 : new ScriptWeakReference(arg0);
             }
@@ -59,7 +59,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptActionBase action, IScriptObject @this)
+            protected override IScriptObject Invoke(ScriptActionBase action, IScriptObject @this, InterpreterState state)
             {
                 return action != null ? action.ChangeThis(@this) : null;
             }
@@ -76,9 +76,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptString name)
+            protected override IScriptObject Invoke(ScriptString name, InterpreterState state)
             {
-                return GetData(ctx, name);
+                return GetData(name, state);
             }
         }
 
@@ -94,9 +94,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override void Invoke(InvocationContext ctx, ScriptString name, IScriptObject data)
+            protected override void Invoke(ScriptString name, IScriptObject obj, InterpreterState state)
             {
-                SetData(ctx, name, data);
+                SetData(name, obj, state);
             }
         }
 
@@ -111,13 +111,13 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, IScriptObject obj)
+            protected override IScriptObject Invoke(IScriptObject obj, InterpreterState state)
             {
                 if (obj is ScriptCompositeContract)
-                    return ScriptModule.Reflect(ctx, (ScriptCompositeContract)obj);
+                    return Reflect((ScriptCompositeContract)obj);
                 else if (obj is ScriptCompositeObject)
-                    return ScriptModule.Reflect(ctx, (ScriptCompositeObject)obj);
-                else return ScriptCompositeContract.Empty.CreateCompositeObject(new IScriptObject[0], ctx.RuntimeState);
+                    return ScriptModule.Reflect((ScriptCompositeObject)obj);
+                else return ScriptCompositeContract.Empty.CreateCompositeObject(new IScriptObject[0], state);
             }
         }
 
@@ -140,14 +140,14 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptString scriptCode, IScriptObject global)
+            protected override IScriptObject Invoke(ScriptString scriptCode, IScriptObject global, InterpreterState state)
             {
-                if (IsVoid(global)) global = ctx.Global;
+                if (IsVoid(global)) global = state.Global;
                 if (scriptCode == null) scriptCode = ScriptString.Empty;
                 using (var enumerator = scriptCode.Value.GetEnumerator())
                 {
                     var compiledScript = DynamicScriptInterpreter.OnFlyCompiler.Invoke(enumerator);
-                    return compiledScript.Invoke(ctx.RuntimeState);
+                    return compiledScript.Invoke(state);
                 }
             }
         }
@@ -163,7 +163,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptCompositeObject obj)
+            protected override IScriptObject Invoke(ScriptCompositeObject obj, InterpreterState state)
             {
                 return new ScriptIterable(obj != null ? obj.Split() : Enumerable.Empty<ScriptCompositeObject>());
             }
@@ -204,7 +204,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                 return Invoke(value, type, string.IsNullOrWhiteSpace(language) ? CultureInfo.InvariantCulture : CultureInfo.GetCultureInfoByIetfLanguageTag(language));
             }
 
-            public override IScriptObject Invoke(InvocationContext ctx, ScriptString value, IScriptContract type, ScriptString language)
+            public override IScriptObject Invoke(ScriptString value, IScriptContract type, ScriptString language, InterpreterState state)
             {
                 return Invoke(value, type, language);
             }
@@ -221,7 +221,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, IScriptArray array)
+            protected override IScriptObject Invoke(IScriptArray array, InterpreterState state)
             {
                 return array.GetContractBinding().Rank == 1 || array.GetLength(0) > 1L ? new ScriptSetContract(array) : null;
             }
@@ -241,9 +241,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override void Invoke(InvocationContext ctx, IScriptObject obj)
+            protected override void Invoke(IScriptObject obj, InterpreterState state)
             {
-                ScriptModule.Puts(ctx, obj);
+                Puts(obj);
             }
         }
 
@@ -257,9 +257,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx)
+            protected override IScriptObject Invoke(InterpreterState state)
             {
-                return ScriptModule.Gets(ctx);
+                return Gets();
             }
         }
 
@@ -275,9 +275,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptString name, IScriptContract contract)
+            protected override IScriptObject Invoke(ScriptString name, IScriptContract contract, InterpreterState state)
             {
-                return name == null || IsVoid(contract) ? Void : ScriptModule.NewObj(ctx, name, contract);
+                return name == null || IsVoid(contract) ? Void : NewObj(name, contract, state);
             }
         }
 
@@ -350,9 +350,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptString scriptFile)
+            protected override IScriptObject Invoke(ScriptString scriptFile, InterpreterState state)
             {
-                return Use(ctx, scriptFile);
+                return Use(scriptFile, state);
             }
         }
 
@@ -368,9 +368,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override void Invoke(InvocationContext ctx, ScriptString scriptFile, ScriptBoolean cache)
+            protected override void Invoke(ScriptString scriptFile, ScriptBoolean cacheResult, InterpreterState state)
             {
-                Prepare(ctx, scriptFile, cache);
+                Prepare(scriptFile, cacheResult, state);
             }
         }
 
@@ -387,9 +387,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            public override IScriptObject Invoke(InvocationContext ctx, ScriptString fileName, ScriptString arguments, ScriptInteger timeout)
+            public override IScriptObject Invoke(ScriptString command, ScriptString arguments, ScriptInteger timeout, InterpreterState state)
             {
-                return Cmd(ctx, fileName, arguments, timeout);
+                return Cmd(command, arguments, timeout);
             }
         }
 
@@ -425,9 +425,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, IScriptCompositeObject obj)
+            protected override IScriptObject Invoke(IScriptCompositeObject obj, InterpreterState state)
             {
-                return obj != null ? obj.AsReadOnly(ctx.RuntimeState) : null;
+                return obj != null ? obj.AsReadOnly(state) : null;
             }
         }
 
@@ -441,7 +441,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx)
+            protected override IScriptObject Invoke(InterpreterState state)
             {
                 return new Regex();
             }
@@ -510,47 +510,45 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// <summary>
         /// Constructs a new object dynamically.
         /// </summary>
-        /// <param name="ctx">The invocation context.</param>
         /// <param name="name">The name of the slot.</param>
         /// <param name="contract">The contract binding for the slot. Cannot be <see cref="ScriptObject.Void"/>.</param>
+        /// <param name="state"></param>
         /// <returns>The created object.</returns>
         /// <exception cref="VoidException"><paramref name="contract"/> is <see cref="ScriptObject.Void"/>.</exception>
         [CLSCompliant(false)]
-        public static IScriptObject NewObj(InvocationContext ctx, ScriptString name, IScriptObject contract)
+        public static IScriptObject NewObj(ScriptString name, IScriptObject contract, InterpreterState state)
         {
-            if (ScriptObject.IsVoid(contract)) throw new VoidException(ctx.RuntimeState);
+            if (ScriptObject.IsVoid(contract)) throw new VoidException(state);
             return new ScriptCompositeObject(new[] { Variable(name, contract) });
         }
 
         /// <summary>
         /// Writes the specified object to the output stream.
         /// </summary>
-        /// <param name="ctx">The invocation context.</param>
         /// <param name="obj">The object to be written to the output stream.</param>
-        public static void Puts(InvocationContext ctx, IScriptObject obj)
+        public static void Puts(IScriptObject obj)
         {
-            QScriptIO.WriteLine(obj);
+            DScriptIO.WriteLine(obj);
         }
 
         /// <summary>
         /// Reads object from the input stream.
         /// </summary>
-        /// <param name="ctx">The invocation context.</param>
         /// <returns>The object restored from the input stream.</returns>
-        public static IScriptObject Gets(InvocationContext ctx)
+        public static IScriptObject Gets()
         {
-            return QScriptIO.ReadLine();
+            return DScriptIO.ReadLine();
         }
 
-        private static IScriptObject Use(InvocationContext ctx, IEnumerable<Uri> scriptLocations)
+        private static IScriptObject Use(IEnumerable<Uri> scriptLocations, InterpreterState state)
         {
             IScriptObject module = Void;
             foreach (var location in scriptLocations)
-                if (Use(ctx, location, out module)) break;
+                if (Use(location, out module, state)) break;
             return module;
         }
 
-        private static bool Use(InvocationContext ctx, Uri scriptLocation, out IScriptObject module)
+        private static bool Use(Uri scriptLocation, out IScriptObject module, InterpreterState state)
         {
             //if script file is not existed the return void.
             if (scriptLocation.IsFile && !File.Exists(scriptLocation.LocalPath))
@@ -558,67 +556,55 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                 module = Void;
                 return false;
             }
-            var compiledScript = ctx.RuntimeState.Cache.Cached(scriptLocation) ?
-                ctx.RuntimeState.Cache.Lookup(scriptLocation, DynamicScriptInterpreter.OnFlyCompiler).CompiledScript :
+            var compiledScript = state.Cache.Cached(scriptLocation) ?
+                state.Cache.Lookup(scriptLocation, DynamicScriptInterpreter.OnFlyCompiler).CompiledScript :
                 InterpreterState.Compile(scriptLocation, DynamicScriptInterpreter.OnFlyCompiler).CompiledScript;
             //trace module loading
             if (ScriptDebugger.CurrentDebugger != null) ScriptDebugger.CurrentDebugger.OnLoadModule(scriptLocation);
-            module = compiledScript.Invoke(ctx.RuntimeState);
+            module = compiledScript.Invoke(state);
             return true;
         }
 
-        private static IScriptObject Use(InvocationContext ctx, string scriptFile)
+        /// <summary>
+        /// Executes a script stored in the specified file.
+        /// </summary>
+        /// <param name="scriptFile"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public static IScriptObject Use(string scriptFile, InterpreterState state)
         {
             if (string.IsNullOrWhiteSpace(scriptFile)) return Void;
-            return Use(ctx, RuntimeHelpers.PrepareScriptFilePath(scriptFile));
+            return Use(RuntimeHelpers.PrepareScriptFilePath(scriptFile), state);
         }
 
-        /// <summary>
-        /// Loads script file or compiled script.
-        /// </summary>
-        /// <param name="ctx">The invocation context.</param>
-        /// <param name="scriptFile">The path to the script file or URL address of script location.</param>
-        /// <returns>Script invocation result.</returns>
-        [CLSCompliant(false)]
-        public static IScriptObject Use(InvocationContext ctx, ScriptString scriptFile)
+        private static bool Prepare(Uri scriptFile, bool cacheResult, InterpreterState state)
         {
-            return Use(ctx, (string)scriptFile);
-        }
-
-        private static bool Prepare(InvocationContext ctx, Uri scriptFile, bool cacheResult)
-        {
-            var cookie = ctx.RuntimeState.Cache.Lookup(scriptFile, DynamicScriptInterpreter.OnFlyCompiler);
+            var cookie = state.Cache.Lookup(scriptFile, DynamicScriptInterpreter.OnFlyCompiler);
             switch (cacheResult && cookie != null)
             {
                 case true:
-                    cookie.ScriptResult = cookie.CompiledScript.Invoke(ctx.RuntimeState);
+                    cookie.ScriptResult = cookie.CompiledScript.Invoke(state);
                     return true;
                 default: return false;
             }
         }
 
-        private static bool Prepare(InvocationContext ctx, IEnumerable<Uri> scriptFiles, bool cacheResult)
+        private static bool Prepare(IEnumerable<Uri> scriptFiles, bool cacheResult, InterpreterState state)
         {
             foreach (var f in scriptFiles)
-                if (Prepare(ctx, f, cacheResult)) return true;
+                if (Prepare(f, cacheResult, state)) return true;
             return false;
         }
 
-        private static void Prepare(InvocationContext ctx, string scriptFile, bool cacheResult)
-        {
-            Prepare(ctx, RuntimeHelpers.PrepareScriptFilePath(scriptFile), cacheResult);
-        }
-
         /// <summary>
-        /// Loads script file and saves it to the cache.
+        /// Compiles the specified script file.
         /// </summary>
-        /// <param name="ctx">The action invocation context.</param>
-        /// <param name="scriptFile">The path to the script file.</param>
-        /// <param name="cacheResult">Specifies that the loaded script should be executed and its result saved into cache.</param>
-        [CLSCompliant(false)]
-        public static void Prepare(InvocationContext ctx, ScriptString scriptFile, ScriptBoolean cacheResult)
+        /// <param name="scriptFile"></param>
+        /// <param name="cacheResult"></param>
+        /// <param name="state"></param>
+        public static void Prepare(string scriptFile, bool cacheResult, InterpreterState state)
         {
-            Prepare(ctx, (string)scriptFile, (bool)cacheResult);
+            Prepare(RuntimeHelpers.PrepareScriptFilePath(scriptFile), cacheResult, state);
         }
 
         internal static ConstructorInfo DefaultConstructor
@@ -629,18 +615,11 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// <summary>
         /// Executes external program.
         /// </summary>
-        /// <param name="ctx">The invocation context.</param>
-        /// <param name="fileName">The name of an applicatio file to run.</param>
-        /// <param name="arguments">Command-line arguments to pass when starting process.</param>
-        /// <param name="timeout">The amount of time, in milliseconds, to wait for the associated process to exit.</param>
-        /// <returns>Process exit code.</returns>
-        [CLSCompliant(false)]
-        public static ScriptInteger Cmd(InvocationContext ctx, ScriptString fileName, ScriptString arguments, ScriptInteger timeout)
-        {
-            return Cmd(ctx, (string)fileName, (string)arguments, (long)timeout);
-        }
-
-        private static ScriptInteger Cmd(InvocationContext ctx, string command, string arguments, long timeout)
+        /// <param name="command"></param>
+        /// <param name="arguments"></param>
+        /// <param name="timeout"></param>
+        /// <returns></returns>
+        public static ScriptInteger Cmd(string command, string arguments, long timeout)
         {
             using (var p = Process.Start(command, arguments))
                 return p.WaitForExit((int)timeout) ? new ScriptInteger(p.ExitCode) : ScriptInteger.MinValue;
@@ -649,34 +628,33 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// <summary>
         /// Stores object into the internal data store.
         /// </summary>
-        /// <param name="ctx">Internal interpreter state.</param>
         /// <param name="name">The name of data slot.</param>
         /// <param name="obj">An object to store.</param>
-        public static void SetData(InvocationContext ctx, ScriptString name, IScriptObject obj)
+        /// <param name="state">Internal interpreter state.</param>
+        public static void SetData(ScriptString name, IScriptObject obj, InterpreterState state)
         {
-            if (name == null) throw new VoidException(ctx.RuntimeState);
-            ctx.RuntimeState[name] = IsVoid(obj) ? null : obj;
+            if (name == null) throw new VoidException(state);
+            state[name] = IsVoid(obj) ? null : obj;
         }
 
         /// <summary>
         /// Restores object from the internal data store.
         /// </summary>
-        /// <param name="ctx"></param>
         /// <param name="name"></param>
+        /// <param name="state"></param>
         /// <returns></returns>
-        public static ScriptObject GetData(InvocationContext ctx, ScriptString name)
+        public static ScriptObject GetData(ScriptString name, InterpreterState state)
         {
-            if (name == null) throw new VoidException(ctx.RuntimeState);
-            return (ctx.RuntimeState[name] as ScriptObject) ?? Void;
+            if (name == null) throw new VoidException(state);
+            return (state[name] as ScriptObject) ?? Void;
         }
 
         /// <summary>
         /// Reflects the specified composite contract.
         /// </summary>
-        /// <param name="ctx"></param>
         /// <param name="contract"></param>
         /// <returns></returns>
-        public static ScriptCompositeObject Reflect(InvocationContext ctx, ScriptCompositeContract contract)
+        public static ScriptCompositeObject Reflect(ScriptCompositeContract contract)
         {
             return contract != null ? new ScriptIterable(contract.Reflect()) : ScriptIterable.Empty();
         }
@@ -684,10 +662,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// <summary>
         /// Reflects the specified composite contract.
         /// </summary>
-        /// <param name="ctx"></param>
         /// <param name="obj"></param>
         /// <returns></returns>
-        public static ScriptCompositeObject Reflect(InvocationContext ctx, ScriptCompositeObject obj)
+        public static ScriptCompositeObject Reflect(ScriptCompositeObject obj)
         {
             if (obj == null) throw new ArgumentNullException("obj");
             return new ScriptCompositeObjectMetadata(obj);

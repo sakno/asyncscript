@@ -30,9 +30,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptInteger arg0, ScriptInteger arg1)
+            protected override IScriptObject Invoke(ScriptInteger value, ScriptInteger shift, InterpreterState state)
             {
-                return Shl(ctx, arg0, arg1);
+                return Shl(value, shift);
             }
         }
 
@@ -48,9 +48,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptInteger arg0, ScriptInteger arg1)
+            protected override IScriptObject Invoke(ScriptInteger value, ScriptInteger shift, InterpreterState state)
             {
-                return Shr(ctx, arg0, arg1);
+                return Shr(value, shift);
             }
         }
 
@@ -65,9 +65,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptReal a)
+            protected override IScriptObject Invoke(ScriptReal a, InterpreterState state)
             {
-                return Sin(ctx, a);
+                return Sin(a);
             }
         }
 
@@ -82,9 +82,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptReal a)
+            protected override IScriptObject Invoke(ScriptReal a, InterpreterState state)
             {
-                return Sinh(ctx, a);
+                return Sinh(a);
             }
         }
 
@@ -99,9 +99,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptReal a)
+            protected override IScriptObject Invoke(ScriptReal a, InterpreterState state)
             {
-                return Deg(ctx, a);
+                return Deg(a);
             }
         }
 
@@ -116,9 +116,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptReal a)
+            protected override IScriptObject Invoke(ScriptReal a, InterpreterState state)
             {
-                return Rad(ctx, a);
+                return Rad(a);
             }
         }
 
@@ -133,9 +133,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptReal a)
+            protected override IScriptObject Invoke(ScriptReal a, InterpreterState state)
             {
-                return Cos(ctx, a);
+                return Cos(a);
             }
         }
 
@@ -150,9 +150,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptReal a)
+            protected override IScriptObject Invoke(ScriptReal a, InterpreterState state)
             {
-                return Cosh(ctx, a);
+                return Cosh(a);
             }
         }
 
@@ -167,9 +167,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptReal a)
+            protected override IScriptObject Invoke(ScriptReal a, InterpreterState state)
             {
-                return Floor(ctx, a);
+                return Floor(a);
             }
         }
 
@@ -184,9 +184,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptReal value)
+            protected override IScriptObject Invoke(ScriptReal a, InterpreterState state)
             {
-                return Ceiling(ctx, value);
+                return Ceiling(a);
             }
         }
 
@@ -201,9 +201,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptReal a)
+            protected override IScriptObject Invoke(ScriptReal a, InterpreterState state)
             {
-                return Tan(ctx, a);
+                return Tan(a);
             }
         }
 
@@ -218,9 +218,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptReal a)
+            protected override IScriptObject Invoke(ScriptReal a, InterpreterState state)
             {
-                return Tanh(ctx, a);
+                return Tanh(a);
             }
         }
 
@@ -235,9 +235,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptReal a)
+            protected override IScriptObject Invoke(ScriptReal d, InterpreterState state)
             {
-                return Atan(ctx, a);
+                return Atan(d);
             }
         }
 
@@ -252,9 +252,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptReal a)
+            protected override IScriptObject Invoke(ScriptReal d, InterpreterState state)
             {
-                return Acos(ctx, a);
+                return Acos(d);
             }
         }
 
@@ -269,9 +269,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptReal a)
+            protected override IScriptObject Invoke(ScriptReal d, InterpreterState state)
             {
-                return Asin(ctx, a);
+                return Asin(d);
             }
         }
 
@@ -286,9 +286,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, ScriptReal d)
+            protected override IScriptObject Invoke(ScriptReal value, InterpreterState state)
             {
-                return Trunc(ctx, d);
+                return Trunc(value);
             }
         }
         #endregion
@@ -329,11 +329,10 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// <summary>
         /// Shifts the first value right by the number of bits specified by its value.
         /// </summary>
-        /// <param name="ctx"></param>
         /// <param name="value"></param>
         /// <param name="shift"></param>
         /// <returns></returns>
-        public static ScriptInteger Shr(InvocationContext ctx, ScriptInteger value, ScriptInteger shift)
+        public static ScriptInteger Shr(ScriptInteger value, ScriptInteger shift)
         {
             return value >> (int)shift;
         }
@@ -341,11 +340,10 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// <summary>
         /// Shifts the first value left by the number of bits specified by its value.
         /// </summary>
-        /// <param name="ctx"></param>
         /// <param name="value"></param>
         /// <param name="shift"></param>
         /// <returns></returns>
-        public static ScriptInteger Shl(InvocationContext ctx, ScriptInteger value, ScriptInteger shift)
+        public static ScriptInteger Shl(ScriptInteger value, ScriptInteger shift)
         {
             return value << (int)shift;
         }
@@ -353,10 +351,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// <summary>
         /// Returns the angle whose tangent is the specified number.
         /// </summary>
-        /// <param name="ctx"></param>
         /// <param name="d">A number representing a tangent.</param>
         /// <returns></returns>
-        public static ScriptReal Atan(InvocationContext ctx, ScriptReal d)
+        public static ScriptReal Atan(ScriptReal d)
         {
             return SystemMath.Atan(d);
         }
@@ -364,10 +361,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// <summary>
         /// Returns the angle whose sine is the specified number.
         /// </summary>
-        /// <param name="ctx"></param>
         /// <param name="d">A number representing a sine, where -1 ≤d≤ 1.</param>
         /// <returns></returns>
-        public static ScriptReal Asin(InvocationContext ctx, ScriptReal d)
+        public static ScriptReal Asin(ScriptReal d)
         {
             return SystemMath.Asin(d);
         }
@@ -375,10 +371,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// <summary>
         /// Returns the angle whose cosine is the specified number.
         /// </summary>
-        /// <param name="ctx"></param>
         /// <param name="d">A number representing a cosine, where -1 ≤d≤ 1.</param>
         /// <returns></returns>
-        public static ScriptReal Acos(InvocationContext ctx, ScriptReal d)
+        public static ScriptReal Acos(ScriptReal d)
         {
             return SystemMath.Acos(d);
         }
@@ -387,10 +382,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// Returns the smallest integral value that is greater than or equal to the
         /// specified double-precision floating-point number.
         /// </summary>
-        /// <param name="ctx"></param>
         /// <param name="a"></param>
         /// <returns></returns>
-        public static ScriptInteger Ceiling(InvocationContext ctx, ScriptReal a)
+        public static ScriptInteger Ceiling(ScriptReal a)
         {
             return (long)SystemMath.Ceiling(a);
         }
@@ -398,10 +392,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// <summary>
         /// Returns the largest integer less than or equal to the specified decimal number.
         /// </summary>
-        /// <param name="ctx"></param>
         /// <param name="a"></param>
         /// <returns></returns>
-        public static ScriptInteger Floor(InvocationContext ctx, ScriptReal a)
+        public static ScriptInteger Floor(ScriptReal a)
         {
             return (long)SystemMath.Floor(a);
         }
@@ -409,10 +402,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// <summary>
         /// Returns the sine of the specified angle.
         /// </summary>
-        /// <param name="ctx">The invocation context.</param>
         /// <param name="a">An angle, measured in radians.</param>
         /// <returns>The sine of the specified angle.</returns>
-        public static ScriptReal Sin(InvocationContext ctx, ScriptReal a)
+        public static ScriptReal Sin(ScriptReal a)
         {
             return SystemMath.Sin(a);
         }
@@ -420,10 +412,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// <summary>
         /// Returns the hyperbolic sine of the specified angle.
         /// </summary>
-        /// <param name="ctx">The invocation context.</param>
         /// <param name="a">An angle, measured in radians.</param>
         /// <returns>The hyperbolic sine of the specified angle.</returns>
-        public static ScriptReal Sinh(InvocationContext ctx, ScriptReal a)
+        public static ScriptReal Sinh(ScriptReal a)
         {
             return SystemMath.Sinh(a);
         }
@@ -431,10 +422,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// <summary>
         /// Returns the cosine of the specified angle.
         /// </summary>
-        /// <param name="ctx">The invocation context.</param>
         /// <param name="a">An angle, measured in radians.</param>
         /// <returns>The cosine of the specified angle.</returns>
-        public static ScriptReal Cos(InvocationContext ctx, ScriptReal a)
+        public static ScriptReal Cos(ScriptReal a)
         {
             return SystemMath.Cos(a);
         }
@@ -442,10 +432,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// <summary>
         /// Returns the hyperbolic cosine of the specified angle.
         /// </summary>
-        /// <param name="ctx">The invocation context.</param>
         /// <param name="a">An angle, measured in radians.</param>
         /// <returns>The hyperbolic cosine of the specified angle.</returns>
-        public static ScriptReal Cosh(InvocationContext ctx, ScriptReal a)
+        public static ScriptReal Cosh(ScriptReal a)
         {
             return SystemMath.Cosh(a);
         }
@@ -453,10 +442,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// <summary>
         /// Returns the tangent of the specified angle.
         /// </summary>
-        /// <param name="ctx">The invocation context.</param>
         /// <param name="a">An angle, measured in radians.</param>
         /// <returns>The tangent of the specified angle.</returns>
-        public static ScriptReal Tan(InvocationContext ctx, ScriptReal a)
+        public static ScriptReal Tan(ScriptReal a)
         {
             return SystemMath.Tan(a);
         }
@@ -464,10 +452,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// <summary>
         /// Returns the hyperbolic tangent of the specified angle.
         /// </summary>
-        /// <param name="ctx">The invocation context.</param>
         /// <param name="a">An angle, measured in radians.</param>
         /// <returns>The hyperbolic tangent of the specified angle.</returns>
-        public static ScriptReal Tanh(InvocationContext ctx, ScriptReal a)
+        public static ScriptReal Tanh(ScriptReal a)
         {
             return SystemMath.Tanh(a);
         }
@@ -475,11 +462,10 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// <summary>
         /// Calculates integral part of a specified floating-point number.
         /// </summary>
-        /// <param name="ctx">The invocation context.</param>
         /// <param name="d">A number to truncate.</param>
         /// <returns> The integral part of <paramref name="d"/>; that is, the number that remains after any fractional
         ///     digits have been discarded.</returns>
-        public static ScriptInteger Trunc(InvocationContext ctx, ScriptReal d)
+        public static ScriptInteger Trunc(ScriptReal d)
         {
             return (long)SystemMath.Truncate(d);
         }
@@ -487,10 +473,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// <summary>
         /// Converts radians to degrees.
         /// </summary>
-        /// <param name="ctx">The invocation context.</param>
         /// <param name="a">An angle, measured in radians.</param>
         /// <returns>An angle, measured in degrees.</returns>
-        public static ScriptReal Deg(InvocationContext ctx, ScriptReal a)
+        public static ScriptReal Deg(ScriptReal a)
         {
             return a * 180 / SystemMath.PI;
         }
@@ -498,10 +483,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// <summary>
         /// Converts degrees to radians.
         /// </summary>
-        /// <param name="ctx">The invocation context.</param>
         /// <param name="a">An angle, measured in degrees.</param>
         /// <returns>An angle, measured in radians.</returns>
-        public static ScriptReal Rad(InvocationContext ctx, ScriptReal a)
+        public static ScriptReal Rad(ScriptReal a)
         {
             return a * SystemMath.PI / 180;
         }

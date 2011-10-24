@@ -31,12 +31,12 @@ namespace DynamicScript.Runtime.Environment
         /// <summary>
         /// Executes unary operator.
         /// </summary>
-        /// <param name="ctx"></param>
+        /// <param name="state">Internal interpreter state.</param>
         /// <param name="operand"></param>
         /// <returns></returns>
-        protected override IScriptObject Invoke(InvocationContext ctx, IScriptObject operand)
+        protected override IScriptObject Invoke(IScriptObject operand, InterpreterState state)
         {
-            return operand.UnaryOperation(Operator, ctx.RuntimeState);
+            return operand.UnaryOperation(Operator, state);
         }
 
         ScriptCodeUnaryOperatorType IUnaryOperatorInvoker.Operator

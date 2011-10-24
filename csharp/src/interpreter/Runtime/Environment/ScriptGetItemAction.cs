@@ -113,20 +113,22 @@ namespace DynamicScript.Runtime.Environment
         /// <summary>
         /// Returns an item identified by the specified indicies.
         /// </summary>
-        /// <param name="ctx"></param>
         /// <param name="indicies"></param>
+        /// <param name="state"></param>
         /// <returns></returns>
-        protected abstract IScriptObject GetItem(InvocationContext ctx, IScriptObject[] indicies);
+        protected abstract IScriptObject GetItem(IScriptObject[] indicies, InterpreterState state);
 
         /// <summary>
-        /// Returns an item identified by the specified indicies.
+        /// 
         /// </summary>
-        /// <param name="ctx"></param>
-        /// <param name="indicies"></param>
+        /// <param name="args"></param>
+        /// <param name="state"></param>
         /// <returns></returns>
-        protected internal sealed override IScriptObject Invoke(InvocationContext ctx, params IRuntimeSlot[] indicies)
+        protected sealed override IScriptObject InvokeCore(IList<IScriptObject> args, InterpreterState state)
         {
-            return GetItem(ctx, indicies.GetValues(ctx.RuntimeState));
+            var indicies = new IScriptObject[args.Count];
+            args.CopyTo(0, indicies, 0, args.Count);
+            return GetItem(indicies, state);
         }
     }
 

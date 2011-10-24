@@ -47,7 +47,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, IScriptCodeElement<ScriptCodeStatement> tree)
+            protected override IScriptObject Invoke(IScriptCodeElement<ScriptCodeStatement> tree, InterpreterState state)
             {
                 return Convert(Extensions.Clone(tree.CodeObject));
             }
@@ -90,16 +90,16 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             {
             }
 
-            protected override IScriptObject Invoke(InvocationContext ctx, IScriptCodeElement<ScriptCodeStatement> tree, IScriptAction visitor)
+            protected override IScriptObject Invoke(IScriptCodeElement<ScriptCodeStatement> tree, IScriptAction visitor, InterpreterState state)
             {
-                return Convert(tree.CodeObject.Visit(null, new ScriptSyntaxTreeVisitor(visitor, ctx.RuntimeState)));
+                return Convert(tree.CodeObject.Visit(null, new ScriptSyntaxTreeVisitor(visitor, state)));
             }
         }
 
         [ComVisible(false)]
         private sealed class InitAction : ScriptAction
         {
-            protected override void Invoke(InvocationContext ctx)
+            protected override void Invoke(InterpreterState state)
             {
                 Instance.Clear();
             }
