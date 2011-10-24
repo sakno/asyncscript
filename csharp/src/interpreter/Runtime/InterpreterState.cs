@@ -171,9 +171,10 @@ namespace DynamicScript.Runtime
             m_args = args ?? new ReadOnlyCollection<string>(new string[0]);
             m_cache = cache;
             m_intern = internPool ?? new InternPool(10);
-            m_dataSlots = dataSlots ?? new Dictionary<string, object>(StringComparer.Ordinal);
-            if (!m_dataSlots.ContainsKey(RuntimeBehavior.DataSlotName))
-                m_dataSlots.Add(RuntimeBehavior.DataSlotName, new RuntimeBehavior());
+            m_dataSlots = dataSlots ?? new Dictionary<string, object>(StringComparer.Ordinal)
+                    {
+                        {RuntimeBehavior.DataSlotName, new RuntimeBehavior()}
+                    };
         }
 
         /// <summary>
