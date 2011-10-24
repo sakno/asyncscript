@@ -128,7 +128,7 @@ namespace DynamicScript.Compiler.Ast
         /// </summary>
         public override bool CanReduce
         {
-            get { return Condition.CanReduce || ThenBranch.CanReduce || ElseBranch.CanReduce; }
+            get { return Condition.CanReduce || ThenBranch.CanReduce || ElseBranch.CanReduce || Condition is ScriptCodePrimitiveExpression; }
         }
 
         /// <summary>
@@ -138,7 +138,11 @@ namespace DynamicScript.Compiler.Ast
         /// <returns>A new reduced conditional expression.</returns>
         public override ScriptCodeExpression Reduce(InterpretationContext context)
         {
-            return new ScriptCodeConditionalExpression(Condition.Reduce(context), ThenBranch.Reduce(context), ElseBranch.Reduce(context));
+            if (Condition is ScriptCodeBooleanExpression)
+                return ((ScriptCodeBooleanExpression)Condition).Value ? ThenBranch.Reduce(context) : ElseBranch.Reduce(context);
+            else if (Condition is ScriptCodePrimitiveExpression)
+                return ElseBranch.Reduce(context);
+            else return new ScriptCodeConditionalExpression(Condition.Reduce(context), ThenBranch.Reduce(context), ElseBranch.Reduce(context));
         }
 
         /// <summary>
