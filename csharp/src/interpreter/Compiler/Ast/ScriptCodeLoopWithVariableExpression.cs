@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 namespace DynamicScript.Compiler.Ast
 {
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
+    using StringBuilder = System.Text.StringBuilder;
 
     /// <summary>
     /// Represents loop expression with variable.
@@ -45,11 +46,7 @@ namespace DynamicScript.Compiler.Ast
             public bool Temporary
             {
                 get { return m_temporary; }
-                set 
-                { 
-                    m_temporary = value;
-                    OnPropertyChanged("Temporary");
-                }
+                set { m_temporary = value; }
             }
 
             string ISlot.Name
@@ -63,11 +60,7 @@ namespace DynamicScript.Compiler.Ast
             public ScriptCodeExpression InitExpression
             {
                 get { return m_init ?? ScriptCodeVoidExpression.Instance; }
-                set 
-                { 
-                    m_init = value;
-                    OnPropertyChanged("InitExpression");
-                }
+                set { m_init = value; }
             }
 
             ScriptCodeExpression ISlot.ContractBinding
@@ -139,6 +132,20 @@ namespace DynamicScript.Compiler.Ast
             {
                 var ctor = LinqHelpers.BodyOf<string, bool, ScriptCodeExpression, LoopVariable, NewExpression>((name, temp, init) => new LoopVariable(name, temp, init));
                 return ctor.Update(new[] { LinqHelpers.Constant(Name), LinqHelpers.Constant(Temporary), LinqHelpers.Restore(InitExpression) });
+            }
+
+            /// <summary>
+            /// Returns a string representation of the loop variable.
+            /// </summary>
+            /// <returns></returns>
+            public override string ToString()
+            {
+                var result = new StringBuilder();
+                if (Temporary) result.Append(Keyword.Var + Lexeme.WhiteSpace);
+                result.Append(Name);
+                if (m_init != null)
+                    result.AppendFormat("{0}{1}", Operator.Assignment, m_init);
+                return result.ToString();
             }
         }
 

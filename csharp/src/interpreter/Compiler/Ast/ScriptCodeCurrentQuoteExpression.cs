@@ -33,7 +33,7 @@ namespace DynamicScript.Compiler.Ast
         /// <returns>A string representation of this expression.</returns>
         public override string ToString()
         {
-            return string.Concat(Punctuation.Dog, Punctuation.Dog);
+            return Punctuation.DoubleDog;
         }
 
         /// <summary>

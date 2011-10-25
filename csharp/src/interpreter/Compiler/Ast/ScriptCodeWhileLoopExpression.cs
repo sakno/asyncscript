@@ -6,6 +6,7 @@ using System.Linq.Expressions;
 namespace DynamicScript.Compiler.Ast
 {
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
+    using StringBuilder = System.Text.StringBuilder;
 
     /// <summary>
     /// Represens while-loop expression.
@@ -201,6 +202,32 @@ namespace DynamicScript.Compiler.Ast
                 Style = this.Style,
                 SuppressResult = this.SuppressResult
             };
+        }
+
+        /// <summary>
+        /// Returns a string representation of this expression.
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            var result = new StringBuilder();
+            result.Append((string)Punctuation.LeftBracket);
+            switch (Style)
+            {
+                case LoopStyle.EvaluateConditionBeforeBody:
+                    result.Append(string.Concat(Keyword.While, Lexeme.WhiteSpace, Condition, Lexeme.WhiteSpace));
+                    if (Grouping != null)
+                        result.Append(string.Concat(Keyword.GroupBy, Lexeme.WhiteSpace, Grouping, Lexeme.WhiteSpace));
+                    result.Append(string.Concat(Keyword.Do, Lexeme.WhiteSpace, Body.Expression));
+                    break;
+                case LoopStyle.EvaluateConditionAfterBody:
+                    result.Append(string.Concat(Keyword.Do, Lexeme.WhiteSpace, Body.Expression, Lexeme.WhiteSpace, Keyword.While, Lexeme.WhiteSpace, Condition, Lexeme.WhiteSpace));
+                    if (Grouping != null)
+                        result.Append(string.Concat(Keyword.GroupBy, Lexeme.WhiteSpace, Grouping, Lexeme.WhiteSpace));
+                    break;
+            }
+            result.Append((string)Punctuation.RightBracket);
+            return result.ToString();
         }
     }
 }

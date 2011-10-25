@@ -94,5 +94,14 @@ namespace DynamicScript.Compiler.Ast
         {
             return new ScriptCodeAsyncExpression(Extensions.Clone(Contract));
         }
+
+        /// <summary>
+        /// Returns a string representation of this expression.
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return string.Concat(Keyword.Async, Punctuation.LeftBracket, Contract, Punctuation.RightBracket);
+        }
     }
 }

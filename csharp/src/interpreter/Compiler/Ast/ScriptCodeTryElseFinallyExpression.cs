@@ -197,7 +197,8 @@ namespace DynamicScript.Compiler.Ast
             builder.Append(DangerousCode);
             foreach (var t in Traps)
                 builder.AppendFormat(" {0}", t);
-            builder.Append(Finally);
+            if (!Finally.IsVoidExpression)
+                builder.Append(string.Concat(Keyword.Finally, Lexeme.WhiteSpace, Finally.Expression));
             return builder.ToString();
         }
 

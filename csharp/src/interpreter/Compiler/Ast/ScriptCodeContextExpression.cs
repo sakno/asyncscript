@@ -55,7 +55,7 @@ namespace DynamicScript.Compiler.Ast
         /// <returns></returns>
         public override string ToString()
         {
-            return string.Concat(Context == InterpretationContext.Unchecked ? Keyword.Unchecked : Keyword.Checked, Punctuation.Colon, Body.Expression);
+            return string.Concat(Context == InterpretationContext.Unchecked ? Keyword.Unchecked : Keyword.Checked, Body.Expression);
         }
 
         /// <summary>

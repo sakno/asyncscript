@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 namespace DynamicScript.Compiler.Ast
 {
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
+    using StringBuilder = System.Text.StringBuilder;
 
     /// <summary>
     /// Represents for-loop expression.
@@ -138,6 +139,18 @@ namespace DynamicScript.Compiler.Ast
             };
         }
 
-
+        /// <summary>
+        /// Returns a string representation of this expression.
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            const char WhiteSpace = Lexeme.WhiteSpace;
+            var result = new StringBuilder();
+            result.Append(String.Concat(Punctuation.LeftBracket, Keyword.For, WhiteSpace, Variable, WhiteSpace, Keyword.While, Condition, WhiteSpace));
+            if (Grouping != null) result.Append(String.Concat(Keyword.GroupBy, WhiteSpace, Grouping, WhiteSpace));
+            result.Append(String.Concat(Keyword.Do, WhiteSpace, Body.Expression, Punctuation.RightBracket));
+            return result.ToString();
+        }
     }
 }

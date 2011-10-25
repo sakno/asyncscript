@@ -69,27 +69,18 @@ namespace DynamicScript.Compiler.Ast
         /// <returns>A string that represents the current expression.</returns>
         public override string ToString()
         {
-            var builder = new StringBuilder();
-            builder.Append(Left);
-            switch (Operator)
-            {
-                case ScriptCodeBinaryOperatorType.TypeCast:
-                case ScriptCodeBinaryOperatorType.PartOf:
-                case ScriptCodeBinaryOperatorType.InstanceOf:
-                    builder.AppendFormat(" {0} ", ToString(Operator));
-                    break;
-                default:
-                    builder.Append(ToString(Operator));
-                    break;
-            }
-            builder.Append(Right);
-            return builder.ToString();
+            return string.Concat(Punctuation.LeftBrace, 
+                Left, 
+                Punctuation.WhiteSpace, ToString(Operator), Punctuation.WhiteSpace, 
+                Right, Punctuation.RightBracket);
         }
 
         internal static string ToString(ScriptCodeBinaryOperatorType @operator)
         {
             switch (@operator)
             {
+                case ScriptCodeBinaryOperatorType.Initializer:
+                    return OperatorToken.Initializer;
                 case ScriptCodeBinaryOperatorType.Add:
                     return OperatorToken.Plus;
                 case ScriptCodeBinaryOperatorType.Subtract:

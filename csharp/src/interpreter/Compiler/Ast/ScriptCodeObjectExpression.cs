@@ -104,7 +104,7 @@ namespace DynamicScript.Compiler.Ast
             public override string ToString()
             {
                 var builder = new StringBuilder();
-                builder.Append(String.Concat(Name, InitExpression != null ? String.Concat(Operator.Assignment, InitExpression) : String.Empty));
+                builder.Append(string.Concat(Name, InitExpression != null ? String.Concat(Operator.Assignment, InitExpression) : String.Empty));
                 builder.Append(ContractBinding != null ? String.Concat(Punctuation.Colon, ContractBinding) : String.Empty);
                 return builder.ToString();
             }
@@ -386,6 +386,15 @@ namespace DynamicScript.Compiler.Ast
             foreach (var p in m_slots.Values)
                 result.Add(Extensions.Clone(p));
             return result;
+        }
+
+        /// <summary>
+        /// Returns a string representation of this expression.
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return string.Concat(Punctuation.DoubleLeftBrace, string.Join(Punctuation.Comma, m_slots.Values), Punctuation.DoubleRightBrace);
         }
     }
 }

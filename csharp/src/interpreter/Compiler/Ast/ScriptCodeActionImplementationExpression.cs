@@ -52,7 +52,7 @@ namespace DynamicScript.Compiler.Ast
         /// <returns>The string representation of the action implementation.</returns>
         public override string ToString()
         {
-            return string.Concat(Signature, Punctuation.Colon, Body); 
+            return string.Concat(Punctuation.LeftBracket, Signature, Punctuation.Colon, Body, Punctuation.RightBracket); 
         }
 
         /// <summary>

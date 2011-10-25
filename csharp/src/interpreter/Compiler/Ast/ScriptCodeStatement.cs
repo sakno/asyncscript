@@ -3,7 +3,6 @@ using System.CodeDom;
 using System.Linq.Expressions;
 using System.Collections.Generic;
 using System.Linq;
-using System.ComponentModel;
 
 namespace DynamicScript.Compiler.Ast
 {
@@ -15,15 +14,10 @@ namespace DynamicScript.Compiler.Ast
     /// </summary>
     [ComVisible(false)]
     [Serializable]
-    public abstract class ScriptCodeStatement: CodeStatement, ISyntaxTreeNode, IEquatable<ScriptCodeStatement>, INotifyPropertyChanged
+    public abstract class ScriptCodeStatement: CodeStatement, ISyntaxTreeNode, IEquatable<ScriptCodeStatement>
     {
-        private int? m_hash;
-        private PropertyChangedEventHandler PropertyChanged;
-
         internal ScriptCodeStatement()
         {
-            m_hash = null;
-            PropertyChanged = null;
         }
 
         internal abstract bool Completed
@@ -80,8 +74,7 @@ namespace DynamicScript.Compiler.Ast
         /// <returns></returns>
         public sealed override int GetHashCode()
         {
-            if (m_hash == null) m_hash = StringEqualityComparer.GetHashCode(ToString());
-            return m_hash.Value;
+            return StringEqualityComparer.GetHashCode(ToString());
         }
 
         /// <summary>
@@ -112,27 +105,6 @@ namespace DynamicScript.Compiler.Ast
             return Restore();
         }
 
-        event PropertyChangedEventHandler INotifyPropertyChanged.PropertyChanged
-        {
-            add { PropertyChanged += value; }
-            remove { PropertyChanged -= value; }
-        }
-
-        private void OnPropertyChanged(PropertyChangedEventArgs e)
-        {
-            if (PropertyChanged != null)
-                PropertyChanged(this, e);
-        }
-
-        /// <summary>
-        /// Changes internal state of this statement.
-        /// </summary>
-        /// <param name="propertyName"></param>
-        protected void OnPropertyChanged(string propertyName)
-        {
-            m_hash = null;
-            OnPropertyChanged(new PropertyChangedEventArgs(propertyName));
-        }
 
         internal static TSlot Visit<TSlot>(ISyntaxTreeNode parent, TSlot slot, Converter<ISyntaxTreeNode, ISyntaxTreeNode> visitor, Func<ISlot, TSlot> ctor)
             where TSlot : ISlot

@@ -118,5 +118,18 @@ namespace DynamicScript.Compiler.Ast
         {
             return new ScriptCodeAwaitExpression(Extensions.Clone(AsyncResult), Extensions.Clone(Synchronizer));
         }
+
+        /// <summary>
+        /// Returns a string representation of this expression.
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            var result = string.Concat(Punctuation.LeftBracket, Keyword.Await, Punctuation.LeftBracket, AsyncResult, Punctuation.RightBracket);
+            result += Synchronizer != null ?
+                string.Concat(Keyword.While, Punctuation.LeftBracket, Synchronizer, Punctuation.RightBracket, Punctuation.RightBracket) :
+                Punctuation.RightBracket;
+            return result;
+        }
     }
 }

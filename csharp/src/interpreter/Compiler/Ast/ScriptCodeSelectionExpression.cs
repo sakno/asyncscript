@@ -7,6 +7,7 @@ namespace DynamicScript.Compiler.Ast
 {
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
     using Enumerable = System.Linq.Enumerable;
+    using StringBuilder = System.Text.StringBuilder;
 
     /// <summary>
     /// Represents 'caseof' expression.
@@ -121,6 +122,19 @@ namespace DynamicScript.Compiler.Ast
             {
                 var ctor = LinqHelpers.BodyOf<ScriptCodeExpression[], ScriptCodeExpressionStatement, SelectionCase, NewExpression>((vals, body) => new SelectionCase(vals, body));
                 return ctor.Update(new[] { Values.NewArray(), LinqHelpers.Restore(Handler) });
+            }
+
+            /// <summary>
+            /// Returns a string representation of this expression.
+            /// </summary>
+            /// <returns></returns>
+            public override string ToString()
+            {
+                return string.Concat(Keyword.If, Lexeme.WhiteSpace,
+                    Values,
+                    Lexeme.WhiteSpace,
+                    Keyword.Then,
+                    Handler.Expression);
             }
         }
         #endregion
@@ -299,6 +313,24 @@ namespace DynamicScript.Compiler.Ast
                 Comparer = Extensions.Clone(Comparer),
                 Source = Extensions.Clone(Source)
             };
+        }
+
+        /// <summary>
+        /// Returns a string representation of this expression.
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            var result = new StringBuilder();
+            result.Append(string.Concat(Punctuation.LeftBracket, Keyword.Caseof, Lexeme.WhiteSpace, Source));
+            if (Comparer != null)
+                result.Append(string.Concat(Lexeme.WhiteSpace, Punctuation.Arrow, Lexeme.WhiteSpace, Comparer));
+            result.Append(Lexeme.WhiteSpace);
+            result.Append(string.Join(Environment.NewLine, Cases));
+            if (!DefaultHandler.IsVoidExpression)
+                result.Append(string.Concat(Environment.NewLine, Keyword.Else, Lexeme.WhiteSpace, DefaultHandler.Expression));
+            result.Append((string)Punctuation.RightBracket);
+            return result.ToString();
         }
     }
 }

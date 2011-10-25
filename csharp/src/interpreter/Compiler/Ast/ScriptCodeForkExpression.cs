@@ -93,5 +93,14 @@ namespace DynamicScript.Compiler.Ast
         {
             return new ScriptCodeForkExpression(Extensions.Clone(Body));
         }
+
+        /// <summary>
+        /// Returns a string representation of this expression.
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return string.Concat(Punctuation.LeftBracket, Keyword.Fork, Lexeme.WhiteSpace, Body.Expression, Lexeme.WhiteSpace, Punctuation.RightBracket);
+        }
     }
 }

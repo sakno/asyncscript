@@ -65,12 +65,11 @@ namespace DynamicScript.Compiler.Ast
         /// <returns>The string representation of the loop.</returns>
         public override string ToString()
         {
-            const char WhiteSpace = ' ';
+            const char WhiteSpace = Lexeme.WhiteSpace;
             var result = new StringBuilder();
             result.Append((char)Punctuation.LeftBracket);
             result.Append(String.Concat(Keyword.For, WhiteSpace));
-            if (Variable.Temporary) result.Append(String.Concat(Keyword.Var, WhiteSpace));
-            result.Append(String.Concat(Variable.Name, WhiteSpace, Keyword.In, WhiteSpace, Iterator, WhiteSpace));
+            result.Append(String.Concat(Variable, WhiteSpace, Keyword.In, WhiteSpace, Iterator, WhiteSpace));
             if (Grouping != null) result.Append(String.Concat(Keyword.GroupBy, WhiteSpace, Grouping, WhiteSpace));
             result.Append(String.Concat(Keyword.Do, WhiteSpace));
             result.Append(Body.Expression);

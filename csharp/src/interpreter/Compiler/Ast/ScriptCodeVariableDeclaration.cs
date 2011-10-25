@@ -68,12 +68,8 @@ namespace DynamicScript.Compiler.Ast
         /// </summary>
         public bool IsConst
         {
-            get{return m_const;}
-            set 
-            { 
-                m_const = value;
-                OnPropertyChanged("IsConst");
-            }
+            get { return m_const; }
+            set { m_const = value; }
         }
 
         /// <summary>
@@ -82,11 +78,7 @@ namespace DynamicScript.Compiler.Ast
         public string Name
         {
             get { return m_name ?? string.Empty; }
-            set 
-            { 
-                m_name = value;
-                OnPropertyChanged("Name");
-            }
+            set {  m_name = value; }
         }
 
         /// <summary>
@@ -95,11 +87,7 @@ namespace DynamicScript.Compiler.Ast
         public ScriptCodeExpression InitExpression
         {
             get { return m_init; }
-            set 
-            { 
-                m_init = value;
-                OnPropertyChanged("InitExpression");
-            }
+            set { m_init = value; }
         }
 
         SlotDeclarationStyle ISlot.Style

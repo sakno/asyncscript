@@ -39,7 +39,7 @@ namespace DynamicScript.Compiler.Ast
 
 
         internal ScriptCodeQuoteExpression(ScriptCodeActionImplementationExpression actionImplementation)
-            :this(actionImplementation.Signature, actionImplementation.Body)
+            : this(actionImplementation.Signature, actionImplementation.Body)
         {
         }
 
@@ -112,6 +112,15 @@ namespace DynamicScript.Compiler.Ast
         protected override ScriptCodeExpression Clone()
         {
             return new ScriptCodeQuoteExpression(Extensions.Clone(Signature), Extensions.Clone(Body));
+        }
+
+        /// <summary>
+        /// Returns a string representation of the action implementation.
+        /// </summary>
+        /// <returns>The string representation of the action implementation.</returns>
+        public override string ToString()
+        {
+            return string.Concat(Punctuation.LeftBracket, Punctuation.Dog, Signature, Punctuation.Colon, Body, Punctuation.RightBracket);
         }
     }
 }
