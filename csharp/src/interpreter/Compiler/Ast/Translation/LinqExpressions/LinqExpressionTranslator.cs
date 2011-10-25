@@ -1271,14 +1271,16 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             }
             context.Pop();  //Leave action scope
             return action.IsAsynchronous ?
-                ScriptAsyncAction.Bind(
+                ScriptAsyncAction.New(
                 Translate(action.Signature, context),   //action contract
                 context.Scope.ScopeVar,           //'this' reference
-                actionExpr) :                            //lambda that implements the action
+                actionExpr,                     //lambda that implements the action
+                action.ToString()) :
                 ScriptRuntimeAction.New(
                 Translate(action.Signature, context),   //action contract
                 context.Scope.ScopeVar,                //'this' reference
-                actionExpr);                            //lambda that implements the action
+                actionExpr,                             //lambda that implements the action
+                action.ToString());
         }
 
         private static IList<ParameterExpression> PopulateActionParameters(ScriptCodeActionImplementationExpression action, ActionScope scope)

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Linq;
+using System.ComponentModel;
 
 namespace DynamicScript.Runtime.Environment
 {
@@ -57,6 +58,7 @@ namespace DynamicScript.Runtime.Environment
         #endregion
 
         private readonly Delegate m_implementation;
+        private readonly long? m_token;
 
         /// <summary>
         /// Initializes a new script action.
@@ -67,7 +69,7 @@ namespace DynamicScript.Runtime.Environment
         /// <exception cref="System.ArgumentNullException"><paramref name="contract"/> or <paramref name="implementation"/> is <see langword="null"/>.</exception>
         /// <remarks>
         /// An implementation should have the following signature:
-        /// IScriptObject M(InvocationContext ctx[, IRuntimeSlot arg0, IRuntimeSlot arg1,...]);
+        /// IScriptObject M(InterpreterState state[, IRuntimeSlot arg0, IRuntimeSlot arg1,...]);
         /// </remarks>
         public ScriptRuntimeAction(ScriptActionContract contract, IScriptObject @this, Delegate implementation)
             : base(contract, @this)
@@ -78,6 +80,22 @@ namespace DynamicScript.Runtime.Environment
                         new Closure(new object[0], new object[0]),
                         implementation.Method, false) :
                         implementation;
+            m_token = null;
+        }
+
+        /// <summary>
+        /// Initializes a new script action.
+        /// </summary>
+        /// <param name="contract">The action signature. Cannot be <see langword="null"/>.</param>
+        /// <param name="this">An action owner.</param>
+        /// <param name="implementation">An implementation of the action. Cannot be <see langword="null"/>.</param>
+        /// <param name="unqiueID">An unique identifier of the action.</param>
+        /// <exception cref="System.ArgumentNullException"><paramref name="contract"/> or <paramref name="implementation"/> is <see langword="null"/>.</exception>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public ScriptRuntimeAction(ScriptActionContract contract, IScriptObject @this, Delegate implementation, long unqiueID)
+            : this(contract, @this, implementation)
+        {
+            m_token = unqiueID;
         }
 
         /// <summary>
@@ -221,11 +239,11 @@ namespace DynamicScript.Runtime.Environment
         {
         }
 
-        internal static Expression New(Expression actionContract, Expression @this, LambdaExpression implementation)
+        internal static Expression New(Expression actionContract, Expression @this, LambdaExpression implementation, string sourceCode)
         {
             actionContract = Expression.TypeAs(ScriptContract.Extract(actionContract), typeof(ScriptActionContract));
-            var ctor = LinqHelpers.BodyOf<ScriptActionContract, IScriptObject, Delegate, ScriptRuntimeAction, NewExpression>((c, t, i) => new ScriptRuntimeAction(c, t, i)).Constructor;
-            return Expression.New(ctor, actionContract, @this, implementation);
+            var ctor = LinqHelpers.BodyOf<ScriptActionContract, IScriptObject, Delegate, long, ScriptRuntimeAction, NewExpression>((c, t, i, u) => new ScriptRuntimeAction(c, t, i, u)).Constructor;
+            return Expression.New(ctor, actionContract, @this, implementation, LinqHelpers.Constant(StringEqualityComparer.GetHashCodeLong(sourceCode)));
         }
 
         /// <summary>
@@ -241,7 +259,11 @@ namespace DynamicScript.Runtime.Environment
 
         internal sealed override byte[] ByteCode
         {
-            get { return GetByteCode(m_implementation); }
+            get
+            {
+                var byteCode = GetByteCode(m_implementation);
+                return byteCode.LongLength == 0L && m_token.HasValue ? BitConverter.GetBytes(m_token.Value) : byteCode;
+            }
         }
 
         /// <summary>

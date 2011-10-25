@@ -315,10 +315,10 @@ namespace DynamicScript.Runtime.Environment.Threading
             return syncAction is ScriptAsyncAction ? ((ScriptAsyncAction)syncAction) : new ScriptAsyncAction(syncAction);
         }
 
-        internal static MethodCallExpression Bind(Expression actionContract, Expression @this, LambdaExpression implementation)
+        internal static MethodCallExpression New(Expression actionContract, Expression @this, LambdaExpression implementation, string sourceCode)
         {
             var fromsync = LinqHelpers.BodyOf<ScriptRuntimeAction, ScriptAsyncAction, MethodCallExpression>(a => FromSynchronous(a));
-            return fromsync.Update(null, new[] { ScriptRuntimeAction.New(actionContract, @this, implementation) });
+            return fromsync.Update(null, new[] { ScriptRuntimeAction.New(actionContract, @this, implementation, sourceCode) });
         }
 
         protected override IScriptObject InvokeCore(IList<IScriptObject> arguments, InterpreterState state)

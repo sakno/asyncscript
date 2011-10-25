@@ -809,19 +809,15 @@ namespace DynamicScript.Runtime.Environment
 
         internal static byte[] GetByteCode(MethodInfo m)
         {
-            switch (m != null)
+            if (m == null) return new byte[0];
+            try
             {
-                case true:
-                    try
-                    {
-                        var body = m.GetMethodBody();
-                        return body.GetILAsByteArray();
-                    }
-                    catch (InvalidOperationException)
-                    {
-                        return BitConverter.GetBytes(m.GetHashCode());
-                    }
-                default: return new byte[0];
+                var body = m.GetMethodBody();
+                return body.GetILAsByteArray();
+            }
+            catch (InvalidOperationException)
+            {
+                return new byte[0];
             }
         }
 
