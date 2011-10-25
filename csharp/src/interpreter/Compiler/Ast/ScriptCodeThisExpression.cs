@@ -47,20 +47,6 @@ namespace DynamicScript.Compiler.Ast
         }
 
         /// <summary>
-        /// Converts this expression to its string representation.
-        /// </summary>
-        /// <param name="style"></param>
-        /// <returns></returns>
-        public override string ToString(ScriptCodeExpression.FormattingStyle style)
-        {
-            switch (style)
-            {
-                case FormattingStyle.Parenthesize: return string.Concat(Punctuation.LeftBracket, Keyword.This, Punctuation.RightBracket);
-                default: return ToString();
-            }
-        }
-
-        /// <summary>
         /// Returns a LINQ expression that produces this object.
         /// </summary>
         /// <returns></returns>

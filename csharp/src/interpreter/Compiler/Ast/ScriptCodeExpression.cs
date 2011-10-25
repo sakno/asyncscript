@@ -15,25 +15,6 @@ namespace DynamicScript.Compiler.Ast
     [ComVisible(false)]
     public abstract class ScriptCodeExpression : CodeExpression, ISyntaxTreeNode, IEquatable<ScriptCodeExpression>
     {
-        #region Nested Types
-        /// <summary>
-        /// Represents expression formatting style.
-        /// </summary>
-        [ComVisible(false)]
-        [Serializable]
-        public enum FormattingStyle: byte
-        {
-            /// <summary>
-            /// Represents default formatting style.
-            /// </summary>
-            Default = 0,
-
-            /// <summary>
-            /// Parenthesize expression string representation.
-            /// </summary>
-            Parenthesize
-        }
-        #endregion
 
         internal ScriptCodeExpression()
         {
@@ -94,22 +75,6 @@ namespace DynamicScript.Compiler.Ast
         public sealed override int GetHashCode()
         {
             return StringEqualityComparer.GetHashCode(ToString());
-        }
-
-        /// <summary>
-        /// Converts this expression to the DynamicScript source code.
-        /// </summary>
-        /// <param name="style">Expression formatting style.</param>
-        /// <returns>A string representation of this expression.</returns>
-        public virtual string ToString(FormattingStyle style)
-        {
-            switch (style)
-            {
-                case FormattingStyle.Parenthesize:
-                    return string.Concat(Punctuation.LeftBracket, ToString(), Punctuation.RightBracket);
-                default:
-                    return ToString();
-            }
         }
 
         /// <summary>

@@ -56,20 +56,6 @@ namespace DynamicScript.Compiler.Ast
         }
 
         /// <summary>
-        /// Returns a string representation of the action implementation.
-        /// </summary>
-        /// <param name="style"></param>
-        /// <returns></returns>
-        public override string ToString(FormattingStyle style)
-        {
-            switch (style)
-            {
-                case FormattingStyle.Parenthesize: return string.Concat(Punctuation.LeftBracket, ToString(), Punctuation.RightBracket);
-                default: return ToString();
-            }
-        }
-
-        /// <summary>
         /// Gets static contract binding.
         /// </summary>
         ScriptCodeActionContractExpression IStaticContractBinding<ScriptCodeActionContractExpression>.Contract

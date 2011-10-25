@@ -71,21 +71,6 @@ namespace DynamicScript.Compiler.Ast
         }
 
         /// <summary>
-        /// Returns a string representation of the array expression. 
-        /// </summary>
-        /// <param name="style"></param>
-        /// <returns></returns>
-        public override string ToString(FormattingStyle style)
-        {
-            switch (style)
-            {
-                case FormattingStyle.Parenthesize: return string.Concat(Punctuation.LeftBracket, ToString(), Punctuation.RightBracket);
-                case FormattingStyle.Default: return ToString();
-                default: return string.Empty;
-            }
-        }
-
-        /// <summary>
         /// Returns a LINQ expression that produces this object.
         /// </summary>
         /// <returns></returns>
