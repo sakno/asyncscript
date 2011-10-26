@@ -177,7 +177,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns></returns>
         protected override Expression Translate(ScriptCodeComplexExpression complex, TranslationContext context)
         {
-            var currentScope = context.Push(parent => GenericScope.Create(parent, true));
+            var currentScope = context.Push(parent => new GenericScope(parent, true));
             IList<Expression> block = new List<Expression>(complex.Body.Count);
             block.Add(Expression.Label(currentScope.BeginOfScope));
             Translate(complex, context, GotoExpressionKind.Goto, ref block);
@@ -363,24 +363,25 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
 
         private Expression BindToConstant(ParameterExpression constantRef, ISlot variableDeclaration, TranslationContext context)
         {
+            Func<LexicalScope, GenericScope> scopeFactory = parent => new GenericScope(parent, false);
             var value = default(Expression);
             var contractBinding = default(Expression);
             switch (variableDeclaration.Style)
             {
                 case SlotDeclarationStyle.InitExpressionOnly:   //bind to constant slot using constant value
                     //Create a new lexical scope associated with the constant value provider (based on lambda)
-                    var currentScope = context.Push<GenericScope>((parent) => GenericScope.Create(parent, false));
+                    var currentScope = context.Push<GenericScope>(scopeFactory);
                     value = TranslateConstantValue(variableDeclaration.InitExpression, context);
                     //Pop constant value lexical scope
                     context.Pop();
                     break;
                 case SlotDeclarationStyle.TypeAndInitExpression:    //bind to constant slot using its value and contract
                     //Create scope for the constant value
-                    currentScope = context.Push<GenericScope>((parent) => GenericScope.Create(parent, false));
+                    currentScope = context.Push<GenericScope>(scopeFactory);
                     value = TranslateConstantValue(variableDeclaration.InitExpression, context);
                     context.Pop();
                     //Create scope for the contract binding
-                    currentScope = context.Push<GenericScope>((parent) => GenericScope.Create(parent, false));
+                    currentScope = context.Push<GenericScope>(scopeFactory);
                     contractBinding = TranslateContractBinding(variableDeclaration.ContractBinding, context);
                     context.Pop();
                     break;
@@ -1313,14 +1314,10 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             var cases = from @case in selection.Cases select Translate(@case, context);
             IList<Expression> @default = new List<Expression>(10);
             Translate(selection.DefaultHandler.UnwrapStatements(), context, GotoExpressionKind.Break, ref @default);
-            var result = Expression.Block(typeof(IScriptObject), new Expression[]
-            {
-                Expression.Label(context.Scope.BeginOfScope),
-                Expression.Label(context.Scope.EndOfScope, Expression.Switch(typeof(IScriptObject), ScriptObjectComparer.Bind(Translate(selection.Source, context), selection.Comparer != null ? Translate(selection.Comparer, context) : null, context.Scope.StateHolder),
+            var result = Expression.Switch(typeof(IScriptObject), ScriptObjectComparer.Bind(AsRightSide(Translate(selection.Source, context), context), selection.Comparer != null ? AsRightSide(Translate(selection.Comparer, context), context) : null, context.Scope.StateHolder),
                 Expression.Block(typeof(IScriptObject), @default),
                 ScriptObjectComparer.EqualsMethod,
-                cases))
-            });
+                cases);
             context.Pop();
             return result;
         }

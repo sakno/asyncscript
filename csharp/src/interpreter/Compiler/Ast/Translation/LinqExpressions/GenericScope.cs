@@ -12,22 +12,23 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
     class GenericScope: LexicalScope
     {
         private const ScopeOptions DefaultOptions = ScopeOptions.InheritedState;
+        private const Type DefaultEndOfScope = null;
         public readonly IScopeVariables Locals;
 
-        protected GenericScope(LexicalScope parent, Type endOfScope = null, ScopeOptions options = DefaultOptions)
+        protected GenericScope(LexicalScope parent, Type endOfScope = DefaultEndOfScope, ScopeOptions options = DefaultOptions)
             : base(parent, endOfScope ?? typeof(IScriptObject), options)
         {
             Locals = CreateVariableTable();
         }
 
-        public static GenericScope Create(LexicalScope parent, bool inheritedState)
+        /// <summary>
+        /// Initializes a new generic scope.
+        /// </summary>
+        /// <param name="parent"></param>
+        /// <param name="inheritedState"></param>
+        public GenericScope(LexicalScope parent, bool inheritedState)
+            : this(parent, options: inheritedState ? ScopeOptions.InheritedState : ScopeOptions.None)
         {
-            return new GenericScope(parent, options: inheritedState ? ScopeOptions.InheritedState : ScopeOptions.None);
-        }
-
-        public static GenericScope Create(LexicalScope parent)
-        {
-            return Create(parent, true);
         }
 
         protected sealed override IEnumerable<string> Variables

@@ -10,7 +10,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             if (parent == null) throw new ArgumentNullException("parent");
         }
 
-        public static new TryScope Create(LexicalScope parent)
+        public static TryScope Create(LexicalScope parent)
         {
             return new TryScope(parent);
         }

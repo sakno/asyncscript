@@ -15,7 +15,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         {
         }
 
-        public static new CatchScope Create(LexicalScope parent)
+        public static CatchScope Create(LexicalScope parent)
         {
             return new CatchScope(parent);
         }

@@ -12,7 +12,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         {
         }
 
-        public static new TrapScope Create(LexicalScope parent)
+        public static TrapScope Create(LexicalScope parent)
         {
             return new TrapScope(parent);
         }

@@ -15,7 +15,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             if (parent == null) throw new ArgumentNullException("parent");
         }
 
-        public static new FinallyScope Create(LexicalScope parent)
+        public static FinallyScope Create(LexicalScope parent)
         {
             return new FinallyScope(parent);
         }

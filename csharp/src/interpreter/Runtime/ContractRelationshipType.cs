@@ -8,7 +8,7 @@ namespace DynamicScript.Runtime
     /// Represents relationship between two contracts.
     /// </summary>
     [ComVisible(false)]
-    public enum ContractRelationshipType : short
+    public enum ContractRelationshipType : byte
     {
         /// <summary>
         /// Two contracts are not compatible.

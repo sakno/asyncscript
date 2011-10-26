@@ -4,9 +4,9 @@ using DynamicScript.Testing;
 
 namespace DynamicScript.Runtime.Environment
 {
-    [TestFixture(Description = "Various tests for LEAVE/CONTINUE/RETURN statements.")]
+    [TestFixture(Description = "Flow control instructions, such as IF, CONTINUE, CASEOF and etc.")]
     [SemanticTest]
-    sealed class ControlFlowTests : SemanticTestBase
+    sealed class FlowControlInstructions : SemanticTestBase
     {
         [Test(Description = "Test for valid loop breaking.")]
         public void LoopBreak()
@@ -86,6 +86,19 @@ leave a;
 return a.c;
 ");
             Assert.AreEqual(new ScriptInteger(10), r);
+        }
+
+        [Test(Description = "Represents a simple CASEOF instruction usage.")]
+        public void SimpleCaseof()
+        {
+            string r = Run(@"
+var i = 10;
+return caseof i 
+    if 1, 2 then 'one or two'
+    if 10 then 'ten'
+    else 'unknown';
+");
+            Assert.AreEqual("ten", r);
         }
     }
 }
