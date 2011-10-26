@@ -177,8 +177,8 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns></returns>
         protected override Expression Translate(ScriptCodeComplexExpression complex, TranslationContext context)
         {
-            var currentScope = context.Push(parent => new GenericScope(parent, true));
             IList<Expression> block = new List<Expression>(complex.Body.Count);
+            var currentScope = context.Push(parent => new GenericScope(parent, true));
             block.Add(Expression.Label(currentScope.BeginOfScope));
             Translate(complex, context, GotoExpressionKind.Goto, ref block);
             block.Add(Expression.Label(currentScope.EndOfScope, ScriptObject.MakeVoid()));
@@ -216,7 +216,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns>LINQ expression that represents return statement.</returns>
         protected override Expression Translate(ScriptCodeReturnStatement returnStatement, TranslationContext context)
         {
-            var scope = context.Lookup<RoutineScope>();
+            var scope = context.Lookup<RoutineScope, FinallyScope>();
             switch (scope is RoutineScope)
             {
                 case true:
@@ -648,7 +648,6 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                 var catchVar = default(ParameterExpression);
                 if (t.Filter != null) context.Scope.DeclareVariable(t.Filter.Name, out catchVar);
                 Translate(t.Handler.UnwrapStatements(), context, GotoExpressionKind.Goto, ref catchBlock);
-                catchBlock.Add(Expression.Empty());
                 var filter = catchVar != null ? (Expression)ScriptFault.BindCatch(errorReceiver, catchVar, context.Scope.StateHolder) : Expression.Constant(true);
                 result.Add(Expression.Block(currentScope.Locals.Values, catchVar != null ? BindToVariable(catchVar, t.Filter, context) : Expression.Empty(),
                     Expression.IfThen(filter, Expression.Block(catchBlock))));
@@ -661,7 +660,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         private CatchBlock Translate(ICollection<ScriptCodeTryElseFinallyExpression.FailureTrap> traps, TranslationContext context)
         {
             var receiver = Expression.Parameter(typeof(object));
-            context.Push(TrapScope.Create);
+            context.Push(parent => new GenericScope(parent, true));
             var blocks = Translate(traps,  receiver, context);
             blocks.Insert(0, Expression.Label(context.Scope.BeginOfScope));
             //if exception is not handled then rethrow
@@ -1310,7 +1309,6 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns></returns>
         protected override Expression Translate(ScriptCodeSelectionExpression selection, TranslationContext context)
         {
-            context.Push(SelectionScope.Create);
             var cases = from @case in selection.Cases select Translate(@case, context);
             IList<Expression> @default = new List<Expression>(10);
             Translate(selection.DefaultHandler.UnwrapStatements(), context, GotoExpressionKind.Break, ref @default);
@@ -1318,7 +1316,6 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                 Expression.Block(typeof(IScriptObject), @default),
                 ScriptObjectComparer.EqualsMethod,
                 cases);
-            context.Pop();
             return result;
         }
 

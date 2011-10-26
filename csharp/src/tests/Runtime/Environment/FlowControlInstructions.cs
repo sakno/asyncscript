@@ -4,6 +4,8 @@ using DynamicScript.Testing;
 
 namespace DynamicScript.Runtime.Environment
 {
+    using CodeAnalysisException = Compiler.CodeAnalysisException;
+
     [TestFixture(Description = "Flow control instructions, such as IF, CONTINUE, CASEOF and etc.")]
     [SemanticTest]
     sealed class FlowControlInstructions : SemanticTestBase
@@ -58,7 +60,7 @@ continue;
         }
 
         [Test(Description="Unattended return from const init expr.")]
-        [ExpectedException(typeof(DynamicScriptException))]
+        [ExpectedException(typeof(CodeAnalysisException))]
         public void ReturnFromConstantExpr()
         {
              Run(@"
@@ -73,7 +75,7 @@ leave a;
         }
 
         [Test(Description="Unattended return from slot initialization.")]
-        [ExpectedException(typeof(DynamicScriptException))]
+        [ExpectedException(typeof(CodeAnalysisException))]
         public void ReturnInstructionInCompositeObject()
         {
             Run("var a = {{c = {var i; return i;} }};");
@@ -99,6 +101,44 @@ return caseof i
     else 'unknown';
 ");
             Assert.AreEqual("ten", r);
+        }
+
+        [Test(Description = "Unattended return from FINALLY block.")]
+        [ExpectedException(typeof(CodeAnalysisException))]
+        public void ReturnFromFinally()
+        {
+            Run(@"
+var a = @void -> integer: try 
+{
+    fault 2;
+}
+finally
+{
+    return 10;
+};
+return a();
+");
+        }
+
+        [Test(Description="Try-else-finally test.")]
+        public void TryElseFinallyTest()
+        {
+            var r = Run(@"
+var a = @void -> integer: try 
+{
+    fault 2;
+}
+else()
+{
+    return 20;
+}
+finally
+{
+    leave 10;
+};
+return a();
+");
+            Assert.AreEqual(new ScriptInteger(20), r);
         }
     }
 }

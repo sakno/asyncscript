@@ -133,7 +133,6 @@
     <Compile Include="Compiler\Ast\ISlot.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeWhileLoopExpression.cs" />
     <Compile Include="Compiler\Ast\Translation\LinqExpressions\GenericScope.cs" />
-    <Compile Include="Compiler\Ast\Translation\LinqExpressions\SelectionScope.cs" />
     <Compile Include="Compiler\Macro.cs" />
     <Compile Include="Compiler\PlaceholderID.cs" />
     <Compile Include="MonoRuntime.cs" />
@@ -190,7 +189,6 @@
     <Compile Include="Compiler\Ast\ScriptCodeIntegerContractExpression.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeInvocationExpression.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeStringExpression.cs" />
-    <Compile Include="Compiler\Ast\Translation\LinqExpressions\TrapScope.cs" />
     <Compile Include="Compiler\Ast\Translation\LinqExpressions\TryScope.cs" />
     <Compile Include="Compiler\Ast\Translation\LinqExpressions\WhileLoopScope.cs" />
     <Compile Include="Compiler\Ast\Translation\SourceCodeInfo.cs" />
