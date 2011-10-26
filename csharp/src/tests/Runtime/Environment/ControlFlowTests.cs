@@ -71,5 +71,21 @@ leave a;
 ");
 
         }
+
+        [Test(Description="Unattended return from slot initialization.")]
+        [ExpectedException(typeof(DynamicScriptException))]
+        public void ReturnInstructionInCompositeObject()
+        {
+            Run("var a = {{c = {var i; return i;} }};");
+        }
+
+        [Test(Description="Using complex expression to initialize object slot.")]
+        public void LeaveScopeInCompositeObject()
+        {
+            var r = Run(@"var a = {{c = {var i = 0; leave i + 10;} }};
+return a.c;
+");
+            Assert.AreEqual(new ScriptInteger(10), r);
+        }
     }
 }

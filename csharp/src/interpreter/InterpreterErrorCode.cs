@@ -117,23 +117,18 @@ namespace DynamicScript
         ContractExpected = 20,
 
         /// <summary>
-        /// It is not possible to return from FINALLY block.
-        /// </summary>
-        ReturnFromFinally = 21,
-
-        /// <summary>
         /// The action body is described in wrong way.
         /// </summary>
-        InvalidActionBody = 22,
+        InvalidActionBody = 21,
 
         /// <summary>
         /// The end of the statement expected.
         /// </summary>
-        EndOfStatementExpected = 23,
+        EndOfStatementExpected = 22,
 
         /// <summary>
         /// Control flow chaning is not allowed here.
         /// </summary>
-        CannotChangeControlFlow = 24,
+        CannotChangeControlFlow = 23,
     }
 }

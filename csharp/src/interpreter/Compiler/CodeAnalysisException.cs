@@ -177,11 +177,6 @@ namespace DynamicScript.Compiler
         {
             return new CodeAnalysisException(String.Format(ErrorMessages.UndeclaredIdentifier, identifier), InterpreterErrorCode.UndeclaredIdentifier, info.StartColumn, info.StartLine);
         }
-
-        internal static CodeAnalysisException ReturnFromFinally(ScriptDebugInfo info)
-        {
-            return new CodeAnalysisException(ErrorMessages.ReturnFormFinally, InterpreterErrorCode.ReturnFromFinally, info.StartColumn, info.StartLine);
-        }
         #endregion
 
         #region Internal and Runtime errors

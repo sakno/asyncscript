@@ -16,7 +16,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         public readonly ScriptCodeObjectExpression Expression;
 
         private ObjectScope(ScriptCodeObjectExpression definition, LexicalScope parent)
-            : base(parent)
+            : base(parent, options: ScopeOptions.None)
         {
             if (parent == null) throw new ArgumentNullException("parent");
             if (definition == null) throw new ArgumentNullException("definition");

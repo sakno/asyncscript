@@ -250,15 +250,6 @@ namespace DynamicScript {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Returning from FINALLY block is not allowed..
-        /// </summary>
-        internal static string ReturnFormFinally {
-            get {
-                return ResourceManager.GetString("ReturnFormFinally", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Action return type expected..
         /// </summary>
         internal static string ReturnTypeOrVoidExpected {

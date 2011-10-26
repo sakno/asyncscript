@@ -195,9 +195,6 @@
   <data name="ScriptFault" xml:space="preserve">
     <value>Script exception is occured and produced by '{0}' script object.</value>
   </data>
-  <data name="ReturnFormFinally" xml:space="preserve">
-    <value>Returning from FINALLY block is not allowed.</value>
-  </data>
   <data name="EArrayisEmptyForSet" xml:space="preserve">
     <value>Array is empty and cannot be used for set contract.</value>
   </data>

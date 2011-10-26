@@ -216,15 +216,15 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns>LINQ expression that represents return statement.</returns>
         protected override Expression Translate(ScriptCodeReturnStatement returnStatement, TranslationContext context)
         {
-            var scope = context.Lookup<RoutineScope, FinallyScope>();
-            if (scope is RoutineScope)
+            var scope = context.Lookup<RoutineScope>();
+            switch (scope is RoutineScope)
             {
-                var routineScope = (RoutineScope)scope;
-                return Expression.Return(routineScope.EndOfScope, AsRightSide(returnStatement.Value != null ? Translate(returnStatement.Value, context) : ScriptObject.MakeVoid(), context));
+                case true:
+                    var routineScope = (RoutineScope)scope;
+                    return Expression.Return(routineScope.EndOfScope, AsRightSide(returnStatement.Value != null ? Translate(returnStatement.Value, context) : ScriptObject.MakeVoid(), context));
+                default:
+                    throw CodeAnalysisException.CannotChangeControlFlow(returnStatement.LinePragma);
             }
-            else if (scope is FinallyScope)
-                throw CodeAnalysisException.ReturnFromFinally(returnStatement.LinePragma);
-            else throw CodeAnalysisException.CannotChangeControlFlow(returnStatement.LinePragma);
         }
 
         /// <summary>
