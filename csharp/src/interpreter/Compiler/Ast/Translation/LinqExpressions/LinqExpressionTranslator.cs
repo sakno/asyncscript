@@ -74,8 +74,9 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <summary>
         /// Initializes a new instance of the root scope.
         /// </summary>
+        /// <param name="userData">A collection of user-defined properties.</param>
         /// <returns>A new instance of the root scope.</returns>
-        protected override LexicalScope CreateRootScope()
+        protected override LexicalScope CreateRootScope(dynamic userData)
         {
             return new GlobalScope();
         }
@@ -223,7 +224,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             }
             else if (scope is FinallyScope)
                 throw CodeAnalysisException.ReturnFromFinally(returnStatement.LinePragma);
-            else return ScriptObject.MakeVoid();
+            else throw CodeAnalysisException.CannotChangeControlFlow(returnStatement.LinePragma);
         }
 
         /// <summary>
@@ -259,11 +260,11 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns></returns>
         protected override Expression Translate(ScriptCodeBreakLexicalScopeStatement breakStatement, TranslationContext context)
         {
-            var scope = context.Lookup<LoopScope, ActionScope>();
-            switch (scope is LoopScope)
+            var loopScope = context.Lookup<LoopScope>();
+            switch (loopScope != null)
             {
                 case true:
-                    return context.Lookup<LoopScope>().Break(from ScriptCodeExpression a in breakStatement.ArgList select AsRightSide(Translate(a, context), context));
+                    return ((LoopScope)context.Scope.Parent).Break(from ScriptCodeExpression a in breakStatement.ArgList select AsRightSide(Translate(a, context), context));
                 default:
                     var lastExpr = breakStatement.ArgList.Count > 0 ? Translate((ScriptCodeExpression)breakStatement.ArgList[breakStatement.ArgList.Count - 1], context) : ScriptObject.MakeVoid();
                     return Expression.Break(context.Scope.EndOfScope, lastExpr);

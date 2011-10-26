@@ -130,5 +130,10 @@ namespace DynamicScript
         /// The end of the statement expected.
         /// </summary>
         EndOfStatementExpected = 23,
+
+        /// <summary>
+        /// Control flow chaning is not allowed here.
+        /// </summary>
+        CannotChangeControlFlow = 24,
     }
 }

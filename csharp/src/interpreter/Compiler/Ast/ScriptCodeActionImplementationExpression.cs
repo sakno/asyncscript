@@ -119,7 +119,15 @@ namespace DynamicScript.Compiler.Ast
 
         internal bool IsPrimitive
         {
-            get { return Body.Expression is ScriptCodePrimitiveExpression; }
+            get 
+            {
+                return Body.Expression is ScriptCodePrimitiveExpression ||
+                    Body.Expression is ScriptCodeVariableReference ||
+                    Body.Expression is ScriptCodePlaceholderExpression ||
+                    Body.Expression is ScriptCodeObjectExpression ||
+                    Body.Expression is ScriptCodeActionContractExpression ||
+                    Body.Expression is ScriptCodeArrayContractExpression;
+            }
         }
 
         internal bool IsComplex

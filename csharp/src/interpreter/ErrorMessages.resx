@@ -207,4 +207,7 @@
   <data name="EndOfStatement" xml:space="preserve">
     <value>End of statement expected. Did you forget ';'?</value>
   </data>
+  <data name="CannotChangeControlFlow" xml:space="preserve">
+    <value>Control flow changing is not allowed here.</value>
+  </data>
 </root>

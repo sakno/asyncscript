@@ -6,7 +6,7 @@ using System.CodeDom;
 namespace DynamicScript.Compiler.Ast.Translation
 {
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
-    using Hashtable = System.Collections.Hashtable;
+    using ExpandoObject = System.Dynamic.ExpandoObject;
 
     /// <summary>
     /// Represents an abstract class for building code document analyzer,
@@ -27,7 +27,6 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// to/from lexical scope. This class cannot be inherited.
         /// </summary>
         [ComVisible(false)]
-        
         protected sealed class LexicalScopeChangedEventArgs : EventArgs
         {
             private readonly TScope m_scope;
@@ -55,11 +54,15 @@ namespace DynamicScript.Compiler.Ast.Translation
         {
             private TScope m_scope;
             private ScriptDebugInfo m_dbgInfo;
-            private readonly Hashtable m_userData;
+
+            /// <summary>
+            /// Represents user data stored in the translation context.
+            /// </summary>
+            public readonly dynamic UserData;
 
             private TranslationContext()
             {
-                m_userData = new Hashtable();
+                UserData = new ExpandoObject();
             }
 
             /// <summary>
@@ -86,31 +89,10 @@ namespace DynamicScript.Compiler.Ast.Translation
             /// Initializes a new translation context.
             /// </summary>
             /// <param name="rootCreator">The delegate that implements root lexical scope creation.</param>
-            internal TranslationContext(Func<TScope> rootCreator)
-                :this()
+            internal TranslationContext(Func<dynamic, TScope> rootCreator)
+                : this()
             {
-                Reset(rootCreator);
-            }
-
-            /// <summary>
-            /// Sets user-defined data to the translation context.
-            /// </summary>
-            /// <param name="key">Identifier of the data slot.</param>
-            /// <returns>User-defined data available through translation stage.</returns>
-            public object this[object key]
-            {
-                set { m_userData[key] = value; }
-            }
-
-            /// <summary>
-            /// Gets user-defined data to the translation context.
-            /// </summary>
-            /// <param name="key">Identifier of the data slot.</param>
-            /// <param name="defaultValue"></param>
-            /// <returns>User-defined data available through translation stage.</returns>
-            public object this[object key, object defaultValue = null]
-            {
-                get { return m_userData.ContainsKey(key) ? key : defaultValue; }
+                Reset(rootCreator.Invoke(UserData));
             }
 
             /// <summary>
@@ -258,25 +240,19 @@ namespace DynamicScript.Compiler.Ast.Translation
                 ScopeEnter = null;
                 ScopeLeave = null;
             }
-
-            internal void Reset(Func<TScope> rootCreator)
-            {
-                if (rootCreator == null) throw new ArgumentNullException("rootCreator");
-                Reset(rootCreator.Invoke());
-            }
         }
         #endregion
         private readonly IEnumerator<ScriptCodeStatement> m_statements;
         private bool m_disposed;
         private TResult m_current;
         private readonly ErrorMode m_mode;
-        private readonly TranslationContext m_context;
+        private readonly TranslationContext Context;
         private readonly string m_sourceFile;
 
         private Translator()
         {
             m_disposed = false;
-            m_context = new TranslationContext(CreateRootScope);
+            Context = new TranslationContext(CreateRootScope);
         }
 
         /// <summary>
@@ -332,8 +308,9 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <summary>
         /// Initializes a new root scope.
         /// </summary>
+        /// <param name="userData">A dynamic object associated with the translation context.</param>
         /// <returns>A new root scope.</returns>
-        protected abstract TScope CreateRootScope();
+        protected abstract TScope CreateRootScope(dynamic userData);
 
         private string ObjectName
         {
@@ -362,14 +339,6 @@ namespace DynamicScript.Compiler.Ast.Translation
             }
         }
 
-        /// <summary>
-        /// Gets translation context.
-        /// </summary>
-        private TranslationContext Context
-        {
-            get { return m_context; }
-        }
-
         object System.Collections.IEnumerator.Current
         {
             get { return Current; }
@@ -391,7 +360,7 @@ namespace DynamicScript.Compiler.Ast.Translation
             {
                 case true:
                     info.FileName = SourceFile;
-                    m_context.DebugInfo = info;
+                    Context.DebugInfo = info;
                     return Translate(info);
                 default: return null;
             }
@@ -1182,7 +1151,7 @@ namespace DynamicScript.Compiler.Ast.Translation
             VerifyOnDisposed();
             if (resetSyntaxAnalyzer)
                 m_statements.Reset();
-            Context.Reset(CreateRootScope);
+            Context.Reset(CreateRootScope(Context.UserData));
             Context.ScopeEnter += EnterScope;
             Context.ScopeLeave += LeaveScope;
         }

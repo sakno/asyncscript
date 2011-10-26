@@ -37,6 +37,11 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="obj"></param>
         /// <returns></returns>
         public static bool OneOf<T1, T2, T3, T4, T5>(this IScriptObject obj)
+            where T1 : IScriptObject
+            where T2 : IScriptObject
+            where T3 : IScriptObject
+            where T4 : IScriptObject
+            where T5 : IScriptObject
         {
             return obj is T1 || obj is T2 || obj is T3 || obj is T4 || obj is T5;
         }

@@ -186,6 +186,11 @@ namespace DynamicScript.Compiler
 
         #region Internal and Runtime errors
 
+        internal static CodeAnalysisException CannotChangeControlFlow(ScriptDebugInfo position)
+        {
+            return new CodeAnalysisException(ErrorMessages.CannotChangeControlFlow, InterpreterErrorCode.CannotChangeControlFlow, position);
+        }
+
         internal static CodeAnalysisException IdentifierExpected(ScriptDebugInfo position)
         {
             return IdentifierExpected(position.Start);
