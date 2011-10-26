@@ -140,5 +140,29 @@ return a();
 ");
             Assert.AreEqual(new ScriptInteger(20), r);
         }
+
+        [Test(Description = "Try-else test.")]
+        [ExpectedException(typeof(ScriptFault))]
+        public void TryElseTestWithFailure()
+        {
+            var r = Run(@"
+return try
+{
+    fault 2;
+}else(var s: string) s;
+");
+        }
+
+        [Test(Description = "Try-else test.")]
+        public void TryElseTest()
+        {
+            var r = Run(@"
+return try
+{
+    fault 2;
+}else(var s: string) s else(var i: integer) i;
+");
+            Assert.AreEqual(new ScriptInteger(2), r);
+        }
     }
 }
