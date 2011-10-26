@@ -145,7 +145,7 @@ return a();
         [ExpectedException(typeof(ScriptFault))]
         public void TryElseTestWithFailure()
         {
-            var r = Run(@"
+             Run(@"
 return try
 {
     fault 2;
@@ -163,6 +163,38 @@ return try
 }else(var s: string) s else(var i: integer) i;
 ");
             Assert.AreEqual(new ScriptInteger(2), r);
+        }
+
+        [Test(Description="Try-else-finally with continue in trap.")]
+        public void TryElseFinallyWithContinue()
+        {
+            var r = Run(@"
+var a = @i: integer -> integer: try if i > 0 then {fault 2;} else 3
+else()
+{
+    continue 0;
+}
+finally
+{
+    leave 10;
+};
+return a(1);
+");
+            Assert.AreEqual(new ScriptInteger(3), r);
+        }
+
+        [Test(Description="Continue from FINALLY block.")]
+        [ExpectedException(typeof(CodeAnalysisException))]
+        public void ContinueFromFinally()
+        {
+            Run(@"
+var a = @i: integer -> integer: try if i > 0 then {fault 2;} else 3
+finally
+{
+    continue 10;
+};
+return a(1);
+");
         }
     }
 }

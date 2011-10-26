@@ -235,7 +235,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns>LINQ expression that represents continuation.</returns>
         protected override Expression Translate(ScriptCodeContinueStatement continueStatement, TranslationContext context)
         {
-            var scope = context.Lookup<ActionScope, LoopScope>();
+            var scope = context.Lookup<ActionScope, LoopScope, FinallyScope>();
             if (scope is ActionScope)
             {
                 var action = (ActionScope)scope;
@@ -249,6 +249,8 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             }
             if (scope is LoopScope)
                 return ((LoopScope)scope).Continue(from ScriptCodeExpression a in continueStatement.ArgList select AsRightSide(Translate(a, context), context));
+            else if (scope is FinallyScope)
+                throw CodeAnalysisException.CannotChangeControlFlow(continueStatement.LinePragma);
             else return Expression.Goto(context.Scope.BeginOfScope);
         }
 
