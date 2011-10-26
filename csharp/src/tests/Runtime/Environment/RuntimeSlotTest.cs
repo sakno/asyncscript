@@ -20,5 +20,12 @@ namespace DynamicScript.Runtime.Environment
             var r = Run("const a = 20.4342; a to void; return a;");
             Assert.AreEqual(new ScriptReal(20.4342), r);
         }
+
+        [Test(Description="Attempts to interpret object as contract.")]
+        [ExpectedException(typeof(ContractExpectedException))]
+        public void InvalidContractBinding()
+        {
+            Run("var a: 10;");
+        }
     }
 }

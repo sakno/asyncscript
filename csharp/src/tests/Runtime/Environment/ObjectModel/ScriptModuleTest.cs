@@ -45,6 +45,7 @@ var a = 10;
 var s = weakref(a);
 a to void;
 gc.collect();
+gc.wait();
 return s.isalive;
 ");
             Assert.IsFalse(r);
@@ -91,6 +92,20 @@ return $obj == ${{a: real}};
         {
             var r = Run("return wdir;");
             Assert.AreEqual(SystemEnvironment.CurrentDirectory, (string)r);
+        }
+
+        [Test(Description="Test for READONLY action.")]
+        [ExpectedException(typeof(ConstantCannotBeChangedException))]
+        public void ReadOnlyTest()
+        {
+            Run("var s = readonly({{a= 10}}); s.a = 10;");
+        }
+
+        [Test(Description="Test for GETDATA and SETDATA actions.")]
+        public void GetDataSetDataTest()
+        {
+            bool r = Run("setdata('store', true); return getdata('store');");
+            Assert.IsTrue(r);
         }
     }
 }
