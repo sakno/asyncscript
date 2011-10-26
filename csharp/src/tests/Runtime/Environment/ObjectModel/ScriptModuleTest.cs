@@ -5,6 +5,8 @@ using System.Linq;
 
 namespace DynamicScript.Runtime.Environment.ObjectModel
 {
+    using SystemEnvironment = System.Environment;
+
     [TestClass(typeof(ScriptModule))]
     sealed class ScriptModuleTest:SemanticTestBase
     {
@@ -16,7 +18,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             Assert.AreEqual(set1, set2);
         }
 
-        [Test(Description = "Test of SPLIT action.")]
+        [Test(Description = "Test for SPLIT action.")]
         public void SplitActionTest()
         {
             IScriptObject slots = Run("return split({{a = 1, b = 2}});");
@@ -33,6 +35,62 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             Assert.AreEqual(2L, match.GetLength(0));
             Assert.IsTrue(Equals(new ScriptString("http"), match.GetValue(0)));
             Assert.IsTrue(Equals(new ScriptString(":8080"), match.GetValue(1)));
+        }
+
+        [Test(Description="Test for WEAKREF action.")]
+        public void WeakRefTest()
+        {
+            bool r = Run(@"
+var a = 10;
+var s = weakref(a);
+a to void;
+gc.collect();
+return s.isalive;
+");
+            Assert.IsFalse(r);
+        }
+
+        [Test(Description="Test for NEWOBJ action.")]
+        public void NewObjTest()
+        {
+            bool r = Run(@"var obj = newobj('a', real);
+return $obj == ${{a: real}};
+");
+            Assert.IsTrue(r);
+        }
+
+        [Test(Description="Test for ARGS slot.")]
+        public void ArgsTest()
+        {
+            IScriptArray args = Run("return args;", "a", "b");
+            Assert.AreEqual(2L, args.GetLength(0));
+        }
+
+        [Test(Description="Test for EVAL action.")]
+        public void EvalTest()
+        {
+            long r = Run("return eval('return 15;', void);");
+            Assert.AreEqual(15L, r);
+        }
+
+        [Test(Description="Test for PARSE action.")]
+        public void ParseTest()
+        {
+            var r = Run("return parse('true', boolean, void);");
+            Assert.IsTrue((bool)r);
+            r = Run("return parse('12', integer, void);");
+            Assert.AreEqual(12L, (long)r);
+            r = Run("return parse('12.34', real, void);");
+            Assert.AreEqual(12.34, (double)r);
+            r = Run("return parse('hello, world', object, void);");
+            Assert.AreEqual("hello, world", (string)r);
+        }
+
+        [Test(Description="Test for WDIR slot.")]
+        public void WorkingDirectoryTest()
+        {
+            var r = Run("return wdir;");
+            Assert.AreEqual(SystemEnvironment.CurrentDirectory, (string)r);
         }
     }
 }

@@ -516,7 +516,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// <returns>The created object.</returns>
         /// <exception cref="VoidException"><paramref name="contract"/> is <see cref="ScriptObject.Void"/>.</exception>
         [CLSCompliant(false)]
-        public static IScriptObject NewObj(ScriptString name, IScriptObject contract, InterpreterState state)
+        public static IScriptObject NewObj(ScriptString name, IScriptContract contract, InterpreterState state)
         {
             if (ScriptObject.IsVoid(contract)) throw new VoidException(state);
             return new ScriptCompositeObject(new[] { Variable(name, contract) });
