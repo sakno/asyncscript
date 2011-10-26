@@ -45,8 +45,8 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         [Test(Description = "Test for CONTINUE statement compilation.")]
         public void ContinueArgsActionTest()
         {
-            var arg0 = Run("const f = stmt.continuedef(['Hello, world!']); return expr.compile(stmt.continuedef.args(f)[0]);");
-            Assert.IsTrue(Equals(new ScriptString("Hello, world!"), arg0));
+            string arg0 = Run("const f = stmt.continuedef(['Hello, world!']); return expr.compile(stmt.continuedef.args(f)[0]);");
+            Assert.AreEqual("Hello, world!", arg0);
         }
 
         [Test(Description = "Test for LEAVE statement contract.")]
@@ -65,7 +65,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         [Test(Description = "Test for RETURN statement contract.")]
         public void ReturnContractTest()
         {
-            Assert.IsTrue(ReferenceEquals(ScriptStatementFactory.Leave, Run("return stmt.returndef;")));
+            Assert.IsTrue(ReferenceEquals(ScriptStatementFactory.Return, Run("return stmt.returndef;")));
         }
 
         [Test(Description = "Test for RETURN statement compilation.")]

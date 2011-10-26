@@ -17,8 +17,6 @@ namespace DynamicScript.Runtime.Environment
     [CLSCompliant(false)]
     public sealed class ScriptList: ScriptObject, IList<IScriptObject>, IScriptObjectCollection, IArraySlots
     {
-        private static readonly ScriptArrayContract ContractBinding = new ScriptArrayContract();
-
         #region Nested Types
 
         [ComVisible(false)]
@@ -143,6 +141,7 @@ namespace DynamicScript.Runtime.Environment
         private static readonly object SyncRoot = new object();
 
         private readonly List<IScriptObject> m_elements;
+        private ScriptArrayContract m_contract;
 
         private IRuntimeSlot m_length;
         private IRuntimeSlot m_rank;
@@ -183,6 +182,15 @@ namespace DynamicScript.Runtime.Environment
             : this(capacity)
         {
             m_elements.AddRange(elements);
+        }
+
+        private ScriptArrayContract ContractBinding
+        {
+            get
+            {
+                if (m_contract == null) m_contract = new ScriptArrayContract(ScriptArray.InferContract(m_elements));
+                return m_contract;
+            }
         }
 
         /// <summary>
@@ -286,6 +294,7 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="item"></param>
         public void Add(IScriptObject item)
         {
+            m_contract = null;
             m_elements.Add(item);
         }
 

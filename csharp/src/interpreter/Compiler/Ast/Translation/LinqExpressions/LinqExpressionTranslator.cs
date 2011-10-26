@@ -796,9 +796,9 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         protected override Expression Translate(ScriptCodeInvocationExpression invocation, TranslationContext context)
         {
             var target = Translate(invocation.Target, context);
-            var args = new List<Expression>(from CodeExpression a in invocation.ArgList
+            var args = new List<Expression>(from a in invocation.ArgList
                                             where a is ScriptCodeExpression
-                                            select Translate((ScriptCodeExpression)a, context));
+                                            select AsRightSide(Translate(a, context), context));
             return ScriptObject.BindInvoke(target, args, context.Scope.StateHolder);
         }
 
@@ -882,7 +882,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns></returns>
         protected override Expression Translate(ScriptCodeIndexerExpression indexer, TranslationContext context)
         {
-            return ScriptObject.BindIndexer(Translate(indexer.Target, context), from ScriptCodeExpression expr in indexer.ArgList select Translate(expr, context), context.Scope.StateHolder);
+            return ScriptObject.BindIndexer(Translate(indexer.Target, context), from expr in indexer.ArgList select AsRightSide(Translate(expr, context), context), context.Scope.StateHolder);
         }
 
         private Expression TranslateFor(IList<ScriptCodeStatement> forBody, ScriptCodeForLoopExpression.LoopVariable variable, ScriptCodeExpression condition, ScriptCodeForLoopExpression.YieldGrouping grouping, TranslationContext context)
