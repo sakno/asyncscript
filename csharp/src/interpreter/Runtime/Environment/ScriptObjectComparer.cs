@@ -12,7 +12,6 @@ namespace DynamicScript.Runtime.Environment
     /// Represents an object that is used as selection source in 'caseof' expression.
     /// This class cannot be inherited.
     /// </summary>
-    
     [ComVisible(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     public sealed class ScriptObjectComparer: IEquatable<IScriptObject>
@@ -70,7 +69,9 @@ namespace DynamicScript.Runtime.Environment
         public bool Equals(IScriptObject other)
         {
             if (other == null) other = ScriptObject.Void;
-            return Convert.ToBoolean(m_comparer != null ? m_comparer.Invoke(new[] { m_source, other }, m_state) : m_source.BinaryOperation(QCodeBinaryOperatorType.ValueEquality, other, m_state));
+            return RuntimeHelpers.IsTrue(
+                m_comparer != null ? m_comparer.Invoke(new[] { m_source, other }, m_state) : m_source.BinaryOperation(QCodeBinaryOperatorType.ValueEquality, other, m_state),
+                m_state);
         }
 
         /// <summary>

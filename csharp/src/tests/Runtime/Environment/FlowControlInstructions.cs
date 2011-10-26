@@ -91,16 +91,45 @@ return a.c;
         }
 
         [Test(Description = "Represents a simple CASEOF instruction usage.")]
-        public void SimpleCaseof()
+        public void CaseofTest()
         {
-            string r = Run(@"
+            var r = Run(@"
 var i = 10;
 return caseof i 
     if 1, 2 then 'one or two'
     if 10 then 'ten'
     else 'unknown';
 ");
-            Assert.AreEqual("ten", r);
+            Assert.AreEqual("ten", (string)r);
+            r = Run(@"
+var s = '10';
+return caseof s
+    if '10', '11' then 10
+    if '12' then 12
+    else 0;
+");
+            Assert.AreEqual(new ScriptInteger(10), r);
+            r = Run(@"
+var s = {{a = 10}};
+return caseof s
+    if {{a = 10}} then 'ten'
+    if '1' then 'one'
+    else 'unknown';
+");
+            Assert.AreEqual("ten", (string)r);
+        }
+
+        [Test(Description="Caseof instruction with custom comparer.")]
+        public void CaseofWithCustomComparerTest()
+        {
+            string r = Run(@"
+var s = {{a = 10}};
+return caseof s -> @src, value -> boolean: value == '1'
+    if {{a = 10}} then 'ten'
+    if '1' then 'one'
+    else 'unknown';
+");
+            Assert.AreEqual("one", r);
         }
 
         [Test(Description = "Unattended return from FINALLY block.")]

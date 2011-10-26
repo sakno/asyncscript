@@ -447,7 +447,7 @@ namespace DynamicScript.Runtime.Environment
                         foreach (var l in this)
                         {
                             var r = other[l.Key];
-                            if (r == null || !l.Equals(r)) return false;
+                            if (r == null || !l.Value.Equals(r)) return false;
                         }
                         return true;
                     default: return false;
@@ -742,11 +742,9 @@ namespace DynamicScript.Runtime.Environment
         /// <returns></returns>
         protected sealed override IScriptObject Equals(IScriptObject right, InterpreterState state)
         {
-            if (right is ScriptCompositeObject)
-                return Equals((ScriptCompositeObject)right, state);
-            else if (state.Context == InterpretationContext.Unchecked)
-                return Void;
-            else throw new UnsupportedOperationException(state);
+            return right is ScriptCompositeObject ?
+                Equals((ScriptCompositeObject)right, state) :
+                ScriptBoolean.False;
         }
 
         /// <summary>
@@ -757,11 +755,9 @@ namespace DynamicScript.Runtime.Environment
         /// <returns></returns>
         protected sealed override IScriptObject NotEquals(IScriptObject right, InterpreterState state)
         {
-            if (right is ScriptCompositeObject)
-                return !Equals((ScriptCompositeObject)right, state);
-            else if (state.Context == InterpretationContext.Unchecked)
-                return Void;
-            else throw new UnsupportedOperationException(state);
+            return right is ScriptCompositeObject ?
+                !Equals((ScriptCompositeObject)right, state) :
+                ScriptBoolean.True;
         }
 
         IScriptCompositeObject IScriptCompositeObject.AsReadOnly(InterpreterState state)
