@@ -21,13 +21,6 @@ namespace DynamicScript.Runtime.Hosting
         [LoaderOptimization(LoaderOptimization.SingleDomain)]
         private static int Main(string[] args)
         {
-            var r = DynamicScriptInterpreter.Run(@"
-var i = 10;
-return caseof i 
-    if 1, 2 then 'one or two'
-    if 10 then 'ten'
-    else 'unknown';
-");
             return Execute(new CommandLineParser(Console.Out, Console.In), args);
         }
     }
