@@ -249,7 +249,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             }
             if (scope is LoopScope)
                 return ((LoopScope)scope).Continue(from ScriptCodeExpression a in continueStatement.ArgList select AsRightSide(Translate(a, context), context));
-            else return Expression.Block(Expression.Goto(context.Scope.BeginOfScope), ScriptObject.MakeVoid());
+            else return Expression.Goto(context.Scope.BeginOfScope);
         }
 
         /// <summary>
@@ -279,7 +279,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns>LINQ-ET representation of the fault statemenet.</returns>
         protected override Expression Translate(ScriptCodeFaultStatement fault, TranslationContext context)
         {
-            return ScriptFault.Throw(Translate(fault.Error, context), context.Scope.StateHolder);
+            return ScriptFault.Throw(AsRightSide(Translate(fault.Error, context), context), context.Scope.StateHolder);
         }
 
         /// <summary>

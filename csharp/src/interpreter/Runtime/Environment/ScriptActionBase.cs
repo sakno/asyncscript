@@ -546,10 +546,16 @@ namespace DynamicScript.Runtime.Environment
             {
                 result = InvokeCore(args, state) ?? Void;
             }
+#if !DEBUG
+            catch (System.Reflection.TargetInvocationException e)
+            {
+                throw e.InnerException;
+            }
             catch (NullReferenceException)
             {
                 throw new VoidException(state);
             }
+#endif
             finally
             {
                 Pop();

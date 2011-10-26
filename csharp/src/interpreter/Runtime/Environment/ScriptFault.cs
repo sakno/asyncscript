@@ -23,7 +23,7 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="faultObj">The object returned from fault.</param>
         /// <param name="state">Internal interpreter state.</param>
         public ScriptFault(IScriptObject faultObj, InterpreterState state)
-            : base(string.Format(ErrorMessages.ScriptFault, faultObj), InterpreterErrorCode.Internal, state)
+            : base(string.Format(ErrorMessages.ScriptFault, faultObj, state), InterpreterErrorCode.Internal, state)
         {
             m_fault = faultObj;
         }
@@ -46,31 +46,17 @@ namespace DynamicScript.Runtime.Environment
             get { return m_fault; }
         }
 
-        /// <summary>
-        /// Throws a script-compliant exception.
-        /// </summary>
-        /// <param name="faultObj">An exception object.</param>
-        /// <param name="state">Internal interpreter state.</param>
-        /// <returns>Never returns.</returns>
-#if !DEBUG
-        [DebuggerHidden]
-        [DebuggerNonUserCode]
-#endif
-        public static IScriptObject Throw(IScriptObject faultObj, InterpreterState state)
-        {
-            throw new ScriptFault(faultObj, state);
-        }
-
         internal static NewExpression New(Expression faultObj, ParameterExpression stateVar)
         {
             var ctor = LinqHelpers.BodyOf<IScriptObject, InterpreterState, ScriptFault, NewExpression>((f, s) => new ScriptFault(f, s));
             return ctor.Update(new Expression[] { faultObj, stateVar });
         }
 
-        internal static MethodCallExpression Throw(Expression faultObj, ParameterExpression stateVar)
+        internal static UnaryExpression Throw(Expression faultObj, ParameterExpression stateVar)
         {
-            var @throw = LinqHelpers.BodyOf<IScriptObject, InterpreterState, IScriptObject, MethodCallExpression>((f, s) => Throw(f, s));
-            return @throw.Update(null, new[] { faultObj, stateVar });
+            //var @throw = LinqHelpers.BodyOf<IScriptObject, InterpreterState, IScriptObject, MethodCallExpression>((f, s) => Throw(f, s));
+            //return @throw.Update(null, new[] { faultObj, stateVar });
+            return Expression.Throw(New(faultObj, stateVar), typeof(ScriptFault));
         }
 
         private static IScriptObject Unwrap(object e)
