@@ -297,7 +297,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             body.Label(currentScope.BeginOfScope);
             Translate(forkExpression.Body.UnwrapStatements(), context, GotoExpressionKind.Goto, ref body);
             body.Label(currentScope.EndOfScope, ScriptObject.MakeVoid());
-            var result = ScriptAsyncObject.Bind(Expression.Lambda<Func<IScriptObject, InterpreterState, IScriptObject>>(Expression.Block(body), (ParameterExpression)currentScope.ScopeVar, currentScope.StateHolder), AsRightSide(currentScope.Parent.ScopeVar, context), currentScope.Parent.StateHolder);
+            var result = ScriptAsyncObject.New(Expression.Lambda<Func<IScriptObject, InterpreterState, IScriptObject>>(Expression.Block(body), (ParameterExpression)currentScope.ScopeVar, currentScope.StateHolder), AsRightSide(currentScope.Parent.ScopeVar, context), currentScope.Parent.StateHolder);
             context.Pop();
             return result;
         }

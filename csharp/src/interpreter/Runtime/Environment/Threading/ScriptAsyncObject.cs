@@ -1,52 +1,126 @@
 ﻿using System;
-using System.Dynamic;
 using System.Linq.Expressions;
-using System.Threading.Tasks;
-using System.Runtime.CompilerServices;
-using System.ComponentModel;
 
 namespace DynamicScript.Runtime.Environment.Threading
 {
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
-    using WaitHandle = System.Threading.WaitHandle;
+    using Compiler.Ast;
+    using IScopeVariable = Microsoft.Scripting.IScopeVariable;
+    using ValueQueue = System.Collections.Concurrent.ConcurrentQueue<Action<IRuntimeSlot>>;
+    using IScriptProducerConsumerCollection = System.Collections.Concurrent.IProducerConsumerCollection<Action<IRuntimeSlot>>;
 
     /// <summary>
     /// Represents asynchronous object that holds asynchronous task result.
     /// This class cannot be inherited.
     /// </summary>
     [ComVisible(false)]
-    public sealed class ScriptAsyncObject: ScriptProxyObject, ISynchronizable
+    public sealed class ScriptAsyncObject: ScriptFuture
     {
         #region Nested Types
-        [ComVisible(false)]
-        private sealed class ScriptTaskItem
+        /// <summary>
+        /// Represents future runtime storage.
+        /// This class cannot be inherited.
+        /// </summary>
+        private abstract class ScriptAsyncSlotBase : ScriptFuture, IRuntimeSlot
         {
-            private readonly InterpreterState RuntimeState;
-            private readonly Func<IScriptObject, InterpreterState, IScriptObject> Implementation;
-            private readonly IScriptObject This;
+            private readonly ValueQueue SetValueQueue;
 
-            public ScriptTaskItem(Func<IScriptObject, InterpreterState, IScriptObject> task, IScriptObject @this, InterpreterState state)
+            protected ScriptAsyncSlotBase(IScriptAsyncObject owner, Func<IScriptObject, InterpreterState, IScriptObject> task, InterpreterState state)
+                : base(owner, task, state)
             {
-                if (task == null) throw new ArgumentNullException("task");
-                if (state == null) throw new ArgumentNullException("state");
-                RuntimeState = state;
-                Implementation = task;
-                This = IsVoid(@this) ? state.Global : @this;
+                SetValueQueue = new ValueQueue();
             }
 
-            private IScriptObject Invoke()
+            public IScriptObject GetValue(InterpreterState state)
             {
-                return Implementation.Invoke(This, RuntimeState);
+                var value = UnwrapUnsafe(state);
+                if (value is IRuntimeSlot)
+                    return ((IRuntimeSlot)value).GetValue(state);
+                else if (value != null)
+                    return value;
+                else return Create(this, (target, s) => target is IRuntimeSlot ? ((IRuntimeSlot)target).GetValue(s) : target, state);
             }
 
-            public static implicit operator Func<IScriptObject>(ScriptTaskItem item)
+            private static void SetValue(IRuntimeSlot storage, IScriptProducerConsumerCollection queue)
             {
-                return item != null ? new Func<IScriptObject>(item.Invoke) : null;
+                foreach (var value in queue)
+                    value(storage);
+            }
+
+            void IRuntimeSlot.SetValue(IScriptObject value, InterpreterState state)
+            {
+                var underlyingObject = UnwrapUnsafe(state);
+                if (underlyingObject == null)
+                    SetValueQueue.Enqueue(s => s.SetValue(value, state));
+                else if (underlyingObject is IRuntimeSlot)
+                    SetValue((IRuntimeSlot)underlyingObject, SetValueQueue);
+            }
+
+            RuntimeSlotAttributes IRuntimeSlot.Attributes
+            {
+                get { return RuntimeSlotAttributes.Lazy; }
+            }
+
+            private static bool DeleteValue(IScriptObject obj)
+            {
+                return obj is IRuntimeSlot ? ((IRuntimeSlot)obj).DeleteValue() : false;
+            }
+
+            bool IScopeVariable.DeleteValue()
+            {
+                return TryApply<bool>(DeleteValue);
+            }
+
+            private static bool HasValue(IScriptObject value)
+            {
+                return value is IRuntimeSlot ?
+                    ((IRuntimeSlot)value).HasValue :
+                    value != null;
+            }
+
+            bool IScopeVariable.HasValue
+            {
+                get { return IsCompleted && TryApply<bool>(HasValue); }
+            }
+
+            public void SetValue(object value)
+            {
+                throw new NotImplementedException();
+            }
+
+            private static dynamic TryGetValue(IScriptObject obj)
+            {
+                dynamic result;
+                if (obj is IRuntimeSlot)
+                    ((IRuntimeSlot)obj).TryGetValue(out result);
+                else if (obj != null)
+                    result = obj;
+                else result = null;
+                return result;
+            }
+
+            bool IScopeVariable.TryGetValue(out dynamic value)
+            {
+                value = TryApply<dynamic>(TryGetValue);
+                return value != null;
+            }
+
+            bool IEquatable<IRuntimeSlot>.Equals(IRuntimeSlot other)
+            {
+                return base.Equals(other);
             }
         }
-        #endregion
 
-        private Task<IScriptObject> m_task;
+        /// <summary>
+        /// Represents a implementation of runtime slot.
+        /// This class cannot be inherited.
+        /// </summary>
+        [ComVisible(false)]
+        private sealed class ScriptAsyncSlot : ScriptAsyncSlotBase
+        {
+         
+        }
+        #endregion
 
         /// <summary>
         /// Creates a new asynchronous object.
@@ -54,74 +128,34 @@ namespace DynamicScript.Runtime.Environment.Threading
         /// <param name="task">The delegate that produces the object and will be executed synchronously.</param>
         /// <param name="this">Scope object.</param>
         /// <param name="state">Internal interpreter state.</param>
-        public ScriptAsyncObject(Func<IScriptObject, InterpreterState, IScriptObject> task, IScriptObject @this, InterpreterState state)
+        public ScriptAsyncObject(IScriptObject @this, Func<IScriptObject, InterpreterState, IScriptObject> task, InterpreterState state)
+            : base(@this, task, state)
         {
-            m_task = new Task<IScriptObject>(new ScriptTaskItem(task, @this, state));
-            m_task.Start();
         }
 
         #region Runtime Helpers
 
-        internal static NewExpression Bind(Expression<Func<IScriptObject, InterpreterState, IScriptObject>> task, Expression @this, ParameterExpression stateVar)
+        internal static NewExpression New(Expression<Func<IScriptObject, InterpreterState, IScriptObject>> task, Expression @this, ParameterExpression stateVar)
         {
-            var ctor = LinqHelpers.BodyOf<Func<IScriptObject, InterpreterState, IScriptObject>, IScriptObject, InterpreterState, ScriptAsyncObject, NewExpression>((t, o, s) => new ScriptAsyncObject(t, o, s));
+            var ctor = LinqHelpers.BodyOf<IScriptObject, Func<IScriptObject, InterpreterState, IScriptObject>, InterpreterState, ScriptAsyncObject, NewExpression>((o, t, s) => new ScriptAsyncObject(o, t, s));
             return ctor.Update(new Expression[] { task, @this, stateVar });
         }
         #endregion
 
-        /// <summary>
-        /// Gets task associated with the current asynchronous object.
-        /// </summary>
-        internal Task<IScriptObject> Task
+
+        protected override ScriptFuture Create(IScriptObject target, Func<IScriptObject, InterpreterState, IScriptObject> task, InterpreterState state)
         {
-            get { return m_task; }
+            return new ScriptAsyncObject(target, task, state);
         }
 
-        /// <summary>
-        /// This method is not supported.
-        /// </summary>
-        /// <param name="operation"></param>
-        /// <returns></returns>
-        public override bool Apply(Func<IScriptObject, IScriptObject> operation)
+        protected override IRuntimeSlot Create(string slotName, InterpreterState state)
         {
-            return false;
+            throw new NotImplementedException();
         }
 
-        /// <summary>
-        /// Finalizes task and returns result.
-        /// </summary>
-        /// <returns>The result obtained from the asynchronous task.</returns>
-        protected override IScriptObject UnwrapCore()
+        protected override IRuntimeSlot Create(IScriptObject[] indicies, InterpreterState state)
         {
-            m_task.Wait();
-            switch (m_task.Exception != null)
-            {
-                case true: throw m_task.Exception.InnerException;
-                default: return m_task.Result;
-            }
-        }
-
-        /// <summary>
-        /// Gets contract binding for the asynchronous object.
-        /// </summary>
-        /// <returns>The contract binding for the asynchronous object.</returns>
-        [MethodImpl(MethodImplOptions.Synchronized)]
-        public override IScriptContract GetContractBinding()
-        {
-            return Task.IsCompleted ? Task.Result.GetContractBinding() : ScriptSuperContract.Instance;
-        }
-
-        [MethodImpl(MethodImplOptions.Synchronized)]
-        bool ISynchronizable.Await(WaitHandle handle, TimeSpan timeout)
-        {
-            switch (handle != null)
-            {
-                case true:
-                    IAsyncResult ar = m_task;
-                    return Task.IsCompleted || WaitHandle.WaitAny(new[] { ar.AsyncWaitHandle, handle }, timeout) == 0;
-                default:
-                    return Task.Wait(timeout);
-            }
+            throw new NotImplementedException();
         }
     }
 }

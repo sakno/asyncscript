@@ -108,6 +108,7 @@ namespace DynamicScript.Runtime.Environment
             HasValue = true;
         }
 
+
         /// <summary>
         /// Stores the specified value directly to the slot.
         /// </summary>
@@ -122,21 +123,16 @@ namespace DynamicScript.Runtime.Environment
             else if (value is IRuntimeSlot)
                 SetValueDirect(((IRuntimeSlot)value).GetValue(state), state);
             else if (value is IScriptProxyObject)
+            {
+                ((IScriptProxyObject)value).RequiresContract(ContractBinding, state);
                 SetValueDirect(value);
+            }
             else if (ContractBinding.IsCompatible(value, out theSame))
                 SetValueDirect(theSame ? value : ContractBinding.Convert(Conversion.Implicit, value, state));
             else if (value is ScriptVoid || state.Context == InterpretationContext.Unchecked)
                 SetValueDirect(ContractBinding.FromVoid(state));
             else
                 throw new ContractBindingException(value, ContractBinding, state);
-        }
-
-        private IScriptObject GetValueDirect(InterpreterState state)
-        {
-            var v = Value;
-            if (v is IScriptProxyObject)
-                SetValueDirect(((IScriptProxyObject)v).Unwrap(), state);
-            return v;
         }
 
         /// <summary>
@@ -169,13 +165,10 @@ namespace DynamicScript.Runtime.Environment
         /// value from unassigned slot in the checked context.</exception>
         public override IScriptObject GetValue(InterpreterState state)
         {
-            switch (HasValue)
-            {
-                case true: return GetValueDirect(state);
-                default:
-                    if (state.Context == InterpretationContext.Unchecked) return ContractBinding.FromVoid(state);
-                    else throw new UnassignedSlotReadingException(state);
-            }
+            if (HasValue)
+                return Value;
+            else if (state.Context == InterpretationContext.Unchecked) return ContractBinding.FromVoid(state);
+            else throw new UnassignedSlotReadingException(state);
         }
 
         /// <summary>

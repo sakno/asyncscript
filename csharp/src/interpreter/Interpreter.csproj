@@ -284,9 +284,11 @@
     <Compile Include="Runtime\Environment\ExpressionTrees\ScriptWhileExpressionFactory.cs" />
     <Compile Include="Runtime\Environment\IBinaryOperatorInvoker.cs" />
     <Compile Include="Runtime\Environment\IScriptActionContractSlots.cs" />
+    <Compile Include="Runtime\Environment\IScriptAsyncObject.cs" />
     <Compile Include="Runtime\Environment\IUnaryOperatorInvoker.cs" />
     <Compile Include="Runtime\Environment\ObjectModel\RuntimeBehaviorSlots.cs" />
     <Compile Include="Runtime\Environment\ScriptActionInvoker.cs" />
+    <Compile Include="Runtime\Environment\Threading\ScriptFuture.cs" />
     <Compile Include="Runtime\Hosting\InteractiveInterpreter.cs" />
     <Compile Include="Runtime\Hosting\InteractiveModeStrings.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -478,7 +480,6 @@
     <Compile Include="Runtime\Environment\ScriptInteger.cs" />
     <Compile Include="Runtime\Environment\ScriptIntegerContract.cs" />
     <Compile Include="Runtime\Environment\ScriptConvertibleObject.cs" />
-    <Compile Include="Runtime\Environment\ScriptProxyObject.cs" />
     <Compile Include="Runtime\Environment\ScriptPrimitiveObject.cs" />
     <Compile Include="Runtime\Environment\ScriptSuperContract.cs" />
     <Compile Include="Runtime\Environment\ScriptBuiltinContract.cs" />
