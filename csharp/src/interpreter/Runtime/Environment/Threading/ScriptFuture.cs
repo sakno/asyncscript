@@ -343,7 +343,7 @@ namespace DynamicScript.Runtime.Environment.Threading
         /// <param name="binder"></param>
         /// <param name="result"></param>
         /// <returns></returns>
-        public override bool TryConvert(ConvertBinder binder, out object result)
+        public sealed override bool TryConvert(ConvertBinder binder, out object result)
         {
             switch (binder.ReturnType.Is<IScriptObject, IScriptProxyObject, IScriptAsyncObject>())
             {
@@ -362,7 +362,7 @@ namespace DynamicScript.Runtime.Environment.Threading
         /// <param name="arg"></param>
         /// <param name="result"></param>
         /// <returns></returns>
-        public override bool TryBinaryOperation(BinaryOperationBinder binder, object arg, out object result)
+        public sealed override bool TryBinaryOperation(BinaryOperationBinder binder, object arg, out object result)
         {
             return ScriptObject.TryBinaryOperation(this, binder, arg, out result);
         }
@@ -374,7 +374,7 @@ namespace DynamicScript.Runtime.Environment.Threading
         /// <param name="indexes"></param>
         /// <param name="result"></param>
         /// <returns></returns>
-        public override bool TryGetIndex(GetIndexBinder binder, object[] indexes, out object result)
+        public sealed override bool TryGetIndex(GetIndexBinder binder, object[] indexes, out object result)
         {
             return ScriptObject.TryGetIndex(this, binder, indexes, out result);
         }
@@ -385,7 +385,7 @@ namespace DynamicScript.Runtime.Environment.Threading
         /// <param name="binder"></param>
         /// <param name="result"></param>
         /// <returns></returns>
-        public override bool TryGetMember(GetMemberBinder binder, out object result)
+        public sealed override bool TryGetMember(GetMemberBinder binder, out object result)
         {
             return ScriptObject.TryGetMember(this, binder, out result);
         }
@@ -397,7 +397,7 @@ namespace DynamicScript.Runtime.Environment.Threading
         /// <param name="args"></param>
         /// <param name="result"></param>
         /// <returns></returns>
-        public override bool TryInvoke(InvokeBinder binder, object[] args, out object result)
+        public sealed override bool TryInvoke(InvokeBinder binder, object[] args, out object result)
         {
             return ScriptObject.TryInvoke(this, binder, args, out result);
         }
@@ -409,7 +409,7 @@ namespace DynamicScript.Runtime.Environment.Threading
         /// <param name="args"></param>
         /// <param name="result"></param>
         /// <returns></returns>
-        public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
+        public sealed override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
         {
             return ScriptObject.TryInvokeMember(this, binder, args, out result);
         }
@@ -420,7 +420,7 @@ namespace DynamicScript.Runtime.Environment.Threading
         /// <param name="binder"></param>
         /// <param name="result"></param>
         /// <returns></returns>
-        public override bool TryUnaryOperation(UnaryOperationBinder binder, out object result)
+        public sealed override bool TryUnaryOperation(UnaryOperationBinder binder, out object result)
         {
             return ScriptObject.TryUnaryOperation(this, binder, out result);
         }
@@ -432,7 +432,7 @@ namespace DynamicScript.Runtime.Environment.Threading
         /// <param name="indexes"></param>
         /// <param name="value"></param>
         /// <returns></returns>
-        public override bool TrySetIndex(SetIndexBinder binder, object[] indexes, object value)
+        public sealed override bool TrySetIndex(SetIndexBinder binder, object[] indexes, object value)
         {
             return ScriptObject.TrySetIndex(this, binder, indexes, value);
         }
@@ -443,7 +443,7 @@ namespace DynamicScript.Runtime.Environment.Threading
         /// <param name="binder"></param>
         /// <param name="value"></param>
         /// <returns></returns>
-        public override bool TrySetMember(SetMemberBinder binder, object value)
+        public sealed override bool TrySetMember(SetMemberBinder binder, object value)
         {
             return ScriptObject.TrySetMember(this, binder, value);
         }
