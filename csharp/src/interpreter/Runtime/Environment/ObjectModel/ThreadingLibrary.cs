@@ -14,6 +14,45 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         public const string Name = "threading";
         #region Nested Types
         [ComVisible(false)]
+        private sealed class IsAsyncAction : ScriptFunc<IScriptObject>
+        {
+            public const string Name = "isasync";
+            private const string FirstParamName = "obj";
+
+            public IsAsyncAction()
+                : base(FirstParamName, ScriptSuperContract.Instance, ScriptBooleanContract.Instance)
+            {
+            }
+
+            protected override IScriptObject Invoke(IScriptObject obj, InterpreterState state)
+            {
+                return (ScriptBoolean)(obj is IAsyncResult);
+            }
+        }
+
+        [ComVisible(false)]
+        private sealed class IsCompletedAction: ScriptFunc<IScriptObject>
+        {
+            public const string Name = "completed";
+            private const string FirstParamName = "obj";
+
+            public IsCompletedAction()
+                : base(FirstParamName, ScriptSuperContract.Instance, ScriptBooleanContract.Instance)
+            {
+            }
+
+            private static ScriptBoolean IsCompleted(IAsyncResult ar)
+            {
+                return ar != null ? ar.IsCompleted : true;
+            }
+
+            protected override IScriptObject Invoke(IScriptObject obj, InterpreterState state)
+            {
+                return IsCompleted(obj as IAsyncResult);
+            }
+        }
+
+        [ComVisible(false)]
         private sealed class SleepAction : ScriptAction<ScriptReal>
         {
             /// <summary>
@@ -93,6 +132,8 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                 AddConstant<WaitAllAction>(WaitAllAction.Name);
                 AddConstant<WaitAnyAction>(WaitAnyAction.Name);
                 AddConstant<SleepAction>(SleepAction.Name);
+                AddConstant<IsAsyncAction>(IsAsyncAction.Name);
+                AddConstant<IsCompletedAction>(IsCompletedAction.Name);
             }
         }
         #endregion

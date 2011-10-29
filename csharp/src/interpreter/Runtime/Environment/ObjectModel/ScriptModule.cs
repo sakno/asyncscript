@@ -375,6 +375,23 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         }
 
         [ComVisible(false)]
+        private sealed class QuitAction : ScriptAction<ScriptInteger>
+        {
+            public const string Name = "quit";
+            private const string FirstParamName = "exitCode";
+
+            public QuitAction()
+                : base(FirstParamName, ScriptIntegerContract.Instance)
+            {
+            }
+
+            protected override void Invoke(ScriptInteger exitCode, InterpreterState state)
+            {
+                SystemEnvironment.Exit(exitCode.IsInt32 ? (int)exitCode : 0);
+            }
+        }
+
+        [ComVisible(false)]
         private sealed class CmdAction : ScriptFunc<ScriptString, ScriptString, ScriptInteger>
         {
             public const string Name = "cmd";
@@ -429,7 +446,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
                 return obj != null ? obj.AsReadOnly(state) : null;
             }
-        }
+        } 
 
         [ComVisible(false)]
         private sealed class RegexAction : ScriptFunc
@@ -486,6 +503,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                 AddConstant<WeakRefAction>(WeakRefAction.Name);
                 AddConstant<ParseAction>(ParseAction.Name);
                 AddConstant<RuntimeBehaviorSlots>(RuntimeBehaviorSlots.Name);
+                AddConstant<QuitAction>(QuitAction.Name);
             }
         }
         #endregion
