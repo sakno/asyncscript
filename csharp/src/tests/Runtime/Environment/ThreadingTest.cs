@@ -26,8 +26,20 @@ namespace DynamicScript.Runtime.Environment
         [Test(Description="Lazy constant.")]
         public void LazyConstTest()
         {
-            var r = Run("const g = 3; const a = fork g + 10; return a;");
+            var r = Run("const g = 3; const a = fork g + 10; await a; return a;");
             Assert.AreEqual(new ScriptInteger(13), r);
+        }
+
+        [Test(Description = "Future computation.")]
+        public void FutureComputation()
+        {
+            var r = Run(@"
+var s = fork {threading.sleep(4000); leave 2; };
+var f = s + 10;
+await f;
+return f;
+");
+            Assert.AreEqual(new ScriptInteger(12), r);
         }
     }
 }

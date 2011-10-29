@@ -310,7 +310,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns>The translated expression.</returns>
         protected override Expression Translate(ScriptCodeAwaitExpression awaitExpression, TranslationContext context)
         {
-            var asyncResult = Translate(awaitExpression.AsyncResult, context);
+            var asyncResult = AsRightSide(Translate(awaitExpression.AsyncResult, context), context);
             var synchronizer = default(Expression);
             switch (awaitExpression.Synchronizer != null)
             {
@@ -795,7 +795,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns>Translated invocation expression.</returns>
         protected override Expression Translate(ScriptCodeInvocationExpression invocation, TranslationContext context)
         {
-            var target = Translate(invocation.Target, context);
+            var target = AsRightSide(Translate(invocation.Target, context), context);
             var args = new List<Expression>(from a in invocation.ArgList
                                             where a is ScriptCodeExpression
                                             select AsRightSide(Translate(a, context), context));

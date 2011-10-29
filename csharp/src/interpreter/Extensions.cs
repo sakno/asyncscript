@@ -60,5 +60,10 @@ namespace DynamicScript
             }
             
         }
+
+        public static bool Is<T1, T2, T3>(this Type t)
+        {
+            return Equals(t, typeof(T1)) || Equals(t, typeof(T2)) || Equals(t, typeof(T3));
+        }
     }
 }

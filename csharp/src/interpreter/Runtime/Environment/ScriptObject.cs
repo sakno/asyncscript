@@ -243,16 +243,7 @@ namespace DynamicScript.Runtime.Environment
             /// <returns><see langword="true"/> if the operation is successful; otherwise, <see langword="false"/>.</returns>
             public sealed override bool TryInvoke(InvokeBinder binder, object[] args, out object result)
             {
-                try
-                {
-                    result = Invoke(ScriptObject.Convert<object>(args), binder.GetState());
-                    return true;
-                }
-                catch (ConversionNotSupportedException e)
-                {
-                    result = e;
-                    return false;
-                }
+                return ScriptObject.TryInvoke(GetValue(binder.GetState()), binder, args, out result);
             }
 
             /// <summary>
@@ -299,26 +290,30 @@ namespace DynamicScript.Runtime.Environment
             /// cases, a language-specific run-time exception is thrown.)</returns>
             public sealed override bool TryBinaryOperation(BinaryOperationBinder binder, object arg, out object result)
             {
-                var scriptObject = default(IScriptObject);
-                var state = binder.GetState();
-                switch (ScriptObject.TryConvert(arg, out scriptObject))
-                {
-                    case true:
-                        try
-                        {
-                            result = RuntimeHelpers.BinaryOperation(this, binder.Operation, scriptObject, state);
-                            return true;
-                        }
-                        catch (UnsupportedOperationException e)
-                        {
-                            result = e;
-                            return false;
-                        }
-                    default:
-                        if (state.Context == InterpretationContext.Unchecked) result = ScriptObject.Void;
-                        else throw new UnsupportedOperationException(state);
-                        return true;
-                }
+                return ScriptObject.TryBinaryOperation(this, binder, arg, out result);
+            }
+
+            /// <summary>
+            /// Binds to the member value.
+            /// </summary>
+            /// <param name="binder"></param>
+            /// <param name="result"></param>
+            /// <returns></returns>
+            public sealed override bool TryGetMember(GetMemberBinder binder, out object result)
+            {
+                return ScriptObject.TryGetMember(GetValue(binder.GetState()), binder, out result);
+            }
+
+
+            /// <summary>
+            /// Binds to the member assignment.
+            /// </summary>
+            /// <param name="binder"></param>
+            /// <param name="value"></param>
+            /// <returns></returns>
+            public sealed override bool TrySetMember(SetMemberBinder binder, object value)
+            {
+                return ScriptObject.TrySetMember(GetValue(binder.GetState()), binder, value);
             }
 
             /// <summary>
@@ -329,39 +324,54 @@ namespace DynamicScript.Runtime.Environment
             /// <returns><see langword="true"/> if the operation is successful; otherwise, <see langword="false"/>.</returns>
             public sealed override bool TryUnaryOperation(UnaryOperationBinder binder, out object result)
             {
-                try
-                {
-                    result = RuntimeHelpers.UnaryOperation(this, binder.Operation, binder.GetState());
-                    return true;
-                }
-                catch (UnsupportedOperationException e)
-                {
-                    result = e;
-                    return false;
-                }
+                return TryUnaryOperation(binder, out result);
             }
 
             /// <summary>
-            /// Converts
+            /// Peforms conversion through dynamic context.
             /// </summary>
             /// <param name="binder"></param>
             /// <param name="result"></param>
             /// <returns></returns>
             public sealed override bool TryConvert(ConvertBinder binder, out object result)
             {
-                var value = GetValue(InterpreterState.Current);
-                if (Equals(binder.Type, typeof(IRuntimeSlot)) || Equals(binder.Type, typeof(RuntimeSlotBase)) || Equals(binder.Type, GetType()))
-                {
-                    result = this;
-                    return true;
-                }
-                else if (value is DynamicObject)
-                    return ((DynamicObject)value).TryConvert(binder, out result);
-                else
-                {
-                    result = null;
-                    return false;
-                }
+                return ScriptObject.TryConvert(GetValue(InterpreterState.Current), binder, out result);
+            }
+
+            /// <summary>
+            /// Binds to the member invocation.
+            /// </summary>
+            /// <param name="binder"></param>
+            /// <param name="args"></param>
+            /// <param name="result"></param>
+            /// <returns></returns>
+            public sealed override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
+            {
+                return ScriptObject.TryInvokeMember(GetValue(binder.GetState()), binder, args, out result);
+            }
+
+            /// <summary>
+            /// Binds to the indexer getter.
+            /// </summary>
+            /// <param name="binder"></param>
+            /// <param name="indexes"></param>
+            /// <param name="result"></param>
+            /// <returns></returns>
+            public sealed override bool TryGetIndex(GetIndexBinder binder, object[] indexes, out object result)
+            {
+                return ScriptObject.TryGetIndex(GetValue(binder.GetState()), binder, indexes, out result);
+            }
+
+            /// <summary>
+            /// Binds to the indexer setter.
+            /// </summary>
+            /// <param name="binder"></param>
+            /// <param name="indexes"></param>
+            /// <param name="value"></param>
+            /// <returns></returns>
+            public sealed override bool TrySetIndex(SetIndexBinder binder, object[] indexes, object value)
+            {
+                return ScriptObject.TrySetIndex(GetValue(binder.GetState()), binder, indexes, value);
             }
 
             IScriptObject IScriptObject.GetRuntimeDescriptor(string slotName, InterpreterState state)
@@ -369,10 +379,16 @@ namespace DynamicScript.Runtime.Environment
                 return GetValue(state).GetRuntimeDescriptor(slotName, state);
             }
 
+            private IScriptObject BinaryOperation(ScriptCodeBinaryOperatorType @operator, IScriptAsyncObject arg, InterpreterState state)
+            {
+                return arg.Enqueue(this, @operator, state);
+            }
+
             private IScriptObject BinaryOperation(ScriptCodeBinaryOperatorType @operator, IScriptObject arg, InterpreterState state)
             {
-                arg = arg.Normalize(state);
-                switch (@operator)
+                if (arg is IScriptAsyncObject)
+                    return BinaryOperation(@operator, (IScriptAsyncObject)arg, state);
+                else switch (@operator)
                 {
                     case ScriptCodeBinaryOperatorType.Assign:
                         SetValue(arg, state);
@@ -1396,6 +1412,19 @@ namespace DynamicScript.Runtime.Environment
             return Array.ConvertAll(values ?? new T[0], Convert<T>);
         }
 
+        private static bool TryConvert<T>(T[] values, out IScriptObject[] result)
+        {
+            if (values == null) values = new T[0];
+            result = new IScriptObject[values.LongLength];
+            for (var i = 0L; i < result.LongLength; i++)
+            {
+                var current = default(IScriptObject);
+                if (TryConvert(values[i], out current)) result[i] = current;
+                else return false;
+            }
+            return true;
+        }
+
         /// <summary>
         /// Gets an object that represents DynamicScript-compliant void expression.
         /// </summary>
@@ -1442,6 +1471,30 @@ namespace DynamicScript.Runtime.Environment
         }
 
         #region Binary Operations
+        internal static bool TryBinaryOperation(IScriptObject target, BinaryOperationBinder binder, object arg, out object result)
+        {
+            var scriptObject = default(IScriptObject);
+            var state = binder.GetState();
+            switch (ScriptObject.TryConvert(arg, out scriptObject))
+            {
+                case true:
+                    try
+                    {
+                        result = RuntimeHelpers.BinaryOperation(target, binder.Operation, scriptObject, state);
+                        return true;
+                    }
+                    catch (UnsupportedOperationException e)
+                    {
+                        result = e;
+                        return false;
+                    }
+                default:
+                    if (state.Context == InterpretationContext.Unchecked) result = ScriptObject.Void;
+                    else throw new UnsupportedOperationException(state);
+                    return true;
+            }
+        }
+
         /// <summary>
         /// Provides implementation for binary operations.
         /// </summary>
@@ -1453,26 +1506,7 @@ namespace DynamicScript.Runtime.Environment
         /// cases, a language-specific run-time exception is thrown.)</returns>
         public sealed override bool TryBinaryOperation(BinaryOperationBinder binder, object arg, out object result)
         {
-            var scriptObject = default(IScriptObject);
-            var state = binder.GetState();
-            switch (TryConvert(arg, out scriptObject))
-            {
-                case true:
-                    try
-                    {
-                        result = RuntimeHelpers.BinaryOperation(this, binder.Operation, scriptObject, state);
-                        return true;
-                    }
-                    catch (UnsupportedOperationException e)
-                    {
-                        result = e;
-                        return false;
-                    }
-                default:
-                    if (state.Context == InterpretationContext.Unchecked) result = Void;
-                    else throw new UnsupportedOperationException(state);
-                    return true;
-            }
+            return TryBinaryOperation(this, binder, arg, out result);
         }
 
         /// <summary>
@@ -1929,6 +1963,20 @@ namespace DynamicScript.Runtime.Environment
 
         #region Invocation Operation
 
+        internal static bool TryInvoke(IScriptObject target, InvokeBinder binder, object[] args, out object result)
+        {
+            try
+            {
+                result = target.Invoke(Convert<object>(args), binder.GetState());
+                return true;
+            }
+            catch (ConversionNotSupportedException e)
+            {
+                result = e;
+                return false;
+            }
+        }
+
         /// <summary>
         /// Provides the implementation for operations that invoke an object.
         /// </summary>
@@ -1938,16 +1986,7 @@ namespace DynamicScript.Runtime.Environment
         /// <returns><see langword="true"/> if the operation is successful; otherwise, <see langword="false"/>.</returns>
         public sealed override bool TryInvoke(InvokeBinder binder, object[] args, out object result)
         {
-            try
-            {
-                result = Invoke(Convert<object>(args), binder.GetState());
-                return true;
-            }
-            catch (ConversionNotSupportedException e)
-            {
-                result = e;
-                return false;
-            }
+            return TryInvoke(this, binder, args, out result);
         }
 
         /// <summary>
@@ -1971,15 +2010,9 @@ namespace DynamicScript.Runtime.Environment
 
         #region Special Members Invocation
 
-        /// <summary>
-        /// Provides the implementation for operations that get member values.
-        /// </summary>
-        /// <param name="binder">Provides information about the object that called the dynamic operation.</param>
-        /// <param name="result">The result of the get operation.</param>
-        /// <returns><see langword="true"/> if the operation is successful; otherwise, <see langword="false"/>.</returns>
-        public sealed override bool TryGetMember(GetMemberBinder binder, out object result)
+        internal static bool TryGetMember(IScriptObject target, GetMemberBinder binder, out object result)
         {
-            var slot = this[binder.Name, InterpreterState.Current];
+            var slot = target[binder.Name, InterpreterState.Current];
             var state = binder.GetState();
             switch (slot != null)
             {
@@ -1994,17 +2027,77 @@ namespace DynamicScript.Runtime.Environment
             }
         }
 
+        internal static bool TrySetIndex(IScriptObject target, SetIndexBinder binder, object[] indexes, object value)
+        {
+            var state = binder.GetState();
+            var args = default(IScriptObject[]);
+            var v = default(IScriptObject);
+            switch (TryConvert(indexes, out args) && TryConvert(value, out v))
+            {
+                case true:
+                    var slot = target[args, state];
+                    slot.SetValue(v, state);
+                    return true;
+                default:return false;
+            }
+        }
+
         /// <summary>
-        /// Provides the implementation for operations that set member values.
+        /// Binds to the indexer setter operation.
+        /// </summary>
+        /// <param name="binder"></param>
+        /// <param name="indexes"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public sealed override bool TrySetIndex(SetIndexBinder binder, object[] indexes, object value)
+        {
+            return base.TrySetIndex(binder, indexes, value);
+        }
+
+        internal static bool TryGetIndex(IScriptObject target, GetIndexBinder binder, object[] indexes, out object result)
+        {
+            var state = binder.GetState();
+            var args = default(IScriptObject[]);
+            switch (TryConvert(indexes, out args))
+            {
+                case true:
+                    var slot = target[args, state];
+                    result = slot.GetValue(state);
+                    return true;
+                default:
+                    result = null;
+                    return false;
+            }
+        }
+
+        /// <summary>
+        /// Binds to the indexer getter.
+        /// </summary>
+        /// <param name="binder"></param>
+        /// <param name="indexes"></param>
+        /// <param name="result"></param>
+        /// <returns></returns>
+        public sealed override bool TryGetIndex(GetIndexBinder binder, object[] indexes, out object result)
+        {
+            return TryGetIndex(this, binder, indexes, out result);
+        }
+
+        /// <summary>
+        /// Provides the implementation for operations that get member values.
         /// </summary>
         /// <param name="binder">Provides information about the object that called the dynamic operation.</param>
-        /// <param name="value">The value to set to the member.</param>
+        /// <param name="result">The result of the get operation.</param>
         /// <returns><see langword="true"/> if the operation is successful; otherwise, <see langword="false"/>.</returns>
-        public sealed override bool TrySetMember(SetMemberBinder binder, object value)
+        public sealed override bool TryGetMember(GetMemberBinder binder, out object result)
+        {
+            return TryGetMember(this, binder, out result);
+        }
+
+        internal static bool TrySetMember(IScriptObject target, SetMemberBinder binder, object value)
         {
             var scriptObject = default(IScriptObject);
-            var state=binder.GetState();
-            switch (TryConvert(value, out scriptObject) && BindSetMember(binder, scriptObject))
+            var state = binder.GetState();
+            switch (TryConvert(value, out scriptObject) && BindSetMember(target, binder, scriptObject))
             {
                 case true: return true;
                 default:
@@ -2013,15 +2106,42 @@ namespace DynamicScript.Runtime.Environment
             }
         }
 
-        private bool BindSetMember(SetMemberBinder binder, IScriptObject value)
+        /// <summary>
+        /// Provides the implementation for operations that set member values.
+        /// </summary>
+        /// <param name="binder">Provides information about the object that called the dynamic operation.</param>
+        /// <param name="value">The value to set to the member.</param>
+        /// <returns><see langword="true"/> if the operation is successful; otherwise, <see langword="false"/>.</returns>
+        public sealed override bool TrySetMember(SetMemberBinder binder, object value)
         {
-            var slot = this[binder.Name, InterpreterState.Current];
+            return TrySetMember(this, binder, value);
+        }
+
+        private static bool BindSetMember(IScriptObject target, SetMemberBinder binder, IScriptObject value)
+        {
+            var slot = target[binder.Name, binder.GetState()];
             switch (slot != null)
             {
                 case true:
                     slot.SetValue(value, binder.GetState());
                     return true;
                 default: return false;
+            }
+        }
+
+        internal static bool TryInvokeMember(IScriptObject target, InvokeMemberBinder binder, object[] args, out object result)
+        {
+            var state = binder.GetState();
+            var a = default(IScriptObject[]);
+            switch (TryConvert(args, out a))
+            {
+                case true:
+                    var slot = target[binder.Name, state];
+                    result = slot.Invoke(a, state);
+                    return true;
+                default:
+                    result = null;
+                    return false;
             }
         }
 
@@ -2034,25 +2154,19 @@ namespace DynamicScript.Runtime.Environment
         /// <returns><see langword="true"/> if the operation is successful; otherwise, <see langword="false"/>.</returns>
         public sealed override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
         {
-            var scriptResult = default(IScriptObject);
-            var success = BindInvokeMember(binder, Convert<object>(args), out scriptResult);
-            result = scriptResult;
-            return success;
+            return TryInvokeMember(this, binder, args, out result);
         }
 
-        private bool BindInvokeMember(InvokeMemberBinder binder, IScriptObject[] args, out IScriptObject result)
+        internal static bool TryConvert(IScriptObject target, ConvertBinder binder, out object result)
         {
-            var slot = this[binder.Name, InterpreterState.Current];
-            var state = binder.GetState();
-            switch (slot != null)
+            switch (binder.ReturnType.IsAssignableFrom(target.GetType()))
             {
                 case true:
-                    result = slot.GetValue(state).Invoke(args, state);
+                    result = target;
                     return true;
                 default:
-                    if (state.Context == InterpretationContext.Unchecked) result = Void;
-                    else throw new SlotNotFoundException(binder.Name, state);
-                    return true;
+                    result = null;
+                    return false;
             }
         }
 
@@ -2064,30 +2178,25 @@ namespace DynamicScript.Runtime.Environment
         /// <returns><see langword="true"/> if the operation is successful; otherwise, <see langword="false"/>.</returns>
         public override bool TryConvert(ConvertBinder binder, out object result)
         {
-            if (binder.ReturnType.IsAssignableFrom(GetType()))
-            {
-                result = this;
-                return true;
-            }
-            else if (binder.ReturnType.IsAssignableFrom(typeof(int)))
-            {
-                result = GetHashCode();
-                return true;
-            }
-            else if (binder.ReturnType.IsAssignableFrom(typeof(string)))
-            {
-                result = ToString();
-                return true;
-            }
-            else
-            {
-                result = null;
-                return false;
-            }
+            return TryConvert(this, binder, out result);
         }
         #endregion
 
         #region Unary Operations
+
+        internal static bool TryUnaryOperation(IScriptObject target, UnaryOperationBinder binder, out object result)
+        {
+            try
+            {
+                result = RuntimeHelpers.UnaryOperation(target, binder.Operation, binder.GetState());
+                return true;
+            }
+            catch (UnsupportedOperationException e)
+            {
+                result = e;
+                return false;
+            }
+        }
 
         /// <summary>
         /// Provides implementation for unary operations.
@@ -2097,16 +2206,7 @@ namespace DynamicScript.Runtime.Environment
         /// <returns><see langword="true"/> if the operation is successful; otherwise, <see langword="false"/>.</returns>
         public sealed override bool TryUnaryOperation(UnaryOperationBinder binder, out object result)
         {
-            try
-            {
-                result = RuntimeHelpers.UnaryOperation(this, binder.Operation, binder.GetState());
-                return true;
-            }
-            catch (UnsupportedOperationException e)
-            {
-                result = e;
-                return false;
-            }
+            return TryUnaryOperation(this, binder, out result);
         }
 
         /// <summary>

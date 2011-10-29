@@ -7,6 +7,8 @@ namespace DynamicScript.Runtime.Environment.Threading
 {
     using Compiler.Ast;
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
+    using Resources = Properties.Resources;
+
     /// <summary>
     /// Represetns implementation of future pattern.
     /// </summary>
@@ -58,6 +60,7 @@ namespace DynamicScript.Runtime.Environment.Threading
         /// <param name="task">A task implementation to be executed in the parallel thread.</param>
         /// <param name="state">Internal interpreter state.</param>
         protected ScriptFuture(IScriptObject target, Func<IScriptObject, InterpreterState, IScriptObject> task, InterpreterState state)
+            : this()
         {
             ThreadPool.QueueUserWorkItem(ProcessTask, new TaskParameters(target, task, state));
         }
@@ -103,7 +106,6 @@ namespace DynamicScript.Runtime.Environment.Threading
             {
                 m_handle.Set();
                 m_requirement = null;
-                m_handle.Dispose();
             }
         }
 
@@ -140,16 +142,22 @@ namespace DynamicScript.Runtime.Environment.Threading
             return Create(this, (right, s) => left.BinaryOperation(@operator, right, s), state);
         }
 
-        IScriptAsyncObject IScriptAsyncObject.Enqueue(IList<IScriptObject> args, InterpreterState state)
+        /// <summary>
+        /// Attempts to apply the specified function to the synchronized value.
+        /// </summary>
+        /// <typeparam name="TResult">Type of the function result.</typeparam>
+        /// <param name="f">A function to be applied to the synchronized value.</param>
+        /// <returns>A function invocation result.</returns>
+        protected TResult TryApply<TResult>(Func<IScriptObject, TResult> f)
         {
-            return Create(this, (target, s) => target.Invoke(args, s), state);
+            return m_result != null ? f(m_result) : default(TResult);
         }
 
-        protected TResult TryApply<TResult>(Func<IScriptObject, TResult> action)
-        {
-            return m_result != null ? action(m_result) : default(TResult);
-        }
-
+        /// <summary>
+        /// Obtains an asynchronous value without synchronization.
+        /// </summary>
+        /// <param name="state">Internal interpreter state.</param>
+        /// <returns>An unwrapped value if the result is synchronized; otherwise, <see langword="null"/>.</returns>
         protected IScriptObject UnwrapUnsafe(InterpreterState state)
         {
             if (m_error != null)
@@ -163,6 +171,13 @@ namespace DynamicScript.Runtime.Environment.Threading
             else throw new ContractBindingException(m_result, m_requirement, state);
         }
 
+        /// <summary>
+        /// Synchronizes with the underlying value.
+        /// </summary>
+        /// <param name="timeout">A caller thread blocking timeout.</param>
+        /// <param name="result">A result obtained during synchronization.</param>
+        /// <param name="state">Internal interpreter state.</param>
+        /// <returns><see langword="true"/> if the script object is obtained during timeout; otherwise, <see langword="false"/>.</returns>
         public bool Unwrap(TimeSpan timeout, out IScriptObject result, InterpreterState state)
         {
             switch (IsCompleted || m_handle.WaitOne(timeout))
@@ -176,12 +191,25 @@ namespace DynamicScript.Runtime.Environment.Threading
             }
         }
 
+        /// <summary>
+        /// Synchronizes with the underlying value.
+        /// </summary>
+        /// <param name="state">Internal interpreter state.</param>
+        /// <returns><see langword="true"/> if the script object is obtained during timeout; otherwise, <see langword="false"/>.</returns>
         public IScriptObject Unwrap(InterpreterState state)
         {
             var result = default(IScriptObject);
             return Unwrap(MaxTimeout, out result, state) ? result : ScriptObject.Void;
         }
 
+        /// <summary>
+        /// Enqueues a new binary operation.
+        /// </summary>
+        /// <param name="operator">A binary operator to be applied to the synchronized object as left operand and to the specified
+        /// right operand.</param>
+        /// <param name="right">The right operand of the operation.</param>
+        /// <param name="state">Internal interpreter state.</param>
+        /// <returns></returns>
         protected IScriptObject BinaryOperation(ScriptCodeBinaryOperatorType @operator, IScriptObject right, InterpreterState state)
         {
             return IsCompleted ?
@@ -229,7 +257,11 @@ namespace DynamicScript.Runtime.Environment.Threading
         /// <returns></returns>
         public IScriptContract GetContractBinding()
         {
-            return m_requirement ?? ScriptSuperContract.Instance;
+            switch (IsCompleted)
+            {
+                case true: return m_result.GetContractBinding();
+                default: return m_requirement ?? ScriptSuperContract.Instance;
+            }
         }
 
         IScriptObject IScriptObject.Invoke(IList<IScriptObject> args, InterpreterState state)
@@ -256,7 +288,10 @@ namespace DynamicScript.Runtime.Environment.Threading
             get { return IsCompleted ? m_result[args, state] : Create(args, state); }
         }
 
-        ICollection<string> IScriptObject.Slots
+        /// <summary>
+        /// Gets a collection of object members.
+        /// </summary>
+        public ICollection<string> Slots
         {
             get { return IsCompleted ? m_result.Slots : new string[0]; }
         }
@@ -282,6 +317,135 @@ namespace DynamicScript.Runtime.Environment.Threading
             if (obj is IScriptObject)
                 return m_result != null ? Equals(obj, m_result) : m_hashCode == obj.GetHashCode();
             else return false;
+        }
+
+        /// <summary>
+        /// Returns a string representation of this asynchronous object.
+        /// </summary>
+        /// <returns></returns>
+        public sealed override string ToString()
+        {
+            return m_result != null ? m_result.ToString() : Resources.StillRunning;
+        }
+
+        /// <summary>
+        /// Returns a collection of the object members.
+        /// </summary>
+        /// <returns></returns>
+        public sealed override IEnumerable<string> GetDynamicMemberNames()
+        {
+            return Slots;
+        }
+
+        /// <summary>
+        /// Converts the current object to the specified type in the dynamic context.
+        /// </summary>
+        /// <param name="binder"></param>
+        /// <param name="result"></param>
+        /// <returns></returns>
+        public override bool TryConvert(ConvertBinder binder, out object result)
+        {
+            switch (binder.ReturnType.Is<IScriptObject, IScriptProxyObject, IScriptAsyncObject>())
+            {
+                case true:
+                    result = this;
+                    return true;
+                default:
+                    return ScriptObject.TryConvert(Unwrap(binder.GetState()), binder, out result);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="binder"></param>
+        /// <param name="arg"></param>
+        /// <param name="result"></param>
+        /// <returns></returns>
+        public override bool TryBinaryOperation(BinaryOperationBinder binder, object arg, out object result)
+        {
+            return ScriptObject.TryBinaryOperation(this, binder, arg, out result);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="binder"></param>
+        /// <param name="indexes"></param>
+        /// <param name="result"></param>
+        /// <returns></returns>
+        public override bool TryGetIndex(GetIndexBinder binder, object[] indexes, out object result)
+        {
+            return ScriptObject.TryGetIndex(this, binder, indexes, out result);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="binder"></param>
+        /// <param name="result"></param>
+        /// <returns></returns>
+        public override bool TryGetMember(GetMemberBinder binder, out object result)
+        {
+            return ScriptObject.TryGetMember(this, binder, out result);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="binder"></param>
+        /// <param name="args"></param>
+        /// <param name="result"></param>
+        /// <returns></returns>
+        public override bool TryInvoke(InvokeBinder binder, object[] args, out object result)
+        {
+            return ScriptObject.TryInvoke(this, binder, args, out result);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="binder"></param>
+        /// <param name="args"></param>
+        /// <param name="result"></param>
+        /// <returns></returns>
+        public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
+        {
+            return ScriptObject.TryInvokeMember(this, binder, args, out result);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="binder"></param>
+        /// <param name="result"></param>
+        /// <returns></returns>
+        public override bool TryUnaryOperation(UnaryOperationBinder binder, out object result)
+        {
+            return ScriptObject.TryUnaryOperation(this, binder, out result);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="binder"></param>
+        /// <param name="indexes"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public override bool TrySetIndex(SetIndexBinder binder, object[] indexes, object value)
+        {
+            return ScriptObject.TrySetIndex(this, binder, indexes, value);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="binder"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public override bool TrySetMember(SetMemberBinder binder, object value)
+        {
+            return ScriptObject.TrySetMember(this, binder, value);
         }
     }
 }

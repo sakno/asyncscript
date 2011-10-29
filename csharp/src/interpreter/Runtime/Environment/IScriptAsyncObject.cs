@@ -20,7 +20,5 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="state">Internal interpreter state.</param>
         /// <returns>A new asynchronous object </returns>
         IScriptAsyncObject Enqueue(IScriptObject left, ScriptCodeBinaryOperatorType @operator, InterpreterState state);
-
-        IScriptAsyncObject Enqueue(IList<IScriptObject> args, InterpreterState state);
     }
 }

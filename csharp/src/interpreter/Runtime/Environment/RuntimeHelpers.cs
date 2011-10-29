@@ -109,7 +109,11 @@ namespace DynamicScript.Runtime.Environment
         public static bool IsTrue(this IScriptObject value, InterpreterState state)
         {
             value = Normalize(value, state);
-            return value is IConvertible ? SystemConverter.ToBoolean((IConvertible)value) : !ScriptObject.IsVoid(value);
+            if (value is IConvertible)
+                return SystemConverter.ToBoolean((IConvertible)value);
+            else if (value is IScriptProxyObject)
+                return IsTrue(((IScriptProxyObject)value).Unwrap(state), state);
+            else return !ScriptObject.IsVoid(value);
         }
 
         /// <summary>

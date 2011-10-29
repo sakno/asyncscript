@@ -47,7 +47,7 @@ namespace DynamicScript.Runtime.Environment.Threading
                     value(storage);
             }
 
-            void IRuntimeSlot.SetValue(IScriptObject value, InterpreterState state)
+            public void SetValue(IScriptObject value, InterpreterState state)
             {
                 var underlyingObject = UnwrapUnsafe(state);
                 if (underlyingObject == null)
@@ -83,9 +83,9 @@ namespace DynamicScript.Runtime.Environment.Threading
                 get { return IsCompleted && TryApply<bool>(HasValue); }
             }
 
-            public void SetValue(object value)
+            void IScopeVariable.SetValue(object value)
             {
-                throw new NotImplementedException();
+                SetValue(ScriptObject.Convert(value), InterpreterState.Current);
             }
 
             private static dynamic TryGetValue(IScriptObject obj)
@@ -118,7 +118,49 @@ namespace DynamicScript.Runtime.Environment.Threading
         [ComVisible(false)]
         private sealed class ScriptAsyncSlot : ScriptAsyncSlotBase
         {
-         
+            public ScriptAsyncSlot(IScriptAsyncObject owner, string slotName, InterpreterState state)
+                : base(owner, (target, s) => owner[slotName, s], state)
+            {
+            }
+
+            protected override ScriptFuture Create(IScriptObject target, Func<IScriptObject, InterpreterState, IScriptObject> task, InterpreterState state)
+            {
+                return new ScriptAsyncObject(target, task, state);
+            }
+
+            protected override IRuntimeSlot Create(string slotName, InterpreterState state)
+            {
+                return new ScriptAsyncSlot(this, slotName, state);
+            }
+
+            protected override IRuntimeSlot Create(IScriptObject[] indicies, InterpreterState state)
+            {
+                return new ScriptAsyncIndexer(this, indicies, state);
+            }
+        }
+
+        [ComVisible(false)]
+        private sealed class ScriptAsyncIndexer : ScriptAsyncSlotBase
+        {
+            public ScriptAsyncIndexer(IScriptAsyncObject owner, IScriptObject[] indicies, InterpreterState state)
+                : base(owner, (target, s) => target[indicies, s], state)
+            {
+            }
+
+            protected override ScriptFuture Create(IScriptObject target, Func<IScriptObject, InterpreterState, IScriptObject> task, InterpreterState state)
+            {
+                return new ScriptAsyncObject(target, task, state);
+            }
+
+            protected override IRuntimeSlot Create(string slotName, InterpreterState state)
+            {
+                return new ScriptAsyncSlot(this, slotName, state);
+            }
+
+            protected override IRuntimeSlot Create(IScriptObject[] indicies, InterpreterState state)
+            {
+                return new ScriptAsyncIndexer(this, indicies, state);
+            }
         }
         #endregion
 
@@ -138,24 +180,42 @@ namespace DynamicScript.Runtime.Environment.Threading
         internal static NewExpression New(Expression<Func<IScriptObject, InterpreterState, IScriptObject>> task, Expression @this, ParameterExpression stateVar)
         {
             var ctor = LinqHelpers.BodyOf<IScriptObject, Func<IScriptObject, InterpreterState, IScriptObject>, InterpreterState, ScriptAsyncObject, NewExpression>((o, t, s) => new ScriptAsyncObject(o, t, s));
-            return ctor.Update(new Expression[] { task, @this, stateVar });
+            return ctor.Update(new Expression[] { @this, task , stateVar });
         }
         #endregion
 
-
+        /// <summary>
+        /// Creates a new lazy object.
+        /// </summary>
+        /// <param name="target"></param>
+        /// <param name="task"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
         protected override ScriptFuture Create(IScriptObject target, Func<IScriptObject, InterpreterState, IScriptObject> task, InterpreterState state)
         {
             return new ScriptAsyncObject(target, task, state);
         }
-
+        
+        /// <summary>
+        /// Creates a new lazy slot.
+        /// </summary>
+        /// <param name="slotName"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
         protected override IRuntimeSlot Create(string slotName, InterpreterState state)
         {
-            throw new NotImplementedException();
+            return new ScriptAsyncSlot(this, slotName, state);
         }
 
+        /// <summary>
+        /// Creates a new lazy indexer.
+        /// </summary>
+        /// <param name="indicies"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
         protected override IRuntimeSlot Create(IScriptObject[] indicies, InterpreterState state)
         {
-            throw new NotImplementedException();
+            return new ScriptAsyncIndexer(this, indicies, state);
         }
     }
 }

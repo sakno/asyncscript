@@ -48,8 +48,8 @@ namespace DynamicScript.Runtime.Environment.Threading
             {
                 case true: return WaitHandle.WaitAll(new[]{taskToSynchronize.AsyncWaitHandle, synchronizer.AsyncWaitHandle});
                 default:
-                    using(var handle=new ManualResetEvent(false))
-                        return WaitHandle.WaitAll(new[]{taskToSynchronize.AsyncWaitHandle, handle});
+                    using (var handle = new ManualResetEvent(false))
+                        return WaitHandle.WaitAny(new[] { taskToSynchronize.AsyncWaitHandle, handle }) == 0;
             }
         }
 

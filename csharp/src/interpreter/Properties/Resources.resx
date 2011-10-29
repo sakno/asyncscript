@@ -153,6 +153,9 @@
   <data name="SlotIsOutOfScope" xml:space="preserve">
     <value>Runtime slot is not available at the current call stack frame. Possible, it is out of lexical scope.</value>
   </data>
+  <data name="StillRunning" xml:space="preserve">
+    <value>An asynchronous object is in running state.</value>
+  </data>
   <data name="StorageContract" xml:space="preserve">
     <value>Contract binding: {0}</value>
   </data>
