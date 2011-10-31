@@ -137,9 +137,10 @@ namespace DynamicScript.Runtime.Environment.Threading
                 }
         }
 
-        IScriptAsyncObject IScriptAsyncObject.Enqueue(IScriptObject left, ScriptCodeBinaryOperatorType @operator, InterpreterState state)
+        IScriptObject IScriptProxyObject.Enqueue(IScriptObject left, ScriptCodeBinaryOperatorType @operator, InterpreterState state)
         {
-            return Create(this, (right, s) => left.BinaryOperation(@operator, right, s), state);
+            return IsCompleted ? left.BinaryOperation(@operator, m_result, state) :
+                Create(this, (right, s) => left.BinaryOperation(@operator, right, s), state);
         }
 
         /// <summary>

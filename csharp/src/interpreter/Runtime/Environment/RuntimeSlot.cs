@@ -108,6 +108,18 @@ namespace DynamicScript.Runtime.Environment
             HasValue = true;
         }
 
+        private void SetValueDirect(IScriptProxyObject value, InterpreterState state)
+        {
+            switch (value.IsCompleted)
+            {
+                case true: SetValueDirect(value.Unwrap(state), state); return;
+                default:
+                    value.RequiresContract(ContractBinding, state);
+                    SetValueDirect(value);
+                    return;
+            }
+        }
+
 
         /// <summary>
         /// Stores the specified value directly to the slot.
@@ -123,10 +135,7 @@ namespace DynamicScript.Runtime.Environment
             else if (value is IRuntimeSlot)
                 SetValueDirect(((IRuntimeSlot)value).GetValue(state), state);
             else if (value is IScriptProxyObject)
-            {
-                ((IScriptProxyObject)value).RequiresContract(ContractBinding, state);
-                SetValueDirect(value);
-            }
+                SetValueDirect((IScriptProxyObject)value, state);
             else if (ContractBinding.IsCompatible(value, out theSame))
                 SetValueDirect(theSame ? value : ContractBinding.Convert(Conversion.Implicit, value, state));
             else if (value is ScriptVoid || state.Context == InterpretationContext.Unchecked)
