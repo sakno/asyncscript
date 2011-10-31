@@ -48,11 +48,6 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                 get { return GC.TotalMem; }
             }
 
-            protected override IScriptContract GetValueContract()
-            {
-                return ContractBinding;
-            }
-
             public override IScriptObject GetValue(InterpreterState state)
             {
                 return Value;

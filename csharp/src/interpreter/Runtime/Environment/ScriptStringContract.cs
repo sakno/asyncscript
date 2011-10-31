@@ -74,11 +74,6 @@ namespace DynamicScript.Runtime.Environment
                 set { Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfoByIetfLanguageTag(value); }
             }
 
-            protected override IScriptContract GetValueContract()
-            {
-                return Value.GetContractBinding();
-            }
-
             public override IScriptObject GetValue(InterpreterState state)
             {
                 return Value;

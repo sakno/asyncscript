@@ -104,11 +104,6 @@ namespace DynamicScript.Runtime.Environment
                 get { return ScriptIntegerContract.Instance; }
             }
 
-            protected override IScriptContract GetValueContract()
-            {
-                return ContractBinding;
-            }
-
             public override RuntimeSlotAttributes Attributes
             {
                 get { return RuntimeSlotAttributes.Immutable; }

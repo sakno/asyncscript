@@ -77,15 +77,6 @@ namespace DynamicScript.Runtime.Environment
         }
 
         /// <summary>
-        /// Returns contract binding of the stored value.
-        /// </summary>
-        /// <returns>The contract binding of the stored value.</returns>
-        protected sealed override IScriptContract GetValueContract()
-        {
-            return Value != null ? Value.GetContractBinding() : ScriptObject.Void;
-        }
-
-        /// <summary>
         /// Gets contract binding.
         /// </summary>
         public sealed override IScriptContract ContractBinding

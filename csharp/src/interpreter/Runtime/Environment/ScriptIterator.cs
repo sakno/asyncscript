@@ -167,11 +167,9 @@ namespace DynamicScript.Runtime.Environment
             {
                 if (collection is IScriptProxyObject)
                     collection = ((IScriptProxyObject)collection).Unwrap(state);
-                if (collection.Slots.Contains(IteratorAction))
-                    return collection[IteratorAction, state].Invoke(new IScriptObject[0], state);
-                else if (collection is IEnumerable)
-                    return new ScriptIterator((IEnumerable)collection);
-                else throw new SlotNotFoundException(IteratorAction, state);
+                else if (collection is IScriptIterable)
+                    return new ScriptIterator(((IScriptIterable)collection).GetIterator(state));
+                return collection[IteratorAction, state].Invoke(new IScriptObject[0], state);
             }
 
             internal static MethodCallExpression GetEnumerator(Expression collection, ParameterExpression state)

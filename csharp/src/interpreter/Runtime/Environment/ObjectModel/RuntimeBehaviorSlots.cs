@@ -14,11 +14,6 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         {
             public const string Name = "omitVoidInLoops";
 
-            protected override IScriptContract GetValueContract()
-            {
-                return ContractBinding;
-            }
-
             public override IScriptObject GetValue(InterpreterState state)
             {
                 return (ScriptBoolean)state.Behavior.OmitVoidYieldInLoops;

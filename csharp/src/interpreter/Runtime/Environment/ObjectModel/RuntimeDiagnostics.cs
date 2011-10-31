@@ -20,11 +20,6 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         {
             public const string Name = "IsEnabled";
 
-            protected override IScriptContract GetValueContract()
-            {
-                return ContractBinding;
-            }
-
             public ScriptBoolean Value
             {
                 get { return Monitoring.IsEnabled; }
@@ -97,11 +92,6 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         {
             public const string Name = "allocated";
 
-            protected override IScriptContract GetValueContract()
-            {
-                return ContractBinding;
-            }
-
             public ScriptInteger Value
             {
                 get { return Monitoring.AllocatedMemory; }
@@ -163,11 +153,6 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         {
             public const string Name = "survived";
 
-            protected override IScriptContract GetValueContract()
-            {
-                return ContractBinding;
-            }
-
             public ScriptInteger Value
             {
                 get { return Monitoring.SurvivedMemory; }
@@ -228,12 +213,6 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         private sealed class ProcessorTimeSlot : RuntimeSlotBase, IEquatable<ProcessorTimeSlot>
         {
             public const string Name = "cputime";
-
-
-            protected override IScriptContract GetValueContract()
-            {
-                return ContractBinding;
-            }
 
             public ScriptInteger Value
             {

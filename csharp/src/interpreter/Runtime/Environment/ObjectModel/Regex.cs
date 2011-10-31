@@ -203,11 +203,6 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                 set;
             }
 
-            protected sealed override IScriptContract GetValueContract()
-            {
-                return ContractBinding;
-            }
-
             public sealed override IScriptObject GetValue(InterpreterState state)
             {
                 return Value;

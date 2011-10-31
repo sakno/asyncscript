@@ -18,11 +18,6 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         {
             public const string Name = "depth";
 
-            protected override IScriptContract GetValueContract()
-            {
-                return ContractBinding;
-            }
-
             public ScriptInteger Value
             {
                 get { return CallStack.Depth; }
@@ -83,11 +78,6 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         private sealed class CallerSlot : RuntimeSlotBase, IEquatable<CallerSlot>
         {
             public const string Name = "caller";
-
-            protected override IScriptContract GetValueContract()
-            {
-                return ContractBinding;
-            }
 
             public IScriptAction Value
             {

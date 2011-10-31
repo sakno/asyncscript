@@ -44,11 +44,6 @@ namespace DynamicScript.Runtime.Environment
                 m_reference = reference ?? new WeakReferenceHolder(Void);
             }
 
-            protected override IScriptContract GetValueContract()
-            {
-                return ContractBinding;
-            }
-
             public override IScriptObject GetValue(InterpreterState state)
             {
                 return m_reference.IsAlive ? m_reference.Target : m_contract.FromVoid(state);
@@ -109,11 +104,6 @@ namespace DynamicScript.Runtime.Environment
             public IsAliveSlot(WeakReferenceHolder reference)
             {
                 m_reference = reference;
-            }
-
-            protected override IScriptContract GetValueContract()
-            {
-                return ContractBinding;
             }
 
             public override IScriptObject GetValue(InterpreterState state)

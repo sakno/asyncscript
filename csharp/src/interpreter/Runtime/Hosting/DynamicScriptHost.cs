@@ -27,6 +27,7 @@ var clazz = clr.system.class('System.Uri');
 var uri = clazz('http://www.ya.ru');
 return uri;
 ");
+            var m = typeof(object).GetMember("Equals", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
             return Execute(new CommandLineParser(Console.Out, Console.In), args);
         }
     }

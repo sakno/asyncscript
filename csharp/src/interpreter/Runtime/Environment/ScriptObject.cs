@@ -154,11 +154,6 @@ namespace DynamicScript.Runtime.Environment
                     info.AddValue(SlotNameHolder, Name);
                 }
 
-                protected override IScriptContract GetValueContract()
-                {
-                    return Void;
-                }
-
                 public override IScriptObject GetValue(InterpreterState state)
                 {
                     switch (state.Context)
@@ -472,7 +467,7 @@ namespace DynamicScript.Runtime.Environment
 
             IScriptContract IScriptObject.GetContractBinding()
             {
-                return GetValueContract();
+                return ContractBinding;
             }
 
             IRuntimeSlot IScriptObject.this[string slotName, InterpreterState state]
@@ -491,12 +486,6 @@ namespace DynamicScript.Runtime.Environment
             }
 
             #endregion
-
-            /// <summary>
-            /// Returns contract binding of the value stored in the slot.
-            /// </summary>
-            /// <returns></returns>
-            protected abstract IScriptContract GetValueContract();
 
             /// <summary>
             /// Reads value stored in the slot.
@@ -762,15 +751,6 @@ namespace DynamicScript.Runtime.Environment
             }
 
             /// <summary>
-            /// Gets a contract binding of the stored value.
-            /// </summary>
-            /// <returns></returns>
-            protected override IScriptContract GetValueContract()
-            {
-                return m_getter != null && m_getter.IsAlive ? m_getter.Invoke().GetContractBinding() : m_contract;
-            }
-
-            /// <summary>
             /// Restores value from slot.
             /// </summary>
             /// <param name="state">Internal interpreter state.</param>
@@ -941,15 +921,6 @@ namespace DynamicScript.Runtime.Environment
             }
 
             /// <summary>
-            /// Returns contract binding of the value stored in this slot.
-            /// </summary>
-            /// <returns></returns>
-            protected sealed override IScriptContract GetValueContract()
-            {
-                return Value.GetContractBinding();
-            }
-
-            /// <summary>
             /// Returns static contract binding.
             /// </summary>
             public sealed override IScriptContract ContractBinding
@@ -1051,21 +1022,12 @@ namespace DynamicScript.Runtime.Environment
             }
 
             /// <summary>
-            /// Returns contract of the stored value.
-            /// </summary>
-            /// <returns></returns>
-            protected sealed override IScriptContract GetValueContract()
-            {
-                return m_contract;
-            }
-
-            /// <summary>
             /// This property is not implemented.
             /// </summary>
             /// <remarks>This property will never used by interpeter.</remarks>
             public sealed override IScriptContract ContractBinding
             {
-                get { throw new NotImplementedException(); }
+                get { return m_contract; }
             }
 
             /// <summary>
@@ -1230,11 +1192,6 @@ namespace DynamicScript.Runtime.Environment
                 Value = obj;
             }
 
-            protected override IScriptContract GetValueContract()
-            {
-                return Value.GetContractBinding();
-            }
-
             public override IScriptObject GetValue(InterpreterState state)
             {
                 return Value;
@@ -1247,7 +1204,7 @@ namespace DynamicScript.Runtime.Environment
 
             public override IScriptContract ContractBinding
             {
-                get { return GetValueContract(); }
+                get { return Value.GetContractBinding(); }
             }
 
             public override RuntimeSlotAttributes Attributes

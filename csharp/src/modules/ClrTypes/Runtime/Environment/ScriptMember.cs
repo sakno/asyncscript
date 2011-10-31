@@ -25,11 +25,6 @@ namespace DynamicScript.Runtime.Environment
             Members = mi;
         }
 
-        protected override IScriptContract GetValueContract()
-        {
-            throw new NotImplementedException();
-        }
-
         public override IScriptObject GetValue(InterpreterState state)
         {
             throw new NotImplementedException();
