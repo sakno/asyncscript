@@ -296,7 +296,6 @@
       <DependentUpon>InteractiveModeStrings.resx</DependentUpon>
     </Compile>
     <Compile Include="Runtime\IScriptConvertible.cs" />
-    <Compile Include="Runtime\INetObject.cs" />
     <Compile Include="Runtime\Environment\ScriptAction.cs" />
     <Compile Include="Runtime\Environment\ScriptActionBase.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\ScriptArrayContractExpression.cs" />

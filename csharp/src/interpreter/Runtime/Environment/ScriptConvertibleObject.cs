@@ -175,5 +175,11 @@ namespace DynamicScript.Runtime.Environment
                     return true;
             }
         }
+
+        bool IScriptConvertible.TryConvert(out object result)
+        {
+            result = Value;
+            return true;
+        }
     }
 }

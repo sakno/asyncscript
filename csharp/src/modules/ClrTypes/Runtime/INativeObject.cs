@@ -9,7 +9,7 @@ namespace DynamicScript.Runtime
     /// </summary>
     [ComVisible(false)]
     [CLSCompliant(false)]
-    public interface INetObject: IScriptObject
+    public interface INativeObject: IScriptObject
     {
         /// <summary>
         /// Gets wrapped object.

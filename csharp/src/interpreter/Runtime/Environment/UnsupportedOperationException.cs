@@ -11,10 +11,13 @@ namespace DynamicScript.Runtime.Environment
     /// This class cannot be inherited.
     /// </summary>
     [ComVisible(false)]
-    
     public sealed class UnsupportedOperationException: RuntimeException
     {
-        internal UnsupportedOperationException(InterpreterState state)
+        /// <summary>
+        /// Initializes a new instance of the exception.
+        /// </summary>
+        /// <param name="state">Internal interpreter state.</param>
+        public UnsupportedOperationException(InterpreterState state)
             : base(ErrorMessages.UnsupportedOperation, InterpreterErrorCode.UnsupportedOperation, state)
         {
         }

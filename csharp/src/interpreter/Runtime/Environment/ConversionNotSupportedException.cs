@@ -19,7 +19,11 @@ namespace DynamicScript.Runtime.Environment
         {
         }
 
-        internal ConversionNotSupportedException(object obj)
+        /// <summary>
+        /// Initializes a new instance of the exception.
+        /// </summary>
+        /// <param name="obj"></param>
+        public ConversionNotSupportedException(object obj)
             : base(String.Format(ErrorMessages.UnsupportedConversion, obj != null ? obj.GetType() : typeof(void)))
         {
         }

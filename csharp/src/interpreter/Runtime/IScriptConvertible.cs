@@ -17,5 +17,12 @@ namespace DynamicScript.Runtime
         /// <param name="result">A conversion result.</param>
         /// <returns><see langword="true"/> if conversion is possible; otherwise, <see langword="false"/>.</returns>
         bool TryConvertTo(Type conversionType, out object result);
+
+        /// <summary>
+        /// Attempts to convert the script object to the default underlying .NET type.
+        /// </summary>
+        /// <param name="result"></param>
+        /// <returns></returns>
+        bool TryConvert(out object result);
     }
 }
