@@ -16,7 +16,7 @@ namespace DynamicScript.Runtime.Environment
     [ComVisible(false)]
     [CLSCompliant(false)]
     [Serializable]
-    public abstract class ScriptConvertibleObject<TContract, TValue>: ScriptPrimitiveObject<TContract, TValue>, IConvertible
+    public abstract class ScriptConvertibleObject<TContract, TValue>: ScriptPrimitiveObject<TContract, TValue>, IConvertible, IScriptConvertible
         where TContract: ScriptBuiltinContract
         where TValue: IConvertible, IEquatable<TValue>, IComparable<TValue>
     {
@@ -158,6 +158,22 @@ namespace DynamicScript.Runtime.Environment
         {
             state.Intern(this);
             return this;
+        }
+
+        bool IScriptConvertible.TryConvertTo(Type conversionType, out object result)
+        {
+            switch (Type.GetTypeCode(conversionType))
+            {
+                case TypeCode.Empty:
+                    result = null;
+                    return true;
+                case TypeCode.Object:
+                    result = null;
+                    return false;
+                default:
+                    result = SystemConverter.ChangeType(Value, conversionType);
+                    return true;
+            }
         }
     }
 }
