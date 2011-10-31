@@ -5,8 +5,11 @@ namespace DynamicScript.Runtime.Environment
 {
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
 
+    /// <summary>
+    /// Represents a union of two or more data types.
+    /// </summary>
     [ComVisible(false)]
-    interface IScriptUnionContract: IScriptContract, IEnumerable<IScriptContract>
+    public interface IScriptUnionContract: IScriptContract, IEnumerable<IScriptContract>
     {
     }
 }

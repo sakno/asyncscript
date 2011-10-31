@@ -126,7 +126,7 @@ namespace DynamicScript.Runtime.Environment
                 NegatedContract = contract;
             }
 
-            IScriptContract IScriptComplementation.NegatedContract
+            IScriptContract IScriptComplementation.SourceContract
             {
                 get { return NegatedContract; }
             }
@@ -135,7 +135,7 @@ namespace DynamicScript.Runtime.Environment
             {
                 //See Set Theory axiomatic
                 if (contract is IScriptComplementation)
-                    switch (NegatedContract.GetRelationship(((IScriptComplementation)contract).NegatedContract))
+                    switch (NegatedContract.GetRelationship(((IScriptComplementation)contract).SourceContract))
                     {
                         case ContractRelationshipType.TheSame: return ContractRelationshipType.TheSame;
                         case ContractRelationshipType.Subset: return ContractRelationshipType.Subset;
@@ -496,7 +496,7 @@ namespace DynamicScript.Runtime.Environment
 
         internal virtual IScriptObject Complement(InterpreterState state)
         {
-            return this is IScriptComplementation ? ((IScriptComplementation)this).NegatedContract : new ScriptComplementation(this);
+            return this is IScriptComplementation ? ((IScriptComplementation)this).SourceContract : new ScriptComplementation(this);
         }
 
         private IScriptContract Cartesian(IScriptContract right, InterpreterState state)

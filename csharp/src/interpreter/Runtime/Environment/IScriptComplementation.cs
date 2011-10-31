@@ -4,9 +4,15 @@ namespace DynamicScript.Runtime.Environment
 {
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
 
+    /// <summary>
+    /// Represents data type complementation.
+    /// </summary>
     [ComVisible(false)]
-    interface IScriptComplementation: IScriptContract
+    public interface IScriptComplementation: IScriptContract
     {
-        IScriptContract NegatedContract { get; }
+        /// <summary>
+        /// Gets complemented data type.
+        /// </summary>
+        IScriptContract SourceContract { get; }
     }
 }
