@@ -102,7 +102,7 @@ namespace DynamicScript.Runtime.Environment
                 return GetEnumerator();
             }
 
-            public override ScriptObject CreateObject(IList<IScriptObject> args, InterpreterState state)
+            public override IScriptObject CreateObject(IList<IScriptObject> args, InterpreterState state)
             {
                 if (state.Context == InterpretationContext.Unchecked)
                     return Void;
@@ -162,7 +162,7 @@ namespace DynamicScript.Runtime.Environment
                 else throw new UnsupportedOperationException(state);
             }
 
-            public override ScriptObject CreateObject(IList<IScriptObject> args, InterpreterState state)
+            public override IScriptObject CreateObject(IList<IScriptObject> args, InterpreterState state)
             {
                 if (state.Context == InterpretationContext.Unchecked)
                     return Void;
@@ -184,7 +184,7 @@ namespace DynamicScript.Runtime.Environment
         /// <summary>
         /// Initializes a new contract.
         /// </summary>
-        internal ScriptContract()
+        public ScriptContract()
         {
 #if USE_REL_MATRIX
             m_handle = null;
@@ -657,7 +657,7 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="args"></param>
         /// <param name="state"></param>
         /// <returns></returns>
-        public abstract ScriptObject CreateObject(IList<IScriptObject> args, InterpreterState state);
+        public abstract IScriptObject CreateObject(IList<IScriptObject> args, InterpreterState state);
 
         /// <summary>
         /// Converts an object to the contract.

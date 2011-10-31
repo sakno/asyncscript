@@ -163,7 +163,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         /// <param name="args">Code element creation arguments.</param>
         /// <param name="state">Internal interpreter state.</param>
         /// <returns>A new runtime code element.</returns>
-        public sealed override ScriptObject CreateObject(IList<IScriptObject> args, InterpreterState state)
+        public sealed override IScriptObject CreateObject(IList<IScriptObject> args, InterpreterState state)
         {
             ScriptObject result = CreateCodeElement(args, state);
             return result ?? Void;

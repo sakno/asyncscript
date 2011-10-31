@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Dynamic;
+using System.Collections.Generic;
 
 namespace DynamicScript.Runtime.Environment
 {
@@ -10,17 +12,20 @@ namespace DynamicScript.Runtime.Environment
     /// This class cannot be inherited.
     /// </summary>
     [ComVisible(false)]
-    sealed class NativeObject: INativeObject
+    sealed class NativeObject: DynamicObject, INativeObject
     {
         public readonly object Instance;
+        public readonly IScriptClass ContractBinding;
 
         /// <summary>
         /// Initializes a new wrapper of the native .NET object.
         /// </summary>
         /// <param name="obj">An object to wrap.</param>
-        public NativeObject(object obj)
+        public NativeObject(object obj, Type slice = null)
         {
+            if (obj == null) throw new ArgumentNullException("obj");
             Instance = obj;
+            ContractBinding = (ScriptClass)(slice ?? obj.GetType());
         }
 
         object INativeObject.Instance
@@ -79,6 +84,18 @@ namespace DynamicScript.Runtime.Environment
         public static bool TryConvert(IScriptObject obj, InterpreterState state, out object result)
         {
             return TryConvert(obj, null, state, out result);
+        }
+
+        public static bool TryConvert(IList<IScriptObject> objects, out object[] result, InterpreterState state)
+        {
+            result = new object[objects.Count];
+            for (var i = 0; i < objects.Count; i++)
+            {
+                var element = default(object);
+                if (TryConvert(objects[i], state, out element)) result[i] = element;
+                else return false;
+            }
+            return true;
         }
 
         private static IScriptObject BinaryOperation(dynamic left, ScriptCodeBinaryOperatorType @operator, dynamic right)
@@ -162,7 +179,7 @@ namespace DynamicScript.Runtime.Environment
             throw new NotImplementedException();
         }
 
-        public IScriptObject Invoke(System.Collections.Generic.IList<IScriptObject> args, InterpreterState state)
+        public IScriptObject Invoke(IList<IScriptObject> args, InterpreterState state)
         {
             throw new NotImplementedException();
         }
@@ -182,19 +199,29 @@ namespace DynamicScript.Runtime.Environment
             get { throw new NotImplementedException(); }
         }
 
-        public System.Collections.Generic.ICollection<string> Slots
+        public ICollection<string> Slots
         {
             get { throw new NotImplementedException(); }
         }
 
-        public IScriptContract GetContractBinding()
+        IScriptContract IScriptObject.GetContractBinding()
         {
-            throw new NotImplementedException();
+            return ContractBinding;
         }
 
-        public System.Dynamic.DynamicMetaObject GetMetaObject(System.Linq.Expressions.Expression parameter)
+        public static IScriptObject New(IList<IScriptObject> args, Type target, InterpreterState state)
         {
-            throw new NotImplementedException();
+            var constructorArguments = default(object[]);
+            switch (TryConvert(args, out constructorArguments, state))
+            {
+                case true: return new NativeObject(Activator.CreateInstance(target, constructorArguments));
+                default: return ScriptObject.Void;
+            }
+        }
+
+        public override string ToString()
+        {
+            return Instance.ToString();
         }
     }
 }

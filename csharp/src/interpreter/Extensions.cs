@@ -7,32 +7,43 @@ namespace DynamicScript
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
     using SerializationInfo = System.Runtime.Serialization.SerializationInfo;
 
+    /// <summary>
+    /// Represents common extensions.
+    /// </summary>
     [ComVisible(false)]
-    static class Extensions
+    public static class Extensions
     {
-        public static void AddValue<T>(this SerializationInfo info, string name, T value)
+        internal static void AddValue<T>(this SerializationInfo info, string name, T value)
         {
             info.AddValue(name, value, typeof(T));
         }
 
-        public static T GetValue<T>(this SerializationInfo info, string name)
+        internal static T GetValue<T>(this SerializationInfo info, string name)
         {
             return (T)info.GetValue(name, typeof(T));
         }
 
+        /// <summary>
+        /// Determines whether the specified value is in range.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="value"></param>
+        /// <param name="lowerBound"></param>
+        /// <param name="upperBound"></param>
+        /// <returns></returns>
         public static bool Between<T>(this T value, T lowerBound, T upperBound)
             where T : IComparable<T>
         {
             return value.CompareTo(lowerBound) >= 0 || value.CompareTo(upperBound) <= 0;
         }
 
-        public static T Clone<T>(T obj)
+        internal static T Clone<T>(T obj)
             where T : ICloneable
         {
             return obj != null ? (T)obj.Clone() : default(T);
         }
 
-        public static T[] CloneCollection<T>(ICollection<T> elements)
+        internal static T[] CloneCollection<T>(ICollection<T> elements)
             where T : ICloneable
         {
             var array = new T[elements.Count];
@@ -42,6 +53,15 @@ namespace DynamicScript
             return array;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="source"></param>
+        /// <param name="sourceIndex"></param>
+        /// <param name="destination"></param>
+        /// <param name="destinationIndex"></param>
+        /// <param name="length"></param>
         public static void CopyTo<T>(this IList<T> source, int sourceIndex, IList<T> destination, int destinationIndex, int length)
         {
             switch (length)

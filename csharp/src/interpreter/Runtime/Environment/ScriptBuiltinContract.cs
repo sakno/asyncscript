@@ -65,7 +65,7 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="args"></param>
         /// <param name="state"></param>
         /// <returns></returns>
-        public override ScriptObject CreateObject(IList<IScriptObject> args, InterpreterState state)
+        public override IScriptObject CreateObject(IList<IScriptObject> args, InterpreterState state)
         {
             if (args.Count == 0)
                 return FromVoid(state);

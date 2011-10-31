@@ -335,7 +335,7 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="args"></param>
         /// <param name="state"></param>
         /// <returns></returns>
-        public sealed override ScriptObject CreateObject(IList<IScriptObject> args, InterpreterState state)
+        public sealed override IScriptObject CreateObject(IList<IScriptObject> args, InterpreterState state)
         {
             return CreateCompositeObject(args, state);
         }

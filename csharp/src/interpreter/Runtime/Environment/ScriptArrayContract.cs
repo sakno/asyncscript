@@ -163,7 +163,7 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="args">An array of length of each dimension.</param>
         /// <param name="state">Internal interpreter state.</param>
         /// <returns></returns>
-        public override ScriptObject CreateObject(IList<IScriptObject> args, InterpreterState state)
+        public override IScriptObject CreateObject(IList<IScriptObject> args, InterpreterState state)
         {
             if (args.Count != Rank)
                 throw new ActionArgumentsMistmatchException(state);
