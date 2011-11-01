@@ -14,5 +14,12 @@ namespace DynamicScript.Runtime
         /// Gets underlying type.
         /// </summary>
         Type NativeType { get; }
+
+        /// <summary>
+        /// Returns relationship with the specified class.
+        /// </summary>
+        /// <param name="class"></param>
+        /// <returns></returns>
+        ContractRelationshipType GetRelationship(IScriptClass @class);
     }
 }

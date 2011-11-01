@@ -81,6 +81,14 @@ namespace DynamicScript
             
         }
 
+        /// <summary>
+        /// Determines whether the specified type is equal to one of the passed generic arguments.
+        /// </summary>
+        /// <typeparam name="T1"></typeparam>
+        /// <typeparam name="T2"></typeparam>
+        /// <typeparam name="T3"></typeparam>
+        /// <param name="t"></param>
+        /// <returns></returns>
         public static bool Is<T1, T2, T3>(this Type t)
         {
             return Equals(t, typeof(T1)) || Equals(t, typeof(T2)) || Equals(t, typeof(T3));

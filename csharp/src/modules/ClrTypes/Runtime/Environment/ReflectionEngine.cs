@@ -13,5 +13,16 @@ namespace DynamicScript.Runtime.Environment
         {
             return Array.ConvertAll(t.GetMembers(flags), m => m.Name);
         }
+
+        public static ContractRelationshipType GetRelationship(Type source, Type destination)
+        {
+            if (Equals(source, destination))
+                return ContractRelationshipType.TheSame;
+            else if (source.IsAssignableFrom(destination))
+                return ContractRelationshipType.Superset;
+            else if (source.IsAssignableFrom(destination))
+                return ContractRelationshipType.Subset;
+            else return ContractRelationshipType.None;
+        }
     }
 }

@@ -374,8 +374,10 @@ namespace DynamicScript.Compiler.Ast.Translation
         public bool MoveNext(out TResult debugInfo)
         {
             debugInfo = null;
+#if !DEBUG
             try
             {
+#endif
                 switch (m_statements.MoveNext())
                 {
                     case true:
@@ -385,6 +387,7 @@ namespace DynamicScript.Compiler.Ast.Translation
                         debugInfo = null;
                         return false;
                 }
+#if !DEBUG
             }
             catch (CodeAnalysisException error)
             {
@@ -399,6 +402,7 @@ namespace DynamicScript.Compiler.Ast.Translation
                 }
             }
             return false;
+#endif
         }
 
         /// <summary>

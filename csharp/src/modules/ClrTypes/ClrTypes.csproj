@@ -48,12 +48,14 @@
     <Compile Include="Runtime\Environment\ReflectionEngine.cs" />
     <Compile Include="Runtime\Environment\ScriptAssembly.cs" />
     <Compile Include="Runtime\Environment\ScriptClass.cs" />
+    <Compile Include="Runtime\Environment\ScriptGeneric.cs" />
     <Compile Include="Runtime\Environment\ScriptMember.cs" />
     <Compile Include="Runtime\INativeObject.cs" />
     <Compile Include="Module.cs" />
     <Compile Include="Runtime\Environment\NativeObject.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Runtime\IScriptClass.cs" />
+    <Compile Include="Runtime\IScriptGeneric.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\interpreter\Interpreter.csproj">

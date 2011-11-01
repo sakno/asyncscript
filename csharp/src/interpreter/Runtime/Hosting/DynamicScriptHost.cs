@@ -21,13 +21,6 @@ namespace DynamicScript.Runtime.Hosting
         [LoaderOptimization(LoaderOptimization.SingleDomain)]
         private static int Main(string[] args)
         {
-            var r = DynamicScriptInterpreter.Run(@"
-var clr = use('D:\DynamicScript\csharp\src\modules\ClrTypes\bin\Debug\clrtypes.dll');
-var clazz = clr.system.class('System.Uri');
-var uri = clazz('http://www.ya.ru');
-return uri;
-");
-            var m = typeof(object).GetMember("Equals", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
             return Execute(new CommandLineParser(Console.Out, Console.In), args);
         }
     }

@@ -51,6 +51,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Modules\ClrTypes\ClrTypesTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -90,6 +91,10 @@
     <ProjectReference Include="..\interpreter\Interpreter.csproj">
       <Project>{CB2658EE-09CE-461D-AA07-B5D9102C6977}</Project>
       <Name>Interpreter</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\modules\ClrTypes\ClrTypes.csproj">
+      <Project>{9E9D6915-0E71-4CA9-986E-176A30AEA974}</Project>
+      <Name>ClrTypes</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

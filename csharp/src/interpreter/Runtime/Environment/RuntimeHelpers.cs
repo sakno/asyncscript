@@ -1095,11 +1095,13 @@ namespace DynamicScript.Runtime.Environment
             {
                 case true: return new[] { result };
                 default:
-                    return new[]
+                    var entryAssembly = Assembly.GetEntryAssembly();
+                    return entryAssembly != null ? new[]
                         {
-                            new Uri(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), path), UriKind.Absolute),
+                            new Uri(Path.Combine(Path.GetDirectoryName(entryAssembly.Location), path), UriKind.Absolute),
                             new Uri(Path.Combine(SystemEnvironment.CurrentDirectory, path), UriKind.Absolute)
-                        };
+                        } :
+                        new[] { new Uri(Path.Combine(SystemEnvironment.CurrentDirectory, path), UriKind.Absolute) };
             }
         }
 

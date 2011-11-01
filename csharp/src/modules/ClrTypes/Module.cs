@@ -1,6 +1,8 @@
 ﻿using System;
 using DynamicScript.Runtime;
 using DynamicScript.Runtime.Environment;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace DynamicScript.Modules.ClrTypes
 {
@@ -66,12 +68,71 @@ namespace DynamicScript.Modules.ClrTypes
         }
 
         [ComVisible(false)]
+        private sealed class IsGenericDefinitionAction : ScriptFunc<IScriptClass>
+        {
+            public const string Name = "is_generic_def";
+            private const string FirstParamName = "t";
+
+            public IsGenericDefinitionAction()
+                : base(new ScriptActionContract.Parameter(FirstParamName, ScriptMetaContract.Instance), ScriptBooleanContract.Instance)
+            {
+            }
+
+            protected override IScriptObject Invoke(IScriptClass @class, InterpreterState state)
+            {
+                return @class != null ? (ScriptBoolean)@class.NativeType.IsGenericTypeDefinition : ScriptBoolean.False;
+            }
+        }
+
+        [ComVisible(false)]
+        private sealed class MakeGenericAction : ScriptFunc<IScriptContract, IScriptArray, ScriptBoolean>
+        {
+            public const string Name = "generic";
+            private const string FirstParamName = "baseType";
+            private const string SecondParamName = "interfaces";
+            private const string ThirdParamName = "defctor";
+
+            public MakeGenericAction()
+                : base(new ScriptActionContract.Parameter(FirstParamName, ScriptMetaContract.Instance),
+                new ScriptActionContract.Parameter(SecondParamName, new ScriptArrayContract(ScriptMetaContract.Instance)),
+                new ScriptActionContract.Parameter(ThirdParamName, ScriptBooleanContract.Instance),
+                ScriptMetaContract.Instance)
+            {
+            }
+
+            private static IScriptGeneric MakeGeneric(IScriptGeneric baseGeneric, IEnumerable<IScriptClass> interfaces, bool defctor)
+            {
+                return new ScriptGeneric(baseGeneric, interfaces, defctor);
+            }
+
+            private static IScriptGeneric MakeGeneric(Type baseType, IEnumerable<IScriptClass> interfaces, bool defctor)
+            {
+                return new ScriptGeneric((ScriptClass)baseType, interfaces, defctor);
+            }
+
+            public override IScriptObject Invoke(IScriptContract baseType, IScriptArray interfaces, ScriptBoolean defctor, InterpreterState state)
+            {
+                return baseType is IScriptGeneric ?
+                    MakeGeneric((IScriptGeneric)baseType, from iface in interfaces
+                                                          let typedef = (ScriptClass)ScriptClass.GetType(iface as IScriptContract)
+                                                          where typedef != null
+                                                          select typedef, defctor) :
+                                                          MakeGeneric(ScriptClass.GetType(baseType), from iface in interfaces
+                                                                                let typedef = (ScriptClass)ScriptClass.GetType(iface as IScriptContract)
+                                                                                where typedef != null
+                                                                                select typedef, defctor);
+            }
+        }
+
+        [ComVisible(false)]
         private new sealed class Slots : ObjectSlotCollection
         {
             public Slots()
             {
                 AddConstant<FromGacAction>(FromGacAction.Name);
                 AddConstant<FromFileAction>(FromFileAction.Name);
+                AddConstant<IsGenericDefinitionAction>(IsGenericDefinitionAction.Name);
+                AddConstant<MakeGenericAction>(MakeGenericAction.Name);
                 AddConstant("mscorlib", ScriptAssembly.MsCorLib);
                 AddConstant("system", ScriptAssembly.System);
                 AddConstant("systemcore", ScriptAssembly.SystemCore);

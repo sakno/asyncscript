@@ -285,6 +285,7 @@
     <Compile Include="Runtime\Environment\IBinaryOperatorInvoker.cs" />
     <Compile Include="Runtime\Environment\IScriptActionContractSlots.cs" />
     <Compile Include="Runtime\Environment\IScriptAsyncObject.cs" />
+    <Compile Include="Runtime\Environment\IScriptIterable.cs" />
     <Compile Include="Runtime\Environment\IUnaryOperatorInvoker.cs" />
     <Compile Include="Runtime\Environment\ObjectModel\RuntimeBehaviorSlots.cs" />
     <Compile Include="Runtime\Environment\ScriptActionInvoker.cs" />
