@@ -25,7 +25,7 @@ namespace DynamicScript.Modules.ClrTypes
         public void MakeGenericTest()
         {
             IScriptGeneric r = Run(@"
-var clr = use('clrtypes.dll');
+const clr = use('clrtypes.dll');
 var Uri = clr.system.class('System.Uri');
 var IConvertible = clr.mscorlib.class('System.IConvertible');
 return clr.generic(Uri, [IConvertible], true);
@@ -41,6 +41,17 @@ return clr.generic(Uri, [IConvertible], true);
         {
             IScriptGeneric r = Run("var clr = use('clrtypes.dll'); return $(clr.system.class('System.Uri'));");
             Assert.AreEqual(typeof(Uri), r.BaseType);
+        }
+
+        [Test(Description = "Simple method invocation.")]
+        public void SimpleMethodInvocation()
+        {
+            string s = Run(@"
+const clr = use('clrtypes.dll');
+var uri = clr.system.class('System.Uri')('http://www.homepage.com');
+return uri.ToString();
+");
+            Assert.AreEqual("http://www.homepage.com", s);
         }
     }
 }

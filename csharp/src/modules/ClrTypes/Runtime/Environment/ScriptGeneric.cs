@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace DynamicScript.Runtime.Environment
 {
@@ -20,9 +21,19 @@ namespace DynamicScript.Runtime.Environment
 
         public ScriptGeneric(IScriptClass baseType, IEnumerable<IScriptClass> interfaces = null, bool defaultConstructor = false)
         {
-            BaseType = baseType ?? ScriptClass.ObjectClass;
-            Interfaces = Enumerable.ToArray(interfaces ?? Enumerable.Empty<IScriptClass>());
-            DefaultConstructor = defaultConstructor;
+            if (baseType.NativeType.IsGenericParameter)
+            {
+                var genericParam = baseType.NativeType;
+                DefaultConstructor = (genericParam.GenericParameterAttributes & GenericParameterAttributes.DefaultConstructorConstraint) != 0;
+                BaseType = (genericParam.GenericParameterAttributes & GenericParameterAttributes.NotNullableValueTypeConstraint) != 0 ? (ScriptClass)typeof(ValueType) : (ScriptClass)typeof(object);
+                Interfaces = Array.ConvertAll(genericParam.GetGenericParameterConstraints(), t => (ScriptClass)t);
+            }
+            else
+            {
+                BaseType = baseType ?? ScriptClass.ObjectClass;
+                Interfaces = Enumerable.ToArray(interfaces ?? Enumerable.Empty<IScriptClass>());
+                DefaultConstructor = defaultConstructor;
+            }
         }
 
         /// <summary>
@@ -31,7 +42,7 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="baseType"></param>
         /// <param name="interfaces"></param>
         /// <param name="defaultConstructor"></param>
-        public ScriptGeneric(Type baseType, IEnumerable<Type> interfaces = null, bool defaultConstructor = false)
+        public ScriptGeneric(Type baseType, IEnumerable<Type> interfaces, bool defaultConstructor)
             : this((ScriptClass)baseType, ScriptClass.ToCollection(interfaces), defaultConstructor)
         {
         }

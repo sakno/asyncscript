@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Dynamic;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace DynamicScript.Runtime.Environment
 {
@@ -14,8 +15,9 @@ namespace DynamicScript.Runtime.Environment
     [ComVisible(false)]
     sealed class NativeObject: DynamicObject, INativeObject
     {
+        private const BindingFlags MemberFlags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy | BindingFlags.IgnoreCase;
         public readonly object Instance;
-        public readonly IScriptClass ContractBinding;
+        public readonly ScriptClass ContractBinding;
 
         /// <summary>
         /// Initializes a new wrapper of the native .NET object.
@@ -38,14 +40,14 @@ namespace DynamicScript.Runtime.Environment
         /// </summary>
         /// <param name="obj">An object to convert.</param>
         /// <returns>Conversion result.</returns>
-        public static IScriptObject ConvertFrom(object obj)
+        public static IScriptObject ConvertFrom(object obj, Type destinationType = null)
         {
             var scriptRepresentation = default(IScriptObject);
             if (obj == null)
                 return ScriptObject.Void;
             if (ScriptObject.TryConvert(obj, out scriptRepresentation))
                 return scriptRepresentation;
-            else return new NativeObject(obj);
+            else return new NativeObject(obj, destinationType);
         }
 
         /// <summary>
@@ -86,13 +88,14 @@ namespace DynamicScript.Runtime.Environment
             return TryConvert(obj, null, state, out result);
         }
 
-        public static bool TryConvert(IList<IScriptObject> objects, out object[] result, InterpreterState state)
+        public static bool TryConvert(IList<IScriptObject> objects, out object[] result, Type[] types, InterpreterState state)
         {
+            if (types == null) types = new Type[objects.Count];
             result = new object[objects.Count];
             for (var i = 0; i < objects.Count; i++)
             {
                 var element = default(object);
-                if (TryConvert(objects[i], state, out element)) result[i] = element;
+                if (TryConvert(objects[i], types[i], state, out element)) result[i] = element;
                 else return false;
             }
             return true;
@@ -104,7 +107,7 @@ namespace DynamicScript.Runtime.Environment
             switch (@operator)
             {
                 case ScriptCodeBinaryOperatorType.Add:
-                    result = left + right; 
+                    result = left + right;
                     break;
                 case ScriptCodeBinaryOperatorType.AdditiveAssign:
                     result = (left += right);
@@ -148,6 +151,46 @@ namespace DynamicScript.Runtime.Environment
                 case ScriptCodeBinaryOperatorType.LessThan:
                     result = left < right;
                     break;
+                case ScriptCodeBinaryOperatorType.LessThanOrEqual:
+                    result = left <= right;
+                    break;
+                case ScriptCodeBinaryOperatorType.Modulo:
+                    result = left % right;
+                    break;
+                case ScriptCodeBinaryOperatorType.ModuloAssign:
+                    result = (left %= right);
+                    break;
+                case ScriptCodeBinaryOperatorType.MultiplicativeAssign:
+                    result = (left *= right);
+                    break;
+                case ScriptCodeBinaryOperatorType.Multiply:
+                    result = left * right;
+                    break;
+                case ScriptCodeBinaryOperatorType.OrElse:
+                    result = left || right;
+                    break;
+                case ScriptCodeBinaryOperatorType.Reduction:
+                    result = (left &= right);
+                    break;
+                case ScriptCodeBinaryOperatorType.ReferenceEquality:
+                    return (ScriptBoolean)ReferenceEquals(left, right);
+                case ScriptCodeBinaryOperatorType.ReferenceInequality:
+                    return (ScriptBoolean)(!ReferenceEquals(left, right));
+                case ScriptCodeBinaryOperatorType.Subtract:
+                    result = left - right;
+                    break;
+                case ScriptCodeBinaryOperatorType.SubtractiveAssign:
+                    result = (left -= right);
+                    break;
+                case ScriptCodeBinaryOperatorType.Union:
+                    result = left | right;
+                    break;
+                case ScriptCodeBinaryOperatorType.ValueEquality:
+                    result = left == right;
+                    break;
+                case ScriptCodeBinaryOperatorType.ValueInequality:
+                    result = left != right;
+                    break;
                 default: return ScriptObject.Void;
             }
             return ConvertFrom(result);
@@ -170,6 +213,25 @@ namespace DynamicScript.Runtime.Environment
             {
                 case ScriptCodeUnaryOperatorType.DecrementPostfix:
                     result = operand--; break;
+                case ScriptCodeUnaryOperatorType.DecrementPrefix:
+                    result = --operand; break;
+                case ScriptCodeUnaryOperatorType.IncrementPostfix:
+                    result = operand++; break;
+                case ScriptCodeUnaryOperatorType.IncrementPrefix:
+                    result = ++operand; break;
+                case ScriptCodeUnaryOperatorType.Intern: break;
+                case ScriptCodeUnaryOperatorType.Minus:
+                    result = -operand; break;
+                case ScriptCodeUnaryOperatorType.Negate:
+                    result = !operand; break;
+                case ScriptCodeUnaryOperatorType.Plus:
+                    result = +operand; break;
+                case ScriptCodeUnaryOperatorType.SquarePrefix:
+                case ScriptCodeUnaryOperatorType.SquarePostfix:
+                    result = operand * operand; break;
+                case ScriptCodeUnaryOperatorType.VoidCheck:
+                    result = operand == null; break;
+                default: return ScriptObject.Void;
             }
             return ConvertFrom(result);
         }
@@ -186,7 +248,7 @@ namespace DynamicScript.Runtime.Environment
 
         public IRuntimeSlot this[string slotName, InterpreterState state]
         {
-            get { throw new NotImplementedException(); }
+            get { return ContractBinding[slotName, MemberFlags, this, state]; }
         }
 
         public IScriptObject GetRuntimeDescriptor(string slotName, InterpreterState state)
@@ -212,7 +274,7 @@ namespace DynamicScript.Runtime.Environment
         public static IScriptObject New(IList<IScriptObject> args, Type target, InterpreterState state)
         {
             var constructorArguments = default(object[]);
-            switch (TryConvert(args, out constructorArguments, state))
+            switch (TryConvert(args, out constructorArguments, null, state))
             {
                 case true: return new NativeObject(Activator.CreateInstance(target, constructorArguments));
                 default: return ScriptObject.Void;

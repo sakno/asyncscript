@@ -34,7 +34,7 @@ namespace DynamicScript.Runtime.Environment
         #endregion
         public static readonly ScriptClass ObjectClass;
         public static readonly ScriptClass StringClass;
-        private const BindingFlags MemberFlags = BindingFlags.Static | BindingFlags.Public | BindingFlags.FlattenHierarchy;
+        private const BindingFlags MemberFlags = BindingFlags.Static | BindingFlags.Public | BindingFlags.FlattenHierarchy | BindingFlags.IgnoreCase;
 
         static ScriptClass()
         {
@@ -93,6 +93,27 @@ namespace DynamicScript.Runtime.Environment
             else return null;
         }
 
+        public static IScriptContract GetContractBinding(Type t)
+        {
+            if (Equals(typeof(object), t))
+                return ScriptSuperContract.Instance;
+            else if (Equals(typeof(Type), t))
+                return ScriptMetaContract.Instance;
+            else if (Equals(typeof(string), t))
+                return ScriptStringContract.Instance;
+            else if (t.Is<long, int, byte>())
+                return ScriptIntegerContract.Instance;
+            else if (Equals(typeof(bool), t))
+                return ScriptBooleanContract.Instance;
+            else if (Equals(typeof(double), t))
+                return ScriptRealContract.Instance;
+            else if (Equals(typeof(Delegate), t))
+                return ScriptCallableContract.Instance;
+            else if (Equals(typeof(void), t))
+                return ScriptObject.Void;
+            else return (ScriptClass)t;
+        }
+
         /// <summary>
         /// Returns relationship with other .NET type.
         /// </summary>
@@ -141,6 +162,15 @@ namespace DynamicScript.Runtime.Environment
             else return ContractRelationshipType.None;
         }
 
+        private ScriptClass MakeGenericType(IList<IScriptObject> args)
+        {
+            var genericTypes = from a in args
+                               let type = GetType(a as IScriptContract)
+                               where type != null
+                               select type;
+            return new ScriptClass(NativeType.MakeGenericType(Enumerable.ToArray(genericTypes)));
+        }
+
         /// <summary>
         /// Creates a new instance of the native .NET object.
         /// </summary>
@@ -149,7 +179,7 @@ namespace DynamicScript.Runtime.Environment
         /// <returns>A new instance of the native .NET object.</returns>
         public override IScriptObject CreateObject(IList<IScriptObject> args, InterpreterState state)
         {
-            return NativeObject.New(args, NativeType, state);
+            return NativeType.IsGenericTypeDefinition ? MakeGenericType(args) : NativeObject.New(args, NativeType, state);
         }
 
         /// <summary>
@@ -195,6 +225,15 @@ namespace DynamicScript.Runtime.Environment
             get { return ReflectionEngine.GetMemberNames(NativeType, MemberFlags); }
         }
 
+        public IRuntimeSlot this[string slotName, BindingFlags flags, INativeObject @this, InterpreterState state]
+        {
+            get
+            {
+                var members = NativeType.GetMember(slotName, flags);
+                return members.LongLength > 0L ? new ScriptMember(members, @this) : RuntimeSlotBase.Missing(slotName);
+            }
+        }
+
         /// <summary>
         /// Exposes access to the static member.
         /// </summary>
@@ -203,13 +242,7 @@ namespace DynamicScript.Runtime.Environment
         /// <returns></returns>
         public override IRuntimeSlot this[string slotName, InterpreterState state]
         {
-            get
-            {
-                var member = NativeType.GetMember(slotName, MemberFlags);
-                return member != null && member.LongLength > 0L ?
-                    new ScriptMember(member) :
-                    RuntimeSlotBase.Missing(slotName);
-            }
+            get { return this[slotName, MemberFlags, null, state]; }
         }
     }
 }
