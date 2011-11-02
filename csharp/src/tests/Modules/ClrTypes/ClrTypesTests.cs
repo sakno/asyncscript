@@ -67,5 +67,15 @@ return raised;
 ");
             Assert.IsTrue(r);
         }
+
+        [Test(Description = "Delegate creation.")]
+        public void DelegateCreating()
+        {
+            INativeObject r = Run(@"
+const clr = use('clrtypes.dll');
+return clr.mscorlib.class('System.EventHandler')(@sender, e -> void: puts('Hello, world!'));
+");
+            Assert.IsInstanceOf<EventHandler>(r.Instance);
+        }
     }
 }

@@ -185,6 +185,16 @@ namespace DynamicScript.Runtime.Environment
             return new ScriptClass(NativeType.MakeGenericType(Enumerable.ToArray(genericTypes)));
         }
 
+        private static IScriptObject CreateDelegate(Type delegateType, IScriptAction implementation, InterpreterState state)
+        {
+            return new NativeObject(ScriptMethod.CreateDelegate(delegateType, implementation, state));
+        }
+
+        private static IScriptObject CreateDelegate(Type delegateType, IList<IScriptObject> args, InterpreterState state)
+        {
+            return args.Count == 1 ? CreateDelegate(delegateType, args[0] as IScriptAction, state) : Void;
+        }
+
         /// <summary>
         /// Creates a new instance of the native .NET object.
         /// </summary>
@@ -193,7 +203,11 @@ namespace DynamicScript.Runtime.Environment
         /// <returns>A new instance of the native .NET object.</returns>
         public override IScriptObject CreateObject(IList<IScriptObject> args, InterpreterState state)
         {
-            return NativeType.IsGenericTypeDefinition ? MakeGenericType(args) : NativeObject.New(args, NativeType, state);
+            if (NativeType.IsGenericTypeDefinition)
+                return MakeGenericType(args);
+            else if (typeof(Delegate).IsAssignableFrom(NativeType))
+                return CreateDelegate(NativeType, args, state);
+            else return NativeObject.New(args, NativeType, state);
         }
 
         /// <summary>
