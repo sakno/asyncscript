@@ -168,8 +168,10 @@ namespace DynamicScript.Runtime.Environment
                     result = null;
                     return true;
                 case TypeCode.Object:
-                    result = null;
-                    return false;
+                    if (Equals(typeof(object), conversionType))
+                        result = Value;
+                    else result = null;
+                    return result != null;
                 default:
                     result = SystemConverter.ChangeType(Value, conversionType);
                     return true;

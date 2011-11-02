@@ -314,7 +314,7 @@ namespace DynamicScript.Runtime.Environment
 
         public IRuntimeSlot this[IScriptObject[] args, InterpreterState state]
         {
-            get { throw new NotImplementedException(); }
+            get { return ContractBinding[args, MemberFlags, this, state]; }
         }
 
         /// <summary>

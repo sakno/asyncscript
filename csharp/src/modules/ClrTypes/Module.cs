@@ -112,6 +112,7 @@ namespace DynamicScript.Modules.ClrTypes
 
             public override IScriptObject Invoke(IScriptContract baseType, IScriptArray interfaces, ScriptBoolean defctor, InterpreterState state)
             {
+                if (interfaces == null) interfaces = ScriptArray.Empty(ScriptSuperContract.Instance);
                 return baseType is IScriptGeneric ?
                     MakeGeneric((IScriptGeneric)baseType, from iface in interfaces
                                                           let typedef = (ScriptClass)ScriptClass.GetType(iface as IScriptContract)

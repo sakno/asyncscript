@@ -106,6 +106,7 @@ namespace DynamicScript.Runtime.Environment
                     var ifacesRels = ScriptClass.GetRelationship(Interfaces, generic.Interfaces);
                     if (relationship == ContractRelationshipType.TheSame)
                         relationship = ifacesRels;
+                    else if (ifacesRels == ContractRelationshipType.TheSame) break;
                     else if (relationship != ifacesRels)
                         return ContractRelationshipType.None;
                     break;
@@ -113,7 +114,7 @@ namespace DynamicScript.Runtime.Environment
             switch (DefaultConstructor)
             {
                 case true: return generic.DefaultConstructor ? relationship : ContractRelationshipType.None;
-                default: return generic.DefaultConstructor || relationship == ContractRelationshipType.TheSame ? ContractRelationshipType.Subset : relationship;
+                default: return generic.DefaultConstructor && relationship == ContractRelationshipType.TheSame ? ContractRelationshipType.Subset : relationship;
             }
         }
 

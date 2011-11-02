@@ -292,7 +292,7 @@ namespace DynamicScript.Runtime.Environment
         /// </summary>
         /// <param name="arrayContract">The default contract of the array elements.</param>
         /// <returns>An empty single-dimensional script array.</returns>
-        public static ScriptArray Empty(ScriptContract arrayContract)
+        public static ScriptArray Empty(ScriptContract arrayContract = null)
         {
             return new ScriptArray(arrayContract, 1, 0L);
         }

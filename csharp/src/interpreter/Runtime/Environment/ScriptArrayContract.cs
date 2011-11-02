@@ -136,6 +136,8 @@ namespace DynamicScript.Runtime.Environment
                 return GetRelationship((ScriptCompositeContract)contract);
             else if (contract.OneOf<IScriptComplementation, IScriptUnionContract, IScriptCartesianProduct>())
                 return Inverse(contract.GetRelationship(this));
+            else if (contract is ScriptVoid)
+                return ContractRelationshipType.Superset;
             else return ContractRelationshipType.None;
         }
 

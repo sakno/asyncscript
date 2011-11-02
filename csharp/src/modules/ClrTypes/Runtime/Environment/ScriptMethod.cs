@@ -68,34 +68,35 @@ namespace DynamicScript.Runtime.Environment
                 throw new NotSupportedException();
             }
 
-            private static void Implements(ILGenerator dm, IList<Type> parameters)
+            private static void Implements(ILGenerator dm, IList<Type> parameters, bool omitResult)
             {
                 var array = dm.DeclareLocal(typeof(object[]));
-                dm.Emit(OpCodes.Ldc_I4, parameters.Count - 1);  
+                dm.Emit(OpCodes.Ldarg_0);
+                dm.Emit(OpCodes.Ldc_I4, parameters.Count - 1);
                 dm.Emit(OpCodes.Newarr, typeof(object));
                 dm.Emit(OpCodes.Stloc, array);       // array = new object[parameters.Count - 1];
                 //Save all arguments to the array
                 for (var i = 1; i < parameters.Count; i++)
                 {
-                    dm.Emit(OpCodes.Ldloc, array);   
-                    dm.Emit(OpCodes.Ldc_I4, i - 1); 
-                    dm.Emit(OpCodes.Ldarg, i);  
+                    dm.Emit(OpCodes.Ldloc, array);
+                    dm.Emit(OpCodes.Ldc_I4, i - 1);
+                    dm.Emit(OpCodes.Ldarg, i);
                     if (parameters[i].IsValueType) dm.Emit(OpCodes.Box, parameters[i]); //boxes value if it is necessary
                     dm.Emit(OpCodes.Stelem_Ref);    //result[i - 1] = arg.i;
                 }
-                dm.Emit(OpCodes.Ldarg_0);
                 dm.Emit(OpCodes.Ldloc, array);
                 //Load this reference
                 dm.Emit(OpCodes.Call, typeof(ScriptDelegate).GetMethod("DynamicInvoke", new[] { typeof(object[]) }));
                 //Return value
+                if (omitResult) dm.Emit(OpCodes.Pop);
                 dm.Emit(OpCodes.Ret);
             }
 
             private static DynamicMethod CreateMethod(string methodName, List<Type> parameters, Type returnType)
             {
                 parameters.Insert(0, typeof(ScriptDelegate));
-                var method = new DynamicMethod(methodName, returnType, parameters.ToArray(), typeof(ScriptDelegate));
-                Implements(method.GetILGenerator(), parameters);
+                var method = new DynamicMethod(methodName, returnType, parameters.ToArray(), typeof(ScriptDelegate), false);
+                Implements(method.GetILGenerator(), parameters, Equals(returnType, typeof(void)));
                 return method;
             }
 

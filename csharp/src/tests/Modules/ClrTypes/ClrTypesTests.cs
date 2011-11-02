@@ -77,5 +77,41 @@ return clr.mscorlib.class('System.EventHandler')(@sender, e -> void: puts('Hello
 ");
             Assert.IsInstanceOf<EventHandler>(r.Instance);
         }
+
+        [Test(Description="Working with System.Collections.ArrayList class.")]
+        public void ArrayListTest()
+        {
+            INativeObject r = Run(@"
+var clr = use('clrtypes.dll');
+var list = clr.mscorlib.class('System.Collections.ArrayList')();
+return list;
+");
+            Assert.IsInstanceOf<System.Collections.ArrayList>(r.Instance);
+            Assert.AreEqual(1, ((System.Collections.ArrayList)r.Instance).Count);
+        }
+
+        [Test(Description = "Working with System.Collections.ArrayList indexer.")]
+        public void ArrayListIndexerTest()
+        {
+            long v = Run(@"
+var clr = use('clrtypes.dll');
+var list = clr.mscorlib.class('System.Collections.ArrayList')();
+list.add(2);
+return list[0];
+");
+            Assert.AreEqual(2, v);
+        }
+
+        [Test(Description = "Generic specification with ctor() constraint.")]
+        public void GenericWithDefaultCtorTest()
+        {
+            INativeObject r = Run(@"
+var clr = use('clrtypes.dll');
+const component = clr.system.class('System.ComponentModel.Component');
+const ctor = @t: clr.generic(object, void, true) -> object: t();
+return ctor(component);
+");
+            Assert.IsInstanceOf<System.ComponentModel.Component>(r.Instance);
+        }
     }
 }

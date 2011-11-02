@@ -80,13 +80,43 @@ namespace DynamicScript.Runtime.Environment
                 case MemberTypes.Method:
                     return GetValue(Array.ConvertAll(Members, m => (MethodInfo)m), Owner, state);
                 default:
-                    return ScriptObject.Void;
+                    throw new UnsupportedOperationException(state);
+            }
+        }
+
+        private static void SetValue(IScriptObject value, FieldInfo fi, object @this, InterpreterState state)
+        {
+            var fieldObject = default(object);
+            if (NativeObject.TryConvert(value, fi.FieldType, state, out fieldObject))
+                fi.SetValue(@this, fieldObject);
+            else throw new UnsupportedOperationException(state);
+        }
+
+        private static void SetValue(IScriptObject value, PropertyInfo pi, object @this, IScriptObject[] arguments, InterpreterState state)
+        {
+            var propertyIndicies = default(object[]);
+            var propertyValue = default(object);
+            var parameters = Array.ConvertAll(pi.GetIndexParameters(), p => p.ParameterType);
+            switch (NativeObject.TryConvert(value, state, out propertyValue)&& NativeObject.TryConvert(arguments, out propertyIndicies, parameters, state))
+            {
+                case true:
+                    pi.SetValue(@this, propertyValue, propertyIndicies);
+                    return;
+                default:
+                    throw new UnsupportedOperationException(state);
             }
         }
 
         public override void SetValue(IScriptObject value, InterpreterState state)
         {
-            throw new NotImplementedException();
+            switch (MemberType)
+            {
+                case MemberTypes.Field:
+                     SetValue(value, (FieldInfo)Members[0], Owner != null ? Owner.Instance : null, state);return;
+                case MemberTypes.Property:
+                     SetValue(value, (PropertyInfo)Members[0], Owner != null ? Owner.Instance : null, Arguments, state);return;
+                default: throw new UnsupportedOperationException(state);
+            }
         }
 
         public override IScriptContract ContractBinding

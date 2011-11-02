@@ -137,7 +137,7 @@ namespace DynamicScript.Runtime.Environment
                 else return ContractRelationshipType.None;
             }
             if (source.LongLength == destination.LongLength)
-                return relationship;
+                return source.LongLength == 0L ? ContractRelationshipType.TheSame : relationship;
             else if (source.LongLength > destination.LongLength)
                 return relationship == ContractRelationshipType.TheSame ? ContractRelationshipType.Subset : relationship;
             else return relationship == ContractRelationshipType.TheSame ? ContractRelationshipType.Superset : relationship;
@@ -216,7 +216,7 @@ namespace DynamicScript.Runtime.Environment
         /// <returns></returns>
         public override IScriptContract GetContractBinding()
         {
-            if (m_generic == null) m_generic = new ScriptGeneric(this);
+            if (m_generic == null) m_generic = new ScriptGeneric(this, defaultConstructor: NativeType.GetConstructor(Type.EmptyTypes) != null);
             return m_generic;
         }
 
