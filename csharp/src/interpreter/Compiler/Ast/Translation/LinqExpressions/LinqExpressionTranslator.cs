@@ -817,9 +817,9 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             return key;
         }
 
-        private static UnaryExpression ConverterOf(bool value)
+        private static MemberExpression ConverterOf(bool value)
         {
-            return Expression.Convert(LinqHelpers.Constant<bool>(value), typeof(ScriptBoolean));
+            return value ? ScriptBoolean.TrueField : ScriptBoolean.FalseField;
         }
 
         private static UnaryExpression ConverterOf(double value)

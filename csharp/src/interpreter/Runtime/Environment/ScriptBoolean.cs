@@ -55,6 +55,16 @@ namespace DynamicScript.Runtime.Environment
         /// </summary>
         public static readonly ScriptBoolean True = new ScriptBoolean(true);
 
+        internal static MemberExpression TrueField
+        {
+            get { return LinqHelpers.BodyOf<Func<ScriptBoolean>, MemberExpression>(() => True); }
+        }
+
+        internal static MemberExpression FalseField
+        {
+            get { return LinqHelpers.BodyOf<Func<ScriptBoolean>, MemberExpression>(() => False); }
+        } 
+
         private static ScriptBoolean Create(bool value)
         {
             return value ? True : False;

@@ -15,25 +15,57 @@ namespace DynamicScript.Runtime.Environment
     [ComVisible(false)]
     sealed class ScriptGeneric : ScriptContract, IScriptMetaContract, IScriptGeneric
     {
+        #region Nested Types
+        /// <summary>
+        /// Represents converter between <see cref="System.Type"/> object and
+        /// its script wrapper.
+        /// This class cannot be inherited.
+        /// </summary>
+        [ComVisible(false)]
+        private sealed class GenericConverter : RuntimeConverter<Type>
+        {
+            public override bool Convert(Type input, out IScriptObject result)
+            {
+                result = input.IsGenericTypeDefinition ? new ScriptGeneric(input, null, false) : null;
+                return result != null;
+            }
+        }
+        #endregion
+
+        static ScriptGeneric()
+        {
+            ScriptObject.RegisterConverter<GenericConverter>();
+        }
+
         public readonly IScriptClass BaseType;
         public readonly IScriptClass[] Interfaces;
         public readonly bool DefaultConstructor;
 
         public ScriptGeneric(IScriptClass baseType, IEnumerable<IScriptClass> interfaces = null, bool defaultConstructor = false)
         {
-            if (baseType.NativeType.IsGenericParameter)
-            {
-                var genericParam = baseType.NativeType;
-                DefaultConstructor = (genericParam.GenericParameterAttributes & GenericParameterAttributes.DefaultConstructorConstraint) != 0;
-                BaseType = (genericParam.GenericParameterAttributes & GenericParameterAttributes.NotNullableValueTypeConstraint) != 0 ? (ScriptClass)typeof(ValueType) : (ScriptClass)typeof(object);
-                Interfaces = Array.ConvertAll(genericParam.GetGenericParameterConstraints(), t => (ScriptClass)t);
-            }
-            else
-            {
-                BaseType = baseType ?? ScriptClass.ObjectClass;
-                Interfaces = Enumerable.ToArray(interfaces ?? Enumerable.Empty<IScriptClass>());
-                DefaultConstructor = defaultConstructor;
-            }
+            BaseType = baseType ?? ScriptClass.ObjectClass;
+            Interfaces = Enumerable.ToArray(interfaces ?? Enumerable.Empty<IScriptClass>());
+            DefaultConstructor = defaultConstructor;
+        }
+
+        private static IEnumerable<Type> ExtractConstraints(IEnumerable<Type> interfaces)
+        {
+            foreach(var t in interfaces)
+                switch (t.IsGenericTypeDefinition)
+                {
+                    case true:
+                        foreach (var subt in ExtractConstraints(t.GetGenericParameterConstraints()))
+                            yield return subt;
+                        continue;
+                    default: yield return t; continue;
+                }
+        }
+
+        private static Type ExtractConstraints(Type genericParameter, ref IEnumerable<Type> interfaces, ref bool defaultConstructor)
+        {
+            defaultConstructor = defaultConstructor || (genericParameter.GenericParameterAttributes & GenericParameterAttributes.DefaultConstructorConstraint) != 0;
+            interfaces = Enumerable.Concat(interfaces, ExtractConstraints(genericParameter.GetGenericParameterConstraints()));
+            return genericParameter.BaseType;
         }
 
         /// <summary>
@@ -43,8 +75,18 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="interfaces"></param>
         /// <param name="defaultConstructor"></param>
         public ScriptGeneric(Type baseType, IEnumerable<Type> interfaces, bool defaultConstructor)
-            : this((ScriptClass)baseType, ScriptClass.ToCollection(interfaces), defaultConstructor)
         {
+            if (interfaces == null) interfaces = Enumerable.Empty<Type>();
+            if (baseType == null) baseType = typeof(object);
+            else if (baseType.IsGenericTypeDefinition)
+                BaseType = (ScriptClass)ExtractConstraints(baseType, ref interfaces, ref defaultConstructor);
+            else
+            {
+                BaseType = (ScriptClass)baseType;
+                interfaces = ExtractConstraints(interfaces);
+            }
+            Interfaces = Enumerable.ToArray(ScriptClass.ToCollection(interfaces));
+            DefaultConstructor = defaultConstructor;
         }
 
         /// <summary>

@@ -27,8 +27,8 @@ namespace DynamicScript.Runtime.Environment
         {
             public override bool Convert(Type input, out IScriptObject result)
             {
-                result = (ScriptClass)input;
-                return true;
+                result = input.IsGenericTypeDefinition ? null : (ScriptClass)input;
+                return result != null;
             }
         }
         #endregion
