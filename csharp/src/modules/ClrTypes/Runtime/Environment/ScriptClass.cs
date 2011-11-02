@@ -272,5 +272,36 @@ namespace DynamicScript.Runtime.Environment
         {
             get { return this[slotName, MemberFlags, null, state]; }
         }
+
+        public IScriptObject GetSlotMetadata(string slotName, BindingFlags flags, InterpreterState state)
+        {
+            var members = NativeType.GetMember(slotName, flags);
+            switch (members.LongLength)
+            {
+                case 0L: return Void;
+                case 1L: return NativeObject.ConvertFrom(members[0]);
+                default:
+                    return new ScriptArray(Array.ConvertAll(members, m => NativeObject.ConvertFrom(m)));
+            }
+        }
+
+        protected override IScriptObject GetSlotMetadata(string slotName, InterpreterState state)
+        {
+            return GetSlotMetadata(slotName, MemberFlags, state);
+        }
+
+        public RuntimeSlotBase this[IScriptObject[] args, BindingFlags flags, INativeObject @this, InterpreterState state]
+        {
+            get
+            {
+                var members = NativeType.GetDefaultMembers();
+                return members.LongLength > 0L ? new ScriptMember(members, @this, args) : RuntimeSlotBase.Missing("this");
+            }
+        }
+
+        public override RuntimeSlotBase this[IScriptObject[] args, InterpreterState state]
+        {
+            get { return this[args, MemberFlags, null, state]; }
+        }
     }
 }

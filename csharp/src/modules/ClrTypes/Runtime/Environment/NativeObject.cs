@@ -7,6 +7,7 @@ namespace DynamicScript.Runtime.Environment
 {
     using Compiler.Ast;
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
+    using IEnumerable = System.Collections.IEnumerable;
 
     /// <summary>
     /// Represents wrapper of the native .NET object.
@@ -18,6 +19,13 @@ namespace DynamicScript.Runtime.Environment
         private const BindingFlags MemberFlags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy | BindingFlags.IgnoreCase;
         public readonly object Instance;
         public readonly ScriptClass ContractBinding;
+        private static readonly MethodInfo DynamicCastConverter;
+
+        static NativeObject()
+        {
+            DynamicCastConverter = new Func<dynamic, object>(DynamicCast<object>).Method;
+            DynamicCastConverter = DynamicCastConverter.GetGenericMethodDefinition();
+        }
 
         /// <summary>
         /// Initializes a new wrapper of the native .NET object.
@@ -108,7 +116,40 @@ namespace DynamicScript.Runtime.Environment
             return true;
         }
 
-        private static IScriptObject BinaryOperation(dynamic left, ScriptCodeBinaryOperatorType @operator, dynamic right)
+        private static ScriptBoolean Contains(object left, IEnumerable right, InterpreterState state)
+        {
+            foreach (var element in right)
+                if (Equals(left, element))
+                    return  ScriptBoolean.True;
+            return ScriptBoolean.False;
+        }
+
+        private static IScriptObject PartOf(object left, object right, InterpreterState state)
+        {
+            if (right is IScriptObject)
+                return ConvertFrom(left).BinaryOperation(ScriptCodeBinaryOperatorType.PartOf, (IScriptObject)right, state);
+            else if (right is IEnumerable)
+                return Contains(left, (IEnumerable)right, state);
+            else return ScriptBoolean.False;
+        }
+
+        private static object DynamicCast<T>(dynamic source)
+        {
+            return (T)source;
+        }
+
+        private static IScriptObject CastTo(object source, Type destinationType)
+        {
+            var result = DynamicCastConverter.MakeGenericMethod(destinationType).Invoke(null, new[] { source });
+            return ConvertFrom(result, destinationType);
+        }
+
+        private static IScriptObject CastTo(object source, IScriptContract destinationType)
+        {
+            return CastTo(source, ScriptClass.GetType(destinationType));
+        }
+
+        private static IScriptObject BinaryOperation(dynamic left, ScriptCodeBinaryOperatorType @operator, dynamic right, InterpreterState state)
         {
             var result = default(object);
             switch (@operator)
@@ -198,6 +239,10 @@ namespace DynamicScript.Runtime.Environment
                 case ScriptCodeBinaryOperatorType.ValueInequality:
                     result = left != right;
                     break;
+                case ScriptCodeBinaryOperatorType.PartOf:
+                    return PartOf(left, right, state);
+                case ScriptCodeBinaryOperatorType.TypeCast:
+                    return CastTo(left, right as IScriptContract);
                 default: return ScriptObject.Void;
             }
             return ConvertFrom(result);
@@ -207,13 +252,13 @@ namespace DynamicScript.Runtime.Environment
         {
             var r = default(object);
             if (TryConvert(right, state, out r))
-                return BinaryOperation(Instance, @operator, r);
+                return BinaryOperation(Instance, @operator, r, state);
             else if (state.Context == InterpretationContext.Unchecked)
                 return ScriptObject.Void;
             else throw new UnsupportedOperationException(state);
         }
 
-        private static IScriptObject UnaryOperation(dynamic operand, ScriptCodeUnaryOperatorType @operator)
+        private static IScriptObject UnaryOperation(dynamic operand, ScriptCodeUnaryOperatorType @operator, IScriptClass objectType)
         {
             var result = default(object);
             switch (@operator)
@@ -238,6 +283,8 @@ namespace DynamicScript.Runtime.Environment
                     result = operand * operand; break;
                 case ScriptCodeUnaryOperatorType.VoidCheck:
                     result = operand == null; break;
+                case ScriptCodeUnaryOperatorType.TypeOf:
+                    return objectType;
                 default: return ScriptObject.Void;
             }
             return ConvertFrom(result);
@@ -245,12 +292,14 @@ namespace DynamicScript.Runtime.Environment
 
         IScriptObject IScriptObject.UnaryOperation(ScriptCodeUnaryOperatorType @operator, InterpreterState state)
         {
-            throw new NotImplementedException();
+            return UnaryOperation(Instance, @operator, ContractBinding);
         }
 
-        public IScriptObject Invoke(IList<IScriptObject> args, InterpreterState state)
+        IScriptObject IScriptObject.Invoke(IList<IScriptObject> args, InterpreterState state)
         {
-            throw new NotImplementedException();
+            if (Instance is Delegate)
+                return ScriptMethod.Invoke((Delegate)Instance, args, state);
+            else throw new UnsupportedOperationException(state);
         }
 
         public IRuntimeSlot this[string slotName, InterpreterState state]
@@ -258,9 +307,9 @@ namespace DynamicScript.Runtime.Environment
             get { return ContractBinding[slotName, MemberFlags, this, state]; }
         }
 
-        public IScriptObject GetRuntimeDescriptor(string slotName, InterpreterState state)
+        IScriptObject IScriptObject.GetRuntimeDescriptor(string slotName, InterpreterState state)
         {
-            throw new NotImplementedException();
+            return ContractBinding.GetSlotMetadata(slotName, MemberFlags, state);
         }
 
         public IRuntimeSlot this[IScriptObject[] args, InterpreterState state]
@@ -268,9 +317,12 @@ namespace DynamicScript.Runtime.Environment
             get { throw new NotImplementedException(); }
         }
 
+        /// <summary>
+        /// Gets collection of available members.
+        /// </summary>
         public ICollection<string> Slots
         {
-            get { throw new NotImplementedException(); }
+            get { return ReflectionEngine.GetMemberNames(ContractBinding.NativeType, MemberFlags); }
         }
 
         IScriptContract IScriptObject.GetContractBinding()

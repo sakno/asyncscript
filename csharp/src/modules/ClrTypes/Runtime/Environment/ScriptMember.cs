@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Reflection;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace DynamicScript.Runtime.Environment
 {
@@ -10,7 +12,7 @@ namespace DynamicScript.Runtime.Environment
     /// This class cannot be inherited.
     /// </summary>
     [ComVisible(false)]
-    sealed class ScriptMember: ScriptObject.RuntimeSlotBase
+    sealed class ScriptMember: ScriptObject.RuntimeSlotBase, IEquatable<ScriptMember>
     {
         /// <summary>
         /// Represents wrapped member.
@@ -18,13 +20,15 @@ namespace DynamicScript.Runtime.Environment
         public readonly MemberInfo[] Members;
         private readonly MemberTypes MemberType;
         private readonly INativeObject Owner;
+        private readonly IScriptObject[] Arguments;
 
-        public ScriptMember(MemberInfo[] mi, INativeObject @this = null)
+        public ScriptMember(MemberInfo[] mi, INativeObject @this = null, IScriptObject[] args = null)
         {
             if (mi == null) throw new ArgumentNullException("mi");
             Owner = @this;
             Members = mi;
             MemberType = mi[0].MemberType;
+            Arguments = args ?? new IScriptObject[0];
         }
 
         private static IScriptObject GetValue(FieldInfo fi, object @this)
@@ -32,9 +36,18 @@ namespace DynamicScript.Runtime.Environment
             return NativeObject.ConvertFrom(fi.GetValue(@this));
         }
 
-        private static IScriptObject GetValue(PropertyInfo pi, object @this)
+        private static IScriptObject GetValue(PropertyInfo pi, object @this, IScriptObject[] arguments, InterpreterState state)
         {
-            return NativeObject.ConvertFrom(pi.GetValue(@this, null));
+            var propertyIndicies = default(object[]);
+            var parameters = Array.ConvertAll(pi.GetIndexParameters(), p => p.ParameterType);
+            switch (NativeObject.TryConvert(arguments, out propertyIndicies, parameters, state))
+            {
+                case true:
+                    var result = pi.GetValue(@this, propertyIndicies);
+                    return pi.PropertyType == null || Equals(pi.PropertyType, typeof(void)) ? ScriptObject.Void : NativeObject.ConvertFrom(result, pi.PropertyType);
+                default:
+                    throw new UnsupportedOperationException(state);
+            }
         }
 
         private static IScriptClass GetValue(Type nestedType)
@@ -59,7 +72,7 @@ namespace DynamicScript.Runtime.Environment
                 case MemberTypes.Field:
                     return GetValue((FieldInfo)Members[0], Owner != null ? Owner.Instance : null);
                 case MemberTypes.Property:
-                    return GetValue((PropertyInfo)Members[0], Owner != null ? Owner.Instance : null);
+                    return GetValue((PropertyInfo)Members[0], Owner != null ? Owner.Instance : null, Arguments, state);
                 case MemberTypes.NestedType:
                     return GetValue((Type)Members[0]);
                 case MemberTypes.Event:
@@ -78,27 +91,34 @@ namespace DynamicScript.Runtime.Environment
 
         public override IScriptContract ContractBinding
         {
-            get { throw new NotImplementedException(); }
+            get { return ScriptSuperContract.Instance; }
         }
 
         public override RuntimeSlotAttributes Attributes
         {
-            get { throw new NotImplementedException(); }
+            get { return RuntimeSlotAttributes.Lazy; }
         }
 
-        protected override System.Collections.Generic.ICollection<string> Slots
+        protected override ICollection<string> Slots
         {
-            get { throw new NotImplementedException(); }
+            get { return Array.ConvertAll(Members, m => m.Name); }
         }
 
         public override bool DeleteValue()
         {
-            throw new NotImplementedException();
+            return false;
+        }
+
+        public bool Equals(ScriptMember other)
+        {
+            return other != null &&
+                Enumerable.SequenceEqual(Members, other.Members) &&
+                Equals(Owner, other.Owner);
         }
 
         public override bool Equals(IRuntimeSlot other)
         {
-            throw new NotImplementedException();
+            return Equals(other as ScriptMember);
         }
     }
 }

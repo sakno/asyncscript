@@ -183,33 +183,49 @@ namespace DynamicScript.Runtime.Environment
                                                                         method.Combine(new ScriptMethod(mi[1], @this), null, state);
         }
 
-        private ScriptMethod MakeGenericMethod(IList<IScriptObject> args)
+        private static ScriptMethod MakeGenericMethod(MethodInfo mi, IList<IScriptObject> args)
         {
             var genericTypes = from a in args
                                let type = ScriptClass.GetType(a as IScriptContract)
                                where type != null
                                select type;
-            return new ScriptMethod(Method.MakeGenericMethod(Enumerable.ToArray(genericTypes)));
+            return new ScriptMethod(mi.MakeGenericMethod(Enumerable.ToArray(genericTypes)));
         }
 
-        protected override IScriptObject InvokeCore(IList<IScriptObject> args, InterpreterState state)
+        private static IScriptObject Invoke(MethodInfo mi, object @this, IList<IScriptObject> args, InterpreterState state, ref Type[] parameters)
         {
-            switch (Method.IsGenericMethodDefinition)
+            switch (mi.IsGenericMethodDefinition)
             {
                 case true:
-                    return MakeGenericMethod(args);
+                    return MakeGenericMethod(mi, args);
                 default:
-                    if (m_parameters == null) m_parameters = Array.ConvertAll(Method.GetParameters(), p => p.ParameterType);
+                    if (parameters == null) parameters = Array.ConvertAll(mi.GetParameters(), p => p.ParameterType);
                     var methodArguments = default(object[]);
-                    switch (NativeObject.TryConvert(args, out methodArguments, m_parameters, state))
+                    switch (NativeObject.TryConvert(args, out methodArguments, parameters, state))
                     {
                         case true:
-                            var result = Method.Invoke(This, methodArguments);
-                            return Method.ReturnType == null || Equals(Method.ReturnType, typeof(void)) ? Void : NativeObject.ConvertFrom(result, Method.ReturnType);
+                            var result = mi.Invoke(@this, methodArguments);
+                            return mi.ReturnType == null || Equals(mi.ReturnType, typeof(void)) ? Void : NativeObject.ConvertFrom(result, mi.ReturnType);
                         default:
                             throw new UnsupportedOperationException(state);
                     }
             }
+        }
+
+        public static IScriptObject Invoke(MethodInfo mi, object @this, IList<IScriptObject> args, InterpreterState state)
+        {
+            var parameters = default(Type[]);
+            return Invoke(mi, @this, args, state, ref parameters);
+        }
+
+        public static IScriptObject Invoke(Delegate d, IList<IScriptObject> args, InterpreterState state)
+        {
+            return Invoke(d.Method, d.Target, args, state);
+        }
+
+        protected override IScriptObject InvokeCore(IList<IScriptObject> args, InterpreterState state)
+        {
+            return Invoke(Method, This, args, state, ref m_parameters);
         }
 
         MethodInfo IScriptMethod.Method
