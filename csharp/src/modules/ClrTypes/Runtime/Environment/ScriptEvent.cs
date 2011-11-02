@@ -16,15 +16,24 @@ namespace DynamicScript.Runtime.Environment
         {
             public Slots(EventInfo ei, INativeObject @this = null)
             {
-                foreach (var other in Enumerable.Concat(new[] { ei.GetAddMethod(false), ei.GetRaiseMethod(false), ei.GetRemoveMethod(false) }, ei.GetOtherMethods(false)))
+                foreach (var other in ei.GetOtherMethods(false))
                     if (other != null)
                         AddConstant(other.Name, new ScriptMethod(other, @this));
+                var method = ei.GetAddMethod(false);
+                if (method != null)
+                    AddConstant("subscribe", new ScriptMethod(method, @this));
+                method = ei.GetRemoveMethod(false);
+                if (method != null)
+                    AddConstant("unsubscribe", new ScriptMethod(method, @this));
+                method = ei.GetRaiseMethod(false);
+                if (method != null)
+                    AddConstant("raise", new ScriptMethod(method, @this));
             }
         }
         #endregion
 
         public ScriptEvent(EventInfo ei, INativeObject @this = null)
-            : base(new Slots(ei))
+            : base(new Slots(ei, @this))
         {
         }
     }

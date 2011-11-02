@@ -53,5 +53,19 @@ return uri.ToString();
 ");
             Assert.AreEqual("http://www.homepage.com", s);
         }
+
+        [Test(Description="Event subscribing.")]
+        public void EventSubscribing()
+        {
+            bool r = Run(@"
+const clr = use('clrtypes.dll');
+var raised = false;
+var component = clr.system.class('System.ComponentModel.Component')();
+component.disposed.subscribe(@a, b -> void: raised = true);
+component.dispose();
+return raised;
+");
+            Assert.IsTrue(r);
+        }
     }
 }

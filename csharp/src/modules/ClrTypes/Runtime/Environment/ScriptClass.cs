@@ -143,6 +143,19 @@ namespace DynamicScript.Runtime.Environment
             else return relationship == ContractRelationshipType.TheSame ? ContractRelationshipType.Superset : relationship;
         }
 
+        private static ContractRelationshipType GetRelationship(ScriptActionContract sourceSignature, ScriptActionContract destSignature)
+        {
+            return sourceSignature.GetRelationship(destSignature);
+        }
+
+        private static ContractRelationshipType GetRelationship(Type sourceDelegate, ScriptActionContract destSignature)
+        {
+            var invokeMethod = sourceDelegate.GetMethod("Invoke");
+            return invokeMethod != null ?
+                GetRelationship(ScriptMethod.GetContractBinding(invokeMethod), destSignature) :
+                ContractRelationshipType.None;
+        }
+
         /// <summary>
         /// Returns a relationship
         /// </summary>
@@ -158,6 +171,8 @@ namespace DynamicScript.Runtime.Environment
                 return ContractRelationshipType.Superset;
             else if (contract.OneOf<IScriptComplementation, IScriptUnionContract>())
                 return Inverse(contract.GetRelationship(this));
+            else if (contract is ScriptActionContract && typeof(Delegate).IsAssignableFrom(NativeType))
+                return GetRelationship(NativeType, (ScriptActionContract)contract);
             else return ContractRelationshipType.None;
         }
 
