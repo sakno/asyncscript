@@ -2489,7 +2489,7 @@ namespace DynamicScript.Runtime.Environment
             return from e in expressions select AsRightSide(e, stateHolder);
         }
 
-        public static MethodCallExpression BindBinaryOperation(Expression left, ConstantExpression @operator, Expression right, ParameterExpression stateVar)
+        internal static MethodCallExpression BindBinaryOperation(Expression left, ConstantExpression @operator, Expression right, ParameterExpression stateVar)
         {
             right = AsRightSide(right, stateVar);
             var binaryOp = LinqHelpers.BodyOf<IScriptObject, ScriptCodeBinaryOperatorType, IScriptObject, InterpreterState, IScriptObject, MethodCallExpression>((l, op, r, s) => l.BinaryOperation(op, r, s));

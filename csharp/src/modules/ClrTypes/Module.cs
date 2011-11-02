@@ -140,6 +140,13 @@ namespace DynamicScript.Modules.ClrTypes
         }
         #endregion
 
+        static Module()
+        {
+            ScriptObject.RegisterConverter<ScriptClass.TypeConverter>();
+            ScriptObject.RegisterConverter<ScriptGeneric.GenericConverter>();
+            ScriptObject.RegisterConverter<ScriptMethod.DelegateConverter>();
+        }
+
         /// <summary>
         /// Initializes a new module.
         /// </summary>

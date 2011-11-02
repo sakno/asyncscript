@@ -23,7 +23,7 @@ namespace DynamicScript.Runtime.Environment
         /// This class cannot be inherited.
         /// </summary>
         [ComVisible(false)]
-        private sealed class TypeConverter : RuntimeConverter<Type>
+        public sealed class TypeConverter : RuntimeConverter<Type>
         {
             public override bool Convert(Type input, out IScriptObject result)
             {
@@ -40,7 +40,6 @@ namespace DynamicScript.Runtime.Environment
         {
             ObjectClass = new ScriptClass(typeof(object));
             StringClass = new ScriptClass(typeof(string));
-            ScriptObject.RegisterConverter<TypeConverter>();
         }
 
         /// <summary>

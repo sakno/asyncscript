@@ -9,7 +9,7 @@ namespace DynamicScript.Runtime
     /// Represents a script wrapper for the managed method.
     /// </summary>
     [ComVisible(false)]
-    public interface IScriptMethod : IScriptAction
+    public interface IScriptMethod : IScriptAction, IScriptConvertible
     {
         /// <summary>
         /// Gets an object for the instance method.
@@ -20,13 +20,5 @@ namespace DynamicScript.Runtime
         /// Gets method metadata.
         /// </summary>
         MethodInfo Method { get; }
-
-        /// <summary>
-        /// Creates a new delegate instance.
-        /// </summary>
-        /// <param name="delegateType"></param>
-        /// <param name="throwOnBindFailure"></param>
-        /// <returns></returns>
-        Delegate CreateDelegate(Type delegateType, bool throwOnBindFailure);
     }
 }

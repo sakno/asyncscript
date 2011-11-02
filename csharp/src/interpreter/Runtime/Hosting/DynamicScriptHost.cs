@@ -18,6 +18,10 @@ namespace DynamicScript.Runtime.Hosting
             return cmd.Run(args);
         }
 
+        public class A
+        {
+        }
+
         [LoaderOptimization(LoaderOptimization.SingleDomain)]
         private static int Main(string[] args)
         {

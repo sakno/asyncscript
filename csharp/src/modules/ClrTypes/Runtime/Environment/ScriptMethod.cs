@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Linq;
+using System.Reflection.Emit;
+using System.Threading.Tasks;
 
 namespace DynamicScript.Runtime.Environment
 {
@@ -10,6 +12,103 @@ namespace DynamicScript.Runtime.Environment
     [ComVisible(false)]
     sealed class ScriptMethod : ScriptActionBase, IScriptMethod
     {
+        #region Nested Types
+
+        /// <summary>
+        /// Represents delegate converter.
+        /// This class cannot be inherited.
+        /// </summary>
+        [ComVisible(false)]
+        public sealed class DelegateConverter : RuntimeConverter<Delegate>
+        {
+            public override bool Convert(Delegate input, out IScriptObject result)
+            {
+                var @this = input != null ? new NativeObject(input.Target) : null;
+                var methods = input.GetInvocationList();
+                switch (methods.LongLength > 1L)
+                {
+                    case true:
+                        result = new ScriptArray(Array.ConvertAll(methods, m => new ScriptMethod(m.Method, @this)));
+                        break;
+                    default: result = new ScriptMethod(methods[0].Method, @this); break;
+                }
+                return true;
+            }
+        }
+
+        [ComVisible(false)]
+        private sealed class ScriptDelegate
+        {
+            public readonly InterpreterState State;
+            public readonly IScriptAction Implementation;
+            private readonly Type DelegateType;
+
+            public ScriptDelegate(Type delegateType, IScriptAction action, InterpreterState state)
+            {
+                if (delegateType == null) throw new ArgumentNullException("delegateType");
+                if (action == null) throw new ArgumentNullException("action");
+                if (state == null) throw new ArgumentNullException("state");
+                Implementation = action;
+                State = state;
+                DelegateType = delegateType;
+            }
+
+            public object DynamicInvoke(object[] arguments)
+            {
+                var parameterTypes = default(List<Type>);
+                var returnType = default(Type);
+                if (GetSignature(DelegateType, out parameterTypes, out returnType))
+                {
+                    var scriptArguments = new IScriptObject[arguments.Length];
+                    Parallel.For(0, arguments.Length, i => scriptArguments[i] = NativeObject.ConvertFrom(arguments[i], parameterTypes[i]));
+                    var result = default(object);
+                    if (NativeObject.TryConvert(Implementation.Invoke(scriptArguments, State), returnType, State, out result))
+                        return result;
+                }
+                throw new NotSupportedException();
+            }
+
+            private static void Implements(DynamicMethod dm)
+            {
+                
+            }
+
+            private static DynamicMethod CreateMethod(string methodName, List<Type> parameters, Type returnType)
+            {
+                parameters.Insert(0, typeof(ScriptDelegate));
+                var method = new DynamicMethod(methodName, returnType, parameters.ToArray());
+                Implements(method);
+                return method;
+            }
+
+            private static bool GetSignature(Type dt, out List<Type> parameters, out Type returnType)
+            {
+                var invokeMethod = dt.GetMethod("Invoke");
+                switch (invokeMethod != null)
+                {
+                    case true:
+                        parameters = new List<Type>(from p in invokeMethod.GetParameters() select p.ParameterType);
+                        returnType = invokeMethod.ReturnType;
+                        return true;
+                    default:
+                        parameters = new List<Type>();
+                        returnType = null;
+                        return false;
+                }
+            }
+
+            public Delegate CreateDelegate()
+            {
+                var parameters = default(List<Type>);
+                var returnType = default(Type);
+                var method = GetSignature(DelegateType, out parameters, out returnType) ?
+                    CreateMethod(Implementation.ToString(), parameters, returnType) :
+                    null;
+                return method != null ? method.CreateDelegate(DelegateType, this) : null;
+            }
+        }
+        #endregion
+
         /// <summary>
         /// Represents method metadata.
         /// </summary>
@@ -100,11 +199,6 @@ namespace DynamicScript.Runtime.Environment
             get { return Method; }
         }
 
-        Delegate IScriptMethod.CreateDelegate(Type delegateType, bool throwOnBindFailure)
-        {
-            return Delegate.CreateDelegate(delegateType, This, Method, throwOnBindFailure);
-        }
-
         /// <summary>
         /// Returns a string representation of this method.
         /// </summary>
@@ -112,6 +206,36 @@ namespace DynamicScript.Runtime.Environment
         public override string ToString()
         {
             return Method.ToString();
+        }
+
+        bool IScriptConvertible.TryConvertTo(Type conversionType, out object result)
+        {
+            if (typeof(MethodInfo).IsAssignableFrom(conversionType))
+                result = Method;
+            else if (typeof(Delegate).IsAssignableFrom(conversionType))
+                result = Delegate.CreateDelegate(conversionType, This, Method, false);
+            else result = null;
+            return result != null;
+        }
+
+        bool IScriptConvertible.TryConvert(out object result)
+        {
+            result = Method;
+            return true;
+        }
+
+        public static Delegate CreateDelegate(Type delegateType, IScriptAction implementation, InterpreterState state)
+        {
+            if (implementation is IScriptMethod)
+            {
+                var result = default(object);
+                return ((IScriptMethod)implementation).TryConvertTo(delegateType, out result) ? result as Delegate : null;
+            }
+            else
+            {
+                var instance = new ScriptDelegate(delegateType, implementation, state);
+                return instance.CreateDelegate();
+            }
         }
     }
 }

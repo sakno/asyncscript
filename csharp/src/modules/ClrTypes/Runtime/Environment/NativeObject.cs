@@ -43,7 +43,7 @@ namespace DynamicScript.Runtime.Environment
         public static IScriptObject ConvertFrom(object obj, Type destinationType = null)
         {
             var scriptRepresentation = default(IScriptObject);
-            if (obj == null)
+            if (obj == null || Equals(typeof(void), destinationType))
                 return ScriptObject.Void;
             if (ScriptObject.TryConvert(obj, out scriptRepresentation))
                 return scriptRepresentation;
@@ -60,6 +60,11 @@ namespace DynamicScript.Runtime.Environment
         /// <returns><see langword="true"/> if conversion is possible; otherwise, <see langword="false"/>.</returns>
         public static bool TryConvert(IScriptObject obj, Type conversionType, InterpreterState state, out object result)
         {
+            if (ScriptObject.IsVoid(obj) || Equals(typeof(void), conversionType))
+            {
+                result = null;
+                return true;
+            }
             if (obj is INativeObject)
                 result = ((INativeObject)obj).Instance;
             else if (obj is IScriptConvertible)
@@ -72,6 +77,8 @@ namespace DynamicScript.Runtime.Environment
                         ((IScriptConvertible)obj).TryConvert(out result);
                         break;
                 }
+            else if (typeof(Delegate).IsAssignableFrom(conversionType) && obj is IScriptAction)
+                result = ScriptMethod.CreateDelegate(conversionType, (IScriptAction)obj, state);
             else result = null;
             return result != null;
         }
