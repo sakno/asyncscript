@@ -131,7 +131,7 @@ namespace DynamicScript.Runtime.Environment
 
             internal static NewExpression Bind(ConstantExpression paramName, Expression contractBinding)
             {
-                contractBinding = Extract(contractBinding);
+                contractBinding = RequiresContract(contractBinding);
                 var ctor = LinqHelpers.BodyOf<string, IScriptContract, Parameter, NewExpression>((p, c) => new Parameter(p, c));
                 return ctor.Update(new LinqExpression[] { paramName, contractBinding });
             }
@@ -292,7 +292,7 @@ namespace DynamicScript.Runtime.Environment
 
         internal static NewExpression New(NewArrayExpression signature, Expression @return)
         {
-            @return = Extract(@return);
+            @return = RequiresContract(@return);
             var ctor = LinqHelpers.BodyOf<IEnumerable<Parameter>, IScriptContract, ScriptActionContract, NewExpression>((ps, c) => new ScriptActionContract(ps, c));
             return ctor.Update(new LinqExpression[] { signature, @return });
         }

@@ -172,7 +172,7 @@ namespace DynamicScript.Runtime.Environment
 
         internal static NewExpression New(Expression contractExpr, ConstantExpression rank)
         {
-            contractExpr = Extract(contractExpr);
+            contractExpr = RequiresContract(contractExpr);
             var ctor = LinqHelpers.BodyOf<IScriptContract, int, ScriptArrayContract, NewExpression>((c, r) => new ScriptArrayContract(c, r));
             return ctor.Update(new[] { contractExpr, rank });
         }

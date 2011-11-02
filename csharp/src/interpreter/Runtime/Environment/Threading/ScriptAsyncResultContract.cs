@@ -75,7 +75,7 @@ namespace DynamicScript.Runtime.Environment.Threading
 
         internal static NewExpression Bind(Expression contractExpr)
         {
-            contractExpr = Extract(contractExpr);
+            contractExpr = RequiresContract(contractExpr);
             var ctor = LinqHelpers.BodyOf<IScriptContract, ScriptAsyncResultContract, NewExpression>(c => new ScriptAsyncResultContract(c));
             return ctor.Update(new[] { contractExpr });
         }

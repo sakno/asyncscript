@@ -19,7 +19,7 @@ namespace DynamicScript.Runtime.Environment
     /// <example>
     /// The following example demonstrates how to define composite contract:
     /// <code language="C#">
-    /// sealed class MyContract : QScriptCompositeContract
+    /// sealed class MyContract : ScriptCompositeContract
     /// {
     ///     private static readonly KeyValuePair&lt;string, IScriptContract&gt; Slot1 = DefineSlot("slot1");
     ///     private static readonly KeyValuePair&lt;string, IScriptContract&gt; Slot2 = DefineSlot("slot2", QIntegerContract.Instance);
@@ -139,6 +139,22 @@ namespace DynamicScript.Runtime.Environment
         {
             m_slots = new Dictionary<string, SlotMeta>(new StringEqualityComparer());
             foreach (var s in slots ?? Enumerable.Empty<KeyValuePair<string, SlotMeta>>()) m_slots.Add(s.Key, s.Value);
+        }
+
+        /// <summary>
+        /// Initializes a new composite contract.
+        /// </summary>
+        /// <param name="slots"></param>
+        public ScriptCompositeContract(IEnumerable<KeyValuePair<string, IScriptContract>> slots)
+            : this(from s in slots select new KeyValuePair<string, SlotMeta>(s.Key, new SlotMeta(s.Value)))
+        {
+        }
+
+        internal static NewExpression New(IEnumerable<KeyValuePair<string, Expression>> slots)
+        {
+            var ctor = LinqHelpers.BodyOf<IEnumerable<KeyValuePair<string, IScriptContract>>, ScriptCompositeContract, NewExpression>(s => new ScriptCompositeContract(s));
+            return ctor.Update(new[] { Expression.NewArrayInit(typeof(KeyValuePair<string, IScriptContract>), from s in slots
+                                                                                                            select LinqHelpers.CreateKeyValuePair<string, IScriptContract>(LinqHelpers.Constant(s.Key), RequiresContract(s.Value))) });
         }
 
         /// <summary>

@@ -401,12 +401,12 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             var result = Translate(contractBinding, context);
             switch (contractBinding is ScriptCodePrimitiveExpression)
             {
-                case true: return ScriptContract.Extract(result);
+                case true: return ScriptContract.RequiresContract(result);
                 default:
                     result = Expression.Block(
                         Expression.Label(context.Scope.BeginOfScope),
                         Expression.Label(context.Scope.EndOfScope, AsRightSide(result, context)));
-                    result = ScriptContract.Extract(result);
+                    result = ScriptContract.RequiresContract(result);
                     result = Expression.Lambda<Func<InterpreterState, IScriptContract>>(result, context.Scope.StateHolder);
                     return result;
             }
@@ -1384,7 +1384,6 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns>LINQ binary expression.</returns>
         protected override Expression Translate(ScriptCodeBinaryOperatorExpression expression, TranslationContext context)
         {
-            var leftExpression = Translate(expression.Left, context);
             /*
              * If binary expression has the following format:
              * a to void;
@@ -1394,24 +1393,36 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             switch (expression.Operator)
             {
                 case ScriptCodeBinaryOperatorType.MemberAccess:
+                    var leftExpression = AsRightSide(Translate(expression.Left, context), context);
                     return BindMemberAccess(leftExpression, expression.Right, context);
                 case ScriptCodeBinaryOperatorType.MetadataDiscovery:
+                    leftExpression = AsRightSide(Translate(expression.Left, context), context);
                     return BindMetadataDiscovery(leftExpression, expression.Right, context);
                 case ScriptCodeBinaryOperatorType.AndAlso:
+                    leftExpression = AsRightSide(Translate(expression.Left, context), context);
                     return Expression.Condition(RuntimeHelpers.BindIsTrue(leftExpression, context.Scope.StateHolder), //test
-                        Translate(expression.Right, context), //then
+                        AsRightSide(Translate(expression.Right, context), context), //then
                         ConverterOf(false), //else
                         typeof(IScriptObject));
                 case ScriptCodeBinaryOperatorType.OrElse:
+                    leftExpression = AsRightSide(Translate(expression.Left, context), context);
                     return Expression.Condition(RuntimeHelpers.BindIsTrue(leftExpression, context.Scope.StateHolder), //test
                         ConverterOf(true),  //then
-                        Translate(expression.Right, context), //else
+                        AsRightSide(Translate(expression.Right, context), context), //else
                         typeof(IScriptObject));
                 case ScriptCodeBinaryOperatorType.Initializer:
-                    return ScriptObject.RuntimeSlotBase.Initialize(Translate(expression.Left, context), Translate(expression.Right, context), context.Scope.StateHolder);
+                    leftExpression = Translate(expression.Left, context);
+                    return ScriptObject.RuntimeSlotBase.Initialize(leftExpression, Translate(expression.Right, context), context.Scope.StateHolder);
                 default:
-                    return ScriptObject.BindBinaryOperation(Translate(expression.Left, context), expression.Operator, Translate(expression.Right, context), context.Scope.StateHolder);
+                    leftExpression = Translate(expression.Left, context);
+                    return ScriptObject.BindBinaryOperation(leftExpression, expression.Operator, Translate(expression.Right, context), context.Scope.StateHolder);
             }
+        }
+
+        private Expression CreateCompositeContract(ScriptCodeObjectExpression expr, TranslationContext context)
+        {
+            return ScriptCompositeContract.New(from ScriptCodeObjectExpression.Slot s in expr
+                                               select new KeyValuePair<string, Expression>(s.Name, AsRightSide(Translate(s.ContractBinding, context), context)));
         }
 
         /// <summary>
@@ -1422,7 +1433,9 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns>LINQ expression that represents unary operation.</returns>
         protected override Expression Translate(ScriptCodeUnaryOperatorExpression expression, TranslationContext context)
         {
-            return ScriptObject.BindUnaryOperation(Translate(expression.Operand, context), expression.Operator, context.Scope.StateHolder);
+            if (expression.Operator == ScriptCodeUnaryOperatorType.TypeOf && expression.Operand is ScriptCodeObjectExpression)
+                return CreateCompositeContract((ScriptCodeObjectExpression)expression.Operand, context);
+            else return ScriptObject.BindUnaryOperation(Translate(expression.Operand, context), expression.Operator, context.Scope.StateHolder);
         }
 
         /// <summary>

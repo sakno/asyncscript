@@ -2479,27 +2479,47 @@ namespace DynamicScript.Runtime.Environment
 
         #endregion
 
-        private static void Normalize(ref Expression expr)
+        private static Expression AsRightSide(Expression expr, ParameterExpression stateHolder)
         {
-            if (!Equals(typeof(IScriptObject), expr.Type)) expr = Expression.Convert(expr, typeof(IScriptObject));
+            return RuntimeHelpers.IsRuntimeVariable(expr)? RuntimeSlotBase.GetValue(expr, stateHolder):expr;
         }
 
-        internal static MethodCallExpression BindBinaryOperation(Expression left, ConstantExpression @operator, Expression right, ParameterExpression stateVar)
+        private static IEnumerable<Expression> AsRightSide(IEnumerable<Expression> expressions, ParameterExpression stateHolder)
         {
+            return from e in expressions select AsRightSide(e, stateHolder);
+        }
+
+        public static MethodCallExpression BindBinaryOperation(Expression left, ConstantExpression @operator, Expression right, ParameterExpression stateVar)
+        {
+            right = AsRightSide(right, stateVar);
             var binaryOp = LinqHelpers.BodyOf<IScriptObject, ScriptCodeBinaryOperatorType, IScriptObject, InterpreterState, IScriptObject, MethodCallExpression>((l, op, r, s) => l.BinaryOperation(op, r, s));
-            Normalize(ref left);
             return binaryOp.Update(left, new Expression[] { @operator, right, stateVar });
         }
 
         internal static MethodCallExpression BindBinaryOperation(Expression left, ScriptCodeBinaryOperatorType @operator, Expression right, ParameterExpression stateVar)
         {
+            switch (@operator)
+            {
+                case ScriptCodeBinaryOperatorType.AdditiveAssign:
+                case ScriptCodeBinaryOperatorType.Assign:
+                case ScriptCodeBinaryOperatorType.DivideAssign:
+                case ScriptCodeBinaryOperatorType.ExclusionAssign:
+                case ScriptCodeBinaryOperatorType.Expansion:
+                case ScriptCodeBinaryOperatorType.Initializer:
+                case ScriptCodeBinaryOperatorType.ModuloAssign:
+                case ScriptCodeBinaryOperatorType.MultiplicativeAssign:
+                case ScriptCodeBinaryOperatorType.Reduction:
+                case ScriptCodeBinaryOperatorType.SubtractiveAssign: break;
+                default:
+                    left = AsRightSide(left, stateVar); break;
+            }
             return BindBinaryOperation(left, LinqHelpers.Constant<ScriptCodeBinaryOperatorType>(@operator), right, stateVar);
         }
 
         internal static MethodCallExpression BindUnaryOperation(Expression operand, ConstantExpression @operator, ParameterExpression stateVar)
         {
+            operand = AsRightSide(operand, stateVar);
             var unaryOp = LinqHelpers.BodyOf<IScriptObject, ScriptCodeUnaryOperatorType, InterpreterState, IScriptObject, MethodCallExpression>((l, op, s) => l.UnaryOperation(op, s));
-            Normalize(ref operand);
             return unaryOp.Update(operand, new Expression[] { @operator, stateVar });
         }
 
@@ -2510,28 +2530,31 @@ namespace DynamicScript.Runtime.Environment
 
         internal static MethodCallExpression BindInvoke(Expression target, IEnumerable<Expression> args, ParameterExpression stateVar)
         {
-            if (args == null) args = new Expression[0];
+            target= AsRightSide(target, stateVar);
+            args = AsRightSide(args ?? Enumerable.Empty<Expression>(), stateVar);
             var invoker = LinqHelpers.BodyOf<IScriptObject, IScriptObject[], InterpreterState, IScriptObject, MethodCallExpression>((tgt, a, s) => tgt.Invoke(a, s));
-            Normalize(ref target);
             return invoker.Update(target, new Expression[] { Expression.NewArrayInit(typeof(IScriptObject), args), stateVar });
         }
 
         internal static MethodCallExpression BindSlotAccess(Expression target, string slotName, ParameterExpression stateVar)
         {
+            target = AsRightSide(target, stateVar);
             var indexer = LinqHelpers.BodyOf<IScriptObject, string, InterpreterState, IRuntimeSlot, MethodCallExpression>((@this, n, s) => @this[n, s]);
             return indexer.Update(target, new Expression[] { LinqHelpers.Constant<string>(slotName), stateVar });
         }
 
         internal static MethodCallExpression BindSlotMetadata(Expression target, string slotName, ParameterExpression stateVar)
         {
+            target = AsRightSide(target, stateVar);
             var resolver = LinqHelpers.BodyOf<IScriptObject, string, InterpreterState, IScriptObject, MethodCallExpression>((@this, n, s) => @this.GetRuntimeDescriptor(n, s));
             return resolver.Update(target, new Expression[] { LinqHelpers.Constant<string>(slotName), stateVar });
         }
 
         internal static MethodCallExpression BindIndexer(Expression target, IEnumerable<Expression> indicies, ParameterExpression stateVar)
         {
+            target = AsRightSide(target, stateVar);
+            indicies = AsRightSide(indicies ?? Enumerable.Empty<Expression>(), stateVar);
             var indexer = LinqHelpers.BodyOf<IScriptObject, IScriptObject[], InterpreterState, IRuntimeSlot, MethodCallExpression>((o, i, s) => o[i, s]);
-            Normalize(ref target);
             return indexer.Update(target, new Expression[] { Expression.NewArrayInit(typeof(IScriptObject), indicies), stateVar });
         }
 

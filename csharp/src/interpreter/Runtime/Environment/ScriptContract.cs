@@ -664,7 +664,7 @@ namespace DynamicScript.Runtime.Environment
         /// </summary>
         /// <param name="obj">The object to be converted.</param>
         /// <returns>The conversion result.</returns>
-        public static IScriptContract RtlExtractContract(object obj)
+        public static IScriptContract RequiresContract(object obj)
         {
             switch (obj is IScriptContract)
             {
@@ -673,9 +673,9 @@ namespace DynamicScript.Runtime.Environment
             }
         }
 
-        internal static LinqExpression Extract(LinqExpression contract)
+        internal static LinqExpression RequiresContract(LinqExpression contract)
         {
-            return typeof(IScriptContract).IsAssignableFrom(contract.Type) ? contract : LinqHelpers.Call<object, IScriptContract>(obj => RtlExtractContract(obj), null, contract);
+            return typeof(IScriptContract).IsAssignableFrom(contract.Type) ? contract : LinqHelpers.Call<object, IScriptContract>(obj => RequiresContract(obj), null, contract);
         }
 
         private static IScriptContract AsIterable(IScriptContract contract)
