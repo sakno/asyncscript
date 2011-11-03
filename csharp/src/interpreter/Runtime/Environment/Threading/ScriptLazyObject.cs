@@ -176,11 +176,25 @@ namespace DynamicScript.Runtime.Environment.Threading
         {
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="queue"></param>
+        /// <param name="this"></param>
+        /// <param name="workItem"></param>
+        /// <param name="state"></param>
+        public ScriptLazyObject(IScriptObject queue, IScriptObject @this, ScriptWorkItem workItem, InterpreterState state)
+            : this(ThreadManager.CreateQueue(queue), @this, workItem, state)
+        {
+        }
+
+        
+
         #region Runtime Helpers
 
         internal static NewExpression New(Expression queue, Expression<ScriptWorkItem> task, Expression @this, ParameterExpression stateVar)
         {
-            var ctor = LinqHelpers.BodyOf<IScriptWorkItemQueue, IScriptObject, ScriptWorkItem, InterpreterState, ScriptLazyObject, NewExpression>((q, o, t, s) => new ScriptLazyObject(q, o, t, s));
+            var ctor = LinqHelpers.BodyOf<IScriptObject, IScriptObject, ScriptWorkItem, InterpreterState, ScriptLazyObject, NewExpression>((q, o, t, s) => new ScriptLazyObject(q, o, t, s));
             return ctor.Update(new Expression[] { queue ?? LinqHelpers.Null<IScriptWorkItemQueue>(), @this, task, stateVar });
         }
         #endregion

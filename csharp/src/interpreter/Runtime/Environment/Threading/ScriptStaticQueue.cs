@@ -7,6 +7,7 @@ namespace DynamicScript.Runtime.Environment.Threading
     [ComVisible(false)]
     sealed class ScriptStaticQueue: ScriptCompositeObject, IScriptWorkItemQueue
     {
+        public const string EnqueueActionName = "enqueue";
         #region Nested Types
         [ComVisible(false)]
         private sealed class ScriptAwaitFunction : ScriptFunc<ScriptReal, IScriptObject>
@@ -34,23 +35,22 @@ namespace DynamicScript.Runtime.Environment.Threading
         }
 
         [ComVisible(false)]
-        private sealed class ScriptEnqueueAction : ScriptFunc<IScriptObject, IScriptAction>
+        private sealed class ScriptEnqueueAction : ScriptFunc<IScriptAction>
         {
-            public const string Name = "enqueue";
-            private const string FirstParamName = "target";
-            private const string SecondParamName = "workItem";
+            public const string Name = EnqueueActionName;
+            private const string FirstParamName = "workItem";
 
             private readonly IScriptWorkItemQueue m_queue;
 
             public ScriptEnqueueAction(IScriptWorkItemQueue queue)
-                : base(FirstParamName, ScriptSuperContract.Instance, SecondParamName, ScriptSuperContract.Instance, ScriptSuperContract.Instance)
+                : base(FirstParamName, ScriptSuperContract.Instance, ScriptSuperContract.Instance)
             {
                 m_queue = queue;
             }
 
-            protected override IScriptObject Invoke(IScriptObject target, IScriptAction workItem, InterpreterState state)
+            protected override IScriptObject Invoke(IScriptAction workItem, InterpreterState state)
             {
-                return new ScriptAwaitFunction(m_queue.Enqueue(target, (t, s) => workItem.Invoke(new[] { t }, s), state));
+                return new ScriptAwaitFunction(m_queue.Enqueue(workItem.This, (t, s) => workItem.Invoke(new IScriptObject[0], s), state));
             }
         }
 

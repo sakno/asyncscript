@@ -295,6 +295,7 @@
     <Compile Include="Runtime\Environment\Threading\LazyQueue.cs" />
     <Compile Include="Runtime\Environment\Threading\ScriptStaticQueue.cs" />
     <Compile Include="Runtime\Environment\Threading\ScriptWorkItem.cs" />
+    <Compile Include="Runtime\Environment\Threading\ScriptWorkItemQueue.cs" />
     <Compile Include="Runtime\Environment\Threading\ThreadManager.cs" />
     <Compile Include="Runtime\Environment\Threading\WorkItemStartParameters.cs" />
     <Compile Include="Runtime\IWorkItemQueue.cs" />

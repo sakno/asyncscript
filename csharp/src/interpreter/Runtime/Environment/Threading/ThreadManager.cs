@@ -94,5 +94,19 @@ namespace DynamicScript.Runtime.Environment.Threading
         {
             return LinqHelpers.Call<IScriptObject, ScriptWorkItem, InterpreterState, IAsyncResult>((t, a, s) => RtlRunSynchronizer(t, a, s), null, scopeObj, synchronizer, state);
         }
+
+        /// <summary>
+        /// Creates a new work item queue from its script representation.
+        /// </summary>
+        /// <param name="queue"></param>
+        /// <returns></returns>
+        public static IScriptWorkItemQueue CreateQueue(IScriptObject queue)
+        {
+            if (queue == null)
+                return null;
+            else if (queue is IScriptWorkItemQueue)
+                return (IScriptWorkItemQueue)queue;
+            else return new ScriptWorkItemQueue(queue);
+        }
     }
 }

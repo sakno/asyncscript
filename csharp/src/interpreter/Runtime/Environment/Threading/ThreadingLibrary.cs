@@ -127,7 +127,7 @@ namespace DynamicScript.Runtime.Environment.Threading
                 AddConstant<WaitAnyAction>(WaitAnyAction.Name);
                 AddConstant<SleepAction>(SleepAction.Name);
                 AddConstant<IsLazyAction>(IsLazyAction.Name);
-                AddConstant("timeout", new ScriptCompositeObject(null));
+                AddConstant("timeout", ScriptWorkItemQueue.Timeout);
                 AddConstant("default_queue", new ScriptStaticQueue(DefaultQueue.Instance));
                 AddConstant<CreateLazyQueueAction>(CreateLazyQueueAction.Name);
             }
