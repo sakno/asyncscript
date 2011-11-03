@@ -181,7 +181,7 @@ namespace DynamicScript.Runtime.Environment.Threading
         internal static NewExpression New(Expression queue, Expression<ScriptWorkItem> task, Expression @this, ParameterExpression stateVar)
         {
             var ctor = LinqHelpers.BodyOf<IScriptWorkItemQueue, IScriptObject, ScriptWorkItem, InterpreterState, ScriptLazyObject, NewExpression>((q, o, t, s) => new ScriptLazyObject(q, o, t, s));
-            return ctor.Update(new Expression[] { queue ?? DefaultQueue.InstanceField, @this, task, stateVar });
+            return ctor.Update(new Expression[] { queue ?? LinqHelpers.Null<IScriptWorkItemQueue>(), @this, task, stateVar });
         }
         #endregion
 

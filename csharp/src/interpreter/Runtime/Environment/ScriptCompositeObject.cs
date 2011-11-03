@@ -499,7 +499,11 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="slots">A collection with object slots.</param>
         public ScriptCompositeObject(IEnumerable<KeyValuePair<string, IRuntimeSlot>> slots)
         {
-            m_slots = slots is ObjectSlotCollection ? ((ObjectSlotCollection)slots) : new ObjectSlotCollection(slots);
+            if (slots == null)
+                m_slots = new ObjectSlotCollection();
+            else if (m_slots is ObjectSlotCollection)
+                m_slots = (ObjectSlotCollection)slots;
+            else m_slots = new ObjectSlotCollection(slots);
         }
 
         /// <summary>

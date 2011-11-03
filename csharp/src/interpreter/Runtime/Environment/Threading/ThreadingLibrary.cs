@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Threading;
 
-namespace DynamicScript.Runtime.Environment.ObjectModel
+namespace DynamicScript.Runtime.Environment.Threading
 {
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
     using ClrEnvironment = System.Environment;
@@ -14,41 +14,19 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         public const string Name = "threading";
         #region Nested Types
         [ComVisible(false)]
-        private sealed class IsAsyncAction : ScriptFunc<IScriptObject>
+        private sealed class IsLazyAction : ScriptFunc<IScriptObject>
         {
-            public const string Name = "isasync";
+            public const string Name = "is_lazy";
             private const string FirstParamName = "obj";
 
-            public IsAsyncAction()
+            public IsLazyAction()
                 : base(FirstParamName, ScriptSuperContract.Instance, ScriptBooleanContract.Instance)
             {
             }
 
             protected override IScriptObject Invoke(IScriptObject obj, InterpreterState state)
             {
-                return (ScriptBoolean)(obj is IAsyncResult);
-            }
-        }
-
-        [ComVisible(false)]
-        private sealed class IsCompletedAction: ScriptFunc<IScriptObject>
-        {
-            public const string Name = "completed";
-            private const string FirstParamName = "obj";
-
-            public IsCompletedAction()
-                : base(FirstParamName, ScriptSuperContract.Instance, ScriptBooleanContract.Instance)
-            {
-            }
-
-            private static ScriptBoolean IsCompleted(IAsyncResult ar)
-            {
-                return ar != null ? ar.IsCompleted : true;
-            }
-
-            protected override IScriptObject Invoke(IScriptObject obj, InterpreterState state)
-            {
-                return IsCompleted(obj as IAsyncResult);
+                return (ScriptBoolean)(obj is IScriptProxyObject);
             }
         }
 
@@ -122,6 +100,22 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         }
 
         [ComVisible(false)]
+        private sealed class CreateLazyQueueAction : ScriptFunc
+        {
+            public const string Name = "create_lazy_queue";
+
+            public CreateLazyQueueAction()
+                : base(ScriptCompositeContract.Empty)
+            {
+            }
+
+            protected override IScriptObject Invoke(InterpreterState state)
+            {
+                return new ScriptStaticQueue(new LazyQueue());
+            }
+        }
+
+        [ComVisible(false)]
         private new sealed class Slots : ObjectSlotCollection
         {
             private const string ProcessorsSlot = "processors";
@@ -132,8 +126,10 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                 AddConstant<WaitAllAction>(WaitAllAction.Name);
                 AddConstant<WaitAnyAction>(WaitAnyAction.Name);
                 AddConstant<SleepAction>(SleepAction.Name);
-                AddConstant<IsAsyncAction>(IsAsyncAction.Name);
-                AddConstant<IsCompletedAction>(IsCompletedAction.Name);
+                AddConstant<IsLazyAction>(IsLazyAction.Name);
+                AddConstant("timeout", new ScriptCompositeObject(null));
+                AddConstant("default_queue", new ScriptStaticQueue(DefaultQueue.Instance));
+                AddConstant<CreateLazyQueueAction>(CreateLazyQueueAction.Name);
             }
         }
         #endregion

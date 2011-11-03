@@ -319,13 +319,13 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                     //creates lambda expression that is used to run through task
                     var task = Expression.Lambda<ScriptWorkItem>(Translate(awaitExpression.Synchronizer, context), (ParameterExpression)currentScope.ScopeVar, currentScope.StateHolder);
                     context.Pop();
-                    synchronizer = RuntimeSynchronizationManager.BindRunSynchronizer(context.Scope.ScopeVar, task, context.Scope.StateHolder);
+                    synchronizer = ThreadManager.BindRunSynchronizer(context.Scope.ScopeVar, task, context.Scope.StateHolder);
                     break;
                 default:
                     synchronizer = LinqHelpers.Null<IAsyncResult>();
                     break;
             }
-            return RuntimeSynchronizationManager.BindAwait(asyncResult, synchronizer, context.Scope.StateHolder);
+            return ThreadManager.BindAwait(asyncResult, synchronizer, context.Scope.StateHolder);
         }
 
         /// <summary>

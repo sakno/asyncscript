@@ -21,6 +21,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
     using TransparentActionAttribute = Debugging.TransparentActionAttribute;
     using Enumerable = System.Linq.Enumerable;
     using CultureInfo = System.Globalization.CultureInfo;
+    using ThreadingLibrary = Threading.ThreadingLibrary;
 
     /// <summary>
     /// Represents an object that holds basic routines for DynamicScript programs.

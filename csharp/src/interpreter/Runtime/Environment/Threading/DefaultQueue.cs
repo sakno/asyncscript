@@ -97,11 +97,6 @@ namespace DynamicScript.Runtime.Environment.Threading
         /// </summary>
         public static readonly DefaultQueue Instance = new DefaultQueue();
 
-        internal static MemberExpression InstanceField
-        {
-            get { return LinqHelpers.BodyOf<Func<DefaultQueue>, MemberExpression>(() => Instance); }
-        }
-
         IWorkItemState<TimeSpan, IScriptObject> IScriptWorkItemQueue.Enqueue(IScriptObject target, ScriptWorkItem workItem, InterpreterState state)
         {
             return Enqueue(target, workItem, state);

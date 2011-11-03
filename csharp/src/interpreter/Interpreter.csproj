@@ -292,7 +292,10 @@
     <Compile Include="Runtime\Environment\ScriptActionInvoker.cs" />
     <Compile Include="Runtime\Environment\Threading\DefaultQueue.cs" />
     <Compile Include="Runtime\Environment\Threading\IScriptWorkItemQueue.cs" />
+    <Compile Include="Runtime\Environment\Threading\LazyQueue.cs" />
+    <Compile Include="Runtime\Environment\Threading\ScriptStaticQueue.cs" />
     <Compile Include="Runtime\Environment\Threading\ScriptWorkItem.cs" />
+    <Compile Include="Runtime\Environment\Threading\ThreadManager.cs" />
     <Compile Include="Runtime\Environment\Threading\WorkItemStartParameters.cs" />
     <Compile Include="Runtime\IWorkItemQueue.cs" />
     <Compile Include="Runtime\Environment\Threading\ScriptFuture.cs" />
@@ -338,7 +341,7 @@
     <Compile Include="Runtime\Environment\RuntimeConverters.cs" />
     <Compile Include="Runtime\Environment\ScriptFunc.cs" />
     <Compile Include="Runtime\IScriptCodeElement.cs" />
-    <Compile Include="Runtime\Environment\ObjectModel\ThreadingLibrary.cs" />
+    <Compile Include="Runtime\Environment\Threading\ThreadingLibrary.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\ScriptExpressionDefinition.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\ScriptExpressionFactory.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\ScriptStatementFactory.cs" />
@@ -508,7 +511,6 @@
     <Compile Include="Runtime\DynamicScriptProxy.cs" />
     <Compile Include="Runtime\RuntimeSlotAttributes.cs" />
     <Compile Include="Runtime\Environment\ScriptSlotMetadata.cs" />
-    <Compile Include="Runtime\Environment\Threading\RuntimeSynchronizationManager.cs" />
     <Compile Include="Runtime\ScriptInvoker.cs" />
     <Compile Include="Runtime\Environment\SlotNotFoundException.cs" />
     <Compile Include="Runtime\Environment\UnassignedSlotReadingException.cs" />

@@ -6,7 +6,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 {
     using Compiler.Ast;
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
-    using RuntimeSynchronizationManager = Threading.RuntimeSynchronizationManager;
+    using RuntimeSynchronizationManager = Threading.ThreadManager;
 
     [ComVisible(false)]
     [Serializable]
