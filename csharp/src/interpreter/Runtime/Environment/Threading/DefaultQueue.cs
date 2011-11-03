@@ -20,7 +20,7 @@ namespace DynamicScript.Runtime.Environment.Threading
         /// This class cannot be inherited.
         /// </summary>
         [ComVisible(false)]
-        private sealed class QueueItem: EventWaitHandle
+        private sealed class QueueItem: EventWaitHandle, IWorkItemState<TimeSpan, IScriptObject>, IWorkItemState<WaitHandle, IScriptObject>
         {
             private IScriptObject m_result;
             private Exception m_error;
@@ -58,40 +58,32 @@ namespace DynamicScript.Runtime.Environment.Threading
                 return item;
             }
 
-            public bool WaitOne(TimeSpan timeout, out IScriptObject result)
-            {
-                switch (m_result != null || WaitOne(timeout))
-                {
-                    case true:
-                        if (m_error != null) throw m_error;
-                        result = m_result ?? ScriptObject.Void; 
-                        return true;
-                    default: result = null; return false;
-                }
-            }
-
-            public bool WaitOne(WaitHandle handle, out IScriptObject result)
-            {
-                switch (m_result != null || WaitAny(new[] { this, handle }) == 0)
-                {
-                    case true:
-                        if (m_error != null) throw m_error;
-                        result = m_result ?? ScriptObject.Void;
-                        return true;
-                    default: result = null; return false;
-                }
-            }
-
-            public static implicit operator WorkItemAwait<TimeSpan, IScriptObject>(QueueItem handle)
-            {
-                return handle != null ? new WorkItemAwait<TimeSpan, IScriptObject>(handle.WaitOne) : null;
-            }
-
             protected override void Dispose(bool explicitDisposing)
             {
                 m_error = null;
                 m_result = null;
                 base.Dispose(explicitDisposing);
+            }
+
+            public IScriptObject Result
+            {
+                get 
+                {
+                    if (m_error != null) throw m_error;
+                    return m_result; 
+                }
+            }
+
+            
+
+            public bool IsCompleted
+            {
+                get { return m_result != null; }
+            }
+
+            public bool WaitOne(WaitHandle handle)
+            {
+                return WaitAny(new[] { this, handle }) == 0;
             }
         }
         #endregion
@@ -110,7 +102,7 @@ namespace DynamicScript.Runtime.Environment.Threading
             get { return LinqHelpers.BodyOf<Func<DefaultQueue>, MemberExpression>(() => Instance); }
         }
 
-        WorkItemAwait<TimeSpan, IScriptObject> IScriptWorkItemQueue.Enqueue(IScriptObject target, ScriptWorkItem workItem, InterpreterState state)
+        IWorkItemState<TimeSpan, IScriptObject> IScriptWorkItemQueue.Enqueue(IScriptObject target, ScriptWorkItem workItem, InterpreterState state)
         {
             return Enqueue(target, workItem, state);
         }
@@ -122,7 +114,7 @@ namespace DynamicScript.Runtime.Environment.Threading
         /// <param name="workItem">A user work item to execute in the separated thread.</param>
         /// <param name="state">Internal interpreter state.</param>
         /// <returns></returns>
-        public static WorkItemAwait<TimeSpan, IScriptObject> Enqueue(IScriptObject target, ScriptWorkItem workItem, InterpreterState state)
+        public static IWorkItemState<TimeSpan, IScriptObject> Enqueue(IScriptObject target, ScriptWorkItem workItem, InterpreterState state)
         {
             return QueueItem.Enqueue(target, workItem, state);
         }

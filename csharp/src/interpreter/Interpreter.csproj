@@ -296,7 +296,7 @@
     <Compile Include="Runtime\Environment\Threading\WorkItemStartParameters.cs" />
     <Compile Include="Runtime\IWorkItemQueue.cs" />
     <Compile Include="Runtime\Environment\Threading\ScriptFuture.cs" />
-    <Compile Include="Runtime\WorkItemAwait.cs" />
+    <Compile Include="Runtime\IWorkItemState.cs" />
     <Compile Include="Runtime\Hosting\InteractiveInterpreter.cs" />
     <Compile Include="Runtime\Hosting\InteractiveModeStrings.Designer.cs">
       <AutoGen>True</AutoGen>

@@ -1475,8 +1475,8 @@ namespace DynamicScript.Runtime.Environment
         /// <returns></returns>
         public IScriptObject BinaryOperation(ScriptCodeBinaryOperatorType @operator, IScriptObject arg, InterpreterState state)
         {
-            arg = arg.Normalize(state);
-            switch (@operator)
+            if (arg is IScriptProxyObject) return ((IScriptProxyObject)arg).Enqueue(this, @operator, state);
+            else switch (@operator)
             {
                 case ScriptCodeBinaryOperatorType.Add:
                     return Add(arg, state);
@@ -2426,6 +2426,8 @@ namespace DynamicScript.Runtime.Environment
         /// <returns><see langword="true"/> if the current object is equal to another; otherwise, <see langword="false"/>.</returns>
         public sealed override bool Equals(object other)
         {
+            if (other is IScriptProxyObject)
+                other = ((IScriptProxyObject)other).Unwrap(InterpreterState.Current);
             return SystemConverter.ToBoolean(Equals(Convert(other), InterpreterState.Current));
         }
 

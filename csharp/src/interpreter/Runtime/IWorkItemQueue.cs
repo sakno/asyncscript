@@ -19,6 +19,6 @@ namespace DynamicScript.Runtime
         /// <param name="arguments"></param>
         /// <param name="task"></param>
         /// <returns></returns>
-        WorkItemAwait<TWaitCriteria, TResult> Enqueue<TWaitCriteria, TResult>(object[] arguments, Delegate task);
+        IWorkItemState<TWaitCriteria, TResult> Enqueue<TWaitCriteria, TResult>(object[] arguments, Delegate task);
     }
 }

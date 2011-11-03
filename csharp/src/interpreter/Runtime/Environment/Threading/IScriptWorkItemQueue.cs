@@ -17,6 +17,6 @@ namespace DynamicScript.Runtime.Environment.Threading
         /// <param name="workItem">A work item to enqueue.</param>
         /// <param name="state">Internal interpreter state.</param>
         /// <returns>A delegate that can be used to synchronize the caller thread with work item state.</returns>
-        WorkItemAwait<TimeSpan, IScriptObject> Enqueue(IScriptObject target, ScriptWorkItem workItem, InterpreterState state);
+        IWorkItemState<TimeSpan, IScriptObject> Enqueue(IScriptObject target, ScriptWorkItem workItem, InterpreterState state);
     }
 }
