@@ -205,10 +205,10 @@ namespace DynamicScript.Runtime.Environment
             return DeleteValue(false);
         }
 
-        bool ISynchronizable.Await(WaitHandle handle, TimeSpan timeout)
+        bool ISynchronizable.Await(WaitHandle handle, TimeSpan timeout, InterpreterState state)
         {
             var v = Value;
-            return v is ISynchronizable ? ((ISynchronizable)v).Await(handle, timeout) : true;
+            return v is ISynchronizable ? ((ISynchronizable)v).Await(handle, timeout, state) : true;
         }
 
         /// <summary>

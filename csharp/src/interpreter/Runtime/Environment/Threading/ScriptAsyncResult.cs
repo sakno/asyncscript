@@ -123,7 +123,7 @@ namespace DynamicScript.Runtime.Environment.Threading
             m_ar = ar;
         }
 
-        bool ISynchronizable.Await(WaitHandle handle, TimeSpan timeout)
+        bool ISynchronizable.Await(WaitHandle handle, TimeSpan timeout, InterpreterState state)
         {
             return WaitHandle.WaitAny(new[] { m_ar.AsyncWaitHandle, handle }, timeout) == 0;
         }

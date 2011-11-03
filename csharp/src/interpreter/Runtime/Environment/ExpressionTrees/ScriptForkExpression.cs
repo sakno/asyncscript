@@ -7,7 +7,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 {
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
     using Compiler.Ast;
-    using ScriptAsyncObject = Threading.ScriptAsyncObject;
+    using ScriptAsyncObject = Threading.ScriptLazyObject;
 
     [ComVisible(false)]
     [Serializable]

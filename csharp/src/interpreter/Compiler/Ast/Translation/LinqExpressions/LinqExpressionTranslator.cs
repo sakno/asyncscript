@@ -297,7 +297,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             body.Label(currentScope.BeginOfScope);
             Translate(forkExpression.Body.UnwrapStatements(), context, GotoExpressionKind.Goto, ref body);
             body.Label(currentScope.EndOfScope, ScriptObject.MakeVoid());
-            var result = ScriptAsyncObject.New(Expression.Lambda<Func<IScriptObject, InterpreterState, IScriptObject>>(Expression.Block(body), (ParameterExpression)currentScope.ScopeVar, currentScope.StateHolder), AsRightSide(currentScope.Parent.ScopeVar, context), currentScope.Parent.StateHolder);
+            var result = ScriptLazyObject.New(null, Expression.Lambda<ScriptWorkItem>(Expression.Block(body), (ParameterExpression)currentScope.ScopeVar, currentScope.StateHolder), AsRightSide(currentScope.Parent.ScopeVar, context), currentScope.Parent.StateHolder);
             context.Pop();
             return result;
         }
@@ -315,15 +315,17 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             switch (awaitExpression.Synchronizer != null)
             {
                 case true:
+                    var currentScope = context.Push(SynchronizerScope.Create);
                     //creates lambda expression that is used to run through task
-                    var task = Expression.Lambda<Action>(Translate(awaitExpression.Synchronizer, context));
-                    synchronizer = RuntimeSynchronizationManager.BindRunSynchronizer(task);
+                    var task = Expression.Lambda<ScriptWorkItem>(Translate(awaitExpression.Synchronizer, context), (ParameterExpression)currentScope.ScopeVar, currentScope.StateHolder);
+                    context.Pop();
+                    synchronizer = RuntimeSynchronizationManager.BindRunSynchronizer(context.Scope.ScopeVar, task, context.Scope.StateHolder);
                     break;
                 default:
                     synchronizer = LinqHelpers.Null<IAsyncResult>();
                     break;
             }
-            return RuntimeSynchronizationManager.BindAwait(asyncResult, synchronizer);
+            return RuntimeSynchronizationManager.BindAwait(asyncResult, synchronizer, context.Scope.StateHolder);
         }
 
         /// <summary>

@@ -16,6 +16,7 @@ namespace DynamicScript.Runtime
         /// </summary>
         /// <param name="handle">Synchronization handle. Can be <see langword="null"/>.</param>
         /// <param name="timeout">Synchronization timeout.</param>
-        bool Await(WaitHandle handle, TimeSpan timeout);
+        /// <param name="state">Internal interpreter state.</param>
+        bool Await(WaitHandle handle, TimeSpan timeout, InterpreterState state);
     }
 }

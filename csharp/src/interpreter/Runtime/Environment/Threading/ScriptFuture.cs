@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Dynamic;
+using System.Threading.Tasks;
 
 namespace DynamicScript.Runtime.Environment.Threading
 {
@@ -16,98 +17,72 @@ namespace DynamicScript.Runtime.Environment.Threading
     [ComVisible(false)]
     public abstract class ScriptFuture : DynamicObject, IScriptAsyncObject
     {
-        #region Nested Types
-        /// <summary>
-        /// Represents task execution parameters.
-        /// </summary>
-        private sealed class TaskParameters
-        {
-            public readonly IScriptObject Target;
-            public readonly Func<IScriptObject, InterpreterState, IScriptObject> Task;
-            public readonly InterpreterState State;
-
-            public TaskParameters(IScriptObject target, Func<IScriptObject, InterpreterState, IScriptObject> task, InterpreterState state)
-            {
-                Target = target ?? state.Global;
-                State = state;
-                Task = task;
-            }
-        }
-        #endregion
-
         /// <summary>
         /// Represents maximum timeout for the future wrapper.
         /// </summary>
         public static TimeSpan MaxTimeout = TimeSpan.FromMinutes(10);
         private IScriptObject m_result;
-        private readonly ManualResetEvent m_handle;
-        private Exception m_error;
         private IScriptContract m_requirement;
         private readonly int m_hashCode;
 
+        /// <summary>
+        /// Represents a delegate that can be used to synchronize with the current object.
+        /// </summary>
+        public readonly WorkItemAwait<TimeSpan, IScriptObject> Await;
+
+        /// <summary>
+        /// Represents a queue in which the future object is located.
+        /// </summary>
+        protected readonly IScriptWorkItemQueue OwnerQueue;
+
         private ScriptFuture()
         {
-            m_handle = new ManualResetEvent(false);
             m_result = null;
-            m_error = null;
-            m_hashCode = m_handle.GetHashCode();
         }
 
         /// <summary>
         /// Initializes a new instance of the Future pattern implementation.
         /// </summary>
+        /// <param name="queue">Target queue that is used to allocate a new user work item.</param>
         /// <param name="target">The target object passed to the task in the parallel thread.</param>
-        /// <param name="task">A task implementation to be executed in the parallel thread.</param>
+        /// <param name="workItem">A task implementation to be executed in the parallel thread.</param>
         /// <param name="state">Internal interpreter state.</param>
-        protected ScriptFuture(IScriptObject target, Func<IScriptObject, InterpreterState, IScriptObject> task, InterpreterState state)
+        protected ScriptFuture(IScriptWorkItemQueue queue, IScriptObject target, ScriptWorkItem workItem, InterpreterState state)
             : this()
         {
-            ThreadPool.QueueUserWorkItem(ProcessTask, new TaskParameters(target, task, state));
+            if (queue == null) queue = DefaultQueue.Instance;
+            OwnerQueue = queue;
+            m_hashCode = workItem.GetHashCode();
+            Await = queue.Enqueue(target, workItem, state);
         }
 
         /// <summary>
         /// Creates a new instance of the future object.
         /// </summary>
+        /// <param name="queue">Target queue.</param>
         /// <param name="target">An object to be passed into the task.</param>
         /// <param name="task">The task that implements computation logic.</param>
         /// <param name="state">Internal interpreter state.</param>
         /// <returns>A new future script object.</returns>
-        protected abstract ScriptFuture Create(IScriptObject target, Func<IScriptObject, InterpreterState, IScriptObject> task, InterpreterState state);
+        protected abstract ScriptFuture Create(IScriptWorkItemQueue queue, IScriptObject target, ScriptWorkItem task, InterpreterState state);
 
         /// <summary>
         /// Creates a new future runtime slot.
         /// </summary>
+        /// <param name="queue">Target queue.</param>
         /// <param name="slotName"></param>
         /// <param name="state"></param>
         /// <returns></returns>
-        protected abstract IRuntimeSlot Create(string slotName, InterpreterState state);
+        protected abstract IRuntimeSlot Create(IScriptWorkItemQueue queue, string slotName, InterpreterState state);
 
         /// <summary>
         /// Creates a new future indexer.
         /// </summary>
+        /// <param name="queue">Target queue.</param>
         /// <param name="indicies"></param>
         /// <param name="state"></param>
         /// <returns></returns>
-        protected abstract IRuntimeSlot Create(IScriptObject[] indicies, InterpreterState state);
-
-        private void ProcessTask(IScriptObject target, Func<IScriptObject, InterpreterState, IScriptObject> task, InterpreterState state)
-        {
-            try
-            {
-                var result = task.Invoke(target is IScriptProxyObject ? ((IScriptProxyObject)target).Unwrap(state) : target, state);
-                ProcessResult(ref result, state);
-                m_result = result;
-            }
-            catch (Exception e)
-            {
-                m_error = e;
-            }
-            finally
-            {
-                m_handle.Set();
-                m_requirement = null;
-            }
-        }
+        protected abstract IRuntimeSlot Create(IScriptWorkItemQueue queue, IScriptObject[] indicies, InterpreterState state);
 
         /// <summary>
         /// Applies additional operations on the synchronized object.
@@ -116,12 +91,6 @@ namespace DynamicScript.Runtime.Environment.Threading
         /// <param name="state"></param>
         protected virtual void ProcessResult(ref IScriptObject result, InterpreterState state)
         {
-        }
-
-        private void ProcessTask(object state)
-        {
-            var parameters = (TaskParameters)state;
-            ProcessTask(parameters.Target, parameters.Task, parameters.State);
         }
 
         void IScriptProxyObject.RequiresContract(IScriptContract contract, InterpreterState state)
@@ -140,7 +109,7 @@ namespace DynamicScript.Runtime.Environment.Threading
         IScriptObject IScriptProxyObject.Enqueue(IScriptObject left, ScriptCodeBinaryOperatorType @operator, InterpreterState state)
         {
             return IsCompleted ? left.BinaryOperation(@operator, m_result, state) :
-                Create(this, (right, s) => left.BinaryOperation(@operator, right, s), state);
+                Create(OwnerQueue, this, (right, s) => left.BinaryOperation(@operator, right, s), state);
         }
 
         /// <summary>
@@ -161,9 +130,7 @@ namespace DynamicScript.Runtime.Environment.Threading
         /// <returns>An unwrapped value if the result is synchronized; otherwise, <see langword="null"/>.</returns>
         protected IScriptObject UnwrapUnsafe(InterpreterState state)
         {
-            if (m_error != null)
-                throw m_error;
-            else if (m_result == null)
+            if (m_result == null)
                 return null;
             else if (m_requirement == null)
                 return m_result;
@@ -181,7 +148,7 @@ namespace DynamicScript.Runtime.Environment.Threading
         /// <returns><see langword="true"/> if the script object is obtained during timeout; otherwise, <see langword="false"/>.</returns>
         public bool Unwrap(TimeSpan timeout, out IScriptObject result, InterpreterState state)
         {
-            switch (IsCompleted || m_handle.WaitOne(timeout))
+            switch (IsCompleted || Await.Invoke(timeout, out m_result))
             {
                 case true:
                     result = UnwrapUnsafe(state);
@@ -215,7 +182,7 @@ namespace DynamicScript.Runtime.Environment.Threading
         {
             return IsCompleted ?
                 m_result.BinaryOperation(@operator, right, state) :
-                Create(this, (left, s) => left.BinaryOperation(@operator, right, s), state);
+                Create(OwnerQueue, this, (left, s) => left.BinaryOperation(@operator, right, s), state);
         }
 
         IScriptObject IScriptObject.BinaryOperation(ScriptCodeBinaryOperatorType @operator, IScriptObject right, InterpreterState state)
@@ -226,22 +193,7 @@ namespace DynamicScript.Runtime.Environment.Threading
         IScriptObject IScriptObject.UnaryOperation(ScriptCodeUnaryOperatorType @operator, InterpreterState state)
         {
             return IsCompleted ? m_result.UnaryOperation(@operator, state) :
-                Create(this, (operand, s) => operand.UnaryOperation(@operator, s), state);
-        }
-
-        object IAsyncResult.AsyncState
-        {
-            get { return null; }
-        }
-
-        WaitHandle IAsyncResult.AsyncWaitHandle
-        {
-            get { return m_handle; }
-        }
-
-        bool IAsyncResult.CompletedSynchronously
-        {
-            get { return false; }
+                Create(OwnerQueue, this, (operand, s) => operand.UnaryOperation(@operator, s), state);
         }
 
         /// <summary>
@@ -269,24 +221,24 @@ namespace DynamicScript.Runtime.Environment.Threading
         {
             return IsCompleted ?
                 m_result.Invoke(args, state) :
-                Create(this, (target, s) => target.Invoke(args, s), state);
+                Create(OwnerQueue, this, (target, s) => target.Invoke(args, s), state);
         }
 
         IRuntimeSlot IScriptObject.this[string slotName, InterpreterState state]
         {
-            get { return IsCompleted ? m_result[slotName, state] : Create(slotName, state); }
+            get { return IsCompleted ? m_result[slotName, state] : Create(OwnerQueue, slotName, state); }
         }
 
         IScriptObject IScriptObject.GetRuntimeDescriptor(string slotName, InterpreterState state)
         {
             return IsCompleted ?
                 m_result.GetRuntimeDescriptor(slotName, state) :
-                Create(this, (target, s) => target.GetRuntimeDescriptor(slotName, s), state);
+                Create(OwnerQueue, this, (target, s) => target.GetRuntimeDescriptor(slotName, s), state);
         }
 
         IRuntimeSlot IScriptObject.this[IScriptObject[] args, InterpreterState state]
         {
-            get { return IsCompleted ? m_result[args, state] : Create(args, state); }
+            get { return IsCompleted ? m_result[args, state] : Create(OwnerQueue, args, state); }
         }
 
         /// <summary>
@@ -447,6 +399,22 @@ namespace DynamicScript.Runtime.Environment.Threading
         public sealed override bool TrySetMember(SetMemberBinder binder, object value)
         {
             return ScriptObject.TrySetMember(this, binder, value);
+        }
+
+        bool ISynchronizable.Await(WaitHandle handle, TimeSpan timeout, InterpreterState state)
+        {
+            switch (Await.Target is WaitHandle)
+            {
+                case true:
+                    return WaitHandle.WaitAny(new[] { (WaitHandle)Await.Target, handle }, timeout) == 0;
+                default:
+                    var ar = Task.Factory.StartNew<bool>(delegate()
+                        {
+                            var result = default(IScriptObject);
+                            return Await(timeout, out result);
+                        });
+                    return WaitHandle.WaitAny(new[] { ((IAsyncResult)ar).AsyncWaitHandle, handle }, timeout) == 0 && ar.Result;
+            }
         }
     }
 }

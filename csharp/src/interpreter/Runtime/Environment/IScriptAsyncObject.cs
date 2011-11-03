@@ -8,7 +8,7 @@ namespace DynamicScript.Runtime.Environment
     /// Represents asynchronous object that implements Future pattern.
     /// </summary>
     [ComVisible(false)]
-    interface IScriptAsyncObject: IScriptProxyObject, IAsyncResult
+    interface IScriptAsyncObject: IScriptProxyObject, ISynchronizable
     {
     }
 }

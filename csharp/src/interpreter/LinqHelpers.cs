@@ -76,6 +76,11 @@ namespace DynamicScript
             return Call<Func<T1, T2, TResult>>(method, @this, arg1, arg2);
         }
 
+        public static MethodCallExpression Call<T1, T2, T3, TResult>(Expression<Func<T1, T2, T3, TResult>> method, Expression @this, Expression arg1, Expression arg2, Expression arg3)
+        {
+            return Call<Func<T1, T2, T3, TResult>>(method, @this, arg1, arg2, arg3);
+        }
+
         public static MethodCallExpression Call<T, TResult>(Expression<Func<T, TResult>> method, Expression @this, Expression arg1)
         {
             return Call<Func<T, TResult>>(method, @this, arg1);

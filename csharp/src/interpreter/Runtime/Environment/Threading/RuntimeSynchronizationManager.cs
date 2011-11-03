@@ -23,22 +23,23 @@ namespace DynamicScript.Runtime.Environment.Threading
         /// <param name="synchronizable">The object that should be synchronized. Cannot be <see langword="null"/>.</param>
         /// <param name="ar">The synchronizer.</param>
         /// <param name="timeout">Synchronization timeout.</param>
+        /// <param name="state">Internal interpreter state.</param>
         /// <returns><see langword="true"/> if synchronizable object is synchronized successfully; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="System.ArgumentNullException"><paramref name="synchronizable"/> is <see langword="null"/>.</exception>
-        public static bool Await(this ISynchronizable synchronizable, IAsyncResult ar, TimeSpan timeout)
+        public static bool Await(this ISynchronizable synchronizable, IAsyncResult ar, TimeSpan timeout, InterpreterState state)
         {
             if (synchronizable == null) throw new ArgumentNullException("synchronizable");
-            return synchronizable.Await(ar.AsyncWaitHandle, timeout);
+            return synchronizable.Await(ar.AsyncWaitHandle, timeout, state);
         }
 
-        private static bool RtlAwait(ISynchronizable taskToSynchronize, IAsyncResult synchronizer)
+        private static bool RtlAwait(ISynchronizable taskToSynchronize, IAsyncResult synchronizer, InterpreterState state)
         {
             switch (synchronizer != null)
             {
-                case true: return Await(taskToSynchronize, synchronizer, InfiniteTimeout);
+                case true: return Await(taskToSynchronize, synchronizer, InfiniteTimeout, state);
                 default:
                     using (var handle = new ManualResetEvent(false))
-                        return taskToSynchronize.Await(handle, InfiniteTimeout);
+                        return taskToSynchronize.Await(handle, InfiniteTimeout, state);
             }
         }
 
@@ -58,44 +59,40 @@ namespace DynamicScript.Runtime.Environment.Threading
         /// </summary>
         /// <param name="taskToSynchronize"></param>
         /// <param name="synchronizer"></param>
+        /// <param name="state"></param>
         /// <returns></returns>
         [EditorBrowsable(EditorBrowsableState.Never)]
         [CLSCompliant(false)]
-        public static ScriptBoolean RtlAwait(IScriptObject taskToSynchronize, IAsyncResult synchronizer)
+        public static ScriptBoolean RtlAwait(IScriptObject taskToSynchronize, IAsyncResult synchronizer, InterpreterState state)
         {
             if (taskToSynchronize is ISynchronizable)
-                return RtlAwait(taskToSynchronize as ISynchronizable, synchronizer);
+                return RtlAwait(taskToSynchronize as ISynchronizable, synchronizer, state);
             else if (taskToSynchronize is IAsyncResult)
                 return RtlAwait((IAsyncResult)taskToSynchronize, synchronizer);
             else return ScriptBoolean.True;
         }
 
-        internal static MethodCallExpression BindAwait(Expression asyncObj, Expression synchronizer)
+        internal static MethodCallExpression BindAwait(Expression asyncObj, Expression synchronizer, ParameterExpression state)
         {
-            return LinqHelpers.Call<IScriptObject, IAsyncResult, ScriptBoolean>((a, s) => RtlAwait(a, s), null, asyncObj, synchronizer);
+            return LinqHelpers.Call<IScriptObject, IAsyncResult, InterpreterState, ScriptBoolean>((a, s, t) => RtlAwait(a, s, t), null, asyncObj, synchronizer, state);
         }
 
         /// <summary>
         /// Executes synchronization task.
         /// </summary>
+        /// <param name="target"></param>
         /// <param name="synchronizer">The delegate that implements wait logic.</param>
+        /// <param name="state"></param>
         /// <returns>Synchronizer result.</returns>
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public static IAsyncResult RtlRunSynchronizer(Action synchronizer)
+        public static IAsyncResult RtlRunSynchronizer(IScriptObject target, ScriptWorkItem synchronizer, InterpreterState state)
         {
-            switch (synchronizer != null)
-            {
-                case true:
-                    var task = new Task(synchronizer);
-                    task.Start();
-                    return task;
-                default: return null;
-            }
+            return Task.Factory.StartNew<IScriptObject>(new WorkItemStartParameters(target, synchronizer, state).Start);
         }
 
-        internal static MethodCallExpression BindRunSynchronizer(Expression<Action> synchronizer)
+        internal static MethodCallExpression BindRunSynchronizer(Expression scopeObj, Expression<ScriptWorkItem> synchronizer, ParameterExpression state)
         {
-            return LinqHelpers.Call<Action, IAsyncResult>(a => RtlRunSynchronizer(a), null, synchronizer);
+            return LinqHelpers.Call<IScriptObject, ScriptWorkItem, InterpreterState, IAsyncResult>((t, a, s) => RtlRunSynchronizer(t, a, s), null, scopeObj, synchronizer, state);
         }
     }
 }
