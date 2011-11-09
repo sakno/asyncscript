@@ -5,7 +5,7 @@ namespace DynamicScript.Runtime.Environment.Threading
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
 
     [ComVisible(false)]
-    sealed class ScriptStaticQueue: ScriptCompositeObject, IScriptWorkItemQueue
+    sealed class ScriptNativeQueue: ScriptCompositeObject, IScriptWorkItemQueue
     {
         public const string EnqueueActionName = "enqueue";
         #region Nested Types
@@ -59,15 +59,16 @@ namespace DynamicScript.Runtime.Environment.Threading
         {
             public Slots(IScriptWorkItemQueue queue)
             {
-                if (queue == null) throw new ArgumentNullException("implementation");
                 AddConstant(ScriptEnqueueAction.Name, new ScriptEnqueueAction(queue));
             }
         }
+
         #endregion
 
         private readonly IScriptWorkItemQueue m_queue;
+        private static IScriptContract m_contract;
 
-        public ScriptStaticQueue(IScriptWorkItemQueue queue)
+        public ScriptNativeQueue(IScriptWorkItemQueue queue)
             : base(new Slots(queue))
         {
             m_queue = queue;
@@ -76,6 +77,20 @@ namespace DynamicScript.Runtime.Environment.Threading
         IWorkItemState<TimeSpan, IScriptObject> IScriptWorkItemQueue.Enqueue(IScriptObject target, ScriptWorkItem workItem, InterpreterState state)
         {
             return m_queue.Enqueue(target, workItem, state);
+        }
+
+        public static ScriptFunc<ScriptReal, IScriptObject> CreateAwaitLambda(IWorkItemState<TimeSpan, IScriptObject> workItemState)
+        {
+            return new ScriptAwaitFunction(workItemState);
+        }
+
+        public static IScriptContract ContractBinding
+        {
+            get
+            {
+                if (m_contract == null) m_contract = new ScriptNativeQueue(null).GetContractBinding();
+                return m_contract;
+            }
         }
     }
 }

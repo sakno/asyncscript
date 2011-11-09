@@ -136,7 +136,7 @@ namespace DynamicScript.Runtime.Environment
                 return ctor.Update(new LinqExpression[] { paramName, contractBinding });
             }
 
-            internal static NewExpression Bind(string paramName, Expression contractBinding)
+            internal static NewExpression New(string paramName, Expression contractBinding)
             {
                 return Bind(LinqHelpers.Constant<string>(paramName), contractBinding);
             }

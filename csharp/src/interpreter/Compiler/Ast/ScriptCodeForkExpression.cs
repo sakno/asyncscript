@@ -21,6 +21,11 @@ namespace DynamicScript.Compiler.Ast
         public readonly ScriptCodeExpressionStatement Body;
 
         /// <summary>
+        /// Represents target queue.
+        /// </summary>
+        public ScriptCodeExpression Queue;
+
+        /// <summary>
         /// Initializes a new fork expression.
         /// </summary>
         /// <param name="body"></param>
@@ -41,7 +46,12 @@ namespace DynamicScript.Compiler.Ast
             lexer.MoveNext(true);   //pass through fork keyword
             var fork = new ScriptCodeForkExpression();
             //Parse asynchronous task body.
-            fork.Body.SetExpression(Parser.ParseExpression, lexer, terminator);
+            fork.Body.SetExpression(Parser.ParseExpression, lexer, terminator + Punctuation.Arrow);
+            if (lexer.Current.Value == Punctuation.Arrow)
+            {
+                lexer.MoveNext(true);
+                fork.Queue = Parser.ParseExpression(lexer, terminator);
+            }
             return fork;
         }
 

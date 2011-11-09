@@ -1,117 +1,116 @@
 ﻿using System;
 using System.Threading;
-using System.Linq.Expressions;
+using System.Collections.Concurrent;
 
 namespace DynamicScript.Runtime.Environment.Threading
 {
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
+    using SystemEnvironment = System.Environment;
 
     /// <summary>
-    /// Represents default event queue.
+    /// Represents default auto-scalable queue.
     /// This class cannot be inherited.
     /// </summary>
     [ComVisible(false)]
     public sealed class DefaultQueue : IScriptWorkItemQueue
     {
         #region Nested Types
-
         /// <summary>
-        /// Represents running state of the script work item.
+        /// Represents enqueued work item.
         /// This class cannot be inherited.
         /// </summary>
         [ComVisible(false)]
-        private sealed class QueueItem: EventWaitHandle, IWorkItemState<TimeSpan, IScriptObject>, IWorkItemState<WaitHandle, IScriptObject>
+        private sealed class WorkItemState : IWorkItemState<TimeSpan, IScriptObject>
         {
+            private readonly IScriptObject Target;
+            private readonly ScriptWorkItem WorkItem;
+            private readonly InterpreterState State;
             private IScriptObject m_result;
             private Exception m_error;
 
-            private QueueItem()
-                : base(false, EventResetMode.ManualReset)
+            public WorkItemState(IScriptObject t, ScriptWorkItem wi, InterpreterState state)
             {
+                Target = t;
+                WorkItem = wi;
+                State = state;
             }
 
-            private void Enqueue(WorkItemStartParameters parameters)
+            public IScriptObject Execute()
             {
                 try
                 {
-                    m_result = parameters.UnwrapTargetAndStart();
+                    m_result = WorkItem.Invoke(Target is IScriptProxyObject ? ((IScriptProxyObject)Target).Unwrap(State) : Target, State);
                 }
                 catch (Exception e)
                 {
                     m_error = e;
                 }
-                finally
-                {
-                    Set();
-                }
-            }
-
-            private void Enqueue(object parameters)
-            {
-                Enqueue((WorkItemStartParameters)parameters);
-            }
-
-            public static QueueItem Enqueue(IScriptObject target, ScriptWorkItem workItem, InterpreterState state)
-            {
-                var item = new QueueItem();
-                ThreadPool.QueueUserWorkItem(item.Enqueue, new WorkItemStartParameters(target, workItem, state));
-                return item;
-            }
-
-            protected override void Dispose(bool explicitDisposing)
-            {
-                m_error = null;
-                m_result = null;
-                base.Dispose(explicitDisposing);
+                return m_result;
             }
 
             public IScriptObject Result
             {
-                get 
-                {
-                    if (m_error != null) throw m_error;
-                    return m_result; 
-                }
+                get { if (m_error != null)throw m_error; return m_result; }
             }
 
-            
-
-            public bool IsCompleted
+            private bool IsCompleted()
             {
-                get { return m_result != null; }
+                return m_result != null || m_error != null;
             }
 
-            public bool WaitOne(WaitHandle handle)
+            bool IWorkItemState<TimeSpan, IScriptObject>.IsCompleted
             {
-                return WaitAny(new[] { this, handle }) == 0;
+                get { return IsCompleted(); }
+            }
+
+            bool IWorkItemState<TimeSpan, IScriptObject>.WaitOne(TimeSpan timeout)
+            {
+                return SpinWait.SpinUntil(IsCompleted, timeout);
             }
         }
-        #endregion
+        #endregion   
 
-        private DefaultQueue()
+        private readonly ConcurrentQueue<WorkItemState> m_queue = new ConcurrentQueue<WorkItemState>();
+        private int m_active = 0;
+
+        private void ProcessQueue(object state)
         {
+            var workItem = default(WorkItemState);
+            while (m_queue.TryDequeue(out workItem))
+                workItem.Execute();
+            Interlocked.Decrement(ref m_active);
         }
 
         /// <summary>
-        /// Represents singleton instance of the default queue.
+        /// Gets a value indicating whether the queue has active executed threads.
         /// </summary>
-        public static readonly DefaultQueue Instance = new DefaultQueue();
-
-        IWorkItemState<TimeSpan, IScriptObject> IScriptWorkItemQueue.Enqueue(IScriptObject target, ScriptWorkItem workItem, InterpreterState state)
+        public bool IsActive
         {
-            return Enqueue(target, workItem, state);
+            get { return m_active > 0; }
+        }
+
+        private void ProcessQueue()
+        {
+            for (var i = m_active; i < SystemEnvironment.ProcessorCount; i++)
+            {
+                ThreadPool.QueueUserWorkItem(ProcessQueue, m_queue);
+                Interlocked.Increment(ref m_active);
+            }
         }
 
         /// <summary>
-        /// Creates a new computation thread for the specified user work item.
+        /// Enqueues a new work item into the default queue.
         /// </summary>
-        /// <param name="target">An object passed to the user work item in the parallel thread.</param>
-        /// <param name="workItem">A user work item to execute in the separated thread.</param>
-        /// <param name="state">Internal interpreter state.</param>
+        /// <param name="target"></param>
+        /// <param name="workItem"></param>
+        /// <param name="state"></param>
         /// <returns></returns>
-        public static IWorkItemState<TimeSpan, IScriptObject> Enqueue(IScriptObject target, ScriptWorkItem workItem, InterpreterState state)
+        public IWorkItemState<TimeSpan, IScriptObject> Enqueue(IScriptObject target, ScriptWorkItem workItem, InterpreterState state)
         {
-            return QueueItem.Enqueue(target, workItem, state);
+            var workItemState = new WorkItemState(target, workItem, state);
+            m_queue.Enqueue(workItemState);
+            ProcessQueue();
+            return workItemState;
         }
     }
 }

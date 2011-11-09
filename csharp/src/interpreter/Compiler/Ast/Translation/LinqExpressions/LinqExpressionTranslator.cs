@@ -133,7 +133,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns></returns>
         protected override Expression Translate(ScriptCodeAsyncExpression expression, TranslationContext context)
         {
-            return ScriptAsyncResultContract.Bind(AsRightSide(Translate(expression.Contract, context), context));
+            return ScriptAcceptorContract.New(Translate(expression.Contract, context), context.Scope.StateHolder);
         }
 
         /// <summary>
@@ -297,35 +297,9 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             body.Label(currentScope.BeginOfScope);
             Translate(forkExpression.Body.UnwrapStatements(), context, GotoExpressionKind.Goto, ref body);
             body.Label(currentScope.EndOfScope, ScriptObject.MakeVoid());
-            var result = ScriptLazyObject.New(null, Expression.Lambda<ScriptWorkItem>(Expression.Block(body), (ParameterExpression)currentScope.ScopeVar, currentScope.StateHolder), AsRightSide(currentScope.Parent.ScopeVar, context), currentScope.Parent.StateHolder);
+            var result = ScriptLazyObject.New(forkExpression.Queue != null ? Translate(forkExpression.Queue, context) : null, Expression.Lambda<ScriptWorkItem>(Expression.Block(body), (ParameterExpression)currentScope.ScopeVar, currentScope.StateHolder), AsRightSide(currentScope.Parent.ScopeVar, context), currentScope.Parent.StateHolder);
             context.Pop();
             return result;
-        }
-
-        /// <summary>
-        /// Translates synchronization expression.
-        /// </summary>
-        /// <param name="awaitExpression">The expression to be translated.</param>
-        /// <param name="context">Translation context.</param>
-        /// <returns>The translated expression.</returns>
-        protected override Expression Translate(ScriptCodeAwaitExpression awaitExpression, TranslationContext context)
-        {
-            var asyncResult = AsRightSide(Translate(awaitExpression.AsyncResult, context), context);
-            var synchronizer = default(Expression);
-            switch (awaitExpression.Synchronizer != null)
-            {
-                case true:
-                    var currentScope = context.Push(SynchronizerScope.Create);
-                    //creates lambda expression that is used to run through task
-                    var task = Expression.Lambda<ScriptWorkItem>(Translate(awaitExpression.Synchronizer, context), (ParameterExpression)currentScope.ScopeVar, currentScope.StateHolder);
-                    context.Pop();
-                    synchronizer = ThreadManager.BindRunSynchronizer(context.Scope.ScopeVar, task, context.Scope.StateHolder);
-                    break;
-                default:
-                    synchronizer = LinqHelpers.Null<IAsyncResult>();
-                    break;
-            }
-            return ThreadManager.BindAwait(asyncResult, synchronizer, context.Scope.StateHolder);
         }
 
         /// <summary>
@@ -1207,9 +1181,8 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns>LINQ expression that represents action contract.</returns>
         protected override Expression Translate(ScriptCodeActionContractExpression actionContract, TranslationContext context)
         {
-            var args = Expression.NewArrayInit(typeof(ScriptActionContract.Parameter),
-                actionContract.ParamList.Select(p => ScriptActionContract.Parameter.Bind(p.Name, Translate(p.ContractBinding, context))));
-            return ScriptActionContract.New(args, actionContract.ReturnType != null ? AsRightSide(Translate(actionContract.ReturnType, context), context) : ScriptObject.MakeVoid());
+            return ScriptActionContract.New(Expression.NewArrayInit(typeof(ScriptActionContract.Parameter), actionContract.ParamList.Select(p => ScriptActionContract.Parameter.New(p.Name, AsRightSide(Translate(p.ContractBinding, context), context)))),
+                actionContract.NoReturnValue ? ScriptObject.MakeVoid() : AsRightSide(Translate(actionContract.ReturnType, context), context));
         }
 
         private void Translate(IList<ScriptCodeStatement> statements, TranslationContext context, GotoExpressionKind exitKind, Func<Expression, Expression> exitTransform, ref IList<Expression> output)
@@ -1276,7 +1249,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             }
             context.Pop();  //Leave action scope
             return action.IsAsynchronous ?
-                ScriptAsyncAction.New(
+                ScriptLazyAction.New(
                 Translate(action.Signature, context),   //action contract
                 context.Scope.ScopeVar,           //'this' reference
                 actionExpr,                     //lambda that implements the action

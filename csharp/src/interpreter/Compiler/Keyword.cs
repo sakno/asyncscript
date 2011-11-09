@@ -186,11 +186,6 @@ namespace DynamicScript.Compiler
         public static readonly Keyword Fork = new Keyword("fork");
 
         /// <summary>
-        /// Represents synchronization expression.
-        /// </summary>
-        public static readonly Keyword Await = new Keyword("await");
-
-        /// <summary>
         /// Represents finset contract.
         /// </summary>
         public static readonly Keyword FinSet = new Keyword("finset");

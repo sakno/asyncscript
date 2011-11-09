@@ -207,8 +207,6 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
                     result = ScriptThisExpression.Instance;
                 else if (input is ScriptCodeArrayExpression)
                     result = new ScriptArrayExpression((ScriptCodeArrayExpression)input);
-                else if (input is ScriptCodeAwaitExpression)
-                    result = new ScriptAwaitExpression((ScriptCodeAwaitExpression)input);
                 else if (input is ScriptCodeForkExpression)
                     result = new ScriptForkExpression((ScriptCodeForkExpression)input);
                 else if (input is ScriptCodeConditionalExpression)
@@ -313,7 +311,6 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         private IRuntimeSlot m_arcon;
         private IRuntimeSlot m_thisref;
         private IRuntimeSlot m_array;
-        private IRuntimeSlot m_await;
         private IRuntimeSlot m_fork;
         private IRuntimeSlot m_conditional;
         private IRuntimeSlot m_inv;
@@ -667,14 +664,6 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         /// <summary>
-        /// Gets an expression factory that produces await expression.
-        /// </summary>
-        public static IScriptExpressionContract<ScriptCodeAwaitExpression> AwaitExpr
-        {
-            get { return ScriptAwaitExpressionFactory.Instance; }
-        }
-
-        /// <summary>
         /// Gets an expression factory that produces fork expression.
         /// </summary>
         public static IScriptExpressionContract<ScriptCodeForkExpression> ForkExpr
@@ -819,7 +808,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             m_nmtok = m_binop = m_unop = m_async =
             m_equ = m_requ = m_ca =
             m_arcon = m_thisref = m_array =
-            m_await = m_fork = m_conditional =
+            m_fork = m_conditional =
             m_inv =
             m_indexer =
             m_foreach =
@@ -849,7 +838,6 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             ScriptIndexerExpressionFactory.Instance.Clear();
             ScriptInvocationExpressionFactory.Instance.Clear();
             ScriptForkExpressionFactory.Instance.Clear();
-            ScriptAwaitExpressionFactory.Instance.Clear();
             ScriptArrayExpressionFactory.Instance.Clear();
             ScriptThisExpressionFactory.Instance.Clear();
             ScriptArrayContractExpressionFactory.Instance.Clear();
@@ -962,11 +950,6 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         IRuntimeSlot IExpressionFactorySlots.ForkDef
         {
             get { return CacheConst(ref m_fork, () => ForkExpr); }
-        }
-
-        IRuntimeSlot IExpressionFactorySlots.AwaitDef
-        {
-            get { return CacheConst(ref m_await, () => AwaitExpr); }
         }
 
         IRuntimeSlot IExpressionFactorySlots.Array

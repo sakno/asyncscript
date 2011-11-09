@@ -15,7 +15,7 @@ namespace DynamicScript.Runtime.Environment.Threading
     /// </summary>
     /// <seealso href="http://en.wikipedia.org/wiki/Future_%28programming%29"/>
     [ComVisible(false)]
-    public abstract class ScriptFuture : DynamicObject, IScriptAsyncObject
+    public abstract class ScriptFuture: DynamicObject, IScriptProxyObject
     {
         /// <summary>
         /// Represents maximum timeout for the future wrapper.
@@ -37,13 +37,14 @@ namespace DynamicScript.Runtime.Environment.Threading
         /// <summary>
         /// Initializes a new instance of the Future pattern implementation.
         /// </summary>
-        /// <param name="queue">Target queue that is used to allocate a new user work item.</param>
+        /// <param name="queue">Target queue that is used to allocate a new user work item. Cannot be <see langword="null"/>.</param>
         /// <param name="target">The target object passed to the task in the parallel thread.</param>
         /// <param name="workItem">A task implementation to be executed in the parallel thread.</param>
         /// <param name="state">Internal interpreter state.</param>
+        /// <exception cref="System.ArgumentNullException"><paramref name="queue"/> is <see langword="null"/>.</exception>
         protected ScriptFuture(IScriptWorkItemQueue queue, IScriptObject target, ScriptWorkItem workItem, InterpreterState state)
         {
-            if (queue == null) queue = DefaultQueue.Instance;
+            if (queue == null) throw new ArgumentNullException("queue");
             OwnerQueue = queue;
             m_hashCode = workItem.GetHashCode();
             Await = queue.Enqueue(target, workItem, state);
@@ -292,7 +293,7 @@ namespace DynamicScript.Runtime.Environment.Threading
         /// <returns></returns>
         public sealed override bool TryConvert(ConvertBinder binder, out object result)
         {
-            switch (binder.ReturnType.Is<IScriptObject, IScriptProxyObject, IScriptAsyncObject>())
+            switch (binder.ReturnType.Is<IScriptObject, IScriptProxyObject>())
             {
                 case true:
                     result = this;
@@ -393,18 +394,6 @@ namespace DynamicScript.Runtime.Environment.Threading
         public sealed override bool TrySetMember(SetMemberBinder binder, object value)
         {
             return ScriptObject.TrySetMember(this, binder, value);
-        }
-
-        bool ISynchronizable.Await(WaitHandle handle, TimeSpan timeout, InterpreterState state)
-        {
-            switch (Await is WaitHandle)
-            {
-                case true:
-                    return WaitHandle.WaitAny(new[] { (WaitHandle)Await, handle }, timeout) == 0;
-                default:
-                    var ar = Task.Factory.StartNew<bool>(() => Await.WaitOne(timeout));
-                    return WaitHandle.WaitAny(new[] { ((IAsyncResult)ar).AsyncWaitHandle, handle }, timeout) == 0 && ar.Result;
-            }
         }
     }
 }

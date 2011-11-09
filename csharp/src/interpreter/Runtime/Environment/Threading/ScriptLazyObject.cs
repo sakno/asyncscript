@@ -25,7 +25,7 @@ namespace DynamicScript.Runtime.Environment.Threading
         {
             private readonly ValueQueue SetValueQueue;
 
-            protected ScriptAsyncSlotBase(IScriptWorkItemQueue queue, IScriptAsyncObject owner, ScriptWorkItem task, InterpreterState state)
+            protected ScriptAsyncSlotBase(IScriptWorkItemQueue queue, IScriptProxyObject owner, ScriptWorkItem task, InterpreterState state)
                 : base(queue, owner, task, state)
             {
                 SetValueQueue = new ValueQueue();
@@ -118,7 +118,7 @@ namespace DynamicScript.Runtime.Environment.Threading
         [ComVisible(false)]
         private sealed class ScriptAsyncSlot : ScriptAsyncSlotBase
         {
-            public ScriptAsyncSlot(IScriptWorkItemQueue queue, IScriptAsyncObject owner, string slotName, InterpreterState state)
+            public ScriptAsyncSlot(IScriptWorkItemQueue queue, IScriptProxyObject owner, string slotName, InterpreterState state)
                 : base(queue, owner, (target, s) => owner[slotName, s], state)
             {
             }
@@ -142,7 +142,7 @@ namespace DynamicScript.Runtime.Environment.Threading
         [ComVisible(false)]
         private sealed class ScriptAsyncIndexer : ScriptAsyncSlotBase
         {
-            public ScriptAsyncIndexer(IScriptWorkItemQueue queue, IScriptAsyncObject owner, IScriptObject[] indicies, InterpreterState state)
+            public ScriptAsyncIndexer(IScriptWorkItemQueue queue, IScriptProxyObject owner, IScriptObject[] indicies, InterpreterState state)
                 : base(queue, owner, (target, s) => target[indicies, s], state)
             {
             }
@@ -188,14 +188,14 @@ namespace DynamicScript.Runtime.Environment.Threading
         {
         }
 
-        
-
         #region Runtime Helpers
 
         internal static NewExpression New(Expression queue, Expression<ScriptWorkItem> task, Expression @this, ParameterExpression stateVar)
         {
+            queue = queue != null ? ScriptObject.AsRightSide(queue, stateVar) : LinqHelpers.Null<IScriptObject>();
+            @this = ScriptObject.AsRightSide(@this, stateVar);
             var ctor = LinqHelpers.BodyOf<IScriptObject, IScriptObject, ScriptWorkItem, InterpreterState, ScriptLazyObject, NewExpression>((q, o, t, s) => new ScriptLazyObject(q, o, t, s));
-            return ctor.Update(new Expression[] { queue ?? LinqHelpers.Null<IScriptWorkItemQueue>(), @this, task, stateVar });
+            return ctor.Update(new Expression[] { queue, @this, task, stateVar });
         }
         #endregion
 

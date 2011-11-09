@@ -36,8 +36,6 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
         IRuntimeSlot Array { get; } //array expression
 
-        IRuntimeSlot AwaitDef { get; }  //await expression
-
         IRuntimeSlot ForkDef { get; }   //fork expression
 
         IRuntimeSlot Cond { get; }  //conditional

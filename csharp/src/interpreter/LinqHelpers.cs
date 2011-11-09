@@ -189,5 +189,16 @@ namespace DynamicScript
             foreach (var elem in collection ?? Enumerable.Empty<T>())
                 loopBody.Invoke(elem);
         }
+
+        public static IEnumerable<T> For<T>(int count, Converter<int, T> converter)
+        {
+            for (var i = 0; i < count; i++)
+                yield return converter(i);
+        }
+
+        public static IndexExpression ListIndexer<T>(Expression list, int index)
+        {
+            return BodyOf<IList<T>, int, T, IndexExpression>((l, i) => l[i]).Update(list, new[] { Constant(index) });
+        }
     }
 }

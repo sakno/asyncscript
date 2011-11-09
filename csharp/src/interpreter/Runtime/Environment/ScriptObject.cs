@@ -374,15 +374,15 @@ namespace DynamicScript.Runtime.Environment
                 return GetValue(state).GetRuntimeDescriptor(slotName, state);
             }
 
-            private IScriptObject BinaryOperation(ScriptCodeBinaryOperatorType @operator, IScriptAsyncObject arg, InterpreterState state)
+            private IScriptObject BinaryOperation(ScriptCodeBinaryOperatorType @operator, IScriptProxyObject arg, InterpreterState state)
             {
                 return arg.Enqueue(this, @operator, state);
             }
 
             private IScriptObject BinaryOperation(ScriptCodeBinaryOperatorType @operator, IScriptObject arg, InterpreterState state)
             {
-                if (arg is IScriptAsyncObject)
-                    return BinaryOperation(@operator, (IScriptAsyncObject)arg, state);
+                if (arg is IScriptProxyObject)
+                    return BinaryOperation(@operator, (IScriptProxyObject)arg, state);
                 else switch (@operator)
                 {
                     case ScriptCodeBinaryOperatorType.Assign:
@@ -2481,7 +2481,7 @@ namespace DynamicScript.Runtime.Environment
 
         #endregion
 
-        private static Expression AsRightSide(Expression expr, ParameterExpression stateHolder)
+        internal static Expression AsRightSide(Expression expr, ParameterExpression stateHolder)
         {
             return RuntimeHelpers.IsRuntimeVariable(expr)? RuntimeSlotBase.GetValue(expr, stateHolder):expr;
         }

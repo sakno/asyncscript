@@ -351,7 +351,7 @@ namespace DynamicScript.Compiler.Ast
                 {
                     case true:
                         var asyncexpr = (ScriptCodeAsyncExpression)m_return;
-                        return asyncexpr.Contract == ScriptCodeVoidExpression.Instance || asyncexpr.Contract == null ? ScriptCodeSuperContractExpression.Instance : asyncexpr.Contract;
+                        return asyncexpr.Contract == ScriptCodeVoidExpression.Instance || asyncexpr.Contract == null ? null : asyncexpr.Contract;
                     default: return m_return ?? ScriptCodeVariableDeclaration.DefaultVariableType;
                 }
             }
@@ -363,7 +363,7 @@ namespace DynamicScript.Compiler.Ast
         /// </summary>
         public bool NoReturnValue
         {
-            get { return m_return == null || m_return is ScriptCodeVoidExpression; }
+            get { return ReturnType == null; }
         }
 
         /// <summary>

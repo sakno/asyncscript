@@ -745,8 +745,6 @@ namespace DynamicScript.Compiler.Ast.Translation
                 return Translate((ScriptCodeSelectionExpression)expression, context);
             else if (expression is ScriptCodeForkExpression)
                 return Translate((ScriptCodeForkExpression)expression, context);
-            else if (expression is ScriptCodeAwaitExpression)
-                return Translate((ScriptCodeAwaitExpression)expression, context);
             else if (expression is ScriptCodeThisExpression)
                 return Translate((ScriptCodeThisExpression)expression, context);
             else if (expression is ScriptCodeArrayExpression)
@@ -863,14 +861,6 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="context">Translation context.</param>
         /// <returns></returns>
         protected abstract TResult Translate(ScriptCodeThisExpression thisExpression, TranslationContext context);
-
-        /// <summary>
-        /// Translates synchronization expression.
-        /// </summary>
-        /// <param name="awaitExpression">The expression to be translated.</param>
-        /// <param name="context">Translation context.</param>
-        /// <returns>The translated expression.</returns>
-        protected abstract TResult Translate(ScriptCodeAwaitExpression awaitExpression, TranslationContext context);
 
         /// <summary>
         /// Translates asynchronous task producer.

@@ -54,64 +54,109 @@ namespace DynamicScript.Runtime.Environment.Threading
         }
 
         [ComVisible(false)]
-        private sealed class WaitAllAction : ScriptFunc<IScriptArray, ScriptReal>
-        {
-            public const string Name = "waitall";
-            private const string FirstParamName = "asyncObjects";
-            private const string SecondParamName = "timeout";
-
-            public WaitAllAction()
-                : base(FirstParamName, new ScriptArrayContract(ScriptSuperContract.Instance), SecondParamName, ScriptRealContract.Instance, ScriptBooleanContract.Instance)
-            {
-            }
-
-            private static bool WaitAll(WaitHandle[] handles, double timeout)
-            {
-                return handles.LongLength > 0L ? WaitHandle.WaitAll(handles, TimeSpan.FromMilliseconds(timeout)) : true;
-            }
-
-            protected override IScriptObject Invoke(IScriptArray objects, ScriptReal timeout, InterpreterState state)
-            {
-                return (ScriptBoolean)(objects != null ? WaitAll(Enumerable.ToArray(GetWaitHandles(objects, state)), timeout ?? ScriptReal.Zero) : false);
-            }
-        }
-
-        [ComVisible(false)]
-        private sealed class WaitAnyAction : ScriptFunc<IScriptArray, ScriptReal>
-        {
-            public const string Name = "waitany";
-            private const string FirstParamName = "asyncObjects";
-            private const string SecondParamName = "timeout";
-
-            public WaitAnyAction()
-                : base(FirstParamName, new ScriptArrayContract(ScriptSuperContract.Instance), SecondParamName, ScriptRealContract.Instance, ScriptIntegerContract.Instance)
-            {
-            }
-
-            private static long WaitAny(WaitHandle[] handles, double timeout)
-            {
-                return handles.LongLength > 0L ? WaitHandle.WaitAny(handles, TimeSpan.FromMilliseconds(timeout)) : -1L;
-            }
-
-            protected override IScriptObject Invoke(IScriptArray objects, ScriptReal timeout, InterpreterState state)
-            {
-                return (ScriptInteger)(objects != null ? WaitAny(Enumerable.ToArray(GetWaitHandles(objects, state)), timeout ?? ScriptReal.Zero) : -1L);
-            }
-        }
-
-        [ComVisible(false)]
         private sealed class CreateLazyQueueAction : ScriptFunc
         {
             public const string Name = "create_lazy_queue";
 
             public CreateLazyQueueAction()
-                : base(ScriptCompositeContract.Empty)
+                : base(ScriptNativeQueue.ContractBinding)
             {
             }
 
             protected override IScriptObject Invoke(InterpreterState state)
             {
-                return new ScriptStaticQueue(new LazyQueue());
+                return new ScriptNativeQueue(new LazyQueue());
+            }
+        }
+
+        [ComVisible(false)]
+        private sealed class CreateDefaultQueue : ScriptFunc
+        {
+            public const string Name = "create_default_queue";
+
+            public CreateDefaultQueue()
+                : base(ScriptNativeQueue.ContractBinding)
+            {
+            }
+
+            protected override IScriptObject Invoke(InterpreterState state)
+            {
+                return new ScriptNativeQueue(new DefaultQueue());
+            }
+        }
+
+        [ComVisible(false)]
+        private sealed class CreateParallelQueue : ScriptFunc
+        {
+            public const string Name = "create_parallel_queue";
+
+            public CreateParallelQueue()
+                : base(ScriptNativeQueue.ContractBinding)
+            {
+            }
+
+            protected override IScriptObject Invoke(InterpreterState state)
+            {
+                return new ScriptNativeQueue(ParallelQueue.Instance);
+            }
+        }
+
+        [ComVisible(false)]
+        private sealed class UnwrapAction : ScriptFunc<IScriptObject>
+        {
+            public const string Name = "unwrap";
+            private const string FirstParamName = "asyncobj";
+
+            public UnwrapAction()
+                : base(FirstParamName, ScriptSuperContract.Instance, ScriptSuperContract.Instance)
+            {
+            }
+
+            protected override IScriptObject Invoke(IScriptObject asyncobj, InterpreterState state)
+            {
+                return asyncobj is IScriptProxyObject ? ((IScriptProxyObject)asyncobj).Unwrap(state) : asyncobj;
+            }
+        }
+
+        [ComVisible(false)]
+        private sealed class QueueSlot : RuntimeSlotBase
+        {
+            public const string Name = "queue";
+
+            public override IScriptObject GetValue(InterpreterState state)
+            {
+                var queue = ThreadManager.Queue;
+                return queue is IScriptObject ? (IScriptObject)queue : new ScriptNativeQueue(queue);
+            }
+
+            public override void SetValue(IScriptObject value, InterpreterState state)
+            {
+                ThreadManager.Queue = ThreadManager.CreateQueue(value);
+            }
+
+            public override IScriptContract ContractBinding
+            {
+                get { return ScriptNativeQueue.ContractBinding; }
+            }
+
+            public override RuntimeSlotAttributes Attributes
+            {
+                get { return RuntimeSlotAttributes.None; }
+            }
+
+            protected override ICollection<string> Slots
+            {
+                get { return new string[0]; }
+            }
+
+            public override bool DeleteValue()
+            {
+                return false;
+            }
+
+            public override bool Equals(IRuntimeSlot other)
+            {
+                return other is QueueSlot;
             }
         }
 
@@ -123,13 +168,14 @@ namespace DynamicScript.Runtime.Environment.Threading
             public Slots()
             {
                 AddConstant(ProcessorsSlot, new ScriptInteger(ClrEnvironment.ProcessorCount));
-                AddConstant<WaitAllAction>(WaitAllAction.Name);
-                AddConstant<WaitAnyAction>(WaitAnyAction.Name);
                 AddConstant<SleepAction>(SleepAction.Name);
                 AddConstant<IsLazyAction>(IsLazyAction.Name);
                 AddConstant("timeout", ScriptWorkItemQueue.Timeout);
-                AddConstant("default_queue", new ScriptStaticQueue(DefaultQueue.Instance));
+                Add(QueueSlot.Name, new QueueSlot());
                 AddConstant<CreateLazyQueueAction>(CreateLazyQueueAction.Name);
+                AddConstant<UnwrapAction>(UnwrapAction.Name);
+                AddConstant<CreateDefaultQueue>(CreateDefaultQueue.Name);
+                AddConstant<CreateParallelQueue>(CreateParallelQueue.Name);
             }
         }
         #endregion

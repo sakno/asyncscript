@@ -87,7 +87,6 @@
     <Compile Include="Compiler\Ast\ScriptCodeActionImplementationExpression.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeArrayExpression.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeAsyncExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeAwaitExpression.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeCallableContractExpression.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeArrayContractExpression.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeBooleanContractExpression.cs" />
@@ -232,7 +231,6 @@
     <Compile Include="Runtime\Environment\ExpressionTrees\IArrayContractExpressionFactorySlots.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\IArrayExpressionFactorySlots.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\IAsyncExpressionFactorySlots.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\IAwaitExpressionFactorySlots.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\IBinaryExpressionFactorySlots.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\ICodeElementFactorySlots.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\IConditionalExpressionFactorySlots.cs" />
@@ -249,8 +247,6 @@
     <Compile Include="Runtime\Environment\ExpressionTrees\IVariableDeclarationFactorySlots.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\ScriptArrayExpression.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\ScriptArrayExpressionFactory.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptAwaitExpression.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptAwaitExpressionFactory.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\ScriptConditionalExpression.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\ScriptConditionalExpressionFactory.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\ScriptEmptyStatementFactory.cs" />
@@ -285,15 +281,18 @@
     <Compile Include="Runtime\Environment\ExpressionTrees\ScriptWhileExpressionFactory.cs" />
     <Compile Include="Runtime\Environment\IBinaryOperatorInvoker.cs" />
     <Compile Include="Runtime\Environment\IScriptActionContractSlots.cs" />
-    <Compile Include="Runtime\Environment\IScriptAsyncObject.cs" />
     <Compile Include="Runtime\Environment\IScriptIterable.cs" />
     <Compile Include="Runtime\Environment\IUnaryOperatorInvoker.cs" />
     <Compile Include="Runtime\Environment\ObjectModel\RuntimeBehaviorSlots.cs" />
     <Compile Include="Runtime\Environment\ScriptActionInvoker.cs" />
     <Compile Include="Runtime\Environment\Threading\DefaultQueue.cs" />
+    <Compile Include="Runtime\Environment\Threading\IScriptLazyAction.cs" />
+    <Compile Include="Runtime\Environment\Threading\IScriptLazyActionSlots.cs" />
     <Compile Include="Runtime\Environment\Threading\IScriptWorkItemQueue.cs" />
     <Compile Include="Runtime\Environment\Threading\LazyQueue.cs" />
-    <Compile Include="Runtime\Environment\Threading\ScriptStaticQueue.cs" />
+    <Compile Include="Runtime\Environment\Threading\ParallelQueue.cs" />
+    <Compile Include="Runtime\Environment\Threading\ScriptAwaitContract.cs" />
+    <Compile Include="Runtime\Environment\Threading\ScriptNativeQueue.cs" />
     <Compile Include="Runtime\Environment\Threading\ScriptWorkItem.cs" />
     <Compile Include="Runtime\Environment\Threading\ScriptWorkItemQueue.cs" />
     <Compile Include="Runtime\Environment\Threading\ThreadManager.cs" />
@@ -346,9 +345,7 @@
     <Compile Include="Runtime\Environment\ExpressionTrees\ScriptExpressionDefinition.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\ScriptExpressionFactory.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\ScriptStatementFactory.cs" />
-    <Compile Include="Runtime\Environment\Threading\IScriptAsyncActionExecutionContext.cs" />
-    <Compile Include="Runtime\Environment\Threading\IScriptAsyncResult.cs" />
-    <Compile Include="Runtime\Environment\Threading\ScriptAsyncAction.cs" />
+    <Compile Include="Runtime\Environment\Threading\ScriptLazyAction.cs" />
     <Compile Include="Runtime\Environment\CompositeObjectConverter.cs" />
     <Compile Include="Runtime\Environment\ContractConverter.cs" />
     <Compile Include="Runtime\Environment\ContractExpectedException.cs" />
@@ -370,8 +367,7 @@
     <Compile Include="Runtime\Environment\StringPool.cs" />
     <Compile Include="Runtime\Environment\IRealContractSlots.cs" />
     <Compile Include="Runtime\Environment\IStringContractSlots.cs" />
-    <Compile Include="Runtime\Environment\Threading\ScriptAsyncResult.cs" />
-    <Compile Include="Runtime\Environment\Threading\ScriptAsyncResultContract.cs" />
+    <Compile Include="Runtime\Environment\Threading\ScriptAcceptorContract.cs" />
     <Compile Include="Runtime\Environment\Threading\WaitActionContract.cs" />
     <Compile Include="Runtime\Environment\UnaryOperatorInvoker.cs" />
     <Compile Include="Runtime\IScriptArray.cs" />
@@ -426,7 +422,6 @@
     <Compile Include="Runtime\IScriptContract.cs" />
     <Compile Include="Runtime\IScriptObject.cs" />
     <Compile Include="Runtime\Environment\IScriptProxyObject.cs" />
-    <Compile Include="Runtime\ISynchronizable.cs" />
     <Compile Include="Runtime\Environment\ScriptRuntimeAction.cs" />
     <Compile Include="Runtime\Environment\ScriptActionContract.cs" />
     <Compile Include="Runtime\Environment\ScriptArrayContract.cs" />

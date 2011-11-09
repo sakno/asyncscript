@@ -241,7 +241,6 @@ namespace DynamicScript.Runtime.Environment
 
         internal static Expression New(Expression actionContract, Expression @this, LambdaExpression implementation, string sourceCode)
         {
-            actionContract = Expression.TypeAs(ScriptContract.RequiresContract(actionContract), typeof(ScriptActionContract));
             var ctor = LinqHelpers.BodyOf<ScriptActionContract, IScriptObject, Delegate, long, ScriptRuntimeAction, NewExpression>((c, t, i, u) => new ScriptRuntimeAction(c, t, i, u)).Constructor;
             return Expression.New(ctor, actionContract, @this, implementation, LinqHelpers.Constant(StringEqualityComparer.GetHashCodeLong(sourceCode)));
         }

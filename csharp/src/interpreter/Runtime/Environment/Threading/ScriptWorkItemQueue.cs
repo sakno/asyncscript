@@ -78,7 +78,7 @@ namespace DynamicScript.Runtime.Environment.Threading
 
         public IWorkItemState<TimeSpan, IScriptObject> Enqueue(IScriptObject target, ScriptWorkItem workItem, InterpreterState state)
         {
-            return new ScriptWorkItemState(m_implementation[ScriptStaticQueue.EnqueueActionName, state].GetValue(state).Invoke(new[] { new ScriptWorkItemAction(target, workItem) }, state), state);
+            return new ScriptWorkItemState(m_implementation[ScriptNativeQueue.EnqueueActionName, state].GetValue(state).Invoke(new[] { new ScriptWorkItemAction(target, workItem) }, state), state);
         }
     }
 }

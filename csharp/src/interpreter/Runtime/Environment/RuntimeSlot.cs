@@ -23,7 +23,7 @@ namespace DynamicScript.Runtime.Environment
     /// </summary>
     [ComVisible(false)]
     [Serializable]
-    public abstract class RuntimeSlot: ScriptObject.RuntimeSlotBase, ISynchronizable, IDebuggerEditable, IEquatable<IRuntimeSlot>, IEquatable<RuntimeSlot>
+    public abstract class RuntimeSlot: ScriptObject.RuntimeSlotBase, IDebuggerEditable, IEquatable<IRuntimeSlot>, IEquatable<RuntimeSlot>
     {
         private const string ContractBindingHolder = "ContractBinding";
         private const string ValueHolder = "Value";
@@ -203,12 +203,6 @@ namespace DynamicScript.Runtime.Environment
         public sealed override bool DeleteValue()
         {
             return DeleteValue(false);
-        }
-
-        bool ISynchronizable.Await(WaitHandle handle, TimeSpan timeout, InterpreterState state)
-        {
-            var v = Value;
-            return v is ISynchronizable ? ((ISynchronizable)v).Await(handle, timeout, state) : true;
         }
 
         /// <summary>

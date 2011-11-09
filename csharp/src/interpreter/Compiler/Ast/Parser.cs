@@ -39,7 +39,6 @@ namespace DynamicScript.Compiler.Ast
             Keyword.Unchecked, 
             Keyword.Caseof, 
             Keyword.Fork, 
-            Keyword.Await,
             Keyword.Integer,
             Keyword.Boolean,
             Keyword.Dimensional,
@@ -204,8 +203,6 @@ namespace DynamicScript.Compiler.Ast
                     expression = ScriptCodeStatementContractExpression.Instance;
                 else if (lexer.Current.Value == Punctuation.LeftBrace && expression == null)
                 { expression = ScriptCodeComplexExpression.Parse(lexer); continue; }
-                else if (lexer.Current.Value == Keyword.Await && expression == null)
-                { expression = ScriptCodeAwaitExpression.Parse(lexer, terminator); continue; }
                 else if (lexer.Current.Value is IntegerLiteral && expression == null)
                     expression = new ScriptCodeIntegerExpression((IntegerLiteral)lexer.Current.Value);
                 else if (lexer.Current.Value is StringLiteral && expression == null)

@@ -10,7 +10,7 @@ namespace DynamicScript.Runtime.Environment
     /// script object.
     /// </summary>
     [ComVisible(false)]
-    interface IScriptProxyObject: IScriptObject
+    public interface IScriptProxyObject: IScriptObject
     {
         /// <summary>
         /// Defines contract expectation.
