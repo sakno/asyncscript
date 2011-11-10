@@ -8,9 +8,8 @@ namespace DynamicScript.Runtime.Hosting
     using Encoding = System.Text.Encoding;
 
     [ComVisible(false)]
-    sealed class Program
+    static class Program
     {
-
         private static int Execute(CommandLineParser cmd, string[] args)
         {
             return cmd.Run(args);
