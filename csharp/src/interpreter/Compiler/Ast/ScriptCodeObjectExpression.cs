@@ -67,8 +67,7 @@ namespace DynamicScript.Compiler.Ast
             {
                 get
                 {
-                    var result = (m_init != null ? SlotDeclarationStyle.ContractBindingOnly : SlotDeclarationStyle.Unknown) | (m_init != null ? SlotDeclarationStyle.InitExpressionOnly : SlotDeclarationStyle.Unknown);
-                    return result == SlotDeclarationStyle.Unknown ? SlotDeclarationStyle.ContractBindingOnly : result;
+                    return (ContractBinding != null ? SlotDeclarationStyle.ContractBindingOnly : SlotDeclarationStyle.Unknown) | (InitExpression != null ? SlotDeclarationStyle.InitExpressionOnly : SlotDeclarationStyle.Unknown);
                 }
             }
 

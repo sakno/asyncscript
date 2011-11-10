@@ -37,6 +37,29 @@ namespace DynamicScript.Runtime.Environment
         }
 
         [ComVisible(false)]
+        private sealed class GetArrayAction : ScriptFunc<ScriptString, ScriptInteger>
+        {
+            public const string Name = "array";
+            private const string FirstParamName = "name";
+            private const string SecondParamName = "dimensions";
+
+            private readonly Assembly m_source;
+
+            public GetArrayAction(Assembly source)
+                : base(new ScriptActionContract.Parameter(FirstParamName, ScriptStringContract.Instance), new ScriptActionContract.Parameter(SecondParamName, ScriptIntegerContract.Instance), ScriptMetaContract.Instance)
+            {
+                m_source = source;
+            }
+
+            protected override IScriptObject Invoke(ScriptString typeName, ScriptInteger rank, InterpreterState state)
+            {
+                var resolvedType = m_source.GetType(typeName, false);
+                if (resolvedType == null) return Void;
+                else return (ScriptClass)resolvedType.MakeArrayType((int)rank);
+            }
+        }
+
+        [ComVisible(false)]
         private new sealed class Slots : ObjectSlotCollection
         {
             public Slots(Assembly source)
@@ -44,6 +67,7 @@ namespace DynamicScript.Runtime.Environment
                 AddConstant(GetClassAction.Name, new GetClassAction(source));
                 AddConstant("name", new ScriptString(source.FullName));
                 AddConstant("location", new ScriptString(source.Location));
+                AddConstant(GetArrayAction.Name, new GetArrayAction(source));
             }
         }
         #endregion

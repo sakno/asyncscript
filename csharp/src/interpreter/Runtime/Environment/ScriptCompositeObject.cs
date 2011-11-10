@@ -501,7 +501,7 @@ namespace DynamicScript.Runtime.Environment
         {
             if (slots == null)
                 m_slots = new ObjectSlotCollection();
-            else if (m_slots is ObjectSlotCollection)
+            else if (slots is ObjectSlotCollection)
                 m_slots = (ObjectSlotCollection)slots;
             else m_slots = new ObjectSlotCollection(slots);
         }
@@ -623,7 +623,7 @@ namespace DynamicScript.Runtime.Environment
         {
             ICollection<Expression> expressions = new LinkedList<Expression>();
             //Declare variable that stores collection of slots
-            var runtimeSlots = Expression.Variable(typeof(ObjectSlotCollection));
+            var runtimeSlots = Expression.Variable(typeof(ObjectSlotCollection), "runtimeSlots");
             //runtimeSlots = new ObjectSlotCollection();
             expressions.Add(Expression.Assign(runtimeSlots, LinqHelpers.Restore<ObjectSlotCollection>()));
             //@this = new ScriptCompositeObject(runtimeSlots);
@@ -639,21 +639,6 @@ namespace DynamicScript.Runtime.Environment
         internal static NewExpression Bind(IEnumerable<KeyValuePair<string, ParameterExpression>> slots)
         {
             return New(Expression.NewArrayInit(typeof(KeyValuePair<string, IRuntimeSlot>), Enumerable.Select(slots, s => LinqHelpers.CreateKeyValuePair<string, IRuntimeSlot>(s.Key, s.Value))));
-        }
-
-        /// <summary>
-        /// Adds a new slot to the dictionary.
-        /// </summary>
-        /// <param name="slots"></param>
-        /// <param name="slotName"></param>
-        /// <param name="slot"></param>
-        /// <returns></returns>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static IDictionary<string, IRuntimeSlot> RtlAppendSlot(IDictionary<string, IRuntimeSlot> slots, string slotName, IRuntimeSlot slot)
-        {
-            if (slots == null) slots = new Dictionary<string, IRuntimeSlot>(10, new StringEqualityComparer());
-            slots[slotName] = slot;
-            return slots;
         }
         #endregion
 

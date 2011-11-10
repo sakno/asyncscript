@@ -162,6 +162,12 @@ namespace DynamicScript.Runtime.Environment
         /// </summary>
         public static readonly ScriptCompositeContract Empty = new ScriptCompositeContract(Enumerable.Empty<KeyValuePair<string, SlotMeta>>());
 
+
+        internal static MemberExpression EmptyField
+        {
+            get { return LinqHelpers.BodyOf<Func<ScriptCompositeContract>, MemberExpression>(() => Empty); }
+        }
+
         /// <summary>
         /// Delcares a new contract slot.
         /// </summary>

@@ -110,7 +110,19 @@ namespace DynamicScript.Runtime.Environment
             for (var i = 0; i < objects.Count; i++)
             {
                 var element = default(object);
-                if (TryConvert(objects[i], types[i], state, out element)) result[i] = element;
+                if (TryConvert(objects[i], types[i], state, out element)) result.SetValue(element, i);
+                else return false;
+            }
+            return true;
+        }
+
+        public static bool TryConvert(IList<IScriptObject> objects, out Array result, Type destinationType, InterpreterState state)
+        {
+            result = Array.CreateInstance(destinationType, objects.Count);
+            for (var i = 0; i < objects.Count; i++)
+            {
+                var element = default(object);
+                if (TryConvert(objects[i], destinationType, state, out element)) result.SetValue(element, i);
                 else return false;
             }
             return true;

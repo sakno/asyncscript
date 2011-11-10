@@ -40,7 +40,7 @@ return clr.generic(Uri, [IConvertible], true);
         public void AutoGenericTest()
         {
             IScriptGeneric r = Run("var clr = use('clrtypes.dll'); return $(clr.system.class('System.Uri'));");
-            Assert.AreEqual(typeof(Uri), r.BaseType);
+            Assert.AreEqual(typeof(Uri), r.BaseType.NativeType);
         }
 
         [Test(Description = "Simple method invocation.")]
@@ -51,7 +51,7 @@ const clr = use('clrtypes.dll');
 var uri = clr.system.class('System.Uri')('http://www.homepage.com');
 return uri.ToString();
 ");
-            Assert.AreEqual("http://www.homepage.com", s);
+            Assert.AreEqual("http://www.homepage.com/", s);
         }
 
         [Test(Description="Event subscribing.")]
@@ -87,7 +87,7 @@ var list = clr.mscorlib.class('System.Collections.ArrayList')();
 return list;
 ");
             Assert.IsInstanceOf<System.Collections.ArrayList>(r.Instance);
-            Assert.AreEqual(1, ((System.Collections.ArrayList)r.Instance).Count);
+            Assert.AreEqual(0, ((System.Collections.ArrayList)r.Instance).Count);
         }
 
         [Test(Description = "Working with System.Collections.ArrayList indexer.")]
@@ -112,6 +112,30 @@ const ctor = @t: clr.generic(object, void, true) -> object: t();
 return ctor(component);
 ");
             Assert.IsInstanceOf<System.ComponentModel.Component>(r.Instance);
+        }
+
+        [Test(Description = ".NET array creation test.")]
+        public void ArrayCreationTest()
+        {
+            INativeObject r = Run(@"
+var clr = use('clrtypes.dll');
+var array = clr.mscorlib.array('System.Int32', 1) (10);
+return array;
+");
+            Assert.IsInstanceOf<Array>(r.Instance);
+            Assert.AreEqual(10, ((Array)r.Instance).GetLength(0));
+        }
+
+        [Test(Description=".NET array indexer test.")]
+        public void ArrayIndexerTest()
+        {
+            var r = Run(@"
+var clr = use('clrtypes.dll');
+var array = clr.mscorlib.array('System.Int32', 1) (10);
+array[0] = 10;
+return array[0];
+");
+            Assert.AreEqual(new ScriptInteger(10), r);
         }
     }
 }

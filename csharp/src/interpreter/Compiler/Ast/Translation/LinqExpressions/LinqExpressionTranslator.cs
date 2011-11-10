@@ -1396,8 +1396,9 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
 
         private Expression CreateCompositeContract(ScriptCodeObjectExpression expr, TranslationContext context)
         {
-            return ScriptCompositeContract.New(from ScriptCodeObjectExpression.Slot s in expr
-                                               select new KeyValuePair<string, Expression>(s.Name, AsRightSide(Translate(s.ContractBinding, context), context)));
+            return expr.Count > 0 ? ScriptCompositeContract.New(from ScriptCodeObjectExpression.Slot s in expr
+                                                                select new KeyValuePair<string, Expression>(s.Name, AsRightSide(Translate(s.ContractBinding, context), context))) :
+                                               (Expression)ScriptCompositeContract.EmptyField;
         }
 
         /// <summary>

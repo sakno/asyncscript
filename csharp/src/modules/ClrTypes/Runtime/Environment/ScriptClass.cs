@@ -195,6 +195,18 @@ namespace DynamicScript.Runtime.Environment
             return args.Count == 1 ? CreateDelegate(delegateType, args[0] as IScriptAction, state) : Void;
         }
 
+        private INativeObject CreateArray(Type arrayType, IList<IScriptObject> args, InterpreterState state)
+        {
+            var lengths = default(Array);
+            switch (NativeObject.TryConvert(args, out lengths, typeof(long), state))
+            {
+                case true:
+                    return new NativeObject(Array.CreateInstance(arrayType.GetElementType(), (long[])lengths), arrayType);
+                default:
+                    throw new UnsupportedOperationException(state);
+            }
+        }
+
         /// <summary>
         /// Creates a new instance of the native .NET object.
         /// </summary>
@@ -205,6 +217,8 @@ namespace DynamicScript.Runtime.Environment
         {
             if (NativeType.IsGenericTypeDefinition)
                 return MakeGenericType(args);
+            else if (NativeType.IsArray)
+                return CreateArray(NativeType, args, state);
             else if (typeof(Delegate).IsAssignableFrom(NativeType))
                 return CreateDelegate(NativeType, args, state);
             else return NativeObject.New(args, NativeType, state);
@@ -295,7 +309,11 @@ namespace DynamicScript.Runtime.Environment
             get
             {
                 var members = NativeType.GetDefaultMembers();
-                return members.LongLength > 0L ? new ScriptMember(members, @this, args) : RuntimeSlotBase.Missing("this");
+                if (members.LongLength > 0L)
+                    return new ScriptMember(members, @this, args);
+                else if (@this != null && @this.Instance is Array)
+                    return new ScriptArrayIndexer((Array)@this.Instance, args);
+                else return RuntimeSlotBase.Missing("this");
             }
         }
 
