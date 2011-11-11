@@ -217,6 +217,18 @@ namespace DynamicScript.Runtime.Environment
                 default: return new ScriptInteger(value);
             }
         }
+
+        internal static Expression New(long value)
+        {
+            switch (value)
+            {
+                case 0L: return LinqHelpers.BodyOf<Func<ScriptInteger>, MemberExpression>(() => Zero);
+                case 1L: return LinqHelpers.BodyOf<Func<ScriptInteger>, MemberExpression>(() => One);
+                case long.MaxValue: return LinqHelpers.BodyOf<Func<ScriptInteger>, MemberExpression>(() => MaxValue);
+                case long.MinValue: return LinqHelpers.BodyOf<Func<ScriptInteger>, MemberExpression>(() => MinValue);
+                default: return LinqHelpers.Convert<ScriptInteger, long>(value);
+            }
+        }
      
         /// <summary>
         /// Determines whether the the current object is equal to another.

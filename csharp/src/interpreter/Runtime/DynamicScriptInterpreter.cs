@@ -14,10 +14,10 @@ namespace DynamicScript.Runtime
     using Compiler.Ast;
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
     using LinqExpressionTranslator = Compiler.Ast.Translation.LinqExpressions.LinqExpressionTranslator;
-    using QSourceInfo = Compiler.Ast.Translation.LinqExpressions.SourceCodeInfo;
+    using ScriptSourceInfo = Compiler.Ast.Translation.LinqExpressions.SourceCodeInfo;
     using CodeAnalysisException = Compiler.CodeAnalysisException;
     using ErrorMode = Compiler.Ast.Translation.ErrorMode;
-    using QScriptIO = Hosting.DynamicScriptIO;
+    using DynamicScriptIO = Hosting.DynamicScriptIO;
     using Encoding = System.Text.Encoding;
     using CompiledScriptAttribute = Hosting.CompiledScriptAttribute;
     using ScriptDebugger = Debugging.ScriptDebugger;
@@ -173,16 +173,16 @@ namespace DynamicScript.Runtime
             public ScriptInvoker Compile(Expression<ScriptInvoker> scriptImplementation, DebugInfoGenerator generator = null)
             {
                 if (scriptImplementation == null) throw new ArgumentNullException("scriptImplementation");
-                //creates dynamic module
+                //create dynamic module
                 const string ExecutableFileExtension = ".exe";
                 const string ClassLibraryFileExresion = ".dll";
                 var fileName = Path.ChangeExtension(Options.AssemblyName, Options.Executable ? ExecutableFileExtension : ClassLibraryFileExresion);
                 var module = m_assembly.DefineDynamicModule(Options.AssemblyName, fileName, EmitSymbolInfo);
-                //creates class
+                //create class
                 var st = module.DefineType(ScriptType, ScriptTypeSemantic);
-                //declares method that implements script logic.
+                //declare method that implements script logic.
                 var sm = st.DefineMethod(ScriptMethod, ScriptMethodSemantic, ScriptInvokerReturnType, ScriptMethodParameters);  //signature is satisfied to ScriptInvoker delegate 
-                //Compiles script to the method.
+                //Compile script to the method.
                 switch (generator != null)
                 {
                     case true:
@@ -192,28 +192,28 @@ namespace DynamicScript.Runtime
                         scriptImplementation.CompileToMethod(sm);
                         break;
                 }
-                //Defines global attribute
+                //Define global attribute
                 CompiledScriptAttribute.Emit(m_assembly, st, sm);
                 if (Options.Executable)
                 {
-                    //Creates entry point
+                    //Create entry point
                     var ep = st.DefineMethod(MainMethod, MainMethodSemantic, typeof(void), new[] { typeof(string[]) });
-                    //Emits entry point implementation
+                    //Emit entry point implementation
                     var entryPointImpl = ep.GetILGenerator();
                     entryPointImpl.Emit(OpCodes.Newobj, DScriptModule.DefaultConstructor);  //create a new instance of the module
-                    entryPointImpl.Emit(OpCodes.Ldarg_0);                                   //loas command-line arguments
+                    entryPointImpl.Emit(OpCodes.Ldarg_0);                                   //load command-line arguments
                     entryPointImpl.Emit(OpCodes.Ldc_I4, 10);                                //load default size of the intern pool
                     entryPointImpl.Emit(OpCodes.Ldc_I4_0);                                  //load default context
                     entryPointImpl.Emit(OpCodes.Ldc_I4_0);                                  //false for debug flag
-                    entryPointImpl.Emit(OpCodes.Newobj, InterpreterState.Constructor);      //initializes a new interpreter state
+                    entryPointImpl.Emit(OpCodes.Newobj, InterpreterState.Constructor);      //initialize a new interpreter state
                     entryPointImpl.EmitCall(OpCodes.Call, sm, null);             //call script implementation
-                    entryPointImpl.Emit(OpCodes.Pop);                            //removes result from the stack
+                    entryPointImpl.Emit(OpCodes.Pop);                            //remove result from the stack
                     entryPointImpl.Emit(OpCodes.Ret);                                       //return from method
                     m_assembly.SetEntryPoint(ep, InterpreterHostAttribute.GetHostType());
                 }
-                //Completes type
+                //Complete type
                 st.CreateType();
-                //Saves module to the file.
+                //Save module to the file.
                 m_assembly.Save(fileName, Options.PEKind, Options.ImageType);
                 return (ScriptInvoker)Delegate.CreateDelegate(typeof(ScriptInvoker), st.GetMethod(ScriptMethod), true);
             }
@@ -229,7 +229,7 @@ namespace DynamicScript.Runtime
         /// <summary>
         /// Represents name of the language.
         /// </summary>
-        public const string LanguageName = "QScript";
+        public const string LanguageName = "DynamicScript";
 
         /// <summary>
         /// Represents identifier of DynamicScript language.
@@ -260,9 +260,9 @@ namespace DynamicScript.Runtime
         {
             m_options = new LanguageOptions(options);
             //Redirect DLR IO to DynamicScript IO
-            domainManager.SharedIO.SetOutput(null, QScriptIO.Output);
-            domainManager.SharedIO.SetInput(null, QScriptIO.Input, Encoding.Unicode);
-            domainManager.SharedIO.SetErrorOutput(null, QScriptIO.Error);
+            domainManager.SharedIO.SetOutput(null, DynamicScriptIO.Output);
+            domainManager.SharedIO.SetInput(null, DynamicScriptIO.Input, Encoding.Unicode);
+            domainManager.SharedIO.SetErrorOutput(null, DynamicScriptIO.Error);
         }
 
         /// <summary>
@@ -328,10 +328,10 @@ namespace DynamicScript.Runtime
         private static Expression<ScriptInvoker> CompileSourceCode(IEnumerator<char> sourceCode, string sourceFile, SymbolDocumentInfo symbolDocument, out int capacity)
         {
 
-            return CompileSourceCode(sourceCode, string.IsNullOrEmpty(sourceFile) ? null : new QSourceInfo(sourceFile, symbolDocument), out capacity);
+            return CompileSourceCode(sourceCode, string.IsNullOrEmpty(sourceFile) ? null : new ScriptSourceInfo(sourceFile, symbolDocument), out capacity);
         }
 
-        private static Expression<ScriptInvoker> CompileSourceCode(IEnumerator<char> sourceCode, QSourceInfo sourceInfo, out int capacity)
+        private static Expression<ScriptInvoker> CompileSourceCode(IEnumerator<char> sourceCode, ScriptSourceInfo sourceInfo, out int capacity)
         {
             return LinqExpressionTranslator.Translate(sourceCode, ErrorMode.Panic, sourceInfo, out capacity);
         }

@@ -163,7 +163,7 @@ namespace DynamicScript.Modules.ClrTypes
         /// <returns></returns>
         public static IScriptObject Run(InterpreterState state)
         {
-            return new Module();
+            return new Module(); 
         }
     }
 }

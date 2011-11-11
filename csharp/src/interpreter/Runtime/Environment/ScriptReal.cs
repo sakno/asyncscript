@@ -96,9 +96,7 @@ namespace DynamicScript.Runtime.Environment
         /// <returns>DynamicScript-compliant representation of <see cref="System.Double"/> object.</returns>
         public static implicit operator ScriptReal(double value)
         {
-            if (value == double.NaN)
-                return NaN;
-            else if (double.IsPositiveInfinity(value))
+            if (double.IsPositiveInfinity(value))
                 return PositiveInfinity;
             else if (double.IsNegativeInfinity(value))
                 return NegativeInfinity;
@@ -111,6 +109,23 @@ namespace DynamicScript.Runtime.Environment
             else if (value == double.MinValue)
                 return MinValue;
             else return new ScriptReal(value);
+        }
+
+        internal static Expression New(double value)
+        {
+            if (double.IsPositiveInfinity(value))
+                return LinqHelpers.BodyOf<Func<ScriptReal>, MemberExpression>(() => PositiveInfinity);
+            else if (double.IsNegativeInfinity(value))
+                return LinqHelpers.BodyOf<Func<ScriptReal>, MemberExpression>(() => NegativeInfinity);
+            else if (double.IsNaN(value))
+                return LinqHelpers.BodyOf<Func<ScriptReal>, MemberExpression>(() => NaN);
+            else if (value == default(double))
+                return LinqHelpers.BodyOf<Func<ScriptReal>, MemberExpression>(() => Zero);
+            else if (value == double.MaxValue)
+                return LinqHelpers.BodyOf<Func<ScriptReal>, MemberExpression>(() => MaxValue);
+            else if (value == double.MinValue)
+                return LinqHelpers.BodyOf<Func<ScriptReal>, MemberExpression>(() => MinValue);
+            else return LinqHelpers.Convert<ScriptReal, double>(value);
         }
 
         /// <summary>

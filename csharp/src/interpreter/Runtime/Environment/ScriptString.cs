@@ -77,7 +77,7 @@ namespace DynamicScript.Runtime.Environment
                 return LinqHelpers.BodyOf<Func<ScriptString>, MemberExpression>(() => Empty);
             else if (string.Equals(value, " "))
                 return LinqHelpers.BodyOf<Func<ScriptString>, MemberExpression>(() => WhiteSpace);
-            else return LinqHelpers.BodyOf<string, ScriptString, NewExpression>(s => new ScriptString(s)).Update(new[] { LinqHelpers.Constant(value) });
+            else return LinqHelpers.Convert<ScriptString, string>(value);
         }
 
         /// <summary>

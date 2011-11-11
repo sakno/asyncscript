@@ -13,7 +13,6 @@ namespace DynamicScript.Runtime
     /// Represents an interface that describes runtime behaviour of DynamicScript object.
     /// </summary>
     [ComVisible(false)]
-    
     public interface IScriptObject : IDynamicMetaObjectProvider
     {
         /// <summary>

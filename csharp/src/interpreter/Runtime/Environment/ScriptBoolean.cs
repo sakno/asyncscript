@@ -55,19 +55,11 @@ namespace DynamicScript.Runtime.Environment
         /// </summary>
         public static readonly ScriptBoolean True = new ScriptBoolean(true);
 
-        internal static MemberExpression TrueField
+        internal static MemberExpression New(bool value)
         {
-            get { return LinqHelpers.BodyOf<Func<ScriptBoolean>, MemberExpression>(() => True); }
-        }
-
-        internal static MemberExpression FalseField
-        {
-            get { return LinqHelpers.BodyOf<Func<ScriptBoolean>, MemberExpression>(() => False); }
-        } 
-
-        private static ScriptBoolean Create(bool value)
-        {
-            return value ? True : False;
+            return value ?
+                LinqHelpers.BodyOf<Func<ScriptBoolean>, MemberExpression>(() => True) :
+                LinqHelpers.BodyOf<Func<ScriptBoolean>, MemberExpression>(() => False);
         }
 
         /// <summary>
@@ -77,7 +69,7 @@ namespace DynamicScript.Runtime.Environment
         /// <returns>DynamicScript-compliant representation of <see cref="System.Boolean"/> object.</returns>
         public static implicit operator ScriptBoolean(bool value)
         {
-            return Create(value);
+            return value ? True : False;
         }
 
         /// <summary>
@@ -360,5 +352,6 @@ namespace DynamicScript.Runtime.Environment
         {
             return this ? True : False;
         }
+        
     }
 }

@@ -780,9 +780,9 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
 
         #region .NET-to-DynamicScript Compile-time Conversion Routines
 
-        private static UnaryExpression ConverterOf(long value)
+        private static Expression ConverterOf(long value)
         {
-            return Expression.Convert(LinqHelpers.Constant<long>(value), typeof(ScriptInteger));
+            return ScriptInteger.New(value);
         }
 
         private long Intern(TranslationContext context, long value)
@@ -795,12 +795,12 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
 
         private static MemberExpression ConverterOf(bool value)
         {
-            return value ? ScriptBoolean.TrueField : ScriptBoolean.FalseField;
+            return ScriptBoolean.New(value);
         }
 
-        private static UnaryExpression ConverterOf(double value)
+        private static Expression ConverterOf(double value)
         {
-            return Expression.Convert(LinqHelpers.Constant<double>(value), typeof(ScriptReal));
+            return ScriptReal.New(value);
         }
 
         private long Intern(TranslationContext context, double value)
@@ -811,9 +811,9 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             return key;
         }
 
-        private static UnaryExpression ConverterOf(string value)
+        private static Expression ConverterOf(string value)
         {
-            return Expression.Convert(LinqHelpers.Constant<string>(value), typeof(ScriptString));
+            return ScriptString.New(value);
         }
 
         private long Intern(TranslationContext context, string value)

@@ -200,5 +200,16 @@ namespace DynamicScript
         {
             return BodyOf<IList<T>, int, T, IndexExpression>((l, i) => l[i]).Update(list, new[] { Constant(index) });
         }
+
+        public static UnaryExpression Convert<T>(Expression e)
+        {
+            return Expression.Convert(e, typeof(T));
+        }
+
+        public static UnaryExpression Convert<T, G>(G value)
+            where G : IConvertible
+        {
+            return Convert<T>(Constant(value));
+        }
     }
 }
