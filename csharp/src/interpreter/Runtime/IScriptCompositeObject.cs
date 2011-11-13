@@ -34,5 +34,12 @@ namespace DynamicScript.Runtime
         /// <param name="state">Internal interpreter state.</param>
         /// <returns>A new instance of composite object.</returns>
         IScriptCompositeObject AsReadOnly(InterpreterState state);
+
+        /// <summary>
+        /// Copies slots from the specified object into this object.
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <param name="state">Internal interpreter state.</param>
+        void Import(IScriptObject obj, InterpreterState state);
     }
 }

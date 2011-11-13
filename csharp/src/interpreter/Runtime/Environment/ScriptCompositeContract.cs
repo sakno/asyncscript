@@ -22,7 +22,7 @@ namespace DynamicScript.Runtime.Environment
     /// sealed class MyContract : ScriptCompositeContract
     /// {
     ///     private static readonly KeyValuePair&lt;string, IScriptContract&gt; Slot1 = DefineSlot("slot1");
-    ///     private static readonly KeyValuePair&lt;string, IScriptContract&gt; Slot2 = DefineSlot("slot2", QIntegerContract.Instance);
+    ///     private static readonly KeyValuePair&lt;string, IScriptContract&gt; Slot2 = DefineSlot("slot2", ScriptIntegerContract.Instance);
     /// 
     ///     public MyContract()
     ///         : base(Slot1, Slot2)

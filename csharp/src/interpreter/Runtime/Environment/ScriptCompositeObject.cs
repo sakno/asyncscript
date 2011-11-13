@@ -698,6 +698,21 @@ namespace DynamicScript.Runtime.Environment
             return contract.GetSlotMetadata(slotName);
         }
 
+        /// <summary>
+        /// Imports the specified composite object into the current composite object.
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <param name="state"></param>
+        public void Import(IScriptObject obj, InterpreterState state)
+        {
+            foreach (var foreignSlotName in obj.Slots)
+                switch (m_slots.Contains(foreignSlotName))
+                {
+                    case true: m_slots[foreignSlotName].SetValue(obj[foreignSlotName, state], state); continue;
+                    default: m_slots.Add(foreignSlotName, obj[foreignSlotName, state]); continue;
+                }
+        }
+
         internal virtual void GetObjectData(SerializationInfo info, StreamingContext context)
         {
             info.AddValue(SlotCollectionHolder, m_slots, typeof(ObjectSlotCollection));

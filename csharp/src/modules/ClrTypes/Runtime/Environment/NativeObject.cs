@@ -68,6 +68,7 @@ namespace DynamicScript.Runtime.Environment
         /// <returns><see langword="true"/> if conversion is possible; otherwise, <see langword="false"/>.</returns>
         public static bool TryConvert(IScriptObject obj, Type conversionType, InterpreterState state, out object result)
         {
+            if (conversionType.IsByRef) conversionType = conversionType.GetElementType();
             if (ScriptObject.IsVoid(obj) || Equals(typeof(void), conversionType))
             {
                 result = null;
@@ -110,7 +111,7 @@ namespace DynamicScript.Runtime.Environment
             for (var i = 0; i < objects.Count; i++)
             {
                 var element = default(object);
-                if (TryConvert(objects[i], types[i], state, out element)) result.SetValue(element, i);
+                if (TryConvert(objects[i], types[i], state, out element)) result[i] = element;
                 else return false;
             }
             return true;

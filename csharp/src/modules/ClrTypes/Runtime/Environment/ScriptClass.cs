@@ -51,7 +51,7 @@ namespace DynamicScript.Runtime.Environment
         private ScriptClass(Type nt)
         {
             if (nt == null) throw new ArgumentNullException("nt");
-            NativeType = nt;
+            NativeType = nt.IsByRef ? nt.GetElementType() : nt;
         }
 
         /// <summary>
@@ -163,17 +163,32 @@ namespace DynamicScript.Runtime.Environment
         /// <returns></returns>
         public override ContractRelationshipType GetRelationship(IScriptContract contract)
         {
-            if (contract is IScriptClass)
-                return GetRelationship((IScriptClass)contract);
-            else if (contract.OneOf<ScriptMetaContract, ScriptSuperContract>())
-                return ContractRelationshipType.Subset;
-            else if (contract is ScriptVoid)
-                return ContractRelationshipType.Superset;
-            else if (contract.OneOf<IScriptComplementation, IScriptUnionContract>())
-                return Inverse(contract.GetRelationship(this));
-            else if (contract is ScriptActionContract && typeof(Delegate).IsAssignableFrom(NativeType))
-                return GetRelationship(NativeType, (ScriptActionContract)contract);
-            else return ContractRelationshipType.None;
+            switch (Type.GetTypeCode(NativeType))
+            {
+                case TypeCode.Int32:
+                case TypeCode.Int16:
+                case TypeCode.Int64:
+                    return ScriptIntegerContract.Instance.GetRelationship(contract);
+                case TypeCode.Boolean:
+                    return ScriptBooleanContract.Instance.GetRelationship(contract);
+                case TypeCode.Double:
+                case TypeCode.Single:
+                    return ScriptRealContract.Instance.GetRelationship(contract);
+                case TypeCode.String:
+                    return ScriptStringContract.Instance.GetRelationship(contract);
+                default:
+                    if (contract is IScriptClass)
+                        return GetRelationship((IScriptClass)contract);
+                    else if (contract.OneOf<ScriptMetaContract, ScriptSuperContract>())
+                        return ContractRelationshipType.Subset;
+                    else if (contract is ScriptVoid)
+                        return ContractRelationshipType.Superset;
+                    else if (contract.OneOf<IScriptComplementation, IScriptUnionContract>())
+                        return Inverse(contract.GetRelationship(this));
+                    else if (contract is ScriptActionContract && typeof(Delegate).IsAssignableFrom(NativeType))
+                        return GetRelationship(NativeType, (ScriptActionContract)contract);
+                    else return ContractRelationshipType.None;
+            }
         }
 
         private ScriptClass MakeGenericType(IList<IScriptObject> args)

@@ -79,13 +79,13 @@ namespace DynamicScript.Runtime.Environment
             public ParameterCompatibilityAnalyzer(IList<ScriptActionContract.Parameter> @params, IList<IScriptObject> args, InterpreterState s)
                 : base(@params, args, s)
             {
-                m_error = false;
+                m_error = null;
             }
 
             [MethodImpl(MethodImplOptions.Synchronized)]
             private void Complete(ParallelLoopState state, ScriptActionContract.Parameter p, IScriptObject a)
             {
-                m_error = State == null ? (object)false : new ContractBindingException(a, p.ContractBinding, State);
+                m_error = State == null ? (object)string.Empty : new ContractBindingException(a, p.ContractBinding, State);
             }
 
             protected override void Analyze(ParallelLoopState state, int index, ScriptActionContract.Parameter p, IScriptObject a)
@@ -339,6 +339,34 @@ namespace DynamicScript.Runtime.Environment
             public override IScriptContract GetContractBinding()
             {
                 return m_contract;
+            }
+
+            public override RuntimeSlotBase this[IScriptObject[] args, InterpreterState state]
+            {
+                get
+                {
+                    foreach (var a in Actions)
+                    {
+                        var result = a[args, state];
+                        if (RuntimeSlotBase.IsMissing(result)) continue;
+                        else if (result is RuntimeSlotBase) return (RuntimeSlotBase)result;
+                    }
+                    return base[args, state];
+                }
+            }
+
+            public override IRuntimeSlot this[string slotName, InterpreterState state]
+            {
+                get
+                {
+                    foreach (var a in Actions)
+                    {
+                        var result = a[slotName, state];
+                        if (RuntimeSlotBase.IsMissing(result)) continue;
+                        else if (result is RuntimeSlotBase) return (RuntimeSlotBase)result;
+                    }
+                    return base[slotName, state];
+                }
             }
 
             /// <summary>

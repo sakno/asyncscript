@@ -32,6 +32,25 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         #region Nested Type
 
         [ComVisible(false)]
+        private sealed class ImportAction : ScriptAction<IScriptObject, IScriptCompositeObject>
+        {
+            public const string Name = "import";
+            private const string FirstParamName = "source";
+            private const string SecondParamName = "destination";
+
+            public ImportAction()
+                : base(FirstParamName, ScriptSuperContract.Instance, SecondParamName, ScriptCompositeContract.Empty)
+            {
+            }
+
+            protected override void Invoke(IScriptObject source, IScriptCompositeObject destination, InterpreterState state)
+            {
+                if (source == null || destination == null) return;
+                destination.Import(source, state);
+            }
+        }
+
+        [ComVisible(false)]
         private sealed class WeakRefAction : ScriptFunc<IScriptObject>
         {
             public const string Name = "weakref";
@@ -505,6 +524,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                 AddConstant<ParseAction>(ParseAction.Name);
                 AddConstant<RuntimeBehaviorSlots>(RuntimeBehaviorSlots.Name);
                 AddConstant<QuitAction>(QuitAction.Name);
+                AddConstant<ImportAction>(ImportAction.Name);
             }
         }
         #endregion

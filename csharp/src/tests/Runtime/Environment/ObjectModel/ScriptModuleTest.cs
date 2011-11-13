@@ -107,5 +107,13 @@ return $obj == ${{a: real}};
             bool r = Run("setdata('store', true); return getdata('store');");
             Assert.IsTrue(r);
         }
+
+        [Test(Description="Test for IMPORT function.")]
+        public void ImportActionTest()
+        {
+            IScriptCompositeObject r = Run("var r = {{a = 10}}; import({{a = 20, b = '123'}}, r); return r;");
+            Assert.AreEqual(2, r.Slots.Count);
+            Assert.AreEqual(new ScriptInteger(20), r["a"].GetValue(InterpreterState.Current));
+        }
     }
 }
