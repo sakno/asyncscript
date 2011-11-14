@@ -60,6 +60,7 @@
     </Compile>
     <Compile Include="Runtime\Environment\FlowControlInstructions.cs" />
     <Compile Include="Runtime\Environment\LoopTests.cs" />
+    <Compile Include="Runtime\Environment\OperatorsTest.cs" />
     <Compile Include="Runtime\Environment\RuntimeSlotTest.cs" />
     <Compile Include="Runtime\Environment\ContractOperations.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\ScriptStatementFactoryTest.cs" />

@@ -10,13 +10,18 @@ namespace DynamicScript.Runtime
     [ComVisible(false)]
     public static class Monitoring
     {
+        private static bool m_enabled = false;
+
         /// <summary>
         /// Enables monitoring.
         /// </summary>
         public static void Enable()
         {
-            if (!MonoRuntime.Available)
-                AppDomain.MonitoringIsEnabled = true;
+            switch (MonoRuntime.Available)
+            {
+                case true: m_enabled = true; return;
+                default: AppDomain.MonitoringIsEnabled = m_enabled = true; return;
+            }
         }
 
         /// <summary>
@@ -24,7 +29,7 @@ namespace DynamicScript.Runtime
         /// </summary>
         public static bool IsEnabled
         {
-            get { return MonoRuntime.Available ? false : AppDomain.MonitoringIsEnabled; }
+            get { return MonoRuntime.Available ? m_enabled : AppDomain.MonitoringIsEnabled; }
         }
 
         /// <summary>
