@@ -137,5 +137,20 @@ return array[0];
 ");
             Assert.AreEqual(new ScriptInteger(10), r);
         }
+
+        [Test(Description = "Iteration through array elements.")]
+        public void IterationTest()
+        {
+            IScriptArray r = Run(@"
+var clr = use('clrtypes.dll');
+var intArray = clr.mscorlib.array('System.Int32', 1)(2);
+intArray[0] = 1;
+intArray[1] = 2;
+return for var i in intArray do i + 1;
+");
+            Assert.AreEqual(2L, r.GetLength(0));
+            Assert.AreEqual(new ScriptInteger(2L), r[new[] { 0L }, InterpreterState.Current]);
+            Assert.AreEqual(new ScriptInteger(3L), r[new[] { 1L }, InterpreterState.Current]);
+        }
     }
 }

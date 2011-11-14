@@ -8,13 +8,14 @@ using System.Linq;
 namespace DynamicScript.Runtime.Environment
 {
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
+    using IEnumerator = System.Collections.IEnumerator;
 
     /// <summary>
     /// Represents script-compliant wrapper of the .NET type.
     /// This class cannot be inherited.
     /// </summary>
     [ComVisible(false)]
-    sealed class ScriptClass : ScriptContract, IScriptClass, IScriptMetaContract
+    sealed class ScriptClass : ScriptContract, IScriptClass, IScriptMetaContract, IScriptIterable
     {
         #region Nested Types
         /// <summary>
@@ -335,6 +336,13 @@ namespace DynamicScript.Runtime.Environment
         public override RuntimeSlotBase this[IScriptObject[] args, InterpreterState state]
         {
             get { return this[args, MemberFlags, null, state]; }
+        }
+
+        IEnumerator IScriptIterable.GetIterator(InterpreterState state)
+        {
+            if (NativeType.BaseType != null) yield return (ScriptClass)NativeType.BaseType;
+            foreach (var iface in NativeType.GetInterfaces())
+                yield return (ScriptClass)iface;
         }
     }
 }

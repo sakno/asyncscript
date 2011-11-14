@@ -174,6 +174,7 @@ namespace DynamicScript.Runtime.Environment
 
             internal static MethodCallExpression GetEnumerator(Expression collection, ParameterExpression state)
             {
+                collection = AsRightSide(collection, state);
                 var geten = LinqHelpers.BodyOf<IScriptObject, InterpreterState, IScriptObject, MethodCallExpression>((c, s) => GetEnumerator(c, s));
                 return geten.Update(null, new[] { collection, state });
             }
@@ -192,6 +193,7 @@ namespace DynamicScript.Runtime.Environment
 
             internal static MethodCallExpression GetNext(Expression iterator, ParameterExpression state)
             {
+                iterator = AsRightSide(iterator, state);
                 var getnxt = LinqHelpers.BodyOf<IScriptObject, InterpreterState, IScriptObject, MethodCallExpression>((i, s) => GetNext(i, s));
                 return getnxt.Update(null, new[] { iterator, state });
             }
@@ -211,6 +213,9 @@ namespace DynamicScript.Runtime.Environment
 
             internal static MethodCallExpression CombineResult(Expression result, Expression accumulator, Expression grouping, ParameterExpression state)
             {
+                result = AsRightSide(result, state);
+                accumulator = AsRightSide(accumulator, state);
+                grouping = AsRightSide(grouping, state);
                 var comres = LinqHelpers.BodyOf<IScriptObject, IScriptObject, IScriptObject, InterpreterState, IScriptObject, MethodCallExpression>((r, a, g, s) => CombineResult(r, a, g, s));
                 return comres.Update(null, new[] { result, accumulator, grouping, state });
             }
@@ -229,6 +234,7 @@ namespace DynamicScript.Runtime.Environment
 
             internal static MethodCallExpression HasNext(Expression iterator, ParameterExpression state)
             {
+                iterator = AsRightSide(iterator, state);
                 var hasnext = LinqHelpers.BodyOf<IScriptObject, InterpreterState, bool, MethodCallExpression>((i, s) => HasNext(i, s));
                 return hasnext.Update(null, new[] { iterator, state });
             }

@@ -2,19 +2,19 @@
 using System.Dynamic;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Collections;
 
 namespace DynamicScript.Runtime.Environment
 {
     using Compiler.Ast;
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
-    using IEnumerable = System.Collections.IEnumerable;
 
     /// <summary>
     /// Represents wrapper of the native .NET object.
     /// This class cannot be inherited.
     /// </summary>
     [ComVisible(false)]
-    sealed class NativeObject: DynamicObject, INativeObject
+    sealed class NativeObject: DynamicObject, INativeObject, IScriptIterable
     {
         private const BindingFlags MemberFlags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy | BindingFlags.IgnoreCase;
         public readonly object Instance;
@@ -356,6 +356,14 @@ namespace DynamicScript.Runtime.Environment
         public override string ToString()
         {
             return Instance.ToString();
+        }
+
+        IEnumerator IScriptIterable.GetIterator(InterpreterState state)
+        {
+            if (Instance is IEnumerable)
+                foreach (var obj in (IEnumerable)Instance)
+                    yield return NativeObject.ConvertFrom(obj);
+            else yield break;
         }
     }
 }
