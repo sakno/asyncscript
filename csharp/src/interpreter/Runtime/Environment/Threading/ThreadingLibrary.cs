@@ -161,6 +161,65 @@ namespace DynamicScript.Runtime.Environment.Threading
         }
 
         [ComVisible(false)]
+        private sealed class ThreadName : RuntimeSlotBase, IEquatable<ThreadName>
+        {
+            public const string Name = "threadName";
+            /// <summary>
+            /// Gets or sets thread name.
+            /// </summary>
+            public static ScriptString Value
+            {
+                get { return Thread.CurrentThread.Name ?? string.Empty; }
+                set { if (Thread.CurrentThread.Name == null)Thread.CurrentThread.Name = value; }
+            }
+
+            public override IScriptObject GetValue(InterpreterState state)
+            {
+                return Value;
+            }
+
+            public override void SetValue(IScriptObject value, InterpreterState state)
+            {
+                Value = value.ToString();
+            }
+
+            public override IScriptContract ContractBinding
+            {
+                get { return ScriptStringContract.Instance; }
+            }
+
+            public override RuntimeSlotAttributes Attributes
+            {
+                get { return RuntimeSlotAttributes.None; }
+            }
+
+            protected override ICollection<string> Slots
+            {
+                get { return Value.Slots; }
+            }
+
+            public override bool DeleteValue()
+            {
+                return false;
+            }
+
+            public bool Equals(ThreadName other)
+            {
+                return other != null;
+            }
+
+            public override bool Equals(IRuntimeSlot other)
+            {
+                return Equals(other as ThreadName);
+            }
+
+            public override int GetHashCode()
+            {
+                return Value.GetHashCode();
+            }
+        }
+
+        [ComVisible(false)]
         private new sealed class Slots : ObjectSlotCollection
         {
             private const string ProcessorsSlot = "processors";
@@ -176,6 +235,7 @@ namespace DynamicScript.Runtime.Environment.Threading
                 AddConstant<UnwrapAction>(UnwrapAction.Name);
                 AddConstant<CreateDefaultQueue>(CreateDefaultQueue.Name);
                 AddConstant<CreateParallelQueue>(CreateParallelQueue.Name);
+                Add(ThreadName.Name, new ThreadName());
             }
         }
         #endregion

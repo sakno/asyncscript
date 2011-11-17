@@ -508,7 +508,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                 Add<ArgsSlot>(ArgsSlot.Name);
                 AddConstant<CmdAction>(CmdAction.Name);
                 AddConstant<GC>(GC.Name);
-                AddConstant<RuntimeDiagnostics>(RuntimeDiagnostics.Name);
+                AddConstant<DebuggerModule>(DebuggerModule.Name);
                 Add<WorkingDirectorySlot>(WorkingDirectorySlot.Name);
                 AddConstant("ver", new ScriptInteger(DynamicScriptInterpreter.Version.Major));
                 AddConstant<ReadOnlyAction>(ReadOnlyAction.Name);

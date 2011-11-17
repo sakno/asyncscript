@@ -12,7 +12,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
     using Resources = Properties.Resources;
 
     [ComVisible(false)]
-    sealed class RuntimeDiagnostics : ScriptCompositeObject
+    sealed class DebuggerModule : ScriptCompositeObject
     {
         #region Nested Types
         [ComVisible(false)]
@@ -360,7 +360,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         [TransparentAction]
         private sealed class BreakPointAction : ScriptAction<ScriptString>
         {
-            public const string Name = "bp";
+            public const string Name = "break";
             private const string FirstParamName = "comment";
 
             public BreakPointAction()
@@ -412,9 +412,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             }
         }
         #endregion
-        public const string Name = "diag";
+        public const string Name = "debugger";
 
-        public RuntimeDiagnostics()
+        public DebuggerModule()
             : base(new Slots())
         {
         }

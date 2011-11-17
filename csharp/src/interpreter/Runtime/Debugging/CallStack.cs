@@ -12,7 +12,6 @@ namespace DynamicScript.Runtime.Debugging
     /// </summary>
     /// <remarks>The call stack is worked only when <see cref="Monitoring.IsEnabled"/> is <see langword="true"/>.</remarks>
     [ComVisible(false)]
-    
     public static class CallStack
     {
         /// <summary>

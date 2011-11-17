@@ -353,7 +353,7 @@
     <Compile Include="Runtime\Environment\IScriptActionSlots.cs" />
     <Compile Include="Runtime\Environment\ObjectModel\CallStackManager.cs" />
     <Compile Include="Runtime\Environment\ObjectModel\Regex.cs" />
-    <Compile Include="Runtime\Environment\ObjectModel\RuntimeDiagnostics.cs" />
+    <Compile Include="Runtime\Environment\ObjectModel\DebuggerModule.cs" />
     <Compile Include="Runtime\Environment\ObjectModel\GC.cs" />
     <Compile Include="Runtime\Environment\IArraySlots.cs" />
     <Compile Include="Runtime\Environment\IDimensionalContractSlots.cs" />
