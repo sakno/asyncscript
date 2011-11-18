@@ -10,8 +10,6 @@ namespace DynamicScript.Runtime
     [ComVisible(false)]
     public static class Monitoring
     {
-        private static bool m_enabled = false;
-
         /// <summary>
         /// Enables monitoring.
         /// </summary>
@@ -19,18 +17,15 @@ namespace DynamicScript.Runtime
         {
             switch (MonoRuntime.Available)
             {
-                case true: m_enabled = true; return;
-                default: AppDomain.MonitoringIsEnabled = m_enabled = true; return;
+                case true: IsEnabled = true; return;
+                default: AppDomain.MonitoringIsEnabled = IsEnabled = true; return;
             }
         }
 
         /// <summary>
         /// Gets a value indicating that the monitoring is enabled.
         /// </summary>
-        public static bool IsEnabled
-        {
-            get { return MonoRuntime.Available ? m_enabled : AppDomain.MonitoringIsEnabled; }
-        }
+        public static bool IsEnabled { get; private set; }
 
         /// <summary>
         /// Gets the total size, in bytes, of all memory allocations that have been made by the application

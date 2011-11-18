@@ -92,9 +92,9 @@ namespace DynamicScript
         {
             VerifyOnDisposed();
             if (m_reader.EndOfStream) return false;
-            var buffer = new char[1];
-            var success = m_reader.Read(buffer, 0, buffer.Length) > 0;
-            m_current = buffer[0];
+            var buffer = default(int);
+            var success = (buffer = m_reader.Read()) > 0;
+            m_current = (char)buffer;
             return success;
         }
 
