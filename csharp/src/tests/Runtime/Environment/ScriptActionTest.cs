@@ -154,5 +154,12 @@ const f = @i: integer -> integer: {
 return f(2);");
             Assert.AreEqual(new ScriptInteger(1), r);
         }
+
+        [Test(Description="Fast signature description test.")]
+        public void FastSignature()
+        {
+            long r = Run("const func = @2 -> integer: !!0 + !!1; return func(1, 2);");
+            Assert.AreEqual(3L, r);
+        }
     }
 }

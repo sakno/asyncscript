@@ -169,7 +169,7 @@ namespace DynamicScript.Compiler.Ast
             ScriptCodeExpression expression = null;
             do
             {
-                if (lexer.Current.Value is NameToken && expression==null) 
+                if (lexer.Current.Value is NameToken && expression == null)
                     expression = new ScriptCodeVariableReference((NameToken)lexer.Current.Value);
                 else if (lexer.Current.Value == Keyword.Object && expression == null)
                     expression = ScriptCodeSuperContractExpression.Instance;
@@ -201,6 +201,8 @@ namespace DynamicScript.Compiler.Ast
                     expression = ScriptCodeExpressionContractExpression.Instance;
                 else if (lexer.Current.Value == Keyword.Stmt && expression == null)
                     expression = ScriptCodeStatementContractExpression.Instance;
+                else if (lexer.Current.Value is ArgRef && expression == null)
+                    expression = new ScriptCodeArgumentReferenceExpression((ArgRef)lexer.Current.Value);
                 else if (lexer.Current.Value == Punctuation.LeftBrace && expression == null)
                 { expression = ScriptCodeComplexExpression.Parse(lexer); continue; }
                 else if (lexer.Current.Value is IntegerLiteral && expression == null)
@@ -232,7 +234,7 @@ namespace DynamicScript.Compiler.Ast
                 else if (lexer.Current.Value == Keyword.For && expression == null)         //parse for loop
                 { expression = ParseForLoop(lexer, terminator); continue; }
                 else if (lexer.Current.Value == Keyword.Expandq && expression == null)
-                expression = ScriptCodeExpandExpression.Parse(lexer);
+                    expression = ScriptCodeExpandExpression.Parse(lexer);
                 else if (lexer.Current.Value == Punctuation.Dog && expression == null)    //parse action
                 { expression = lexer.MoveNext() ? ParseAction(lexer, terminator) : ScriptCodeCurrentActionExpression.Instance; continue; }
                 else if (lexer.Current.Value == Punctuation.DoubleDog && expression == null) //parse quoted expression list
@@ -430,6 +432,13 @@ namespace DynamicScript.Compiler.Ast
             {
                 actionContract.ParamList.Clear();
                 lexer.MoveNext();
+            }
+            else if (lexer.Current.Value is IntegerLiteral) //fast function, generates parameters
+            {
+                var count = ((IntegerLiteral)lexer.Current.Value).Value;
+                for(var i = 0L; i<count; i++)
+                    actionContract.ParamList.Add(ArgRef.MakeName(i), contractBinding: ScriptCodeSuperContractExpression.Instance);
+                lexer.MoveNext(true);   //pass through argument count
             }
             else if (lexer.Current.Value is NameToken)  //handles non-empty parameter list
                 while (lexer.Current.Value is NameToken)    //parameter should begins with name token

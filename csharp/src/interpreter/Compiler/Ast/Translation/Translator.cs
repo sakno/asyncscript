@@ -763,8 +763,18 @@ namespace DynamicScript.Compiler.Ast.Translation
                 return Translate((ScriptCodePlaceholderExpression)expression, context);
             else if (expression is ScriptCodeExpandExpression)
                 return Translate((ScriptCodeExpandExpression)expression, context);
+            else if (expression is ScriptCodeArgumentReferenceExpression)
+                return Translate((ScriptCodeArgumentReferenceExpression)expression, context);
             else return null;
         }
+
+        /// <summary>
+        /// Translates argument reference.
+        /// </summary>
+        /// <param name="argref"></param>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        protected abstract TResult Translate(ScriptCodeArgumentReferenceExpression argref, TranslationContext context);
 
         /// <summary>
         /// Translates expand expression.

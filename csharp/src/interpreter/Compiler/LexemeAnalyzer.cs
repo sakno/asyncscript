@@ -553,7 +553,20 @@ namespace DynamicScript.Compiler
             return Operator.Asterisk;
         }
 
-        private static Operator ParseExclamation(IEnumerator<char> characters, ref int column, out bool hasNext)
+        private static ArgRef ParseArgRef(IEnumerator<char> characters, ref int column, out bool hasNext)
+        {
+            column++;
+            hasNext = false;
+            var builder = new StringBuilder();
+            while ((hasNext = characters.MoveNext()) && char.IsDigit(characters.Current))
+            {
+                builder.Append(characters.Current);
+                column++;
+            }
+            return new ArgRef(builder);
+        }
+
+        private static Lexeme ParseExclamation(IEnumerator<char> characters, ref int column, out bool hasNext)
         {
             column++;
             switch (characters.MoveNext())
@@ -581,6 +594,9 @@ namespace DynamicScript.Compiler
                                     hasNext = false;
                                     return Operator.ValueInequality;
                             }
+                        case Lexeme.Exclamation:
+                            column++;
+                            return ParseArgRef(characters, ref column, out hasNext);
                         default:
                             hasNext = true;
                             return Operator.Negotiation;

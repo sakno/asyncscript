@@ -1141,6 +1141,26 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         }
 
         /// <summary>
+        /// Translates argument reference.
+        /// </summary>
+        /// <param name="argref"></param>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        protected override Expression Translate(ScriptCodeArgumentReferenceExpression argref, TranslationContext context)
+        {
+            IComplexExpressionScope<ScriptCodeActionImplementationExpression> actionScope = context.Lookup<ActionScope>();
+            switch (actionScope != null)
+            {
+                case true:
+                    var parameters = actionScope.Expression.Signature.ParamList;
+                    var resolved = default(bool);
+                    var expression = argref.Index.Between(0, parameters.Count - 1) ? Translate(parameters[(int)argref.Index].Name, context, out resolved) : ScriptObject.MakeVoid();
+                    return resolved ? expression : ScriptObject.MakeVoid();
+                default: return ScriptObject.MakeVoid();
+            }
+        }
+
+        /// <summary>
         /// Translates DIMENSIONAL contract.
         /// </summary>
         /// <param name="contract">The contract to translate.</param>

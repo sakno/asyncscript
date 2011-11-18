@@ -78,6 +78,8 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Compiler\ArgRef.cs" />
+    <Compile Include="Compiler\Ast\ScriptCodeArgumentReferenceExpression.cs" />
     <Compile Include="Compiler\Ast\IScriptExpressionStatement.cs" />
     <Compile Include="Compiler\Ast\ISyntaxTreeNode.cs" />
     <Compile Include="Compiler\Ast\ILiteralExpression.cs" />
