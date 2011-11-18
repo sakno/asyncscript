@@ -40,6 +40,6 @@ using ClrTypes = DynamicScript.Modules.ClrTypes.Module;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("0.8.1.*")]
-[assembly: AssemblyFileVersion("0.8.1.0")]
-[assembly: AssemblyInformationalVersion("0.8.1 beta")]
+[assembly: AssemblyVersion("0.8.3.*")]
+[assembly: AssemblyFileVersion("0.8.3.0")]
+[assembly: AssemblyInformationalVersion("0.8.3 beta")]
