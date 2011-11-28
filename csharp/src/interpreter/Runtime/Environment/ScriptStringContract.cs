@@ -25,6 +25,92 @@ namespace DynamicScript.Runtime.Environment
     public sealed class ScriptStringContract : ScriptBuiltinContract, IStringContractSlots
     {
         #region Nested Types
+
+        [ComVisible(false)]
+        private sealed class InsertAction : ScriptFunc<ScriptString, ScriptInteger, ScriptString>
+        {
+            private const string FirstParamName = "str";
+            private const string SecondParamName = "index";
+            private const string ThirdParamName = "value";
+
+            public InsertAction()
+                : base(FirstParamName, Instance, SecondParamName, ScriptIntegerContract.Instance, ThirdParamName, Instance, Instance)
+            {
+            }
+
+            private static ScriptString Invoke(string str, long index, string value)
+            {
+                return str.Insert((int)index, value);
+            }
+
+            public override IScriptObject Invoke(ScriptString str, ScriptInteger index, ScriptString value, InterpreterState state)
+            {
+                return Invoke(str, index, value);
+            }
+        }
+
+        [ComVisible(false)]
+        private sealed class IndexOfAction : ScriptFunc<ScriptString, ScriptString, ScriptInteger>
+        {
+            private const string FirstParamName = "str";
+            private const string SecondParamName = "value";
+            private const string ThirdParamName = "startIndex";
+
+            public IndexOfAction()
+                : base(FirstParamName, Instance, SecondParamName, Instance, ThirdParamName, ScriptIntegerContract.Instance, ScriptIntegerContract.Instance)
+            {
+            }
+
+            private static ScriptInteger Invoke(string str, string value, long startIndex)
+            {
+                return str.IndexOf(value, (int)startIndex);
+            }
+
+            public override IScriptObject Invoke(ScriptString str, ScriptString value, ScriptInteger startIndex, InterpreterState state)
+            {
+                return Invoke(str, value, startIndex);
+            }
+        }
+
+        [ComVisible(false)]
+        private sealed class LengthAction : ScriptFunc<ScriptString>
+        {
+            private const string FirstParamName = "str";
+
+            public LengthAction()
+                : base(FirstParamName, Instance, ScriptIntegerContract.Instance)
+            {
+            }
+
+            protected override IScriptObject Invoke(ScriptString str, InterpreterState state)
+            {
+                return new ScriptInteger(str.Length);
+            }
+        }
+
+        [ComVisible(false)]
+        private sealed class SubstringAction : ScriptFunc<ScriptString, ScriptInteger, ScriptInteger>
+        {
+            private const string FirstParamName = "str";
+            private const string SecondParamName = "startIndex";
+            private const string ThirdParamName = "length";
+
+            public SubstringAction()
+                : base(FirstParamName, Instance, SecondParamName, ScriptIntegerContract.Instance, ThirdParamName, ScriptIntegerContract.Instance, Instance)
+            {
+            }
+
+            private static ScriptString Invoke(string str, long startIndex, long length)
+            {
+                return str.Substring((int)startIndex, (int)length);
+            }
+
+            public override IScriptObject Invoke(ScriptString str, ScriptInteger startIndex, ScriptInteger length, InterpreterState state)
+            {
+                return Invoke(str, startIndex, length);
+            }
+        }
+
         [ComVisible(false)]
         private sealed class IsInternedAction : ScriptFunc<ScriptString>
         {
@@ -153,6 +239,10 @@ namespace DynamicScript.Runtime.Environment
         private IRuntimeSlot m_isint;
         private IRuntimeSlot m_equ;
         private IRuntimeSlot m_cmp;
+        private IRuntimeSlot m_length;
+        private IRuntimeSlot m_substr;
+        private IRuntimeSlot m_indexOf;
+        private IRuntimeSlot m_insert;
 
         private ScriptStringContract(SerializationInfo info, StreamingContext context)
         {
@@ -316,6 +406,16 @@ namespace DynamicScript.Runtime.Environment
 
         #region Runtime Slots
 
+        IRuntimeSlot IStringContractSlots.Length
+        {
+            get { return CacheConst<LengthAction>(ref m_length); }
+        }
+
+        IRuntimeSlot IStringContractSlots.Substr
+        {
+            get { return CacheConst<SubstringAction>(ref m_substr); }
+        }
+
         IRuntimeSlot IStringContractSlots.Equ
         {
             get { return CacheConst<EqualityAction>(ref m_equ); }
@@ -344,6 +444,16 @@ namespace DynamicScript.Runtime.Environment
         IRuntimeSlot IStringContractSlots.Language
         {
             get { return Cache<LanguageSlot>(ref m_language); }
+        }
+
+        IRuntimeSlot IStringContractSlots.IndexOf
+        {
+            get { return CacheConst<IndexOfAction>(ref m_indexOf); }
+        }
+
+        IRuntimeSlot IStringContractSlots.Insert
+        {
+            get { return CacheConst<InsertAction>(ref m_insert); }
         }
 
         #endregion

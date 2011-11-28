@@ -14,5 +14,9 @@ namespace DynamicScript.Runtime.Environment
         IRuntimeSlot Language { get; }
         IRuntimeSlot Cmp { get; }
         IRuntimeSlot Equ { get; }
+        IRuntimeSlot Length { get; }
+        IRuntimeSlot Substr { get; }
+        IRuntimeSlot IndexOf { get; }
+        IRuntimeSlot Insert { get; }
     }
 }

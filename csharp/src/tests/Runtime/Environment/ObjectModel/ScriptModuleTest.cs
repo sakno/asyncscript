@@ -115,5 +115,12 @@ return $obj == ${{a: real}};
             Assert.AreEqual(2, r.Slots.Count);
             Assert.AreEqual(new ScriptInteger(20), r["a"].GetValue(InterpreterState.Current));
         }
+
+        [Test(Description="Invoke a script object.")]
+        public void InvokeActionTest()
+        {
+            var r = Run("const a = @i -> integer: ++i; return __invoke(a, [2]);");
+            Assert.AreEqual(new ScriptInteger(3), r);
+        }
     }
 }

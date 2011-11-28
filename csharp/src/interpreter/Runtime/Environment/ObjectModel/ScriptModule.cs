@@ -51,6 +51,24 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         }
 
         [ComVisible(false)]
+        private sealed class InvokeAction : ScriptFunc<IScriptObject, IScriptArray>
+        {
+            public const string Name = "__invoke";
+            private const string FirstParamName = "target";
+            private const string SecondParamName = "args";
+
+            public InvokeAction()
+                : base(FirstParamName, ScriptSuperContract.Instance, SecondParamName, new ScriptArrayContract(), ScriptSuperContract.Instance)
+            {
+            }
+
+            protected override IScriptObject Invoke(IScriptObject target, IScriptArray arguments, InterpreterState state)
+            {
+                return target.Invoke(arguments.ToArray(), state);
+            }
+        }
+
+        [ComVisible(false)]
         private sealed class WeakRefAction : ScriptFunc<IScriptObject>
         {
             public const string Name = "weakref";
@@ -525,6 +543,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                 AddConstant<RuntimeBehaviorSlots>(RuntimeBehaviorSlots.Name);
                 AddConstant<QuitAction>(QuitAction.Name);
                 AddConstant<ImportAction>(ImportAction.Name);
+                AddConstant<InvokeAction>(InvokeAction.Name);
             }
         }
         #endregion

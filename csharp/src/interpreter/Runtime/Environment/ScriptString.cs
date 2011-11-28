@@ -33,6 +33,7 @@ namespace DynamicScript.Runtime.Environment
             }
         }
         #endregion
+
         private ScriptString(SerializationInfo info, StreamingContext context)
             : this(Deserialize(info))
         {
