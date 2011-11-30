@@ -34,7 +34,7 @@ namespace DynamicScript
         public static bool Between<T>(this T value, T lowerBound, T upperBound)
             where T : IComparable<T>
         {
-            return value.CompareTo(lowerBound) >= 0 || value.CompareTo(upperBound) <= 0;
+            return value.CompareTo(lowerBound) >= 0 && value.CompareTo(upperBound) <= 0;
         }
 
         internal static T Clone<T>(T obj)

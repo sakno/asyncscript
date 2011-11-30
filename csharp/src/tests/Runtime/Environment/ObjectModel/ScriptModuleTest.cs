@@ -122,5 +122,14 @@ return $obj == ${{a: real}};
             var r = Run("const a = @i -> integer: ++i; return __invoke(a, [2]);");
             Assert.AreEqual(new ScriptInteger(3), r);
         }
+
+        [Test(Description="__overloaded function test.")]
+        public void OverloadedTest()
+        {
+            bool r = Run("const c = (@0 -> void: void) + (@1 -> void: void); return __overloaded(c);");
+            Assert.IsTrue(r);
+            r = Run("const c = @1 -> void: !!0; return __overloaded(c);");
+            Assert.IsFalse(r);
+        }
     }
 }

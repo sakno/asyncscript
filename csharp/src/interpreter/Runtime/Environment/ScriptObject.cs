@@ -264,14 +264,8 @@ namespace DynamicScript.Runtime.Environment
             /// <returns>A value used to initialize slot; or the value that is already stored in the slot.</returns>
             protected IScriptObject Initialize(IScriptObject value, InterpreterState state)
             {
-                switch (HasValue)
-                {
-                    case true:
-                        return GetValue(state);
-                    default:
-                        SetValue(value, state);
-                        return value;
-                }
+                if (!HasValue) SetValue(value, state);
+                return GetValue(state);
             }
 
             /// <summary>
@@ -387,7 +381,7 @@ namespace DynamicScript.Runtime.Environment
                 {
                     case ScriptCodeBinaryOperatorType.Assign:
                         SetValue(arg, state);
-                        return this;
+                        return GetValue(state);
                     case ScriptCodeBinaryOperatorType.Expansion:
                         return BinaryOperation(ScriptCodeBinaryOperatorType.Assign, BinaryOperation(ScriptCodeBinaryOperatorType.Union, arg, state), state);
                     case ScriptCodeBinaryOperatorType.AdditiveAssign:
@@ -417,19 +411,19 @@ namespace DynamicScript.Runtime.Environment
                     case ScriptCodeUnaryOperatorType.DecrementPrefix:
                         var value = GetValue(state).UnaryOperation(ScriptCodeUnaryOperatorType.DecrementPrefix, state);
                         TrySetValue(value, state);
-                        return value;
+                        return GetValue(state);
                     case ScriptCodeUnaryOperatorType.IncrementPrefix:
                         value = GetValue(state).UnaryOperation(ScriptCodeUnaryOperatorType.IncrementPrefix, state);
                         TrySetValue(value, state);
-                        return value;
+                        return GetValue(state);
                     case ScriptCodeUnaryOperatorType.SquarePrefix:
                         value = GetValue(state).UnaryOperation(ScriptCodeUnaryOperatorType.SquarePrefix, state);
                         TrySetValue(value, state);
-                        return value;
+                        return GetValue(state);
                     case ScriptCodeUnaryOperatorType.DecrementPostfix:
                         value = GetValue(state);
                         TrySetValue(value.UnaryOperation(ScriptCodeUnaryOperatorType.DecrementPostfix, state), state);
-                        return value;
+                        return GetValue(state);
                     case ScriptCodeUnaryOperatorType.IncrementPostfix:
                         value = GetValue(state);
                         TrySetValue(value.UnaryOperation(ScriptCodeUnaryOperatorType.IncrementPostfix, state), state);
@@ -2491,7 +2485,7 @@ namespace DynamicScript.Runtime.Environment
             return from e in expressions select AsRightSide(e, stateHolder);
         }
 
-        internal static MethodCallExpression BindBinaryOperation(Expression left, ConstantExpression @operator, Expression right, ParameterExpression stateVar)
+        private static MethodCallExpression BindBinaryOperation(Expression left, ConstantExpression @operator, Expression right, ParameterExpression stateVar)
         {
             right = AsRightSide(right, stateVar);
             var binaryOp = LinqHelpers.BodyOf<IScriptObject, ScriptCodeBinaryOperatorType, IScriptObject, InterpreterState, IScriptObject, MethodCallExpression>((l, op, r, s) => l.BinaryOperation(op, r, s));
@@ -2500,27 +2494,11 @@ namespace DynamicScript.Runtime.Environment
 
         internal static MethodCallExpression BindBinaryOperation(Expression left, ScriptCodeBinaryOperatorType @operator, Expression right, ParameterExpression stateVar)
         {
-            switch (@operator)
-            {
-                case ScriptCodeBinaryOperatorType.AdditiveAssign:
-                case ScriptCodeBinaryOperatorType.Assign:
-                case ScriptCodeBinaryOperatorType.DivideAssign:
-                case ScriptCodeBinaryOperatorType.ExclusionAssign:
-                case ScriptCodeBinaryOperatorType.Expansion:
-                case ScriptCodeBinaryOperatorType.Initializer:
-                case ScriptCodeBinaryOperatorType.ModuloAssign:
-                case ScriptCodeBinaryOperatorType.MultiplicativeAssign:
-                case ScriptCodeBinaryOperatorType.Reduction:
-                case ScriptCodeBinaryOperatorType.SubtractiveAssign: break;
-                default:
-                    left = AsRightSide(left, stateVar); break;
-            }
             return BindBinaryOperation(left, LinqHelpers.Constant<ScriptCodeBinaryOperatorType>(@operator), right, stateVar);
         }
 
-        internal static MethodCallExpression BindUnaryOperation(Expression operand, ConstantExpression @operator, ParameterExpression stateVar)
+        private static MethodCallExpression BindUnaryOperation(Expression operand, ConstantExpression @operator, ParameterExpression stateVar)
         {
-            operand = AsRightSide(operand, stateVar);
             var unaryOp = LinqHelpers.BodyOf<IScriptObject, ScriptCodeUnaryOperatorType, InterpreterState, IScriptObject, MethodCallExpression>((l, op, s) => l.UnaryOperation(op, s));
             return unaryOp.Update(operand, new Expression[] { @operator, stateVar });
         }

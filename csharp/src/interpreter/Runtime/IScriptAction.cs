@@ -60,5 +60,12 @@ namespace DynamicScript.Runtime
         /// <param name="result">The composite action.</param>
         /// <returns><see langword="true"/> if composition is applicable; otherwise, <see langword="false"/>.</returns>
         bool Compose(IScriptAction right, out IScriptAction result);
+
+        /// <summary>
+        /// Binds the current function to the specified object.
+        /// </summary>
+        /// <param name="this"></param>
+        /// <returns></returns>
+        IScriptAction Bind(IScriptObject @this);
     }
 }

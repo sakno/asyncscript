@@ -86,7 +86,24 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         }
 
         [ComVisible(false)]
-        private sealed class AdjustAction : ScriptFunc<ScriptActionBase, IScriptObject>
+        private sealed class IsOverloadedAction : ScriptFunc<IScriptObject>
+        {
+            public const string Name = "__overloaded";
+            private const string FirstParamName = "func";
+
+            public IsOverloadedAction()
+                : base(FirstParamName, ScriptSuperContract.Instance, ScriptBooleanContract.Instance)
+            {
+            }
+
+            protected override IScriptObject Invoke(IScriptObject func, InterpreterState state)
+            {
+                return (ScriptBoolean)(func is ScriptActionBase.ICombination);
+            }
+        }
+
+        [ComVisible(false)]
+        private sealed class AdjustAction : ScriptFunc<IScriptAction, IScriptObject>
         {
             public const string Name = "adjust";
             private const string FirstParamName = "act";
@@ -97,9 +114,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
             }
 
-            protected override IScriptObject Invoke(ScriptActionBase action, IScriptObject @this, InterpreterState state)
+            protected override IScriptObject Invoke(IScriptAction action, IScriptObject @this, InterpreterState state)
             {
-                return action != null ? action.ChangeThis(@this) : null;
+                return action.Bind(@this);
             }
         }
 
@@ -544,6 +561,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                 AddConstant<QuitAction>(QuitAction.Name);
                 AddConstant<ImportAction>(ImportAction.Name);
                 AddConstant<InvokeAction>(InvokeAction.Name);
+                AddConstant<IsOverloadedAction>(IsOverloadedAction.Name);
             }
         }
         #endregion

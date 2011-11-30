@@ -129,6 +129,8 @@ namespace DynamicScript.Runtime.Environment
         [TransparentAction]
         private sealed class Composition : ScriptActionBase, IComposition
         {
+            private const string LeftSlotName = "left";
+            private const string RightSlotName = "right";
             public readonly IScriptAction Left;
             public readonly IScriptAction Right;
             private readonly bool NeedCurrying;
@@ -139,6 +141,14 @@ namespace DynamicScript.Runtime.Environment
                 var leftContract = (ScriptActionContract)left.GetContractBinding();
                 var rightContract = (ScriptActionContract)right.GetContractBinding();
                 return new ScriptActionContract(leftContract.Parameters.Concat(noCarrying ? rightContract.Parameters : rightContract.Parameters.Skip(1)), right.ReturnValueContract);
+            }
+
+            private Composition(Composition composition, IScriptObject @this)
+                : base(composition.ContractBinding)
+            {
+                Left = composition.Left.Bind(@this);
+                Right = composition.Right.Bind(@this);
+                NeedCurrying = composition.NeedCurrying;
             }
 
             private Composition(IScriptAction left, IScriptAction right, bool dummy)
@@ -168,6 +178,23 @@ namespace DynamicScript.Runtime.Environment
                 arguments.CopyTo(Left.SignatureInfo.ArgumentCount, buffer, adjustment, Right.SignatureInfo.ArgumentCount - adjustment);
                 if (NeedCurrying) buffer[0] = result;
                 return Right.Invoke(buffer, state);
+            }
+
+            public override ScriptActionBase Bind(IScriptObject @this)
+            {
+                return new Composition(this, @this);   
+            }
+
+            public override IRuntimeSlot this[string slotName, InterpreterState state]
+            {
+                get
+                {
+                    if (StringEqualityComparer.Equals(LeftSlotName, slotName))
+                        return new ScriptConstant(Left);
+                    else if (StringEqualityComparer.Equals(RightSlotName, slotName))
+                        return new ScriptConstant(Right);
+                    else return base[slotName, state];
+                }
             }
 
             IScriptAction IComposition.Left
@@ -310,6 +337,17 @@ namespace DynamicScript.Runtime.Environment
                 Actions = actions;
             }
 
+            public Combination(IScriptAction a, IEnumerable<IScriptAction> actions, InterpreterState state)
+                : this(Combine(a, actions), state)
+            {
+            }
+
+            private static IEnumerable<IScriptAction> Combine(IScriptAction func, IEnumerable<IScriptAction> actions)
+            {
+                foreach (var a in actions) yield return a;
+                yield return func;
+            }
+
             IEnumerable<IScriptAction> ICombination.Actions
             {
                 get { return Actions; }
@@ -341,6 +379,40 @@ namespace DynamicScript.Runtime.Environment
                 return m_contract;
             }
 
+            protected override IScriptObject Add(IScriptObject right, InterpreterState state)
+            {
+                if (ReferenceEquals(this, right))
+                    return this;
+                else if (right is IScriptAction)
+                    return new Combination(Combine((IScriptAction)right, Actions), state);
+                else if (right is ICombination)
+                    return new Combination(Enumerable.Concat(Actions, ((ICombination)right).Actions), state);
+                else if (state.Context == InterpretationContext.Unchecked)
+                    return this;
+                else throw new UnsupportedOperationException(state);
+            }
+
+            protected override IScriptObject Subtract(IScriptObject right, InterpreterState state)
+            {
+                if (ReferenceEquals(this, right))
+                    return Void;
+                else if (right is IScriptAction)
+                    return new Combination(from a in Actions where !ReferenceEquals(a, right) select a, state);
+                else if (right is ICombination)
+                {
+                    var elems = Enumerable.ToArray(Enumerable.Intersect(Actions, ((ICombination)right).Actions));
+                    switch (elems.LongLength)
+                    {
+                        case 0L: return Void;
+                        case 1L: return elems[0];
+                        default: return new Combination(elems, state);
+                    }
+                }
+                else if (state.Context == InterpretationContext.Unchecked)
+                    return this;
+                else throw new UnsupportedOperationException(state);
+            }
+
             public override RuntimeSlotBase this[IScriptObject[] args, InterpreterState state]
             {
                 get
@@ -359,7 +431,9 @@ namespace DynamicScript.Runtime.Environment
             {
                 get
                 {
-                    foreach (var a in Actions)
+                    if (StringEqualityComparer.Equals(slotName, IteratorAction))
+                        return new ScriptConstant(new ScriptIterator(Actions));
+                    else foreach (var a in Actions)
                     {
                         var result = a[slotName, state];
                         if (RuntimeSlotBase.IsMissing(result)) continue;
@@ -401,7 +475,7 @@ namespace DynamicScript.Runtime.Environment
                 return Implementation.InvokeCore(args, state);
             }
 
-            public override ScriptActionBase ChangeThis(IScriptObject @this)
+            public override ScriptActionBase Bind(IScriptObject @this)
             {
                 return new WrappedAction(Implementation, @this);
             }
@@ -755,26 +829,6 @@ namespace DynamicScript.Runtime.Environment
         }
 
         /// <summary>
-        /// Combines the specified actions into the single overloaded action.
-        /// </summary>
-        /// <param name="action0"></param>
-        /// <param name="action1"></param>
-        /// <param name="actions"></param>
-        /// <param name="state"></param>
-        /// <returns></returns>
-        public static ICombination Combine(IScriptAction action0, IScriptAction action1, IEnumerable<IScriptAction> actions, InterpreterState state)
-        {
-            if (actions == null) actions = Enumerable.Empty<IScriptAction>();
-            actions = action0 is IEnumerable<IScriptAction> ?
-                Enumerable.Concat(actions, (IEnumerable<IScriptAction>)action0) :
-                Enumerable.Concat(actions, new[] { action0 });
-            actions = action1 is IEnumerable<IScriptAction> ?
-                Enumerable.Concat(actions, (IEnumerable<IScriptAction>)action1) :
-            Enumerable.Concat(actions, new[] { action1 });
-            return new Combination(actions, state);
-        }
-
-        /// <summary>
         /// Combines this action with the specified set of actions.
         /// </summary>
         /// <param name="action">An action to combine with this action.</param>
@@ -783,7 +837,8 @@ namespace DynamicScript.Runtime.Environment
         /// <returns>>An action that represents overloading.</returns>
         public ICombination Combine(IScriptAction action, IEnumerable<IScriptAction> actions, InterpreterState state)
         {
-            return Combine(this, action, actions, state);
+            actions = actions != null ? Enumerable.Concat(actions, new[] { action }) : new[] { action };
+            return new Combination(this, actions, state);
         }
 
         /// <summary>
@@ -834,7 +889,9 @@ namespace DynamicScript.Runtime.Environment
         /// <returns>The combined action.</returns>
         protected sealed override IScriptObject Add(IScriptObject right, InterpreterState state)
         {
-            if (right is IScriptAction)
+            if (ReferenceEquals(this, right))
+                return this;
+            else if (right is IScriptAction)
                 return Combine((IScriptAction)right, null, state);
             else if (state.Context == InterpretationContext.Unchecked)
                 return ScriptObject.Void;
@@ -892,9 +949,14 @@ namespace DynamicScript.Runtime.Environment
         /// </summary>
         /// <param name="this">A new action owner.</param>
         /// <returns></returns>
-        public virtual ScriptActionBase ChangeThis(IScriptObject @this)
+        public virtual ScriptActionBase Bind(IScriptObject @this)
         {
             return new WrappedAction(this, @this);
+        }
+
+        IScriptAction IScriptAction.Bind(IScriptObject @this)
+        {
+            return Bind(@this);
         }
 
         /// <summary>

@@ -161,5 +161,12 @@ return f(2);");
             long r = Run("const func = @2 -> integer: !!0 + !!1; return func(1, 2);");
             Assert.AreEqual(3L, r);
         }
+
+        [Test(Description="Overloading test.")]
+        public void OverloadingTest()
+        {
+            long r = Run("const c = (@0 ->void: void) + (@1 -> void: void) + (@2 -> void: void); var i = 0; for var g in c do i++; return i;");
+            Assert.AreEqual(3L, r);
+        }
     }
 }

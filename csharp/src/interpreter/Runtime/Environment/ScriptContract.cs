@@ -58,6 +58,8 @@ namespace DynamicScript.Runtime.Environment
 
             public override ContractRelationshipType GetRelationship(IScriptContract contract)
             {
+                if (ReferenceEquals(this, contract))
+                    return ContractRelationshipType.TheSame;
                 switch (m_contract1.GetRelationship(contract))
                 {
                     case ContractRelationshipType.TheSame:
