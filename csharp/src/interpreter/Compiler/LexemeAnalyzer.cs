@@ -15,19 +15,6 @@ namespace DynamicScript.Compiler
     [ComVisible(false)]
     sealed class LexemeAnalyzer : IEnumerator<KeyValuePair<Lexeme.Position, Lexeme>>
     {
-        private static readonly IDictionary<string, Keyword> m_keywordMap;
-
-        static LexemeAnalyzer()
-        {
-            const BindingFlags PublicFields = BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly;
-            var keywordTokenType = typeof(Keyword);
-            var keyWordTokenFields = keywordTokenType.GetFields(PublicFields);
-            m_keywordMap = new Dictionary<string, Keyword>(keyWordTokenFields.Length, new StringEqualityComparer());
-            foreach (var field in keywordTokenType.GetFields(PublicFields))
-                if (field.FieldType.Equals(keywordTokenType))
-                    m_keywordMap.Add((Keyword)field.GetValue(null));
-        }
-
         private readonly IEnumerator<char> m_characters;
         private bool m_disposed;
         private KeyValuePair<Lexeme.Position, Lexeme> m_current;
@@ -63,14 +50,6 @@ namespace DynamicScript.Compiler
         private string ObjectName
         {
             get { return GetType().Name; }
-        }
-
-        /// <summary>
-        /// Gets hash table of the DynamicScript keywords.
-        /// </summary>
-        public static IDictionary<string, Keyword> KeywordTable
-        {
-            get { return m_keywordMap; }
         }
 
         [DebuggerNonUserCode]
@@ -790,14 +769,7 @@ namespace DynamicScript.Compiler
                 builder.Append(characters.Current);
             } while ((hasNext = characters.MoveNext()) && (char.IsLetterOrDigit(characters.Current) || characters.Current == Lexeme.Line));
             var lexeme = builder.ToString();
-            var kw = default(Keyword);
-            switch (KeywordTable.TryGetValue(lexeme, out kw))
-            {
-                case true:
-                    return kw;
-                default:
-                    return new NameToken(lexeme);
-            }
+            return Extensions.Coalesce<Token>(Keyword.FromString(lexeme), new NameToken(lexeme));
         }
 
         #endregion

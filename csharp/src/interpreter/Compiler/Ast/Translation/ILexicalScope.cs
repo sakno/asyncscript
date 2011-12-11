@@ -19,7 +19,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <summary>
         /// Declares a new variable with the specified type.
         /// </summary>
-        /// <typeparam name="T">Type of the variable.</typeparam>
+        /// <typeparam name="T">Type of the variable holder.</typeparam>
         /// <param name="variableName">The name of the variable.</param>
         /// <returns><see langword="true"/> if variable is registered in the scope; <see langword="false"/>
         /// if variable with the specified name is already declared in the scope.</returns>

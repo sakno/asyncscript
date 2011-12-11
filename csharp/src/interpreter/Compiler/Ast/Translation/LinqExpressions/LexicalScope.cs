@@ -27,6 +27,19 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         }
 
         /// <summary>
+        /// Represents implementation of the runtime variable table.
+        /// This class cannot be inherited.
+        /// </summary>
+        [ComVisible(false)]
+        private sealed class ScopeVariables: Dictionary<string, ParameterExpression>, IScopeVariables
+        {
+            public ScopeVariables(int capacity)
+                : base(capacity, new StringEqualityComparer())
+            {
+            }
+        }
+
+        /// <summary>
         /// Represents a read-only empty dictionary of scope variables.
         /// This class cannot be inherited.
         /// </summary>
@@ -127,23 +140,9 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         }
 
         /// <summary>
-        /// Represents implementation of the runtime variable table.
-        /// This class cannot be inherited.
-        /// </summary>
-        [ComVisible(false)]
-        private sealed class ScopeVariables : Dictionary<string, ParameterExpression>, IScopeVariables
-        {
-            public ScopeVariables(int capacity)
-                : base(capacity, new StringEqualityComparer())
-            {
-            }
-        }
-
-        /// <summary>
         /// Represents lexical scope options.
         /// </summary>
         [Serializable]
-        
         [ComVisible(false)]
         protected enum ScopeOptions : int
         {

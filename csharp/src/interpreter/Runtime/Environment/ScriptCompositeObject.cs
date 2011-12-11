@@ -326,6 +326,40 @@ namespace DynamicScript.Runtime.Environment
             }
 
             /// <summary>
+            /// Attempts to set value to the specified slot.
+            /// </summary>
+            /// <param name="slotName"></param>
+            /// <param name="value"></param>
+            /// <param name="state"></param>
+            /// <returns></returns>
+            public bool TrySetValue(string slotName, IScriptObject value, InterpreterState state)
+            {
+                var slot = default(IRuntimeSlot);
+                switch (m_slots.TryGetValue(slotName, out slot))
+                {
+                    case true: slot.SetValue(value, state); return true;
+                    default: return false;
+                }
+            }
+
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="slotName"></param>
+            /// <param name="value"></param>
+            /// <param name="state"></param>
+            /// <returns></returns>
+            public bool TryGetValue(string slotName, out IScriptObject value, InterpreterState state)
+            {
+                var slot = default(IRuntimeSlot);
+                switch (m_slots.TryGetValue(slotName, out slot))
+                {
+                    case true: value = slot.GetValue(state); return true;
+                    default: value = null; return false;
+                }
+            }
+
+            /// <summary>
             /// Gets DynamicScript object holder using slot name.
             /// </summary>
             /// <param name="slotName">The slot name.</param>

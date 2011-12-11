@@ -3,7 +3,7 @@
 namespace DynamicScript.Runtime.Debugging.Interaction
 {
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
-    using QScriptIO = Hosting.DynamicScriptIO;
+    using DScriptIO = Hosting.DynamicScriptIO;
     using Thread = System.Threading.Thread;
     using Compiler;
 
@@ -22,18 +22,21 @@ namespace DynamicScript.Runtime.Debugging.Interaction
             try
             {
                 while (lexer.MoveNext())
-                    if (lexer.Current.Value == Keyword.Continue)
-                        return new DbgContinueCommand();
-                    else if (lexer.Current.Value == Keyword.Leave)
-                        return new DbgLeaveCommand();
-                    else if (lexer.Current.Value == HelpCommandLiteral)
-                        return new DbgHelpCommand();
-                    else if (lexer.Current.Value == ExecCommandLiteral)
-                        return DbgExecCommand.Parse(lexer);
+                    switch (lexer.Current.Value.GetHashCode())
+                    {
+                        case Keyword.HashCodes.lxmContinue:return new DbgContinueCommand();
+                        case Keyword.HashCodes.lxmLeave:return new DbgLeaveCommand();
+                        default:
+                            if (lexer.Current.Value == HelpCommandLiteral)
+                                return new DbgHelpCommand();
+                            else if (lexer.Current.Value == ExecCommandLiteral)
+                                return DbgExecCommand.Parse(lexer);
+                            else return null;
+                    }
             }
             catch (CodeAnalysisException e)
             {
-                QScriptIO.Output.WriteLine(DebuggerStrings.DebuggerError, e.Message);
+                DScriptIO.Output.WriteLine(DebuggerStrings.DebuggerError, e.Message);
                 return DbgCommandStub.Instance;
             }
             finally
@@ -50,7 +53,7 @@ namespace DynamicScript.Runtime.Debugging.Interaction
                 case true:
                     return command.Execute(session, bp);
                 default:
-                    QScriptIO.Output.WriteLine(DebuggerStrings.BadCommand);
+                    DScriptIO.Output.WriteLine(DebuggerStrings.BadCommand);
                     return true;
             }
         }
@@ -72,15 +75,15 @@ namespace DynamicScript.Runtime.Debugging.Interaction
             do
             {
                 //prints prompt
-                QScriptIO.Output.Write(DebuggerStrings.Prompt);
-            } while (RunDebuggerCommand(session, e, QScriptIO.Input.ReadLine()));
+                DScriptIO.Output.Write(DebuggerStrings.Prompt);
+            } while (RunDebuggerCommand(session, e, DScriptIO.Input.ReadLine()));
         }
 
         private static void BreakPointReached(object sender, BreakPointReachedEventArgs e)
         {
             var session = (IScriptDebuggerSession)sender;
             //prints notification
-            QScriptIO.Output.WriteLine(DebuggerStrings.BreakPointReached, 
+            DScriptIO.Output.WriteLine(DebuggerStrings.BreakPointReached, 
                 CallStack.Current, 
                 session.MainThread.ManagedThreadId==e.SourceThread.ManagedThreadId ? DebuggerStrings.MainThread : e.SourceThread.ManagedThreadId.ToString("X"), 
                 e.Comment);

@@ -20,7 +20,6 @@ namespace DynamicScript.Compiler
         /// <param name="token">A string that represents the token. Cannot be <see langword="null"/> or empty.</param>
         /// <exception cref="System.ArgumentNullException"><paramref name="token"/> is <see langword="null"/>.</exception>
         protected Token(string token)
-            : base(true)
         {
             if (string.IsNullOrEmpty(token))
                 throw new ArgumentNullException("token");

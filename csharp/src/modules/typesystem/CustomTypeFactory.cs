@@ -43,5 +43,15 @@ namespace DynamicScript.Modules.TypeSystem
         {
             return new CustomTypeFactory();
         }
+
+        public override ContractRelationshipType GetRelationship(IScriptContract contract)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override IScriptContract GetContractBinding()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

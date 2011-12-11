@@ -142,5 +142,11 @@ namespace DynamicScript.Runtime.Environment
         }
 
         #endregion
+
+
+        public IRuntimeSlot Aggregates
+        {
+            get { throw new NotImplementedException(); }
+        }
     }
 }

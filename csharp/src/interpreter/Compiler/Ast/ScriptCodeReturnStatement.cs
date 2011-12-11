@@ -57,7 +57,7 @@ namespace DynamicScript.Compiler.Ast
         {
             return new ScriptCodeReturnStatement
             {
-                Value = lexer.MoveNext(true) != Punctuation.Semicolon ? Parser.ParseExpression(lexer, Punctuation.Semicolon) : null
+                Value = lexer.MoveNext(true) != Punctuation.HashCodes.lxmSemicolon ? Parser.ParseExpression(lexer, Punctuation.Semicolon) : null
             };
         }
 

@@ -654,6 +654,26 @@ namespace DynamicScript.Runtime.Environment
             /// <param name="other">Other contract to compare.</param>
             /// <returns></returns>
             public abstract bool Equals(IRuntimeSlot other);
+
+            /// <summary>
+            /// Attempts to resolve slot in the current context.
+            /// </summary>
+            /// <param name="slotName"></param>
+            /// <param name="this"></param>
+            /// <param name="state"></param>
+            /// <returns></returns>
+            public static IRuntimeSlot Lookup(string slotName, IScriptObject @this, InterpreterState state)
+            {
+                var slot = @this[slotName, state];
+                if (RuntimeSlotBase.IsMissing(slot)) slot = state.Global[slotName, state];
+                return slot;
+            }
+
+            internal static MethodCallExpression Lookup(string variableName, Expression @this, ParameterExpression stateVar)
+            {
+                @this = AsRightSide(@this, stateVar);
+                return LinqHelpers.BodyOf<string, IScriptObject, InterpreterState, IRuntimeSlot, MethodCallExpression>((v, t, s) => Lookup(v, t, s)).Update(null, new[] { LinqHelpers.Constant(variableName), @this, stateVar });
+            }
         }
 
         /// <summary>

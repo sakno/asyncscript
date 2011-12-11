@@ -89,6 +89,7 @@
     <Compile Include="Compiler\Ast\ScriptCodeActionImplementationExpression.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeArrayExpression.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeAsyncExpression.cs" />
+    <Compile Include="Compiler\Ast\ScriptCodeBaseObjectExpression.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeCallableContractExpression.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeArrayContractExpression.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeBooleanContractExpression.cs" />
@@ -133,6 +134,7 @@
     <Compile Include="Compiler\Ast\ScriptCodeVoidExpression.cs" />
     <Compile Include="Compiler\Ast\ISlot.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeWhileLoopExpression.cs" />
+    <Compile Include="Compiler\Ast\ScriptCodeGlobalObjectExpression.cs" />
     <Compile Include="Compiler\Ast\Translation\LinqExpressions\GenericScope.cs" />
     <Compile Include="Compiler\Ast\Translation\LinqExpressions\SynchronizerScope.cs" />
     <Compile Include="Compiler\Macro.cs" />

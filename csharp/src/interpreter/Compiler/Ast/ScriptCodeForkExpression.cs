@@ -47,7 +47,7 @@ namespace DynamicScript.Compiler.Ast
             var fork = new ScriptCodeForkExpression();
             //Parse asynchronous task body.
             fork.Body.SetExpression(Parser.ParseExpression, lexer, terminator + Punctuation.Arrow);
-            if (lexer.Current.Value == Punctuation.Arrow)
+            if (lexer.Current.Value == Punctuation.HashCodes.lxmArrow)
             {
                 lexer.MoveNext(true);
                 fork.Queue = Parser.ParseExpression(lexer, terminator);

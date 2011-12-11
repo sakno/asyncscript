@@ -15,7 +15,6 @@ namespace DynamicScript.Compiler.Ast.Translation
     /// <typeparam name="TScope">Type of the top-level lexical scope.</typeparam>
     /// <typeparam name="TResult">Type of the analysis result.</typeparam>
     [ComVisible(false)]
-    
     public abstract class Translator<TResult, TScope>: IEnumerator<TResult>
         where TResult: class
         where TScope: class, ILexicalScope
@@ -195,6 +194,20 @@ namespace DynamicScript.Compiler.Ast.Translation
             {
                 get { return m_scope; }
                 private set { m_scope = value != null ? value : m_scope; }
+            }
+
+            /// <summary>
+            /// Gets root lexical scope.
+            /// </summary>
+            public TScope Root
+            {
+                get
+                {
+                    ILexicalScope value = Scope;
+                    while (value.Parent != null)
+                        value = value.Parent;
+                    return (TScope)value;
+                }
             }
 
             /// <summary>
@@ -765,8 +778,28 @@ namespace DynamicScript.Compiler.Ast.Translation
                 return Translate((ScriptCodeExpandExpression)expression, context);
             else if (expression is ScriptCodeArgumentReferenceExpression)
                 return Translate((ScriptCodeArgumentReferenceExpression)expression, context);
+            else if (expression is ScriptCodeGlobalObjectExpression)
+                return Translate((ScriptCodeGlobalObjectExpression)expression, context);
+            else if (expression is ScriptCodeBaseObjectExpression)
+                return Translate((ScriptCodeBaseObjectExpression)expression, context);
             else return null;
         }
+
+        /// <summary>
+        /// Translates reference to the base scope object.
+        /// </summary>
+        /// <param name="baseref"></param>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        protected abstract TResult Translate(ScriptCodeBaseObjectExpression baseref, TranslationContext context);
+
+        /// <summary>
+        /// Translates reference to the global object.
+        /// </summary>
+        /// <param name="globalref"></param>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        protected abstract TResult Translate(ScriptCodeGlobalObjectExpression globalref, TranslationContext context);
 
         /// <summary>
         /// Translates argument reference.

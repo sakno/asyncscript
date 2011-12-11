@@ -117,7 +117,7 @@ namespace DynamicScript.Compiler.Ast
             if (terminator == null) terminator = new Punctuation[0];
             if (terminator.Length == 0) terminator = new[] { Punctuation.Semicolon };
             var initialPosition = lexer.Current.Key;
-            var declaration = new ScriptCodeVariableDeclaration { IsConst = lexer.Current.Value == Keyword.Const };
+            var declaration = new ScriptCodeVariableDeclaration { IsConst = lexer.Current.Value == Keyword.HashCodes.lxmConst };
             var variableName = String.Empty;
             var initExpression = default(ScriptCodeExpression);
             var typeExpression = default(ScriptCodeExpression);

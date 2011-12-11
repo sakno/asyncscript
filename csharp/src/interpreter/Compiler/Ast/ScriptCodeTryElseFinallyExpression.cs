@@ -163,20 +163,20 @@ namespace DynamicScript.Compiler.Ast
             var expr = new ScriptCodeTryElseFinallyExpression();
             expr.DangerousCode.SetExpression(Parser.ParseExpression, lexer, terminator + Keyword.Else + Keyword.Finally);
             //Parse error traps
-            while (lexer.Current.Value == Keyword.Else)
+            while (lexer.Current.Value == Keyword.HashCodes.lxmElse)
             {
                 var trap = new FailureTrap();
                 lexer.MoveNext(Punctuation.LeftBracket, true);   //pass through else keyword
-                if (lexer.MoveNext(true) == Keyword.Var)   //parse exception receiver
+                if (lexer.MoveNext(true) == Keyword.HashCodes.lxmVar)   //parse exception receiver
                     trap.Filter = ScriptCodeVariableDeclaration.Parse(lexer, Punctuation.RightBracket);
-                if (lexer.Current.Value != Punctuation.RightBracket)
+                if (lexer.Current.Value != Punctuation.HashCodes.lxmRightBracket)
                     throw CodeAnalysisException.InvalidPunctuation(Punctuation.RightBracket, lexer.Current);
                 lexer.MoveNext(true);   //pass through right bracket
                 //Parse trap body
                 trap.Handler.SetExpression(Parser.ParseExpression, lexer, terminator + Keyword.Else + Keyword.Finally);
                 expr.Traps.Add(trap);
             }
-            if (lexer.Current.Value == Keyword.Finally)
+            if (lexer.Current.Value == Keyword.HashCodes.lxmFinally)
             {
                 lexer.MoveNext(true);   //pass through finally keyword
                 //Parse finalization block.

@@ -105,5 +105,11 @@ namespace DynamicScript
         {
             return Equals(t, typeof(T1)) || Equals(t, typeof(T2)) || Equals(t, typeof(T3));
         }
+
+        internal static T Coalesce<T>(T left, T right)
+            where T : class
+        {
+            return left ?? right;
+        }
     }
 }

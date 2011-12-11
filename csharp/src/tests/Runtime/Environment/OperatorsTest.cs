@@ -29,5 +29,12 @@ namespace DynamicScript.Runtime.Environment
             var r = Run("return 1 in [1,2];");
             Assert.IsTrue(r);
         }
+
+        [Test(Description = "Member access test.")]
+        public void MemberAccessTest()
+        {
+            var r = Run("const a = 'sl'; const c = {{slot = 2}}; return c.(a + 'ot');");
+            Assert.AreEqual(new ScriptInteger(2), r);
+        }
     }
 }

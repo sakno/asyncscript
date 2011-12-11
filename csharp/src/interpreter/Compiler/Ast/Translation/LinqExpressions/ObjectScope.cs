@@ -10,7 +10,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
     using LinqExpression = System.Linq.Expressions.Expression;
 
     [ComVisible(false)]
-    sealed class ObjectScope: GenericScope
+    sealed class ObjectScope: LexicalScope
     {
         private readonly ParameterExpression m_object;
         public readonly ScriptCodeObjectExpression Expression;
@@ -24,6 +24,11 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             Expression = definition;
         }
 
+        public static ISet<string> CreateSlotSet()
+        {
+            return new HashSet<string>(new StringEqualityComparer());
+        }
+
         public static ObjectScope Create(ScriptCodeObjectExpression def, LexicalScope parent)
         {
             return new ObjectScope(def, parent);
@@ -35,6 +40,22 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             {
                 return m_object;
             }
+        }
+
+        protected override IEnumerable<string> Variables
+        {
+            get { return Enumerable.Empty<string>(); }
+        }
+
+        public override ParameterExpression this[string variableName]
+        {
+            get { return null; }
+        }
+
+        protected override bool DeclareVariable<T>(string variableName, out ParameterExpression declaration)
+        {
+            declaration = null;
+            return false;
         }
     }
 }

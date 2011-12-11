@@ -9,5 +9,9 @@ namespace DynamicScript.Runtime.Environment
     interface IScriptCustomContractSlots
     {
         IRuntimeSlot Constructor { get; }
+
+        IRuntimeSlot Aggregates { get; }
+
+
     }
 }

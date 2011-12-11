@@ -105,7 +105,7 @@ namespace DynamicScript.Compiler.Ast
             };
             lexer.MoveNext(true);    //pass through then keyword
             conditional.ThenBranch = Parser.ParseExpression(lexer, terminator + Keyword.Else);
-            if (lexer.Current.Value == Keyword.Else)
+            if (lexer.Current.Value == Keyword.HashCodes.lxmElse)
             {
                 lexer.MoveNext(true);    //pass through else keyword
                 conditional.ElseBranch = Parser.ParseExpression(lexer, terminator);

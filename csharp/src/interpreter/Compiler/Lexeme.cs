@@ -10,7 +10,7 @@ namespace DynamicScript.Compiler
     /// </summary>
     [ComVisible(false)]
     [Serializable]
-    abstract class Lexeme: IEquatable<string>, IEquatable<Lexeme>
+    abstract class Lexeme: IEquatable<string>, IEquatable<Lexeme>, IEquatable<int>
     {
         #region Nested Types
         /// <summary>
@@ -217,21 +217,14 @@ namespace DynamicScript.Compiler
         /// </summary>
         public const char Diez = '#';
 
-        private readonly bool m_cached;
-        private int m_hash;
+        private int? m_hash;
 
         /// <summary>
         /// Initializes a new lexeme.
         /// </summary>
-        /// <param name="cachedHash">Specifies that the hash code should be cached for high-perfomance lexeme comparison.</param>
-        protected Lexeme(bool cachedHash = true)
+        protected Lexeme()
         {
-            m_cached = cachedHash;
-        }
-
-        private bool CachedHash
-        {
-            get { return m_cached; }
+            m_hash = null;
         }
 
         /// <summary>
@@ -314,16 +307,25 @@ namespace DynamicScript.Compiler
             return OneOf<T1, T2, T3, T4>() || this is T5;
         }
 
+        private bool Equals(int hashCode)
+        {
+            return GetHashCode()==hashCode;
+        }
+
         private bool Equals(Lexeme other)
         {
-            return other != null ? GetHashCode() == other.GetHashCode() : false;
+            return Equals(other.GetHashCode());
+        }
+
+        bool IEquatable<int>.Equals(int hashCode)
+        {
+            return Equals(hashCode);
         }
 
         bool IEquatable<Lexeme>.Equals(Lexeme other)
         {
             return Equals(other);
         }
-
 
         /// <summary>
         /// Determines whether the current lexeme is equal to the specified lexeme.
@@ -341,6 +343,8 @@ namespace DynamicScript.Compiler
                 return Equals((string)other);
             else if (other is Lexeme)
                 return Equals((Lexeme)other);
+            else if (other is int)
+                return Equals((int)other);
             else return false;
         }
 
@@ -352,14 +356,8 @@ namespace DynamicScript.Compiler
         /// the current lexeme.</returns>
         public sealed override int GetHashCode()
         {
-            switch (CachedHash)
-            {
-                case true:
-                    if (m_hash == 0) m_hash = StringEqualityComparer.GetHashCode(Value);
-                    return m_hash;
-                default:
-                    return StringEqualityComparer.GetHashCode(Value);
-            }
+            if (m_hash == null) m_hash = StringEqualityComparer.GetHashCode(Value);
+            return m_hash.Value;
         }
 
         /// <summary>
@@ -384,6 +382,28 @@ namespace DynamicScript.Compiler
         public static bool operator !=(Lexeme lex1, Lexeme lex2)
         {
             return !Equals(lex1, lex2);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="lex1"></param>
+        /// <param name="hashCode"></param>
+        /// <returns></returns>
+        public static bool operator ==(Lexeme lex1, int hashCode)
+        {
+            return lex1 != null && lex1.Equals(hashCode);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="lex1"></param>
+        /// <param name="hashCode"></param>
+        /// <returns></returns>
+        public static bool operator !=(Lexeme lex1, int hashCode)
+        {
+            return lex1 != null && !lex1.Equals(hashCode);
         }
 
         /// <summary>

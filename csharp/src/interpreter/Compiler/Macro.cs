@@ -15,7 +15,6 @@ namespace DynamicScript.Compiler
         private readonly string m_value;
 
         public Macro(string command)
-            : base(true)
         {
             m_value = command ?? string.Empty;
         }

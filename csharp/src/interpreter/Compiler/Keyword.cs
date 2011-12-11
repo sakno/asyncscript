@@ -3,6 +3,7 @@
 namespace DynamicScript.Compiler
 {
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
+    using BindingFlags = System.Reflection.BindingFlags;
 
     /// <summary>
     /// Represents keyword token.
@@ -12,6 +13,197 @@ namespace DynamicScript.Compiler
     [Serializable]
     sealed class Keyword : Token
     {
+        #region Nested Types
+        [ComVisible(false)]
+        internal static class HashCodes
+        {
+#if DEBUG
+            internal static void PrintKeywordValues(System.IO.TextWriter output)
+            {
+                const BindingFlags PublicFields = BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly;
+                var keywordTokenType = typeof(Keyword);
+                foreach (var field in keywordTokenType.GetFields(PublicFields))
+                    if (field.FieldType.Equals(keywordTokenType))
+                    {
+                        var keyword = field.GetValue(null);
+                        output.WriteLine("/// <summary>");
+                        output.WriteLine("/// Hash code of '{0}' keyword", keyword);
+                        output.WriteLine("/// </summary>");
+                        output.WriteLine("public const int lxm{0} = {1};", field.Name, keyword.GetHashCode());
+                    }
+                foreach (var field in keywordTokenType.GetFields(PublicFields))
+                    if (field.FieldType.Equals(keywordTokenType))
+                    {
+                        output.WriteLine("case HashCodes.lxm{0}: return {1};", field.Name, field.Name);
+                    }
+            }
+#endif
+            /// <summary>
+            /// Hash code of 'var' keyword
+            /// </summary>
+            public const int lxmVar = 115981799;
+            /// <summary>
+            /// Hash code of 'const' keyword
+            /// </summary>
+            public const int lxmConst = -1123106461;
+            /// <summary>
+            /// Hash code of 'is' keyword
+            /// </summary>
+            public const int lxmIs = 104170;
+            /// <summary>
+            /// Hash code of 'in' keyword
+            /// </summary>
+            public const int lxmIn = 104165;
+            /// <summary>
+            /// Hash code of 'to' keyword
+            /// </summary>
+            public const int lxmTo = 115067;
+            /// <summary>
+            /// Hash code of 'object' keyword
+            /// </summary>
+            public const int lxmObject = -1425986369;
+            /// <summary>
+            /// Hash code of 'type' keyword
+            /// </summary>
+            public const int lxmType = 1345896634;
+            /// <summary>
+            /// Hash code of 'this' keyword
+            /// </summary>
+            public const int lxmThis = 1329194334;
+            /// <summary>
+            /// Hash code of 'integer' keyword
+            /// </summary>
+            public const int lxmInteger = -581406786;
+            /// <summary>
+            /// Hash code of 'for' keyword
+            /// </summary>
+            public const int lxmFor = 100282377;
+            /// <summary>
+            /// Hash code of 'leave' keyword
+            /// </summary>
+            public const int lxmLeave = -2059448841;
+            /// <summary>
+            /// Hash code of 'continue' keyword
+            /// </summary>
+            public const int lxmContinue = -958206105;
+            /// <summary>
+            /// Hash code of 'return' keyword
+            /// </summary>
+            public const int lxmReturn = 535626416;
+            /// <summary>
+            /// Hash code of 'void' keyword
+            /// </summary>
+            public const int lxmVoid = -1012413868;
+            /// <summary>
+            /// Hash code of 'if' keyword
+            /// </summary>
+            public const int lxmIf = 104157;
+            /// <summary>
+            /// Hash code of 'true' keyword
+            /// </summary>
+            public const int lxmTrue = 1339027022;
+            /// <summary>
+            /// Hash code of 'false' keyword
+            /// </summary>
+            public const int lxmFalse = 1070720931;
+            /// <summary>
+            /// Hash code of 'boolean' keyword
+            /// </summary>
+            public const int lxmBoolean = -920214360;
+            /// <summary>
+            /// Hash code of 'real' keyword
+            /// </summary>
+            public const int lxmReal = -620244386;
+            /// <summary>
+            /// Hash code of 'string' keyword
+            /// </summary>
+            public const int lxmString = 1094552529;
+            /// <summary>
+            /// Hash code of 'callable' keyword
+            /// </summary>
+            public const int lxmCallable = 357883704;
+            /// <summary>
+            /// Hash code of 'do' keyword
+            /// </summary>
+            public const int lxmDo = 99211;
+            /// <summary>
+            /// Hash code of 'while' keyword
+            /// </summary>
+            public const int lxmWhile = 1612899761;
+            /// <summary>
+            /// Hash code of 'groupby' keyword
+            /// </summary>
+            public const int lxmGroupBy = -951552554;
+            /// <summary>
+            /// Hash code of 'then' keyword
+            /// </summary>
+            public const int lxmThen = 1329190365;
+            /// <summary>
+            /// Hash code of 'else' keyword
+            /// </summary>
+            public const int lxmElse = -380599623;
+            /// <summary>
+            /// Hash code of 'fault' keyword
+            /// </summary>
+            public const int lxmFault = 1079552738;
+            /// <summary>
+            /// Hash code of 'try' keyword
+            /// </summary>
+            public const int lxmTry = 114034491;
+            /// <summary>
+            /// Hash code of 'finally' keyword
+            /// </summary>
+            public const int lxmFinally = -495501437;
+            /// <summary>
+            /// Hash code of 'checked' keyword
+            /// </summary>
+            public const int lxmChecked = 1075478823;
+            /// <summary>
+            /// Hash code of 'unchecked' keyword
+            /// </summary>
+            public const int lxmUnchecked = -358083090;
+            /// <summary>
+            /// Hash code of 'caseof' keyword
+            /// </summary>
+            public const int lxmCaseof = 569427655;
+            /// <summary>
+            /// Hash code of 'fork' keyword
+            /// </summary>
+            public const int lxmFork = 595587906;
+            /// <summary>
+            /// Hash code of 'finset' keyword
+            /// </summary>
+            public const int lxmFinSet = -17501257;
+            /// <summary>
+            /// Hash code of 'dimensional' keyword
+            /// </summary>
+            public const int lxmDimensional = 846474449;
+            /// <summary>
+            /// Hash code of 'async' keyword
+            /// </summary>
+            public const int lxmAsync = -2040171972;
+            /// <summary>
+            /// Hash code of 'expr' keyword
+            /// </summary>
+            public const int lxmExpr = -368817611;
+            /// <summary>
+            /// Hash code of 'stmt' keyword
+            /// </summary>
+            public const int lxmStmt = 367741000;
+            /// <summary>
+            /// Hash code of 'expandq' keyword
+            /// </summary>
+            public const int lxmExpandq = 1009504215;
+            /// <summary>
+            /// Hash code of 'global' keyword
+            /// </summary>
+            public const int lxmGlobal = 301049955;
+            /// <summary>
+            /// Hash code of 'base' keyword
+            /// </summary>
+            public const int lxmBase = 983837969;
+        }
+        #endregion
         private Keyword(string keyword)
             : base(keyword)
         {
@@ -214,5 +406,70 @@ namespace DynamicScript.Compiler
         /// Represents an operator that expands quouted expression.
         /// </summary>
         public static readonly Keyword Expandq = new Keyword("expandq");
+
+        /// <summary>
+        /// Represents reference to the global object.
+        /// </summary>
+        public static readonly Keyword Global = new Keyword("global");
+
+        /// <summary>
+        /// Represents reference to the parent scope object.
+        /// </summary>
+        public static readonly Keyword Base = new Keyword("base");
+
+        internal static Keyword FromHashCode(int hashCode)
+        {
+            switch (hashCode)
+            {
+
+                case HashCodes.lxmVar: return Var;
+                case HashCodes.lxmConst: return Const;
+                case HashCodes.lxmIs: return Is;
+                case HashCodes.lxmIn: return In;
+                case HashCodes.lxmTo: return To;
+                case HashCodes.lxmObject: return Object;
+                case HashCodes.lxmType: return Type;
+                case HashCodes.lxmThis: return This;
+                case HashCodes.lxmInteger: return Integer;
+                case HashCodes.lxmFor: return For;
+                case HashCodes.lxmLeave: return Leave;
+                case HashCodes.lxmContinue: return Continue;
+                case HashCodes.lxmReturn: return Return;
+                case HashCodes.lxmVoid: return Void;
+                case HashCodes.lxmIf: return If;
+                case HashCodes.lxmTrue: return True;
+                case HashCodes.lxmFalse: return False;
+                case HashCodes.lxmBoolean: return Boolean;
+                case HashCodes.lxmReal: return Real;
+                case HashCodes.lxmString: return String;
+                case HashCodes.lxmCallable: return Callable;
+                case HashCodes.lxmDo: return Do;
+                case HashCodes.lxmWhile: return While;
+                case HashCodes.lxmGroupBy: return GroupBy;
+                case HashCodes.lxmThen: return Then;
+                case HashCodes.lxmElse: return Else;
+                case HashCodes.lxmFault: return Fault;
+                case HashCodes.lxmTry: return Try;
+                case HashCodes.lxmFinally: return Finally;
+                case HashCodes.lxmChecked: return Checked;
+                case HashCodes.lxmUnchecked: return Unchecked;
+                case HashCodes.lxmCaseof: return Caseof;
+                case HashCodes.lxmFork: return Fork;
+                case HashCodes.lxmFinSet: return FinSet;
+                case HashCodes.lxmDimensional: return Dimensional;
+                case HashCodes.lxmAsync: return Async;
+                case HashCodes.lxmExpr: return Expr;
+                case HashCodes.lxmStmt: return Stmt;
+                case HashCodes.lxmExpandq: return Expandq;
+                case HashCodes.lxmGlobal: return Global;
+                case HashCodes.lxmBase: return Base;
+                default: return null;
+            }
+        }
+
+        internal static Keyword FromString(string lexeme)
+        {
+            return FromHashCode(StringEqualityComparer.GetHashCode(lexeme));
+        }
     }
 }

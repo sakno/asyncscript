@@ -97,7 +97,7 @@ namespace DynamicScript.Compiler.Ast
             if (lexer.Current.Value != Keyword.While) throw CodeAnalysisException.InvalidExpressionTerm(lexer.Current); //matches to the while keyword
             lexer.MoveNext(true);   //pass through while keyword
             loop.Condition = Parser.ParseExpression(lexer, terminator + Keyword.GroupBy); //parse conditional expression
-            if (lexer.Current.Value == Keyword.GroupBy)
+            if (lexer.Current.Value == Keyword.HashCodes.lxmGroupBy)
             {
                 var lexeme = lexer.MoveNext(true); //wait for binary operator or expression.
                 switch (lexeme is Operator)
@@ -122,7 +122,7 @@ namespace DynamicScript.Compiler.Ast
             if (lexer == null) throw new ArgumentNullException("lexer");
             lexer.MoveNext(true);   //pass through while keyword
             var loop = new ScriptCodeWhileLoopExpression { Style = ScriptCodeWhileLoopExpression.LoopStyle.EvaluateConditionBeforeBody, Condition = Parser.ParseExpression(lexer, Keyword.GroupBy, Keyword.Do) };
-            if (lexer.Current.Value == Keyword.GroupBy) //parse grouping expression.
+            if (lexer.Current.Value == Keyword.HashCodes.lxmGroupBy) //parse grouping expression.
             {
                 var lexeme = lexer.MoveNext(true); //wait for binary operator or expression.
                 switch (lexeme is Operator)

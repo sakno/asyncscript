@@ -221,13 +221,13 @@ namespace DynamicScript.Compiler.Ast
             var result = new ScriptCodeSelectionExpression();
             result.Source = Parser.ParseExpression(lexer, terminator + Punctuation.Arrow + Keyword.If + Keyword.Else);
             //Parse comparer
-            if (lexer.Current.Value == Punctuation.Arrow)
+            if (lexer.Current.Value == Punctuation.HashCodes.lxmArrow)
             {
                 lexer.MoveNext(true);   //pass through -> token
                 result.Comparer = Parser.ParseExpression(lexer, terminator + Keyword.If + Keyword.Else);
             }
             //Parse handlers
-            while (lexer.Current.Value == Keyword.If)
+            while (lexer.Current.Value == Keyword.HashCodes.lxmIf)
             {
                 //Parse case
                 var @case = new SelectionCase();
@@ -237,7 +237,7 @@ namespace DynamicScript.Compiler.Ast
                 @case.Handler.SetExpression(Parser.ParseExpression, lexer, terminator + Keyword.Else + Keyword.If);
                 result.Cases.Add(@case);
             }
-            if (lexer.Current.Value == Keyword.Else)
+            if (lexer.Current.Value == Keyword.HashCodes.lxmElse)
             {
                 lexer.MoveNext(true);   //pass through else keyword
                 //Parse default handler.

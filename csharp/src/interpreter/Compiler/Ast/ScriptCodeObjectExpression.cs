@@ -308,7 +308,7 @@ namespace DynamicScript.Compiler.Ast
                 if (expr.Contains(slotName))
                     throw CodeAnalysisException.DuplicateIdentifier(slotName, lexer.Current.Key);
                 else expr.Add(slotName, initExpr, contractBinding);
-            } while (lexer.Current.Value == Punctuation.Comma);
+            } while (lexer.Current.Value == Punctuation.HashCodes.lxmComma);
             return expr;
         }
 

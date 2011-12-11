@@ -437,26 +437,37 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             var resolved = default(bool);
             return Translate(variableRef.VariableName, context, out resolved);
         }
-       
+
+        private static Expression GetBaseObject(LexicalScope scope)
+        {
+            if (scope == null || scope.IsTopLevel)
+                return ScriptObject.MakeVoid();
+            else if (scope.Parent is ObjectScope)
+                return GetBaseObject(scope.Parent);
+            else return scope.Parent.ScopeVar;
+        }
+
+        private static Expression GetBaseObject(TranslationContext context)
+        {
+            return GetBaseObject(context.Scope);   
+        }
+
+        /// <summary>
+        /// Translates reference to the base scope.
+        /// </summary>
+        /// <param name="baseref"></param>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        protected override Expression Translate(ScriptCodeBaseObjectExpression baseref, TranslationContext context)
+        {
+            return GetBaseObject(context);
+        }
+
         private Expression Translate(string variableName, TranslationContext context, out bool resolved)
         {
             //The first, try find out a variable through a scope.
             Expression @var = context.Scope[variableName];
-            if (@var != null)
-            {
-                resolved = true;
-                return @var;
-            }
-            //The second, try to find object slot
-            var objscope = context.Lookup<ObjectScope>();
-            if (objscope != null && objscope.Expression.Contains(variableName))
-            {
-                resolved = true;
-                return ScriptObject.BindSlotAccess(context.Scope.ScopeVar, variableName, context.Scope.StateHolder);
-            }
-            resolved = false;
-            //Variable name cannot be resolved statically, therefore, it should be retreived from the module.
-            return ScriptObject.BindSlotAccess(GlobalScope.GetGlobal(context.Scope), variableName, context.Scope.StateHolder);
+            return (resolved = @var != null) ? @var : ScriptObject.RuntimeSlotBase.Lookup(variableName, context.Scope.ScopeVar, context.Scope.StateHolder);
         }
 
         private Expression TranslateGrouping(ScriptCodeLoopExpression.OperatorGrouping grouping, TranslationContext context)
@@ -750,6 +761,17 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         protected override Expression Translate(ScriptCodeRealContractExpression realContract, TranslationContext context)
         {
             return ScriptRealContract.Expression;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="globalref"></param>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        protected override Expression Translate(ScriptCodeGlobalObjectExpression globalref, TranslationContext context)
+        {
+            return GlobalScope.GetGlobal(context.Scope);
         }
 
         /// <summary>
@@ -1318,12 +1340,10 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
 
         private IEnumerable<KeyValuePair<string, Expression>> ExtractSlots(ScriptCodeObjectExpression expression, TranslationContext context)
         {
+            var slots = ObjectScope.CreateSlotSet();
             foreach (ScriptCodeObjectExpression.Slot s in expression)
-            {
-                var holder = default(ParameterExpression);
-                if (context.Scope.DeclareVariable(s.Name, out holder))
+                if (slots.Add(s.Name))
                     yield return new KeyValuePair<string, Expression>(s.Name, BindToVariable(LinqHelpers.Null<IRuntimeSlot>(), s, context));
-            }
         }
 
         /// <summary>
@@ -1340,26 +1360,22 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             return Expression.Invoke(initializer, context.Scope.StateHolder);
         }
 
-        private MethodCallExpression BindMemberAccess(Expression left, ScriptCodeExpression right, TranslationContext context)
+        private Expression BindMemberAccess(Expression left, ScriptCodeExpression right, TranslationContext context)
         {
-            switch(right is ScriptCodeVariableReference)
-            {
-                case true:
-                    return ScriptObject.BindSlotAccess(left, ((ScriptCodeVariableReference)right).VariableName, context.Scope.StateHolder);
-                default:
-                    throw CodeAnalysisException.IdentifierExpected(context.DebugInfo);
-            }
+            if (right is ScriptCodeVariableReference)
+                return ScriptObject.BindSlotAccess(left, ((ScriptCodeVariableReference)right).VariableName, context.Scope.StateHolder);
+            else if (right is ScriptCodeStringExpression)
+                return ScriptObject.BindSlotAccess(left, ((ScriptCodeStringExpression)right).Value, context.Scope.StateHolder);
+            else return Expression.Convert(ScriptObject.BindBinaryOperation(left, ScriptCodeBinaryOperatorType.MemberAccess, Translate(right, context), context.Scope.StateHolder), typeof(IRuntimeSlot));
         }
 
         private MethodCallExpression BindMetadataDiscovery(Expression left, ScriptCodeExpression right, TranslationContext context)
         {
-            switch (right is ScriptCodeVariableReference)
-            {
-                case true:
-                    return ScriptObject.BindSlotMetadata(left, ((ScriptCodeVariableReference)right).VariableName, context.Scope.StateHolder);
-                default:
-                    throw CodeAnalysisException.IdentifierExpected(context.DebugInfo);
-            }
+            if (right is ScriptCodeVariableReference)
+                return ScriptObject.BindSlotMetadata(left, ((ScriptCodeVariableReference)right).VariableName, context.Scope.StateHolder);
+            else if (right is ScriptCodeStringExpression)
+                return ScriptObject.BindSlotMetadata(left, ((ScriptCodeStringExpression)right).Value, context.Scope.StateHolder);
+            else return ScriptObject.BindBinaryOperation(left, ScriptCodeBinaryOperatorType.MetadataDiscovery, Translate(right, context), context.Scope.StateHolder);
         }
 
         private Expression DeleteValue(string variableName, TranslationContext context)
