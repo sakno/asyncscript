@@ -17,7 +17,7 @@ namespace DynamicScript.Runtime.Debugging
         /// <summary>
         /// Represents an action associated with this call stack frame.
         /// </summary>
-        public readonly IScriptAction Action;
+        public readonly IScriptFunction Action;
         private readonly IDictionary<string, RuntimeSlotWatcher> m_watchers;
         private string m_id;
 
@@ -26,10 +26,10 @@ namespace DynamicScript.Runtime.Debugging
             if (state == null) state = InterpreterState.Initial;
             m_watchers = new Dictionary<string, RuntimeSlotWatcher>(10, new StringEqualityComparer());
             foreach (var s in global.Slots)
-                m_watchers[s] = new RuntimeSlotWatcher(global[s, state]);
+                m_watchers[s] = new RuntimeSlotWatcher(global, s);
         }
 
-        internal CallStackFrame(IScriptAction action, InterpreterState state)
+        internal CallStackFrame(IScriptFunction action, InterpreterState state)
             : this(state.Global, state)
         {
             Action = action;
@@ -69,7 +69,7 @@ namespace DynamicScript.Runtime.Debugging
             m_watchers[storageName] = new RuntimeSlotWatcher(storage);
         }
 
-        internal static bool IsTransparent(IScriptAction action)
+        internal static bool IsTransparent(IScriptFunction action)
         {
             return TransparentActionAttribute.IsDefined(action.GetType());
         }

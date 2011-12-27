@@ -197,7 +197,7 @@ namespace DynamicScript.Compiler
                         column++;
                         return null;
                     }
-                    else if (char.IsLetter(characters.Current) || characters.Current == Lexeme.Line)
+                    else if (char.IsLetter(characters.Current) || characters.Current == Lexeme.Line || characters.Current == Lexeme.Backquote)
                         return ParseToken(characters, ref column, out hasNext);
                     break;
             }
@@ -767,7 +767,7 @@ namespace DynamicScript.Compiler
             {
                 column++;
                 builder.Append(characters.Current);
-            } while ((hasNext = characters.MoveNext()) && (char.IsLetterOrDigit(characters.Current) || characters.Current == Lexeme.Line));
+            } while ((hasNext = characters.MoveNext()) && (char.IsLetterOrDigit(characters.Current) || characters.Current == Lexeme.Line || characters.Current == Lexeme.Backquote));
             var lexeme = builder.ToString();
             return Extensions.Coalesce<Token>(Keyword.FromString(lexeme), new NameToken(lexeme));
         }

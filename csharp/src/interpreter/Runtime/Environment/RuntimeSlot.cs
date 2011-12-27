@@ -16,18 +16,27 @@ namespace DynamicScript.Runtime.Environment
     using QCodeUnaryOperatorType = Compiler.Ast.ScriptCodeUnaryOperatorType;
     using NativeGarbageCollector = System.GC;
     using IDebuggerEditable = Debugging.IDebuggerBrowsable;
-    using ScriptObjectConverter = Debugging.ScriptObjectConverter;
+    using ScriptObjectConverterAttribute = Debugging.ScriptObjectConverterAttribute;
 
     /// <summary>
     /// Represents DynamicScript object runtime storage, such as variable or constant.
     /// </summary>
     [ComVisible(false)]
     [Serializable]
-    public abstract class RuntimeSlot: ScriptObject.RuntimeSlotBase, IDebuggerEditable, IEquatable<IRuntimeSlot>, IEquatable<RuntimeSlot>
+    public abstract class RuntimeSlot: ScriptObject.RuntimeSlotBase, 
+        IDebuggerEditable,
+        IStaticRuntimeSlot,
+        IEquatable<RuntimeSlot>,
+        IEquatable<IStaticRuntimeSlot>
     {
         private const string ContractBindingHolder = "ContractBinding";
         private const string ValueHolder = "Value";
-        private readonly IScriptContract m_contract;
+
+        /// <summary>
+        /// Represents static contract binding.
+        /// </summary>
+        public readonly IScriptContract ContractBinding;
+
         /// <summary>
         /// Represents internal storage of the runtime slot.
         /// </summary>
@@ -39,7 +48,7 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="contract">The contract binding for the storage.</param>
         protected RuntimeSlot(IScriptContract contract = null)
         {
-            m_contract = contract ?? ScriptSuperContract.Instance;
+            ContractBinding = contract ?? ScriptSuperContract.Instance;
         }
 
         /// <summary>
@@ -50,7 +59,7 @@ namespace DynamicScript.Runtime.Environment
         protected RuntimeSlot(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
-            m_contract = (IScriptContract)info.GetValue(ContractBindingHolder, typeof(IScriptContract));
+            ContractBinding = (IScriptContract)info.GetValue(ContractBindingHolder, typeof(IScriptContract));
             Value = (IScriptObject)info.GetValue(ValueHolder, typeof(IScriptObject));
         }
 
@@ -79,35 +88,26 @@ namespace DynamicScript.Runtime.Environment
         /// <summary>
         /// Gets contract binding.
         /// </summary>
-        public sealed override IScriptContract ContractBinding
+        IScriptContract IStaticRuntimeSlot.ContractBinding
         {
-            get { return m_contract; }
-        }
-
-        /// <summary>
-        /// Gets collection of slots.
-        /// </summary>
-        protected sealed override ICollection<string> Slots
-        {
-            get { return Value != null ? Value.Slots : new string[0]; }
+            get { return ContractBinding; }
         }
 
         [MethodImpl(MethodImplOptions.Synchronized)]
-        private void SetValueDirect(IScriptObject v)
+        private IScriptObject SetValueDirect(IScriptObject v)
         {
-            Value = v;
-            HasValue = true;
+            HasValue = v != null;
+            return Value = v;
         }
 
-        private void SetValueDirect(IScriptProxyObject value, InterpreterState state)
+        private IScriptObject SetValueDirect(IScriptProxyObject value, InterpreterState state)
         {
             switch (value.IsCompleted)
             {
-                case true: SetValueDirect(value.Unwrap(state), state); return;
+                case true: return SetValueDirect(value.Unwrap(state), state); 
                 default:
                     value.RequiresContract(ContractBinding, state);
-                    SetValueDirect(value);
-                    return;
+                    return SetValueDirect(value);
             }
         }
 
@@ -118,19 +118,17 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="value"></param>
         /// <param name="state"></param>
         /// <remarks>This method ignores custom semantic defined in overridden <see cref="SetValue"/> method.</remarks>
-        private void SetValueDirect(IScriptObject value, InterpreterState state)
+        private IScriptObject SetValueDirect(IScriptObject value, InterpreterState state)
         {
             var theSame = default(bool);
             if (value == null)
-                SetValueDirect(null);
-            else if (value is IRuntimeSlot)
-                SetValueDirect(((IRuntimeSlot)value).GetValue(state), state);
+            { SetValueDirect(null); return ContractBinding.FromVoid(state); }
             else if (value is IScriptProxyObject)
-                SetValueDirect((IScriptProxyObject)value, state);
+                return SetValueDirect((IScriptProxyObject)value, state);
             else if (ContractBinding.IsCompatible(value, out theSame))
-                SetValueDirect(theSame ? value : ContractBinding.Convert(Conversion.Implicit, value, state));
+                return SetValueDirect(theSame ? value : ContractBinding.Convert(Conversion.Implicit, value, state));
             else if (value is ScriptVoid || state.Context == InterpretationContext.Unchecked)
-                SetValueDirect(ContractBinding.FromVoid(state));
+                return SetValueDirect(ContractBinding.FromVoid(state));
             else
                 throw new ContractBindingException(value, ContractBinding, state);
         }
@@ -151,9 +149,9 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="state">Internal interpreter state.</param>
         /// <exception cref="ContractBindingException">The input object has incompatible contract with the slot and
         /// assignment is located in the checked context.</exception>
-        public override void SetValue(IScriptObject value, InterpreterState state)
+        public override IScriptObject SetValue(IScriptObject value, InterpreterState state)
         {
-            SetValueDirect(value, state);
+            return SetValueDirect(value, state);
         }
 
         /// <summary>
@@ -226,73 +224,55 @@ namespace DynamicScript.Runtime.Environment
             base.GetObjectData(info, context);
         }
 
-        bool IDebuggerEditable.TryGetValue(out string value, InterpreterState state)
+        /// <summary>
+        /// Determines whether the current slot represents the same value and contract binding as the specified slot.
+        /// </summary>
+        /// <param name="s"></param>
+        /// <returns></returns>
+        public bool Equals(RuntimeSlot s)
         {
-            var v = GetValue(state);
-            var converter = TypeDescriptor.GetConverter(v, true) as ScriptObjectConverter;
-            switch (converter != null && converter.CanConvertTo(typeof(string)))
-            {
-                case true:
-                    converter.SetState(state);
-                    value = converter.ConvertToString(v);
-                    return true;
-                default:
-                    value = null;
-                    return false;
-            }
+            return s != null && Equals(ContractBinding, s.ContractBinding) && Equals(Value, s.Value);
         }
 
         /// <summary>
-        /// Determines whether the current runtime slot holds the same value as other.
+        /// Determines whether the current slot represents the same value and contract binding as the specified slot.
         /// </summary>
-        /// <param name="other">Other runtime slot to compare.</param>
-        /// <returns><see langword="true"/> if the current slot holds the same value as other; otherwise, <see langword="false"/>.</returns>
-        
-        public bool Equals(RuntimeSlot other)
+        /// <param name="s"></param>
+        /// <returns></returns>
+        public bool Equals(IStaticRuntimeSlot s)
         {
-            if (other == null) return false;
-            switch (ContractBinding.Equals(ContractBinding))
-            {
-                case true:
-                    return HasValue && other.HasValue ? Value.Equals(other.Value) : HasValue == other.HasValue;
-                default: 
-                    return false;
-            }
+
+            return s != null &&
+                Equals(ContractBinding, s.ContractBinding) &&
+                (HasValue == s.HasValue ? Equals(GetValue(InterpreterState.Current), s.GetValue(InterpreterState.Current)) : true);
         }
 
         /// <summary>
-        /// Determines whether the current runtime slot holds the same value as other.
+        /// Determines whether the current slot represents the same value and contract binding as the specified slot.
         /// </summary>
-        /// <param name="other">Other runtime slot to compare.</param>
-        /// <returns><see langword="true"/> if the current slot holds the same value as other; otherwise, <see langword="false"/>.</returns>
-        public sealed override bool Equals(IRuntimeSlot other)
+        /// <param name="s"></param>
+        /// <returns></returns>
+        public sealed override bool Equals(object s)
         {
-            return Equals(other as RuntimeSlot);
+            if (s is RuntimeSlot)
+                return Equals((RuntimeSlot)s);
+            else if (s is IStaticRuntimeSlot)
+                return Equals((IStaticRuntimeSlot)s);
+            else return false;
         }
 
         /// <summary>
-        /// Determines whether the current runtime slot holds the same value as other.
+        /// Computes hash code for this runtime slot.
         /// </summary>
-        /// <param name="other">Other runtime slot to compare.</param>
-        /// <returns><see langword="true"/> if the current slot holds the same value as other; otherwise, <see langword="false"/>.</returns>
-        public sealed override bool Equals(object other)
-        {
-            switch (other is IScriptObject)
-            {
-                case true:
-                    return HasValue && Value != null ? Equals(Value, other) : false;
-                default: return Equals(other as RuntimeSlot);
-            }
-        }
-
-        /// <summary>
-        /// Computes hash code of this runtime slot.
-        /// </summary>
-        /// <returns>A hash code of this runtime slot.</returns>
+        /// <returns></returns>
         public sealed override int GetHashCode()
         {
-            var result = ContractBinding.GetHashCode();
-            return HasValue ? result ^ Value.GetHashCode() : result;
+            return Value != null ? Value.GetHashCode() : 0;
+        }
+
+        bool IDebuggerEditable.TryGetValue(InterpreterState state, out string value)
+        {
+            return ScriptObjectConverterAttribute.ConvertTo<string>(GetValue(state), state, out value);
         }
     }
 }

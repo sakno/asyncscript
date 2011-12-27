@@ -38,13 +38,6 @@ namespace DynamicScript.Runtime.Environment
             Assert.IsTrue(result);
         }
 
-        [Test(Description="LENGTH function test.")]
-        public void LengthTest()
-        {
-            long len = Run("return string.length('abc');");
-            Assert.AreEqual(3L, len);
-        }
-
         [Test(Description="INSERT function test.")]
         public void InsertTest()
         {

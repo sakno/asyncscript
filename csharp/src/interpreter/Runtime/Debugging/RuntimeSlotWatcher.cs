@@ -11,6 +11,8 @@ namespace DynamicScript.Runtime.Debugging
     using Expression = System.Linq.Expressions.Expression;
     using IDynamicMetaObjectProvider = System.Dynamic.IDynamicMetaObjectProvider;
     using IScopeVariable = Microsoft.Scripting.IScopeVariable;
+    using ScriptSuperContract = Environment.ScriptSuperContract;
+    using NamedRuntimeSlot = Environment.NamedRuntimeSlot;
 
     /// <summary>
     /// Represents runtime slot watcher that is used in debug mode.
@@ -20,10 +22,24 @@ namespace DynamicScript.Runtime.Debugging
     [ComVisible(false)]
     public sealed class RuntimeSlotWatcher: WeakReference, IDebuggerBrowsable, IEquatable<RuntimeSlotWatcher>
     {
-        internal RuntimeSlotWatcher(IRuntimeSlot slot)
+        /// <summary>
+        /// Initializes a new runtime slot watcher.
+        /// </summary>
+        /// <param name="slot">A reference to the runtime slot.</param>
+        public RuntimeSlotWatcher(IRuntimeSlot slot)
             : base(slot, false)
         {
             if (slot == null) throw new ArgumentNullException("slot");
+        }
+
+        /// <summary>
+        /// Initializes a new runtime slot watcher for the specified named slot.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="slotName"></param>
+        public RuntimeSlotWatcher(IScriptObject value, string slotName)
+            : this(new NamedRuntimeSlot(value, slotName))
+        {
         }
 
         /// <summary>
@@ -57,13 +73,12 @@ namespace DynamicScript.Runtime.Debugging
         /// <param name="value">The value to store.</param>
         /// <param name="state">Internal interpreter state.</param>
         /// <exception cref="System.InvalidOperationException">The runtime slot is unavailable at the current stack frame.</exception>
-        public void SetValue(IScriptObject value, InterpreterState state)
+        public IScriptObject SetValue(IScriptObject value, InterpreterState state)
         {
             switch (IsAlive)
             {
                 case true:
-                    Target.SetValue(value, state);
-                    return;
+                    return Target.SetValue(value, state);
                 default:
                     throw new InvalidOperationException(Resources.SlotIsOutOfScope);
             }
@@ -72,16 +87,18 @@ namespace DynamicScript.Runtime.Debugging
         /// <summary>
         /// Returns contract binding of the slot.
         /// </summary>
-        /// <returns></returns>
         /// <exception cref="System.InvalidOperationException">The runtime slot is unavailable at the current stack frame.</exception>
-        public IScriptContract GetContractBinding()
+        public IScriptContract ContractBinding
         {
-            switch (IsAlive)
+            get
             {
-                case true:
-                    return Target.GetContractBinding();
-                default:
-                    throw new InvalidOperationException(Resources.SlotIsOutOfScope);
+                switch (IsAlive)
+                {
+                    case true:
+                        return Target is IStaticRuntimeSlot ? ((IStaticRuntimeSlot)Target).ContractBinding : ScriptSuperContract.Instance;
+                    default:
+                        throw new InvalidOperationException(Resources.SlotIsOutOfScope);
+                }
             }
         }
 
@@ -103,106 +120,9 @@ namespace DynamicScript.Runtime.Debugging
             }
         }
 
-        IScriptObject IScriptObject.GetRuntimeDescriptor(string slotName, InterpreterState state)
-        {
-            switch (IsAlive)
-            {
-                case true:
-                    return Target.GetRuntimeDescriptor(slotName, state);
-                default:
-                    throw new InvalidOperationException(Resources.SlotIsOutOfScope);
-            }
-        }
-
-        IScriptObject IScriptObject.BinaryOperation(QCodeBinaryOperatorType @operator, IScriptObject right, InterpreterState state)
-        {
-            switch (IsAlive)
-            {
-                case true:
-                    return Target.BinaryOperation(@operator, right, state);
-                default:
-                    throw new InvalidOperationException(Resources.SlotIsOutOfScope);
-            } 
-        }
-
-        IScriptObject IScriptObject.UnaryOperation(QCodeUnaryOperatorType @operator, InterpreterState state)
-        {
-            switch (IsAlive)
-            {
-                case true:
-                    return Target.UnaryOperation(@operator, state);
-                default:
-                    throw new InvalidOperationException(Resources.SlotIsOutOfScope);
-            } 
-        }
-
-        IScriptObject IScriptObject.Invoke(IList<IScriptObject> args, InterpreterState state)
-        {
-            switch (IsAlive)
-            {
-                case true:
-                    return Target.Invoke(args, state);
-                default:
-                    throw new InvalidOperationException(Resources.SlotIsOutOfScope);
-            } 
-        }
-
-        IRuntimeSlot IScriptObject.this[string slotName, InterpreterState state]
-        {
-            get 
-            {
-                switch (IsAlive)
-                {
-                    case true:
-                        return Target[slotName, state];
-                    default:
-                        throw new InvalidOperationException(Resources.SlotIsOutOfScope);
-                }  
-            }
-        }
-
-        IRuntimeSlot IScriptObject.this[IScriptObject[] args, InterpreterState state]
-        {
-            get 
-            {
-                switch (IsAlive)
-                {
-                    case true:
-                        return Target[args, state];
-                    default:
-                        throw new InvalidOperationException(Resources.SlotIsOutOfScope);
-                }   
-            }
-        }
-
-        ICollection<string> IScriptObject.Slots
-        {
-            get 
-            {
-                switch (IsAlive)
-                {
-                    case true:
-                        return Target.Slots;
-                    default:
-                        throw new InvalidOperationException(Resources.SlotIsOutOfScope);
-                }   
-            }
-        }
-
-        DynamicMetaObject IDynamicMetaObjectProvider.GetMetaObject(Expression parameter)
-        {
-            switch (IsAlive)
-            {
-                case true:
-                    return Target.GetMetaObject(parameter);
-                default:
-                    throw new InvalidOperationException(Resources.SlotIsOutOfScope);
-            } 
-        }
-
         bool IScopeVariable.DeleteValue()
         {
-            return IsAlive ? Target.DeleteValue() : false;
+            return IsAlive && Target.DeleteValue();
         }
 
         /// <summary>
@@ -210,7 +130,7 @@ namespace DynamicScript.Runtime.Debugging
         /// </summary>
         public bool HasValue
         {
-            get { return IsAlive ? Target.HasValue : false; }
+            get { return IsAlive && Target.HasValue; }
         }
 
         void IScopeVariable.SetValue(object value)
@@ -242,12 +162,12 @@ namespace DynamicScript.Runtime.Debugging
         /// <param name="value"></param>
         /// <param name="state"></param>
         /// <returns></returns>
-        public bool TryGetValue(out string value, InterpreterState state)
+        public bool TryGetValue(InterpreterState state, out string value)
         {
             switch (IsAlive && Target is IDebuggerBrowsable)
             {
                 case true:
-                    return ((IDebuggerBrowsable)Target).TryGetValue(out value, state);
+                    return ((IDebuggerBrowsable)Target).TryGetValue(state, out value);
                 default:
                     value = null;
                     return false;

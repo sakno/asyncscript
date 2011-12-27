@@ -5,7 +5,7 @@ using System.Linq.Expressions;
 namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
 {
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
-    using IRuntimeSlot = Runtime.IRuntimeSlot;
+    using IStaticRuntimeSlot = Runtime.IStaticRuntimeSlot;
     using IScriptObject = Runtime.IScriptObject;
 
     [ComVisible(false)]
@@ -56,7 +56,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                     declaration = null;
                     return false;
                 default:
-                    Locals.Add(variableName, declaration = Expression.Parameter(typeof(IRuntimeSlot), variableName));
+                    Locals.Add(variableName, declaration = Expression.Parameter(typeof(IStaticRuntimeSlot), variableName));
                     return true;
             }
         }

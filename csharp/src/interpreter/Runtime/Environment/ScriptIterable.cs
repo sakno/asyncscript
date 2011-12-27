@@ -14,7 +14,7 @@ namespace DynamicScript.Runtime.Environment
     /// </summary>
     [ComVisible(false)]
     [Serializable]
-    sealed class ScriptIterable: ScriptCompositeObject, IIterableSlots
+    sealed class ScriptIterable: ScriptCompositeObject
     {
         #region Nested Types
         /// <summary>
@@ -36,7 +36,7 @@ namespace DynamicScript.Runtime.Environment
         {
             public Slots(IEnumerable<IScriptObject> collection, IScriptContract elementContract)
             {
-                AddConstant(IteratorAction, new ScriptIteratorAction(collection, elementContract));
+                AddConstant(IteratorAction, new ScriptIteratorFunction(collection, elementContract));
             }
         }
         #endregion
@@ -53,12 +53,7 @@ namespace DynamicScript.Runtime.Environment
 
         public static ScriptCompositeContract GetContractBinding(IScriptContract elementContract = null)
         {
-            return new ScriptCompositeContract(new[] { new KeyValuePair<string, ScriptCompositeContract.SlotMeta>(IteratorAction, new ScriptCompositeContract.SlotMeta(ScriptIteratorAction.GetContractBinding(elementContract))) });
-        }
-
-        IRuntimeSlot IIterableSlots.Iterator
-        {
-            get { return base[IteratorAction]; }
+            return new ScriptCompositeContract(new[] { new KeyValuePair<string, ScriptCompositeContract.SlotMeta>(IteratorAction, new ScriptCompositeContract.SlotMeta(ScriptIteratorFunction.GetContractBinding(elementContract))) });
         }
 
         /// <summary>

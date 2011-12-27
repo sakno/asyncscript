@@ -12,25 +12,31 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
     /// This class cannot be inherited.
     /// </summary>
     [ComVisible(false)]
-    sealed class ScriptBreakStatementFactory: ScriptStatementFactory<ScriptCodeBreakLexicalScopeStatement, ScriptBreakStatement>, IFlowControlStatementFactorySlots
+    sealed class ScriptBreakStatementFactory: ScriptStatementFactory<ScriptCodeBreakLexicalScopeStatement, ScriptBreakStatement>
     {
         #region Nested Types
         [ComVisible(false)]
-        private sealed class ModifyAction : ModifyActionBase
+        private sealed class ModifyFunction : ModifyFunctionBase
         {
             private const string SecondParamName = "values";
 
-            public ModifyAction()
-                : base( Instance, new ScriptActionContract.Parameter(SecondParamName, new ScriptArrayContract(ScriptSuperContract.Instance)))
+            public ModifyFunction()
+                : base( Instance, new ScriptFunctionContract.Parameter(SecondParamName, new ScriptArrayContract(ScriptSuperContract.Instance)))
             {
             }
         }
         #endregion
 
-        public new const string Name = "leavedef";
+        private static readonly AggregatedSlotCollection<ScriptBreakStatementFactory> StaticSlots = new AggregatedSlotCollection<ScriptBreakStatementFactory>
+        {
+            {ModifyFunction.Name, (owner, state) => LazyField<ModifyFunction, IScriptFunction>(ref owner.m_modify)},
+            {FlowControlStatementArgumentsFunction<ScriptCodeBreakLexicalScopeStatement>.Name, (owner, state) => {if(owner.m_args == null) owner.m_args = new FlowControlStatementArgumentsFunction<ScriptCodeBreakLexicalScopeStatement>(owner); return owner.m_args;}}
+        };
 
-        private IRuntimeSlot m_args;
-        private IRuntimeSlot m_modify;
+        public new const string Name = "`leave";
+
+        private IScriptFunction m_args;
+        private IScriptFunction m_modify;
 
         private ScriptBreakStatementFactory(SerializationInfo info, StreamingContext context)
             : base(info, context)
@@ -67,14 +73,20 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             m_modify = m_args = null;
         }
 
-        IRuntimeSlot IFlowControlStatementFactorySlots.Args
+        public override ICollection<string> Slots
         {
-            get { return CacheConst(ref m_args, () => new FlowControlStatementArgumentsAction<ScriptCodeBreakLexicalScopeStatement>(Instance)); }
+            get { return StaticSlots.Keys; }
         }
 
-        protected override IRuntimeSlot Modify
+        protected override IScriptObject GetSlotMetadata(string slotName, InterpreterState state)
         {
-            get { return CacheConst<ModifyAction>(ref m_modify); }
+            return StaticSlots.GetSlotMetadata(this, slotName, state);
+        }
+
+        public override IScriptObject this[string slotName, InterpreterState state]
+        {
+            get { return StaticSlots.GetValue(this, slotName, state); }
+            set { StaticSlots.SetValue(this, slotName, value, state); }
         }
     }
 }

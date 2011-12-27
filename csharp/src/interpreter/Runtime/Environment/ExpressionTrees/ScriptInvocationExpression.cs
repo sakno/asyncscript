@@ -35,7 +35,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         {
             switch (args.Count)
             {
-                case 0: return CreateExpression(new IScriptObject[0]);
+                case 0: return CreateExpression(EmptyArray);
                 case 1: return CreateExpression(args[0] as IEnumerable<IScriptObject> ?? args);
                 default: return CreateExpression(args);
             }

@@ -69,7 +69,7 @@ namespace DynamicScript.Runtime.Environment
         {
             if (args.Count == 0)
                 return FromVoid(state);
-            else throw new ActionArgumentsMistmatchException(state);
+            else throw new FunctionArgumentsMistmatchException(state);
         }
 
         /// <summary>

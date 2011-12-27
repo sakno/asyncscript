@@ -95,76 +95,6 @@ namespace DynamicScript.Runtime.Environment
         internal sealed class UInt32Converter : ConverterBase<uint>
         {
         }
-
-        [ComVisible(false)]
-        private sealed class BitAccessor : Indexer, IEquatable<BitAccessor>
-        {
-            private readonly long m_value;
-            private readonly int m_position;
-
-            public BitAccessor(long value, int position)
-                : base(ScriptBooleanContract.Instance)
-            {
-                m_value = value;
-                m_position = position;
-            }
-
-            /// <summary>
-            /// Gets value.
-            /// </summary>
-            public long Value
-            {
-                get { return m_value; }
-            }
-
-            /// <summary>
-            /// Gets bit position.
-            /// </summary>
-            public int Position
-            {
-                get { return m_position; }
-            }
-
-            protected override bool IsReadOnly
-            {
-                get { return true; }
-            }
-
-            public ScriptBoolean GetValue()
-            {
-                return (m_value & 1L << m_position) > 0;
-            }
-
-            public override IScriptObject GetValue(InterpreterState state)
-            {
-                return GetValue();
-            }
-
-            public override void SetValue(IScriptObject value, InterpreterState state)
-            {
-                throw new ConstantCannotBeChangedException(state);
-            }
-
-            public bool Equals(BitAccessor accessor)
-            {
-                return accessor != null && Position == accessor.Position && Value == accessor.Value;
-            }
-
-            public override bool Equals(IRuntimeSlot other)
-            {
-                return Equals(other as BitAccessor);
-            }
-
-            public override bool Equals(object other)
-            {
-                return Equals(other as BitAccessor);
-            }
-
-            public override int GetHashCode()
-            {
-                return Position << 1 ^ Value.GetHashCode();
-            }
-        }
         #endregion
 
         private ScriptInteger(SerializationInfo info, StreamingContext context)
@@ -178,6 +108,11 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="value">An instance of <see cref="System.Int64"/> object that represent content of the integer object.</param>
         public ScriptInteger(long value)
             : base(ScriptIntegerContract.Instance, value)
+        {
+        }
+
+        internal ScriptInteger(char value)
+            : this((long)value)
         {
         }
 
@@ -722,47 +657,34 @@ namespace DynamicScript.Runtime.Environment
         }
 
         /// <summary>
-        /// Gets bit accessor.
+        /// Gets bit on the specified position in the 64-bit integer.
         /// </summary>
         /// <param name="bitpos"></param>
         /// <returns></returns>
-        public RuntimeSlotBase this[int bitpos]
+        public bool this[int bitpos]
         {
-            get { return new BitAccessor(Value, bitpos); }
-        }
-
-        private RuntimeSlotBase this[IScriptObject bitpos, InterpreterState state]
-        {
-            get
-            {
-                switch (ScriptIntegerContract.Convert(ref bitpos))
-                {
-                    case true:
-                        return this[SystemConverter.ToInt32(bitpos)];
-                    default:
-                        throw new ContractBindingException(bitpos, ScriptIntegerContract.Instance, state);
-                }
-            }
+            get { return (Value & 1L << bitpos) > 0; }
         }
 
         /// <summary>
-        /// Gets bitwise accessor.
+        /// Gets bit at the specified position.
         /// </summary>
-        /// <param name="args"></param>
+        /// <param name="indicies"></param>
         /// <param name="state"></param>
         /// <returns></returns>
-        public override RuntimeSlotBase this[IScriptObject[] args, InterpreterState state]
+        public override IScriptObject this[IList<IScriptObject> indicies, InterpreterState state]
         {
             get
             {
-                switch (args.LongLength)
+                if (indicies.Count == 1)
                 {
-                    case 1L:
-                        return this[args[0], state];
-                    default:
-                        throw new ActionArgumentsMistmatchException(state);
+                    var bitpos = indicies[0] as ScriptInteger;
+                    if (bitpos == null || !bitpos.IsInt32) throw new UnsupportedOperationException(state);
+                    else return (ScriptBoolean)this[(int)bitpos];
                 }
+                else return base[indicies, state];
             }
+            set { base[indicies, state] = value; }
         }
 
         /// <summary>

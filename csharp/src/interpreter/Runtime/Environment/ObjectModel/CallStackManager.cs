@@ -14,26 +14,22 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
 
         #region Nested Types
         [ComVisible(false)]
-        private sealed class DepthSlot : RuntimeSlotBase, IEquatable<DepthSlot>
+        private sealed class DepthSlot : RuntimeSlotBase, IStaticRuntimeSlot
         {
             public const string Name = "depth";
 
-            public ScriptInteger Value
-            {
-                get { return CallStack.Depth; }
-            }
 
             public override IScriptObject GetValue(InterpreterState state)
             {
-                return Value;
+                return (ScriptInteger)CallStack.Depth;
             }
 
-            public override void SetValue(IScriptObject value, InterpreterState state)
+            public override IScriptObject SetValue(IScriptObject value, InterpreterState state)
             {
                 throw new ConstantCannotBeChangedException(state);
             }
 
-            public override IScriptContract ContractBinding
+            public IScriptContract ContractBinding
             {
                 get { return ScriptIntegerContract.Instance; }
             }
@@ -43,58 +39,34 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                 get { return RuntimeSlotAttributes.Immutable; }
             }
 
-            protected override ICollection<string> Slots
-            {
-                get { return Value.Slots; }
-            }
-
             public override bool DeleteValue()
             {
                 return false;
             }
 
-            public bool Equals(DepthSlot other)
+            public override bool HasValue
             {
-                return other != null;
-            }
-
-            public override bool Equals(IRuntimeSlot other)
-            {
-                return Equals(other as DepthSlot);
-            }
-
-            public override bool Equals(object other)
-            {
-                return Equals(other as DepthSlot);
-            }
-
-            public override int GetHashCode()
-            {
-                return GetType().MetadataToken;
+                get { return true; }
+                protected set { }
             }
         }
 
         [ComVisible(false)]
-        private sealed class CallerSlot : RuntimeSlotBase, IEquatable<CallerSlot>
+        private sealed class CallerSlot : RuntimeSlotBase, IStaticRuntimeSlot
         {
             public const string Name = "caller";
 
-            public IScriptAction Value
-            {
-                get { return CallStack.Caller; }
-            }
-
             public override IScriptObject GetValue(InterpreterState state)
             {
-                return Value ?? (IScriptObject)Void;
+                return CallStack.Caller ?? (IScriptObject)Void;
             }
 
-            public override void SetValue(IScriptObject value, InterpreterState state)
+            public override IScriptObject SetValue(IScriptObject value, InterpreterState state)
             {
                 throw new ConstantCannotBeChangedException(state);
             }
 
-            public override IScriptContract ContractBinding
+            public IScriptContract ContractBinding
             {
                 get { return ScriptSuperContract.Instance; }
             }
@@ -104,44 +76,25 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                 get { return RuntimeSlotAttributes.Immutable; }
             }
 
-            protected override ICollection<string> Slots
-            {
-                get { return (Value ?? (IScriptObject)Void).Slots; }
-            }
-
             public override bool DeleteValue()
             {
                 return false;
             }
 
-            public bool Equals(CallerSlot other)
+            public override bool HasValue
             {
-                return other != null;
-            }
-
-            public override bool Equals(IRuntimeSlot other)
-            {
-                return Equals(other as CallerSlot);
-            }
-
-            public override bool Equals(object other)
-            {
-                return Equals(other as CallerSlot);
-            }
-
-            public override int GetHashCode()
-            {
-                return GetType().MetadataToken;
+                get { return true; }
+                protected set { }
             }
         }
 
         [ComVisible(false)]
-        private sealed class GetFrameAction : ScriptFunc<ScriptInteger>
+        private sealed class GetFrameFunction : ScriptFunc<ScriptInteger>
         {
             public const string Name = "getFrame";
             private const string FirstParamName = "frameNum";
 
-            public GetFrameAction()
+            public GetFrameFunction()
                 : base(FirstParamName, ScriptIntegerContract.Instance, ScriptSuperContract.Instance)
             {
             }
@@ -159,7 +112,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             {
                 Add<DepthSlot>(DepthSlot.Name);
                 Add<CallerSlot>(CallerSlot.Name);
-                AddConstant<GetFrameAction>(GetFrameAction.Name);
+                AddConstant<GetFrameFunction>(GetFrameFunction.Name);
             }
         }
         #endregion

@@ -9,24 +9,26 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
     [ComVisible(false)]
     [Serializable]
-    sealed class ScriptIndexerExpressionFactory : ScriptExpressionFactory<ScriptCodeIndexerExpression, ScriptIndexerExpression>, IInvocationExpressionFactorySlots
+    sealed class ScriptIndexerExpressionFactory : ScriptExpressionFactory<ScriptCodeIndexerExpression, ScriptIndexerExpression>
     {
         #region Nested Types
         [ComVisible(false)]
-        private sealed class ModifyAction : ModifyActionBase
+        private sealed class ModifyFunction : ModifyFunctionBase
         {
             private const string SecondParamName = "args";
 
-            public ModifyAction()
-                : base(Instance, new ScriptActionContract.Parameter(SecondParamName, new ScriptArrayContract(ScriptExpressionFactory.Instance)))
+            public ModifyFunction()
+                : base(Instance, new ScriptFunctionContract.Parameter(SecondParamName, new ScriptArrayContract(ScriptExpressionFactory.Instance)))
             {
             }
         }
 
         [ComVisible(false)]
-        private sealed class GetArgumentsAction : CodeElementPartProvider<IScriptArray>
+        private sealed class GetArgumentsFunction : CodeElementPartProvider<IScriptArray>
         {
-            public GetArgumentsAction()
+            public const string Name = "args";
+
+            public GetArgumentsFunction()
                 : base(Instance, new ScriptArrayContract(ScriptExpressionFactory.Instance))
             {
             }
@@ -38,9 +40,15 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
         #endregion
 
+        private static readonly AggregatedSlotCollection<ScriptIndexerExpressionFactory> StaticSlots = new AggregatedSlotCollection<ScriptIndexerExpressionFactory>
+        {
+             {ModifyFunction.Name, (owner, state) => LazyField<ModifyFunction, IScriptFunction>(ref owner.m_modify)},
+             {GetArgumentsFunction.Name, (owner, state) => LazyField<GetArgumentsFunction, IScriptFunction>(ref owner.m_args)}
+        };
+
         public new const string Name = "indexer";
-        private IRuntimeSlot m_modify;
-        private IRuntimeSlot m_args;
+        private IScriptFunction m_modify;
+        private IScriptFunction m_args;
 
         private ScriptIndexerExpressionFactory(SerializationInfo info, StreamingContext context)
             : base(info, context)
@@ -68,20 +76,26 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         {
             switch (args.Count)
             {
-                case 0: return CreateExpression(new IScriptObject[0]);
+                case 0: return CreateExpression(EmptyArray);
                 case 1: return CreateExpression(args[0] as IEnumerable<IScriptObject> ?? args);
                 default: return CreateExpression(args);
             }
         }
 
-        protected override IRuntimeSlot Modify
+        public override ICollection<string> Slots
         {
-            get { return CacheConst<ModifyAction>(ref m_modify); }
+            get { return StaticSlots.Keys; }
         }
 
-        IRuntimeSlot IInvocationExpressionFactorySlots.Args
+        protected override IScriptObject GetSlotMetadata(string slotName, InterpreterState state)
         {
-            get { return CacheConst<GetArgumentsAction>(ref m_args); }
+            return StaticSlots.GetSlotMetadata(this, slotName, state);
+        }
+
+        public override IScriptObject this[string slotName, InterpreterState state]
+        {
+            get { return StaticSlots.GetValue(this, slotName, state); }
+            set { StaticSlots.SetValue(this, slotName, value, state); }
         }
     }
 }

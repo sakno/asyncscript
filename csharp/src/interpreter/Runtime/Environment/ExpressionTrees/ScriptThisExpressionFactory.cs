@@ -9,7 +9,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
     sealed class ScriptThisExpressionFactory: ScriptExpressionFactory<ScriptCodeThisExpression, ScriptThisExpression>
     {
-        public new const string Name = "thisref";
+        public new const string Name = "`this";
 
         private ScriptThisExpressionFactory(SerializationInfo info, StreamingContext context)
             : base(info, context)
@@ -26,11 +26,6 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         public override ScriptThisExpression CreateCodeElement(IList<IScriptObject> args, InterpreterState state)
         {
             return ScriptThisExpression.Instance;
-        }
-
-        protected override IRuntimeSlot Modify
-        {
-            get { return null; }
         }
     }
 }

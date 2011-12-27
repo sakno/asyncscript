@@ -217,6 +217,11 @@ namespace DynamicScript.Compiler
         /// </summary>
         public const char Diez = '#';
 
+        /// <summary>
+        /// Represents backquote.
+        /// </summary>
+        public const char Backquote = '`';
+
         private int? m_hash;
 
         /// <summary>

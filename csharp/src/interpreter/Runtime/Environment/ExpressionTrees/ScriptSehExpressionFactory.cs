@@ -9,24 +9,26 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
     using Enumerable = System.Linq.Enumerable;
 
     [ComVisible(false)]
-    sealed class ScriptSehExpressionFactory : ScriptExpressionFactory<ScriptCodeTryElseFinallyExpression, ScriptSehExpression>, ISehExpressionFactorySlots
+    sealed class ScriptSehExpressionFactory : ScriptExpressionFactory<ScriptCodeTryElseFinallyExpression, ScriptSehExpression>
     {
         #region Nested Types
         [ComVisible(false)]
-        private sealed class ModifyAction : ModifyActionBase
+        private sealed class ModifyFunction : ModifyFunctionBase
         {
             private const string SecondParamName = "dangerouseCode";
 
-            public ModifyAction()
-                : base(Instance, new ScriptActionContract.Parameter(SecondParamName, ScriptExpressionFactory.Instance))
+            public ModifyFunction()
+                : base(Instance, new ScriptFunctionContract.Parameter(SecondParamName, ScriptExpressionFactory.Instance))
             {
             }
         }
 
         [ComVisible(false)]
-        private sealed class GetTrapCountAction : CodeElementPartProvider<ScriptInteger>
+        private sealed class GetTrapCountFunction : CodeElementPartProvider<ScriptInteger>
         {
-            public GetTrapCountAction()
+            public const string Name = "trapCount";
+
+            public GetTrapCountFunction()
                 : base(Instance, ScriptIntegerContract.Instance)
             {
             }
@@ -38,9 +40,11 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class GetFinallyBodyAction : CodeElementPartProvider<IScriptCodeElement<ScriptCodeExpression>>
+        private sealed class GetFinallyBodyFunction : CodeElementPartProvider<IScriptCodeElement<ScriptCodeExpression>>
         {
-            public GetFinallyBodyAction()
+            public const string Name = "getFinally";
+
+            public GetFinallyBodyFunction()
                 : base(Instance, ScriptExpressionFactory.Instance)
             {
             }
@@ -52,12 +56,13 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class GetTrapVarAction : ScriptFunc<IScriptCodeElement<ScriptCodeTryElseFinallyExpression>, ScriptInteger>
+        private sealed class GetTrapVarFunction : ScriptFunc<IScriptCodeElement<ScriptCodeTryElseFinallyExpression>, ScriptInteger>
         {
+            public const string Name = "trapvar";
             private const string FirstParamName = "seh";
             private const string SecondParamName = "idx";
 
-            public GetTrapVarAction()
+            public GetTrapVarFunction()
                 : base(FirstParamName, Instance, SecondParamName, ScriptIntegerContract.Instance, ScriptVariableDeclarationFactory.Instance)
             {
             }
@@ -80,12 +85,13 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class GetTrapBodyAction : ScriptFunc<IScriptCodeElement<ScriptCodeTryElseFinallyExpression>, ScriptInteger>
+        private sealed class GetTrapBodyFunction : ScriptFunc<IScriptCodeElement<ScriptCodeTryElseFinallyExpression>, ScriptInteger>
         {
+            public const string Name = "getTrap";
             private const string FirstParamName = "seh";
             private const string SecondParamName = "idx";
 
-            public GetTrapBodyAction()
+            public GetTrapBodyFunction()
                 : base(FirstParamName, Instance, SecondParamName, ScriptIntegerContract.Instance, ScriptExpressionFactory.Instance)
             {
             }
@@ -108,12 +114,13 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class SetFinallyBodyAction : ScriptAction<IScriptCodeElement<ScriptCodeTryElseFinallyExpression>, IScriptCodeElement<ScriptCodeExpression>>
+        private sealed class SetFinallyBodyFunction : ScriptAction<IScriptCodeElement<ScriptCodeTryElseFinallyExpression>, IScriptCodeElement<ScriptCodeExpression>>
         {
+            public const string Name = "setFinally";
             private const string FirstParamName = "seh";
             private const string SecondParamName = "body";
 
-            public SetFinallyBodyAction()
+            public SetFinallyBodyFunction()
                 : base(FirstParamName, Instance, SecondParamName, ScriptExpressionFactory.Instance)
             {
             }
@@ -125,13 +132,14 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class SetTrapBodyAction : ScriptAction<IScriptCodeElement<ScriptCodeTryElseFinallyExpression>, ScriptInteger, IScriptCodeElement<ScriptCodeExpression>>
+        private sealed class SetTrapBodyFunction : ScriptAction<IScriptCodeElement<ScriptCodeTryElseFinallyExpression>, ScriptInteger, IScriptCodeElement<ScriptCodeExpression>>
         {
+            public const string Name = "setTrap";
             private const string FirstParamName = "seh";
             private const string SecondParamName = "idx";
             private const string ThirdParamName = "body";
 
-            public SetTrapBodyAction()
+            public SetTrapBodyFunction()
                 : base(FirstParamName, Instance, SecondParamName, ScriptIntegerContract.Instance, ThirdParamName, ScriptExpressionFactory.Instance)
             {
             }
@@ -150,15 +158,26 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
         #endregion
 
+        private static readonly AggregatedSlotCollection<ScriptSehExpressionFactory> StaticSlots = new AggregatedSlotCollection<ScriptSehExpressionFactory>
+        {
+             {ModifyFunction.Name, (owner, state) => LazyField<ModifyFunction, IScriptFunction>(ref owner.m_modify)},
+             {GetTrapCountFunction.Name, (owner, state) => LazyField<GetTrapCountFunction, IScriptFunction>(ref owner.m_trapcount)},
+             {GetFinallyBodyFunction.Name, (owner, state) => LazyField<GetFinallyBodyFunction, IScriptFunction>(ref owner.m_getfinally)},
+             {GetTrapVarFunction.Name, (owner, state) => LazyField<GetTrapVarFunction, IScriptFunction>(ref owner.m_gettrapvar)},
+             {GetTrapBodyFunction.Name, (owner, state) => LazyField<GetTrapBodyFunction, IScriptFunction>(ref owner.m_gettrapbody)},
+             {SetFinallyBodyFunction.Name, (owner, state) => LazyField<SetFinallyBodyFunction, IScriptFunction>(ref owner.m_setfinally)},
+             {SetTrapBodyFunction.Name, (owner, state) => LazyField<SetTrapBodyFunction, IScriptFunction>(ref owner.m_settrapbody)},
+        };
+
         public new const string Name = "seh";
 
-        private IRuntimeSlot m_modify;
-        private IRuntimeSlot m_trapcount;
-        private IRuntimeSlot m_getfinally;
-        private IRuntimeSlot m_gettrapvar;
-        private IRuntimeSlot m_gettrapbody;
-        private IRuntimeSlot m_setfinally;
-        private IRuntimeSlot m_settrapbody;
+        private IScriptFunction m_modify;
+        private IScriptFunction m_trapcount;
+        private IScriptFunction m_getfinally;
+        private IScriptFunction m_gettrapvar;
+        private IScriptFunction m_gettrapbody;
+        private IScriptFunction m_setfinally;
+        private IScriptFunction m_settrapbody;
 
         private ScriptSehExpressionFactory(SerializationInfo info, StreamingContext context)
             : base(info, context)
@@ -187,39 +206,20 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             m_getfinally = m_gettrapbody = m_gettrapvar = m_modify = m_setfinally = m_settrapbody = m_trapcount = null;
         }
 
-        protected override IRuntimeSlot Modify
+        public override ICollection<string> Slots
         {
-            get { return CacheConst<ModifyAction>(ref m_modify); }
+            get { return StaticSlots.Keys; }
         }
 
-        IRuntimeSlot ISehExpressionFactorySlots.GetFinallyBody
+        public override IScriptObject this[string slotName, InterpreterState state]
         {
-            get { return CacheConst<GetFinallyBodyAction>(ref m_getfinally); }
+            get { return StaticSlots.GetValue(this, slotName, state); }
+            set { StaticSlots.SetValue(this, slotName, value, state); }
         }
 
-        IRuntimeSlot ISehExpressionFactorySlots.SetFinallyBody
+        protected override IScriptObject GetSlotMetadata(string slotName, InterpreterState state)
         {
-            get { return CacheConst<SetFinallyBodyAction>(ref m_setfinally); }
-        }
-
-        IRuntimeSlot ISehExpressionFactorySlots.GetTrapBody
-        {
-            get { return CacheConst<GetTrapBodyAction>(ref m_gettrapbody); }
-        }
-
-        IRuntimeSlot ISehExpressionFactorySlots.SetTrapBody
-        {
-            get { return CacheConst<SetTrapBodyAction>(ref m_settrapbody); }
-        }
-
-        IRuntimeSlot ISehExpressionFactorySlots.GetTrapVar
-        {
-            get { return CacheConst<GetTrapVarAction>(ref m_gettrapvar); }
-        }
-
-        IRuntimeSlot ISehExpressionFactorySlots.Traps
-        {
-            get { return CacheConst<GetTrapCountAction>(ref m_trapcount); }
+            return StaticSlots.GetSlotMetadata(this, slotName, state);
         }
     }
 }

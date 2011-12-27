@@ -159,7 +159,7 @@ namespace DynamicScript.Runtime.Environment
         [Test(Description="Squary operator.")]
         public void SquareTest()
         {
-            IScriptObject s = Run("const a = 10; return **a;");
+            IScriptObject s = Run("var a = 10; return **a;");
             Assert.AreEqual(new ScriptInteger(100), s);
             Assert.AreSame(ScriptIntegerContract.Instance, s.GetContractBinding());
         }

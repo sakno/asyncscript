@@ -115,7 +115,7 @@ namespace DynamicScript.Runtime.Environment
             return ScriptMetaContract.Instance;
         }
 
-        public IScriptAction GetOverloadedOperator(ScriptCodeUnaryOperatorType @operator)
+        public IScriptFunction GetOverloadedOperator(ScriptCodeUnaryOperatorType @operator)
         {
             throw new NotImplementedException();
         }
@@ -123,13 +123,13 @@ namespace DynamicScript.Runtime.Environment
         /// <summary>
         /// Gets or sets a function that implements invocation operation.
         /// </summary>
-        public IScriptAction OverloadedInvoke
+        public IScriptFunction OverloadedInvoke
         {
             get;
             set;
         }
 
-        public IScriptAction GetOverloadedOperator(ScriptCodeBinaryOperatorType @operator)
+        public IScriptFunction GetOverloadedOperator(ScriptCodeBinaryOperatorType @operator)
         {
             throw new NotImplementedException();
         }

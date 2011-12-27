@@ -8,27 +8,28 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
 
     [ComVisible(false)]
-    sealed class ScriptUnaryExpressionFactory : ScriptExpressionFactory<ScriptCodeUnaryOperatorExpression, ScriptUnaryExpression>, IUnaryExpressionFactorySlots
+    sealed class ScriptUnaryExpressionFactory : ScriptExpressionFactory<ScriptCodeUnaryOperatorExpression, ScriptUnaryExpression>
     {
         #region Nested Types
         [ComVisible(false)]
-        private sealed class ModifyAction : ModifyActionBase
+        private sealed class ModifyFunction : ModifyFunctionBase
         {
             private const string SecondParamName = "operand";
             private const string ThirdParamName = "operator";
 
-            public ModifyAction()
-                : base( Instance,new ScriptActionContract.Parameter(SecondParamName, ScriptExpressionFactory.Instance),new ScriptActionContract.Parameter(ThirdParamName, ScriptStringContract.Instance))
+            public ModifyFunction()
+                : base( Instance,new ScriptFunctionContract.Parameter(SecondParamName, ScriptExpressionFactory.Instance),new ScriptFunctionContract.Parameter(ThirdParamName, ScriptStringContract.Instance))
             {
             }
         }
 
         [ComVisible(false)]
-        private sealed class CreateInvokerAction : ScriptFunc<ScriptString>
+        private sealed class CreateInvokerFunction : ScriptFunc<ScriptString>
         {
+            public const string Name = "invoker";
             private const string FirstParamName = "operator";
 
-            public CreateInvokerAction()
+            public CreateInvokerFunction()
                 : base(FirstParamName, ScriptStringContract.Instance, ScriptSuperContract.Instance)
             {
             }
@@ -42,9 +43,10 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class GetOperandAction : CodeElementPartProvider<IScriptExpression<ScriptCodeExpression>>
+        private sealed class GetOperandFunction : CodeElementPartProvider<IScriptExpression<ScriptCodeExpression>>
         {
-            public GetOperandAction()
+            public const string Name = "operand";
+            public GetOperandFunction()
                 : base(Instance, ScriptExpressionFactory.Instance)
             {
             }
@@ -56,11 +58,12 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class GetOperatorAction : CodeElementPartProvider<ScriptString>
+        private sealed class GetOperatorFunction : CodeElementPartProvider<ScriptString>
         {
+            public const string Name = "operator";
             private const string FirstParamName = "unop";
 
-            public GetOperatorAction()
+            public GetOperatorFunction()
                 : base( Instance, ScriptStringContract.Instance)
             {
             }
@@ -72,6 +75,14 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
         #endregion
 
+        private static readonly AggregatedSlotCollection<ScriptUnaryExpressionFactory> StaticSlots = new AggregatedSlotCollection<ScriptUnaryExpressionFactory>
+        {
+             {ModifyFunction.Name, (owner, state) => LazyField<ModifyFunction, IScriptFunction>(ref owner.m_modify)},
+             {CreateInvokerFunction.Name, (owner, state) => LazyField<CreateInvokerFunction, IScriptFunction>(ref owner.m_invoker)},
+             {GetOperatorFunction.Name, (owner, state) => LazyField<GetOperatorFunction, IScriptFunction>(ref owner.m_operator)},
+             {GetOperandFunction.Name, (owner, state) => LazyField<GetOperandFunction, IScriptFunction>(ref owner.m_operand)}
+        };
+
         private ScriptUnaryExpressionFactory(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
@@ -79,10 +90,10 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
         public new const string Name = "unop";
 
-        private IRuntimeSlot m_modify;
-        private IRuntimeSlot m_invoker;
-        private IRuntimeSlot m_operator;
-        private IRuntimeSlot m_operand;
+        private IScriptFunction m_modify;
+        private IScriptFunction m_invoker;
+        private IScriptFunction m_operator;
+        private IScriptFunction m_operand;
 
         private ScriptUnaryExpressionFactory()
             : base(Name)
@@ -116,28 +127,20 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
                 m_operator = null;
         }
 
-        #region Runtime Slots
-
-        protected override IRuntimeSlot Modify
+        public override ICollection<string> Slots
         {
-            get { return CacheConst<ModifyAction>(ref m_modify); }
+            get { return StaticSlots.Keys; }
         }
 
-        IRuntimeSlot IUnaryExpressionFactorySlots.Invoker
+        public override IScriptObject this[string slotName, InterpreterState state]
         {
-            get { return CacheConst < CreateInvokerAction>(ref m_invoker); }
+            get { return StaticSlots.GetValue(this, slotName, state); }
+            set { StaticSlots.SetValue(this, slotName, value, state); }
         }
 
-        IRuntimeSlot IUnaryExpressionFactorySlots.Operand
+        protected override IScriptObject GetSlotMetadata(string slotName, InterpreterState state)
         {
-            get { return CacheConst<GetOperandAction>(ref m_operand); }
+            return StaticSlots.GetSlotMetadata(this, slotName, state);
         }
-
-        IRuntimeSlot IUnaryExpressionFactorySlots.Operator
-        {
-            get { return CacheConst<GetOperatorAction>(ref m_operator); }
-        }
-
-        #endregion
     }
 }

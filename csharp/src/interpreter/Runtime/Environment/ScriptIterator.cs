@@ -57,12 +57,11 @@ namespace DynamicScript.Runtime.Environment
         }
 
         [ComVisible(false)]
-        private sealed class HasNextSlot : ObservableSlot
+        private sealed class HasNextSlot : RuntimeSlotBase, IStaticRuntimeSlot
         {
             private readonly InternalIterator m_iterator;
 
             public HasNextSlot(InternalIterator iterator)
-                : base(ScriptBoolean.False, ScriptBooleanContract.Instance)
             {
                 m_iterator = iterator;
             }
@@ -72,16 +71,42 @@ namespace DynamicScript.Runtime.Environment
                 get { return m_iterator; }
             }
 
-            protected override IScriptObject GetValue(IScriptObject value, InterpreterState state)
+            public override IScriptObject GetValue(InterpreterState state)
             {
                 return (ScriptBoolean)Iterator.HasNext;
+            }
+
+            public IScriptContract ContractBinding
+            {
+                get { return ScriptBooleanContract.Instance; }
+            }
+
+            public override bool DeleteValue()
+            {
+                return false;
+            }
+
+            public override IScriptObject SetValue(IScriptObject value, InterpreterState state)
+            {
+                throw new ConstantCannotBeChangedException(state);
+            }
+
+            public override RuntimeSlotAttributes Attributes
+            {
+                get { return RuntimeSlotAttributes.Immutable; }
+            }
+
+            public override bool HasValue
+            {
+                get { return true; }
+                protected set { }
             }
         }
 
         [ComVisible(false)]
-        private sealed class GetNextActionContract : ScriptActionContract
+        private sealed class GetNextFunctionContract : ScriptFunctionContract
         {
-            public GetNextActionContract(IScriptContract elementContract)
+            public GetNextFunctionContract(IScriptContract elementContract)
                 : base(EmptyParameters, elementContract)
             {
             }
@@ -112,16 +137,16 @@ namespace DynamicScript.Runtime.Environment
             private static new IEnumerable<KeyValuePair<string, SlotMeta>> Slots(IScriptContract elementContract)
             {
                 yield return DefineSlot(HasNextSlotName, ScriptBooleanContract.Instance);
-                yield return DefineSlot(GetNextSlotName, new GetNextActionContract(elementContract), true);
+                yield return DefineSlot(GetNextSlotName, new GetNextFunctionContract(elementContract), true);
             }
         }
 
         [ComVisible(false)]
-        private sealed class GetNextAction : ScriptFunc
+        private sealed class GetNextFunction : ScriptFunc
         {
             private readonly InternalIterator m_iterator;
 
-            public GetNextAction(InternalIterator iterator, IScriptContract elementContract)
+            public GetNextFunction(InternalIterator iterator, IScriptContract elementContract)
                 : base(elementContract)
             {
                 if (iterator == null) throw new ArgumentNullException("iterator");
@@ -142,7 +167,7 @@ namespace DynamicScript.Runtime.Environment
                 if (iterator == null) throw new ArgumentNullException("iterator");
                 if (elementContract == null) elementContract = ScriptSuperContract.Instance;
                 Add(HasNextSlotName, new HasNextSlot(iterator));
-                AddConstant(GetNextSlotName, new GetNextAction(iterator, elementContract));
+                AddConstant(GetNextSlotName, new GetNextFunction(iterator, elementContract));
             }
 
             public IteratorSlotCollection(IEnumerator enumerator, ref IScriptContract elementContract)
@@ -169,7 +194,7 @@ namespace DynamicScript.Runtime.Environment
                     collection = ((IScriptProxyObject)collection).Unwrap(state);
                 else if (collection is IScriptIterable)
                     return new ScriptIterator(((IScriptIterable)collection).GetIterator(state));
-                return collection[IteratorAction, state].Invoke(new IScriptObject[0], state);
+                return collection[IteratorAction, state].Invoke(EmptyArray, state);
             }
 
             internal static MethodCallExpression GetEnumerator(Expression collection, ParameterExpression state)
@@ -187,8 +212,7 @@ namespace DynamicScript.Runtime.Environment
             /// <returns></returns>
             public static IScriptObject GetNext(IScriptObject iterator, InterpreterState state)
             {
-                var getnxt = iterator[GetNextSlotName, state];
-                return RuntimeSlotBase.IsMissing(getnxt) ? Void : getnxt.Invoke(new IScriptObject[0], state);
+                return iterator[GetNextSlotName, state].Invoke(ScriptObject.EmptyArray, state);
             }
 
             internal static MethodCallExpression GetNext(Expression iterator, ParameterExpression state)
@@ -228,8 +252,8 @@ namespace DynamicScript.Runtime.Environment
             /// <returns></returns>
             public static bool HasNext(IScriptObject iterator, InterpreterState state)
             {
-                var hasnext = iterator[HasNextSlotName, state].GetValue(state);
-                return hasnext is IConvertible ? SystemConverter.ToBoolean((IConvertible)hasnext) : false;
+                var hasnext = iterator[HasNextSlotName, state];
+                return SystemConverter.GetTypeCode(hasnext) == TypeCode.Boolean && SystemConverter.ToBoolean(hasnext);
             }
 
             internal static MethodCallExpression HasNext(Expression iterator, ParameterExpression state)
@@ -270,7 +294,7 @@ namespace DynamicScript.Runtime.Environment
         }
 
         internal ScriptIterator(IEnumerable elements, IScriptContract elementContract = null)
-            : this((elements ?? new IScriptObject[0]).GetEnumerator(), elementContract)
+            : this((elements ?? EmptyArray).GetEnumerator(), elementContract)
         {
         }
 
@@ -320,10 +344,10 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="obj"></param>
         /// <param name="state"></param>
         /// <returns></returns>
-        public static ScriptCompositeObject GetIterator(IScriptObject obj, InterpreterState state)
+        public static IScriptCompositeObject GetIterator(IScriptObject obj, InterpreterState state)
         {
-            var iteratorAct = ScriptIteratorAction.IsIterable(obj) ? obj[IteratorAction, state].GetValue(state) as ScriptActionBase : null;
-            return iteratorAct != null ? iteratorAct.Invoke(new IScriptObject[0], state) as ScriptCompositeObject : null;
+            var iteratorAct = ScriptIteratorFunction.IsIterable(obj) ? obj[IteratorAction, state] as ScriptFunctionBase : null;
+            return iteratorAct != null ? iteratorAct.Invoke(EmptyArray, state) as IScriptCompositeObject : null;
         }
 
         /// <summary>
@@ -339,8 +363,8 @@ namespace DynamicScript.Runtime.Environment
             switch (IsIterator(iterator))
             {
                 case true:
-                    while (SystemConverter.ToBoolean(iterator[HasNextSlotName].GetValue(state)))
-                        yield return iterator[GetNextSlotName].Invoke(new IScriptObject[0], state);
+                    while (RuntimeHelpers.IsTrue(iterator[HasNextSlotName, state]))
+                        yield return iterator[GetNextSlotName, state].Invoke(EmptyArray, state);
                     break;
                 default: yield break;
             }

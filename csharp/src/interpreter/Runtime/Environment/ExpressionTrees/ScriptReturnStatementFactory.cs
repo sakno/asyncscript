@@ -9,24 +9,26 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
     [ComVisible(false)]
     [Serializable]
-    sealed class ScriptReturnStatementFactory : ScriptStatementFactory<ScriptCodeReturnStatement, ScriptReturnStatement>, IReturnStatementFactorySlots
+    sealed class ScriptReturnStatementFactory : ScriptStatementFactory<ScriptCodeReturnStatement, ScriptReturnStatement>
     {
         #region Nested Types
         [ComVisible(false)]
-        private sealed class ModifyAction : ModifyActionBase
+        private sealed class ModifyFunction : ModifyFunctionBase
         {
             private const string SecondParamName = "retval";
 
-            public ModifyAction()
-                : base(Instance, new ScriptActionContract.Parameter(SecondParamName, ScriptExpressionFactory.Instance))
+            public ModifyFunction()
+                : base(Instance, new ScriptFunctionContract.Parameter(SecondParamName, ScriptExpressionFactory.Instance))
             {
             }
         }
 
         [ComVisible(false)]
-        private sealed class GetValueAction : CodeElementPartProvider<IScriptExpression<ScriptCodeExpression>>
+        private sealed class GetValueFunction : CodeElementPartProvider<IScriptExpression<ScriptCodeExpression>>
         {
-            public GetValueAction()
+            public const string Name = "value";
+
+            public GetValueFunction()
                 : base(Instance, ScriptSuperContract.Instance)
             {
             }
@@ -38,9 +40,15 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
         #endregion
 
-        public new const string Name = "returndef";
-        private IRuntimeSlot m_retval;
-        private IRuntimeSlot m_modify;
+        private static readonly AggregatedSlotCollection<ScriptReturnStatementFactory> StaticSlots = new AggregatedSlotCollection<ScriptReturnStatementFactory>
+        {
+             {ModifyFunction.Name, (owner, state) => LazyField<ModifyFunction, IScriptFunction>(ref owner.m_modify)},
+             {GetValueFunction.Name, (owner, state) => LazyField<GetValueFunction, IScriptFunction>(ref owner.m_retval)}
+        };
+
+        public new const string Name = "`return";
+        private IScriptFunction m_retval;
+        private IScriptFunction m_modify;
 
         private ScriptReturnStatementFactory()
             : base(Name)
@@ -74,19 +82,21 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             m_retval = m_modify = null;
         }
 
-        #region Runtime Slots
-
-        IRuntimeSlot IReturnStatementFactorySlots.Value
+        public override ICollection<string> Slots
         {
-            get { return CacheConst<GetValueAction>(ref m_retval); }
+            get { return StaticSlots.Keys; }
         }
 
-        protected override IRuntimeSlot Modify
+        public override IScriptObject this[string slotName, InterpreterState state]
         {
-            get { return CacheConst<ModifyAction>(ref m_modify); }
+            get { return StaticSlots.GetValue(this, slotName, state); }
+            set { StaticSlots.SetValue(this, slotName, value, state); }
         }
 
-        #endregion
+        protected override IScriptObject GetSlotMetadata(string slotName, InterpreterState state)
+        {
+            return StaticSlots.GetSlotMetadata(this, slotName, state);
+        }
 
         
     }

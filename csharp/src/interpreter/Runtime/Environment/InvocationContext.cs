@@ -18,12 +18,12 @@ namespace DynamicScript.Runtime.Environment
     public static class InvocationContext
     {
         [ThreadStatic]
-        private static IScriptAction m_current;
+        private static IScriptFunction m_current;
 
         /// <summary>
         /// Gets current executing action.
         /// </summary>
-        public static IScriptAction Current
+        public static IScriptFunction Current
         {
             get { return m_current; }
             internal set { m_current = value; }
@@ -34,7 +34,7 @@ namespace DynamicScript.Runtime.Environment
         /// </summary>
         /// <param name="current"></param>
         /// <returns>An action located higher in the call stack.</returns>
-        internal static IScriptAction SetCurrent(IScriptAction current)
+        internal static IScriptFunction SetCurrent(IScriptFunction current)
         {
             var previous = m_current;
             m_current = current;
@@ -58,7 +58,7 @@ namespace DynamicScript.Runtime.Environment
         {
             get
             {
-                return LinqHelpers.BodyOf<Func<IScriptAction>, MemberExpression>(() => Current);
+                return LinqHelpers.BodyOf<Func<IScriptFunction>, MemberExpression>(() => Current);
             }
         }
     }

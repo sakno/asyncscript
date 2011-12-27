@@ -21,6 +21,7 @@ namespace DynamicScript.Runtime.Hosting
         [LoaderOptimization(LoaderOptimization.SingleDomain)]
         private static int Main(string[] args)
         {
+            //var r = DynamicScriptInterpreter.Run("var s = readonly({{a= 10}}); s.a = 10;");
             return Execute(new CommandLineParser(Console.Out, Console.In), args);
         }
     }

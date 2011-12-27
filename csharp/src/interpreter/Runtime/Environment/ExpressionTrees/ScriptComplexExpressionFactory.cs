@@ -9,24 +9,26 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
     [ComVisible(false)]
     [Serializable]
-    sealed class ScriptComplexExpressionFactory : ScriptExpressionFactory<ScriptCodeComplexExpression, ScriptComplexExpression>, IScriptComplexExpressionFactorySlots
+    sealed class ScriptComplexExpressionFactory : ScriptExpressionFactory<ScriptCodeComplexExpression, ScriptComplexExpression>
     {
         #region Nested Types
         [ComVisible(false)]
-        private sealed class ModifyAction : ModifyActionBase
+        private sealed class ModifyFunction : ModifyFunctionBase
         {
             private const string SecondParamName = "statements";
 
-            public ModifyAction()
-                : base(Instance, new ScriptActionContract.Parameter(SecondParamName, new ScriptArrayContract(ScriptStatementFactory.Instance)))
+            public ModifyFunction()
+                : base(Instance, new ScriptFunctionContract.Parameter(SecondParamName, new ScriptArrayContract(ScriptStatementFactory.Instance)))
             {
             }
         }
 
         [ComVisible(false)]
-        private sealed class GetStatementsAction : CodeElementPartProvider<IScriptArray>
+        private sealed class GetStatementsFunction : CodeElementPartProvider<IScriptArray>
         {
-            public GetStatementsAction()
+            public const string Name = "statements";
+
+            public GetStatementsFunction()
                 : base(Instance, new ScriptArrayContract(ScriptStatementFactory.Instance))
             {
             }
@@ -38,10 +40,16 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
         #endregion
 
+        private static readonly AggregatedSlotCollection<ScriptComplexExpressionFactory> StaticSlots = new AggregatedSlotCollection<ScriptComplexExpressionFactory>
+        {
+            {ModifyFunction.Name, (owner, state) =>LazyField<ModifyFunction, IScriptFunction>(ref owner.m_modify)},
+            {GetStatementsFunction.Name, (owner, state) => LazyField<GetStatementsFunction, IScriptFunction>(ref owner.m_statements)}
+        };
+
         public new const string Name = "cplx";
 
-        private IRuntimeSlot m_modify;
-        private IRuntimeSlot m_statements;
+        private IScriptFunction m_modify;
+        private IScriptFunction m_statements;
 
         private ScriptComplexExpressionFactory(SerializationInfo info, StreamingContext context)
             : base(info, context)
@@ -75,14 +83,20 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             m_statements = m_modify = null;
         }
 
-        protected override IRuntimeSlot Modify
+        public override ICollection<string> Slots
         {
-            get { return CacheConst<ModifyAction>(ref m_modify); }
+            get { return StaticSlots.Keys; }
         }
 
-        IRuntimeSlot IScriptComplexExpressionFactorySlots.Statements
+        protected override IScriptObject GetSlotMetadata(string slotName, InterpreterState state)
         {
-            get { return CacheConst<GetStatementsAction>(ref m_statements); }
+            return StaticSlots.GetSlotMetadata(this, slotName, state); 
+        }
+
+        public override IScriptObject this[string slotName, InterpreterState state]
+        {
+            get { return StaticSlots.GetValue(this, slotName, state); }
+            set { StaticSlots.SetValue(this, slotName, value, state); }
         }
     }
 }

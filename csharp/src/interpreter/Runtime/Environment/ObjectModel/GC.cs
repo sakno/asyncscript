@@ -17,7 +17,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         internal const string Name = "gc";
         #region Nested Types
         [ComVisible(false)]
-        private sealed class CollectAction : ScriptAction
+        private sealed class CollectFunction : ScriptAction
         {
             public const string Name = "collect";
 
@@ -28,7 +28,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         }
 
         [ComVisible(false)]
-        private sealed class WaitAction : ScriptAction
+        private sealed class WaitFunction : ScriptAction
         {
             public const string Name = "wait";
 
@@ -39,26 +39,21 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         }
 
         [ComVisible(false)]
-        private sealed class TotalMemSlot : RuntimeSlotBase, IEquatable<TotalMemSlot>
+        private sealed class TotalMemSlot : RuntimeSlotBase, IStaticRuntimeSlot
         {
             public const string Name = "totalmem";
 
-            public ScriptInteger Value
-            {
-                get { return GC.TotalMem; }
-            }
-
             public override IScriptObject GetValue(InterpreterState state)
             {
-                return Value;
+                return (ScriptInteger)GC.TotalMem;
             }
 
-            public override void SetValue(IScriptObject value, InterpreterState state)
+            public override IScriptObject SetValue(IScriptObject value, InterpreterState state)
             {
                 throw new ConstantCannotBeChangedException(state);
             }
 
-            public override IScriptContract ContractBinding
+            public IScriptContract ContractBinding
             {
                 get { return ScriptIntegerContract.Instance; }
             }
@@ -68,46 +63,43 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                 get { return RuntimeSlotAttributes.Immutable; }
             }
 
-            protected override ICollection<string> Slots
-            {
-                get { return Value.Slots; }
-            }
-
             public override bool DeleteValue()
             {
                 return false;
             }
 
-            public bool Equals(TotalMemSlot other)
+            public override bool HasValue
             {
-                return other != null;
-            }
-
-            public override bool Equals(IRuntimeSlot other)
-            {
-                return Equals(other as TotalMemSlot);
-            }
-
-            public override bool Equals(object other)
-            {
-                return Equals(other as TotalMemSlot);
-            }
-
-            public override int GetHashCode()
-            {
-                return GetType().MetadataToken;
+                get { return true; }
+                protected set { }
             }
         }
 
+        [ComVisible(false)]
+        private sealed class ClearFunction : ScriptAction<ScriptObject>
+        {
+            public const string Name = "clear";
+            private const string FirstParamName = "obj";
+
+            public ClearFunction()
+                : base(FirstParamName, ScriptSuperContract.Instance)
+            {
+            }
+
+            protected override void Invoke(ScriptObject obj, InterpreterState state)
+            {
+                obj.Clear();
+            }
+        }
         #endregion
 
-        private static new IEnumerable<KeyValuePair<string, IRuntimeSlot>> Slots
+        private static new IEnumerable<KeyValuePair<string, IStaticRuntimeSlot>> Slots
         {
             get
             {
-                yield return Constant(CollectAction.Name, new CollectAction());
-                yield return Constant(WaitAction.Name, new WaitAction());
-                yield return new KeyValuePair<string, IRuntimeSlot>(TotalMemSlot.Name, new TotalMemSlot());
+                yield return Constant(CollectFunction.Name, new CollectFunction());
+                yield return Constant(WaitFunction.Name, new WaitFunction());
+                yield return new KeyValuePair<string, IStaticRuntimeSlot>(TotalMemSlot.Name, new TotalMemSlot());
             }
         }
 

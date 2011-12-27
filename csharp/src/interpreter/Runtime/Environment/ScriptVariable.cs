@@ -73,7 +73,7 @@ namespace DynamicScript.Runtime.Environment
 
         #region Runtime Helpers
 
-        private static IRuntimeSlot IntrnlBindToVariable(IRuntimeSlot slot, string variableName, IScriptObject value, object contractBinding, InterpreterState state)
+        private static IStaticRuntimeSlot IntrnlBindToVariable(IStaticRuntimeSlot slot, string variableName, IScriptObject value, object contractBinding, InterpreterState state)
         {
             if (slot == null)
             {
@@ -96,7 +96,7 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="state">Internal interpreter state.</param>
         /// <returns>Bounded variable slot.</returns>
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public static IRuntimeSlot RtlBindToVariable(IRuntimeSlot slot, string variableName, IScriptObject initialValue, ScriptContractProvider contractBinding, InterpreterState state)
+        public static IStaticRuntimeSlot RtlBindToVariable(IStaticRuntimeSlot slot, string variableName, IScriptObject initialValue, ScriptContractProvider contractBinding, InterpreterState state)
         {
             return IntrnlBindToVariable(slot, variableName, initialValue, contractBinding, state);
         }
@@ -111,7 +111,7 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="state">Internal interpreter state.</param>
         /// <returns>Bounded variable slot.</returns>
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public static IRuntimeSlot RtlBindToVariable(IRuntimeSlot slot, string variableName, IScriptObject initialValue, IScriptContract contractBinding, InterpreterState state)
+        public static IStaticRuntimeSlot RtlBindToVariable(IStaticRuntimeSlot slot, string variableName, IScriptObject initialValue, IScriptContract contractBinding, InterpreterState state)
         {
             return IntrnlBindToVariable(slot, variableName, initialValue, contractBinding, state);
         }
@@ -122,8 +122,8 @@ namespace DynamicScript.Runtime.Environment
             if (contractBinding == null) contractBinding = LinqHelpers.Null<IScriptContract>();
             var rvalue = default(MethodCallExpression);
             rvalue = contractBinding is Expression<ScriptContractProvider> ?
-                LinqHelpers.BodyOf<IRuntimeSlot, string, IScriptObject, ScriptContractProvider, InterpreterState, IRuntimeSlot, MethodCallExpression>((v, n, b, c, s) => RtlBindToVariable(v, n, b, c, s)) :
-                LinqHelpers.BodyOf<IRuntimeSlot, string, IScriptObject, IScriptContract, InterpreterState, IRuntimeSlot, MethodCallExpression>((v, n, b, c, s) => RtlBindToVariable(v, n, b, c, s));
+                LinqHelpers.BodyOf<IStaticRuntimeSlot, string, IScriptObject, ScriptContractProvider, InterpreterState, IStaticRuntimeSlot, MethodCallExpression>((v, n, b, c, s) => RtlBindToVariable(v, n, b, c, s)) :
+                LinqHelpers.BodyOf<IStaticRuntimeSlot, string, IScriptObject, IScriptContract, InterpreterState, IStaticRuntimeSlot, MethodCallExpression>((v, n, b, c, s) => RtlBindToVariable(v, n, b, c, s));
             rvalue = rvalue.Update(null, new Expression[] { varRef, LinqHelpers.Constant(variableName), initValue, contractBinding, state });
             return varRef is ParameterExpression ? (Expression)Expression.Assign(varRef, rvalue) : rvalue;
         }

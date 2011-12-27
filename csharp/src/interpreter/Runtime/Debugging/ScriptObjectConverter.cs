@@ -10,44 +10,52 @@ namespace DynamicScript.Runtime.Debugging
     /// Represents an abstract class for script object converters.
     /// </summary>
     [ComVisible(false)]
-    
-    public abstract class ScriptObjectConverter: TypeConverter
+    [AttributeUsage(AttributeTargets.Class, Inherited=true, AllowMultiple=false)]
+    public abstract class ScriptObjectConverterAttribute: Attribute
     {
         /// <summary>
-        /// Gets interpreter state used for conversion.
+        /// Converts the specified script object to the given type.
         /// </summary>
-        protected InterpreterState State
-        {
-            get;
-            private set;
-        }
+        /// <param name="value"></param>
+        /// <param name="destinationType"></param>
+        /// <param name="state"></param>
+        /// <param name="result"></param>
+        /// <returns></returns>
+        public abstract bool TryConvertTo(IScriptObject value, Type destinationType, InterpreterState state, out object result);
 
-        internal void SetState(InterpreterState s)
+        internal static bool ConvertTo(IScriptObject value, Type destinationType, InterpreterState state, out object result)
         {
-            State = s;
+            var attributes = GetCustomAttributes(value.GetType(), typeof(ScriptObjectConverterAttribute), true) as ScriptObjectConverterAttribute[];
+            foreach (var attr in attributes)
+                if (attr.TryConvertTo(value, destinationType, state, out result))
+                    return true;
+            result = null;
+            return false;
         }
 
         /// <summary>
-        /// 
+        /// Converts the specified script object to .NET-compliant object.
         /// </summary>
-        /// <param name="context"></param>
-        /// <param name="culture"></param>
+        /// <typeparam name="T"></typeparam>
         /// <param name="value"></param>
-        /// <param name="destinationType"></param>
+        /// <param name="state"></param>
+        /// <param name="result"></param>
         /// <returns></returns>
-        protected abstract object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, IScriptObject value, Type destinationType);
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="culture"></param>
-        /// <param name="value"></param>
-        /// <param name="destinationType"></param>
-        /// <returns></returns>
-        public sealed override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
+        public static bool ConvertTo<T>(IScriptObject value, InterpreterState state, out T result)
         {
-            return value is IScriptObject ? ConvertTo(context, culture, (IScriptObject)value, destinationType) : null;
+            var obj = default(object);
+            if (ConvertTo(value, typeof(T), state, out obj))
+            {
+                result = (T)obj;
+                return true;
+            }
+            else
+            {
+                result = default(T);
+                return false;
+            }
         }
+
+        
     }
 }

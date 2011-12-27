@@ -13,28 +13,28 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
     /// </summary>
     [ComVisible(false)]
     [Serializable]
-    sealed class ScriptFaultStatementFactory: ScriptStatementFactory<ScriptCodeFaultStatement, ScriptFaultStatement>,
-        IFaultStatementFactorySlots
+    sealed class ScriptFaultStatementFactory: ScriptStatementFactory<ScriptCodeFaultStatement, ScriptFaultStatement>
     {
         #region Nested Types
         [ComVisible(false)]
-        private sealed class ModifyAction : ModifyActionBase
+        private sealed class ModifyFunction : ModifyFunctionBase
         {
             private const string SecondParamName = "error";
 
-            public ModifyAction()
-                : base( Instance, new ScriptActionContract.Parameter(SecondParamName, ScriptExpressionFactory.Instance))
+            public ModifyFunction()
+                : base( Instance, new ScriptFunctionContract.Parameter(SecondParamName, ScriptExpressionFactory.Instance))
             {
             }
         }
 
         [ComVisible(false)]
-        private sealed class ExecuteAction : ScriptFunc<IScriptStatement<ScriptCodeFaultStatement>, IScriptCompositeObject>
+        private sealed class ExecuteFunction : ScriptFunc<IScriptStatement<ScriptCodeFaultStatement>, IScriptCompositeObject>
         {
+            public const string Name = "execute";
             private const string FirstParamName = "faultstmt";
             private const string SecondParamName = "obj";
 
-            public ExecuteAction()
+            public ExecuteFunction()
                 : base(FirstParamName, Instance, SecondParamName, ScriptCompositeContract.Empty, 
                 ScriptBooleanContract.Instance)
             {
@@ -47,9 +47,10 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class GetErrorAction : CodeElementPartProvider<IScriptExpression<ScriptCodeExpression>>
+        private sealed class GetErrorFunction : CodeElementPartProvider<IScriptExpression<ScriptCodeExpression>>
         {
-            public GetErrorAction()
+            public const string Name = "error";
+            public GetErrorFunction()
                 : base( Instance, ScriptSuperContract.Instance)
             {
             }
@@ -61,14 +62,21 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
         #endregion
 
+        private static readonly AggregatedSlotCollection<ScriptFaultStatementFactory> StaticSlots = new AggregatedSlotCollection<ScriptFaultStatementFactory>
+        {
+            {ModifyFunction.Name, (owner, state) => LazyField<ModifyFunction, IScriptFunction>(ref owner.m_modify)},
+            {ExecuteFunction.Name, (owner, state) => LazyField<ExecuteFunction, IScriptFunction>(ref owner.m_exec)},
+            {GetErrorFunction.Name, (owner, state) => LazyField<GetErrorFunction, IScriptFunction>(ref owner.m_geterr)}
+        };
+
         /// <summary>
         /// Represents name of this contract.
         /// </summary>
-        public new const string Name = "faultdef";
+        public new const string Name = "`fault";
 
-        private IRuntimeSlot m_exec;
-        private IRuntimeSlot m_geterr;
-        private IRuntimeSlot m_modify;
+        private IScriptFunction m_exec;
+        private IScriptFunction m_geterr;
+        private IScriptFunction m_modify;
 
         private ScriptFaultStatementFactory(SerializationInfo info, StreamingContext context)
             : base(info, context)
@@ -99,23 +107,20 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             m_exec = m_geterr = m_modify = null;
         }
 
-        #region Runtime Slots
-
-        IRuntimeSlot IFaultStatementFactorySlots.Exec
+        public override ICollection<string> Slots
         {
-            get { return CacheConst<ExecuteAction>(ref m_exec); }
+            get { return StaticSlots.Keys; }
         }
 
-        IRuntimeSlot IFaultStatementFactorySlots.Error
+        public override IScriptObject this[string slotName, InterpreterState state]
         {
-            get { return CacheConst<GetErrorAction>(ref m_geterr); }
+            get { return StaticSlots.GetValue(this, slotName, state); }
+            set { StaticSlots.SetValue(this, slotName, value, state); }
         }
 
-        #endregion
-
-        protected override IRuntimeSlot Modify
+        protected override IScriptObject GetSlotMetadata(string slotName, InterpreterState state)
         {
-            get { return CacheConst<ModifyAction>(ref m_modify); }
+            return StaticSlots.GetSlotMetadata(this, slotName, state);
         }
     }
 }

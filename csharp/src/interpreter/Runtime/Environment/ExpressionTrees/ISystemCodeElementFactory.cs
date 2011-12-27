@@ -7,10 +7,10 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
     using ISyntaxTreeNode = Compiler.Ast.ISyntaxTreeNode;
 
     [ComVisible(false)]
-    interface ISystemCodeElementFactory<out TCodeObject, out TRuntimeElement>: ICodeElementFactorySlots, IScriptCodeElementFactory<TCodeObject, TRuntimeElement>
+    interface ISystemCodeElementFactory<out TCodeObject, out TRuntimeElement>: IScriptCodeElementFactory<TCodeObject, TRuntimeElement>
         where TCodeObject : CodeObject, ISyntaxTreeNode
         where TRuntimeElement: IScriptCodeElement<TCodeObject>
     {
-        void Clear();
+        
     }
 }

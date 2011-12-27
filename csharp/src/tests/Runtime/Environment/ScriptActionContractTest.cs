@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace DynamicScript.Runtime.Environment
 {
-    [TestClass(typeof(ScriptActionContract))]
+    [TestClass(typeof(ScriptFunctionContract))]
     [SemanticTest]
     sealed class ScriptActionContractTest: SemanticTestBase
     {
@@ -16,7 +16,7 @@ namespace DynamicScript.Runtime.Environment
 const a = @i: real -> real: i + 10;
 return $a;
 ");
-            Assert.IsTrue(Equals(new ScriptActionContract(new[] { new ScriptActionContract.Parameter("i", ScriptRealContract.Instance) }, ScriptRealContract.Instance), r));
+            Assert.IsTrue(Equals(new ScriptFunctionContract(new[] { new ScriptFunctionContract.Parameter("i", ScriptRealContract.Instance) }, ScriptRealContract.Instance), r));
         }
 
         [Test(Description = "Return type reflection.")]
@@ -46,7 +46,7 @@ return a['i'];
 const a = @i: real -> real;
 return a % 'i';
 ");
-            Assert.IsTrue(Equals(new ScriptActionContract(new ScriptActionContract.Parameter[0], ScriptRealContract.Instance), r));
+            Assert.IsTrue(Equals(new ScriptFunctionContract(new ScriptFunctionContract.Parameter[0], ScriptRealContract.Instance), r));
         }
     }
 }

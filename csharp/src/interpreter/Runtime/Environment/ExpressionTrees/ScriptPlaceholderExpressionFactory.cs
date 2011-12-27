@@ -13,20 +13,25 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
     {
         #region Nested Types
         [ComVisible(false)]
-        private sealed class ModifyAction : ModifyActionBase
+        private sealed class ModifyFunction : ModifyFunctionBase
         {
             private const string SecondParamName = "id";
 
-            public ModifyAction()
-                : base(Instance, new ScriptActionContract.Parameter(SecondParamName, ScriptIntegerContract.Instance))
+            public ModifyFunction()
+                : base(Instance, new ScriptFunctionContract.Parameter(SecondParamName, ScriptIntegerContract.Instance))
             {
             }
         }
         #endregion
 
+        private static readonly AggregatedSlotCollection<ScriptPlaceholderExpressionFactory> StaticSlots = new AggregatedSlotCollection<ScriptPlaceholderExpressionFactory>
+        {
+             {ModifyFunction.Name, (owner, state) => LazyField<ModifyFunction, IScriptFunction>(ref owner.m_modify)},
+        };
+
         public new const string Name = "placeholder";
 
-        private IRuntimeSlot m_modify;
+        private IScriptFunction m_modify;
 
         private ScriptPlaceholderExpressionFactory(SerializationInfo info, StreamingContext context)
             : base(info, context)
@@ -55,9 +60,20 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             m_modify = null;
         }
 
-        protected override IRuntimeSlot Modify
+        public override ICollection<string> Slots
         {
-            get { return CacheConst<ModifyAction>(ref m_modify); }
+            get { return StaticSlots.Keys; }
+        }
+
+        public override IScriptObject this[string slotName, InterpreterState state]
+        {
+            get { return StaticSlots.GetValue(this, slotName, state); }
+            set { StaticSlots.SetValue(this, slotName, value, state); }
+        }
+
+        protected override IScriptObject GetSlotMetadata(string slotName, InterpreterState state)
+        {
+            return StaticSlots.GetSlotMetadata(this, slotName, state);
         }
     }
 }

@@ -10,7 +10,7 @@ namespace DynamicScript.Runtime.Environment
     /// Represents a script action with return value.
     /// </summary>
     [ComVisible(false)]
-    public abstract class ScriptFunc: ScriptActionBase
+    public abstract class ScriptFunc: ScriptFunctionBase
     {
         /// <summary>
         /// Initializes a new script action.
@@ -18,7 +18,7 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="returnValue">The contract binding of the return value.</param>
         /// <param name="this">An action owner.</param>
         protected ScriptFunc(IScriptContract returnValue, IScriptObject @this = null)
-            : base(new ScriptActionContract(Enumerable.Empty<ScriptActionContract.Parameter>(), returnValue), @this)
+            : base(new ScriptFunctionContract(Enumerable.Empty<ScriptFunctionContract.Parameter>(), returnValue), @this)
         {
         }
 
@@ -46,7 +46,7 @@ namespace DynamicScript.Runtime.Environment
     /// </summary>
     /// <typeparam name="T">Type of the first action parameter.</typeparam>
     [ComVisible(false)]
-    public abstract class ScriptFunc<T> : ScriptActionBase
+    public abstract class ScriptFunc<T> : ScriptFunctionBase
         where T : class, IScriptObject
     {
         /// <summary>
@@ -55,13 +55,13 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="param0">The description of the first parameter.</param>
         /// <param name="returnValue">The contract binding of the return value.</param>
         /// <param name="this">An action owner.</param>
-        protected ScriptFunc(ScriptActionContract.Parameter param0, IScriptContract returnValue, IScriptObject @this = null)
-            : base(new ScriptActionContract(new[] { param0 }, returnValue), @this)
+        protected ScriptFunc(ScriptFunctionContract.Parameter param0, IScriptContract returnValue, IScriptObject @this = null)
+            : base(new ScriptFunctionContract(new[] { param0 }, returnValue), @this)
         {
         }
 
         internal ScriptFunc(string firstParamName, IScriptContract firstParamType, IScriptContract returnValue, IScriptObject @this = null)
-            : this(new ScriptActionContract.Parameter(firstParamName, firstParamType), returnValue, @this)
+            : this(new ScriptFunctionContract.Parameter(firstParamName, firstParamType), returnValue, @this)
         {
         }
 
@@ -91,7 +91,7 @@ namespace DynamicScript.Runtime.Environment
     /// <typeparam name="T1">Type of the first action parameter.</typeparam>
     /// <typeparam name="T2">Type of the second action parameter.</typeparam>
     [ComVisible(false)]
-    public abstract class ScriptFunc<T1, T2> : ScriptActionBase
+    public abstract class ScriptFunc<T1, T2> : ScriptFunctionBase
         where T1: class, IScriptObject
         where T2: class, IScriptObject
     {
@@ -102,13 +102,13 @@ namespace DynamicScript.Runtime.Environment
         ///<param name="param1">The description of the second parameter.</param>
         /// <param name="returnValue">The contract binding of the return value.</param>
         /// <param name="this">An action owner.</param>
-        protected ScriptFunc(ScriptActionContract.Parameter param0, ScriptActionContract.Parameter param1, IScriptContract returnValue, IScriptObject @this = null)
-            : base(new ScriptActionContract(new[] { param0, param1 }, returnValue), @this)
+        protected ScriptFunc(ScriptFunctionContract.Parameter param0, ScriptFunctionContract.Parameter param1, IScriptContract returnValue, IScriptObject @this = null)
+            : base(new ScriptFunctionContract(new[] { param0, param1 }, returnValue), @this)
         {
         }
 
         internal ScriptFunc(string firstParamName, IScriptContract firstParamType, string secondParamName, IScriptContract secondParamType, IScriptContract returnValue, IScriptObject @this = null)
-            : this(new ScriptActionContract.Parameter(firstParamName, firstParamType), new ScriptActionContract.Parameter(secondParamName, secondParamType), returnValue, @this)
+            : this(new ScriptFunctionContract.Parameter(firstParamName, firstParamType), new ScriptFunctionContract.Parameter(secondParamName, secondParamType), returnValue, @this)
         {
         }
 
@@ -140,7 +140,7 @@ namespace DynamicScript.Runtime.Environment
     /// <typeparam name="T2">Type of the second action parameter.</typeparam>
     /// <typeparam name="T3">Type of the third action parameter.</typeparam>
     [ComVisible(false)]
-    public abstract class ScriptFunc<T1, T2, T3> : ScriptActionBase
+    public abstract class ScriptFunc<T1, T2, T3> : ScriptFunctionBase
         where T1 : class, IScriptObject
         where T2 : class, IScriptObject
         where T3 : class, IScriptObject
@@ -153,13 +153,13 @@ namespace DynamicScript.Runtime.Environment
         ///<param name="param2">The description of the third parameter.</param>
         /// <param name="returnValue">The contract binding of the return value.</param>
         /// <param name="this">An action owner.</param>
-        protected ScriptFunc(ScriptActionContract.Parameter param0, ScriptActionContract.Parameter param1, ScriptActionContract.Parameter param2, IScriptContract returnValue, IScriptObject @this = null)
-            : base(new ScriptActionContract(new[] { param0, param1, param2 }, returnValue), @this)
+        protected ScriptFunc(ScriptFunctionContract.Parameter param0, ScriptFunctionContract.Parameter param1, ScriptFunctionContract.Parameter param2, IScriptContract returnValue, IScriptObject @this = null)
+            : base(new ScriptFunctionContract(new[] { param0, param1, param2 }, returnValue), @this)
         {
         }
 
         internal ScriptFunc(string firstParamName, IScriptContract firstParamType, string secondParamName, IScriptContract secondParamType, string thirdParamName, IScriptContract thirdParamType, IScriptContract returnValue, IScriptObject @this = null)
-            : this(new ScriptActionContract.Parameter(firstParamName, firstParamType), new ScriptActionContract.Parameter(secondParamName, secondParamType), new ScriptActionContract.Parameter(thirdParamName, thirdParamType), returnValue, @this)
+            : this(new ScriptFunctionContract.Parameter(firstParamName, firstParamType), new ScriptFunctionContract.Parameter(secondParamName, secondParamType), new ScriptFunctionContract.Parameter(thirdParamName, thirdParamType), returnValue, @this)
         {
         }
 

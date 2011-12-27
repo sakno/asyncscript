@@ -449,14 +449,14 @@ namespace DynamicScript.Runtime
         /// <param name="slot">A runtime slot to release.</param>
         /// <param name="state"></param>
         /// <returns>A default object that is satisfied to the slot contract.</returns>
-        public static IScriptObject DeleteValue(IRuntimeSlot slot, InterpreterState state)
+        public static IScriptObject DeleteValue(IStaticRuntimeSlot slot, InterpreterState state)
         {
-            return slot.DeleteValue() ? slot.GetContractBinding().FromVoid(state) : slot.GetValue(state);
+            return slot.DeleteValue() ? slot.ContractBinding.FromVoid(state) : slot.GetValue(state);
         }
 
         internal static MethodCallExpression DeleteValue(Expression slot, ParameterExpression state)
         {
-            return LinqHelpers.Call<IRuntimeSlot, InterpreterState, IScriptObject>((s, t) => DeleteValue(s, t), null, slot, state);
+            return LinqHelpers.Call<IStaticRuntimeSlot, InterpreterState, IScriptObject>((s, t) => DeleteValue(s, t), null, slot, state);
         }
     }
 }

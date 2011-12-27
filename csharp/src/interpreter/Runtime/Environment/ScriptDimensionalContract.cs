@@ -17,13 +17,14 @@ namespace DynamicScript.Runtime.Environment
     /// </summary>
     [ComVisible(false)]
     [Serializable]
-    public sealed class ScriptDimensionalContract: ScriptBuiltinContract, IDimensionalContractSlots
+    public sealed class ScriptDimensionalContract: ScriptBuiltinContract
     {
         #region Nested Types
 
         [ComVisible(false)]
         private sealed class ToSingleAction : ScriptFunc<IScriptArray>
         {
+            public const string Name = "toSingle";
             private const string FirstParamName = "a";
 
             public ToSingleAction()
@@ -39,7 +40,12 @@ namespace DynamicScript.Runtime.Environment
         
         #endregion
 
-        private IRuntimeSlot m_single;
+        private static AggregatedSlotCollection<ScriptDimensionalContract> StaticSlots = new AggregatedSlotCollection<ScriptDimensionalContract>
+        {
+            {ToSingleAction.Name, (owner, state) => LazyField<ToSingleAction, IScriptFunction>(ref owner.m_single)}
+        };
+
+        private IScriptFunction m_single;
 
         private ScriptDimensionalContract(SerializationInfo info, StreamingContext context)
         {
@@ -112,17 +118,47 @@ namespace DynamicScript.Runtime.Environment
                     var dimensions = args[1];
                     if (!ScriptIntegerContract.Convert(ref dimensions)) throw new ContractBindingException(dimensions, ScriptIntegerContract.Instance, state);
                     return new ScriptArrayContract(elementContract, SystemConverter.ToInt32(dimensions));
-                default: throw new ActionArgumentsMistmatchException(state);
+                default: throw new FunctionArgumentsMistmatchException(state);
             }
         }
 
-        #region Runtime Slots
-
-        IRuntimeSlot IDimensionalContractSlots.Single
+        /// <summary>
+        /// Clears all cached internal fields.
+        /// </summary>
+        public override void Clear()
         {
-            get { return CacheConst<ToSingleAction>(ref m_single); }
+            m_single = null;
         }
 
-        #endregion
+        /// <summary>
+        /// Gets collection of aggregated slots.
+        /// </summary>
+        public override ICollection<string> Slots
+        {
+            get { return StaticSlots.Keys; }
+        }
+
+        /// <summary>
+        /// Gets or sets value of the aggregated object.
+        /// </summary>
+        /// <param name="slotName"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public override IScriptObject this[string slotName, InterpreterState state]
+        {
+            get { return StaticSlots.GetValue(this, slotName, state); }
+            set { StaticSlots.SetValue(this, slotName, value, state); }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="slotName"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        protected override IScriptObject GetSlotMetadata(string slotName, InterpreterState state)
+        {
+            return StaticSlots.GetSlotMetadata(this, slotName, state);
+        }
     }
 }

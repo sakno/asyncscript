@@ -266,7 +266,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns></returns>
         public bool DeclareVariable(string variableName, out ParameterExpression declaration)
         {
-            return DeclareVariable<IRuntimeSlot>(variableName, out declaration);
+            return DeclareVariable<IStaticRuntimeSlot>(variableName, out declaration);
         }
 
         /// <summary>

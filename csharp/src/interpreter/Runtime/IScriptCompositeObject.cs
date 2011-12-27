@@ -16,7 +16,7 @@ namespace DynamicScript.Runtime
         /// </summary>
         /// <param name="slotName">The name of the slot.</param>
         /// <returns>An object that represents access to slot; or <see langword="null"/> if slot is not existed.</returns>
-        IRuntimeSlot this[string slotName]
+        IStaticRuntimeSlot this[string slotName]
         {
             get;
         }

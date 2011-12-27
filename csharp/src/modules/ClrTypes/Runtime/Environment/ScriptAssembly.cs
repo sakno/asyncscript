@@ -23,7 +23,7 @@ namespace DynamicScript.Runtime.Environment
             private readonly Assembly m_source;
 
             public GetClassAction(Assembly source)
-                : base(new ScriptActionContract.Parameter(FirstParamName, ScriptStringContract.Instance), ScriptMetaContract.Instance)
+                : base(new ScriptFunctionContract.Parameter(FirstParamName, ScriptStringContract.Instance), ScriptMetaContract.Instance)
             {
                 m_source = source;
             }
@@ -46,7 +46,7 @@ namespace DynamicScript.Runtime.Environment
             private readonly Assembly m_source;
 
             public GetArrayAction(Assembly source)
-                : base(new ScriptActionContract.Parameter(FirstParamName, ScriptStringContract.Instance), new ScriptActionContract.Parameter(SecondParamName, ScriptIntegerContract.Instance), ScriptMetaContract.Instance)
+                : base(new ScriptFunctionContract.Parameter(FirstParamName, ScriptStringContract.Instance), new ScriptFunctionContract.Parameter(SecondParamName, ScriptIntegerContract.Instance), ScriptMetaContract.Instance)
             {
                 m_source = source;
             }

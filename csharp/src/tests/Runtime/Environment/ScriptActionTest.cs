@@ -4,7 +4,7 @@ using DynamicScript.Testing;
 
 namespace DynamicScript.Runtime.Environment
 {
-    [TestClass(typeof(ScriptRuntimeAction))]
+    [TestClass(typeof(ScriptRuntimeFunction))]
     [SemanticTest]
     sealed class ScriptActionTest: SemanticTestBase
     {
@@ -88,12 +88,12 @@ return a :: i;
             Assert.AreSame(ScriptIntegerContract.Instance, r);
         }
 
-        [Test(Description = "Obtaining the return type of the ")]
-        public void AdjustAndThisReflectionTest()
+        [Test(Description = "Test for bind function.")]
+        public void BindAndThisReflectionTest()
         {
             var r = Run(@"
 var a = @i -> integer: i + 10;
-a = adjust(a, 2);
+a = bind(a, 2);
 return a.owner;
 ");
             Assert.AreEqual(new ScriptInteger(2), r);

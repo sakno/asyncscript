@@ -6,7 +6,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
 {
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
     using Enumerable = System.Linq.Enumerable;
-    using IRuntimeSlot = Runtime.IRuntimeSlot;
+    using IStaticRuntimeSlot = Runtime.IStaticRuntimeSlot;
 
     /// <summary>
     /// Represents an abstract lexical scope that represents a block of executable scope.
@@ -74,7 +74,8 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                     declaration = null;
                     return false;
                 default:
-                    Parameters.Add(parameterName, declaration = Expression.Parameter(typeof(IRuntimeSlot), parameterName));
+                    
+                    Parameters.Add(parameterName, declaration = Expression.Parameter(typeof(IStaticRuntimeSlot), parameterName));
                     return true;
             }
         }
@@ -87,7 +88,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                     declaration = null;
                     return false;
                 default:
-                    Locals.Add(variableName, declaration = Expression.Variable(typeof(IRuntimeSlot), variableName));
+                    Locals.Add(variableName, declaration = Expression.Variable(typeof(IStaticRuntimeSlot), variableName));
                     return true;
             }
         }

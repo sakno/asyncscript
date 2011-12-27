@@ -8,8 +8,8 @@ namespace DynamicScript.Runtime.Debugging
     /// Represents runtime slot that supports debug-time editing.
     /// </summary>
     [ComVisible(false)]
-    interface IDebuggerBrowsable: IRuntimeSlot
+    interface IDebuggerBrowsable: IStaticRuntimeSlot
     {
-        bool TryGetValue(out string value, InterpreterState state);
+        bool TryGetValue(InterpreterState state, out string value);
     }
 }

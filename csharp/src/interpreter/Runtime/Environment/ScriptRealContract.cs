@@ -2,6 +2,7 @@
 using System.Dynamic;
 using System.Linq.Expressions;
 using System.Runtime.Serialization;
+using System.Collections.Generic;
 
 namespace DynamicScript.Runtime.Environment
 {
@@ -19,12 +20,13 @@ namespace DynamicScript.Runtime.Environment
     /// </summary>
     [ComVisible(false)]
     [Serializable]
-    public sealed class ScriptRealContract : ScriptBuiltinContract, IRealContractSlots
+    public sealed class ScriptRealContract : ScriptBuiltinContract
     {
         #region Nested Types
         [ComVisible(false)]
         private sealed class IsInternedAction : ScriptFunc<ScriptReal>
         {
+            public const string Name = "isInterned";
             private const string FirstParamName = "r";
 
             public IsInternedAction()
@@ -111,16 +113,24 @@ namespace DynamicScript.Runtime.Environment
         }
         #endregion
 
-        private IRuntimeSlot m_nan;
-        private IRuntimeSlot m_max;
-        private IRuntimeSlot m_min;
-        private IRuntimeSlot m_epsilon;
-        private IRuntimeSlot m_rem;
-        private IRuntimeSlot m_sum;
-        private IRuntimeSlot m_abs;
-        private IRuntimeSlot m_isint;
-        private IRuntimeSlot m_pinf;
-        private IRuntimeSlot m_ninf;
+        private static readonly AggregatedSlotCollection<ScriptRealContract> StaticSlots = new AggregatedSlotCollection<ScriptRealContract>
+        {
+            {"nan", (owner, state) => ScriptReal.NaN},
+            {"max", (owner, state) => ScriptReal.MaxValue},
+            {"min", (owner, state) => ScriptReal.MinValue},
+            {"epsilon", (owner, state) => ScriptReal.Epsilon},
+            {IsInternedAction.Name, (owner, state) => LazyField<IsInternedAction, IScriptFunction>(ref owner.m_interned)},
+            {AbsAction.Name, (owner, state) => LazyField<AbsAction, IScriptFunction>(ref owner.m_abs)},
+            {SumAction.Name, (owner, state) => LazyField<SumAction, IScriptFunction>(ref owner.m_sum)},
+            {RemAction.Name, (owner, state) => LazyField<RemAction, IScriptFunction>(ref owner.m_rem)},
+            {"pinf", (owner, state) => ScriptReal.PositiveInfinity},
+            {"ninf", (owner, state) => ScriptReal.NegativeInfinity}
+        };
+
+        private IScriptFunction m_interned;
+        private IScriptFunction m_abs;
+        private IScriptFunction m_sum;
+        private IScriptFunction m_rem;
 
         private ScriptRealContract(SerializationInfo info, StreamingContext context)
         {
@@ -156,6 +166,14 @@ namespace DynamicScript.Runtime.Environment
         public static new ScriptReal Void
         {
             get { return ScriptReal.Zero; }
+        }
+
+        /// <summary>
+        /// Clears all internal fields.
+        /// </summary>
+        public override void Clear()
+        {
+            m_abs = m_interned = m_rem = m_sum = null;
         }
 
         /// <summary>
@@ -257,61 +275,35 @@ namespace DynamicScript.Runtime.Environment
             return state.IsInterned(value);
         }
 
-        #region Runtime Slots
-
-        IRuntimeSlot IRealContractSlots.PINF
+        /// <summary>
+        /// Gets collection of aggregated slot.
+        /// </summary>
+        public override ICollection<string> Slots
         {
-            get { return CacheConst(ref m_pinf, () => ScriptReal.PositiveInfinity); }
+            get { return StaticSlots.Keys; }
         }
 
-        IRuntimeSlot IRealContractSlots.NINF
+        /// <summary>
+        /// Gets or sets value of the aggregated object.
+        /// </summary>
+        /// <param name="slotName"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public override IScriptObject this[string slotName, InterpreterState state]
         {
-            get { return CacheConst(ref m_ninf, () => ScriptReal.NegativeInfinity); }
+            get { return StaticSlots.GetValue(this, slotName, state); }
+            set { StaticSlots.SetValue(this, slotName, value, state); }
         }
 
-        IRuntimeSlot IRealContractSlots.IsInterned
+        /// <summary>
+        /// Returns metadata of the aggregated slot.
+        /// </summary>
+        /// <param name="slotName"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        protected override IScriptObject GetSlotMetadata(string slotName, InterpreterState state)
         {
-            get { return CacheConst<IsInternedAction>(ref m_isint); }
+            return StaticSlots.GetSlotMetadata(this, slotName, state);
         }
-
-        IRuntimeSlot IRealContractSlots.Abs
-        {
-            get { return CacheConst<AbsAction>(ref m_abs); }
-        }
-
-        IRuntimeSlot IRealContractSlots.Sum
-        {
-            get { return CacheConst<SumAction>(ref m_sum); }
-        }
-
-        IRuntimeSlot IRealContractSlots.Rem
-        {
-            get { return CacheConst<RemAction>(ref m_rem); }
-        }
-
-        IRuntimeSlot IRealContractSlots.NaN
-        {
-            get { return CacheConst(ref m_nan, () => ScriptReal.NaN); }
-        }
-
-        IRuntimeSlot IRealContractSlots.Max
-        {
-            get { return CacheConst(ref m_max, () => ScriptReal.MaxValue); }
-        }
-
-        IRuntimeSlot IRealContractSlots.Min
-        {
-            get { return CacheConst(ref m_min, () => ScriptReal.MinValue); }
-        }
-
-        IRuntimeSlot IRealContractSlots.Epsilon
-        {
-            get { return CacheConst(ref m_epsilon, () => ScriptReal.Epsilon); }
-        }
-
-        #endregion
-
-
-        
     }
 }

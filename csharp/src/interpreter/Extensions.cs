@@ -111,5 +111,17 @@ namespace DynamicScript
         {
             return left ?? right;
         }
+
+        internal static T IfThenElse<T>(this bool condition, T left, T right)
+        {
+            return condition ? left : right;
+        }
+
+        internal static T[] AsArray<T>(this T value, long size)
+        {
+            var result = new T[size];
+            for (var i = 0L; i < result.LongLength; i++) result[i] = value;
+            return result;
+        }
     }
 }

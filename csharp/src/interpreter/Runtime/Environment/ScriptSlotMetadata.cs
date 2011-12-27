@@ -35,7 +35,7 @@ namespace DynamicScript.Runtime.Environment
             
         }
 
-        private static new IEnumerable<KeyValuePair<string, IRuntimeSlot>> Slots(string slotName, ScriptCompositeContract.SlotMeta slot)
+        private static new IEnumerable<KeyValuePair<string, IStaticRuntimeSlot>> Slots(string slotName, ScriptCompositeContract.SlotMeta slot)
         {
             yield return Constant(NameSlot, new ScriptString(slotName), ScriptStringContract.Instance);
             yield return Constant(VariableSlot, (ScriptBoolean)!slot.IsConstant, ScriptBooleanContract.Instance);

@@ -6,7 +6,17 @@ using System.Collections.Generic;
 namespace DynamicScript.Modules.TypeSystem
 {
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
-
+    /*
+     * Type definition
+     * const ctor = @i: integer -> void: {
+     *      this.initialize("conv")(2);    //call base constructor
+     *      this.self.a = 10;
+     *      this.conv.b = 10;
+     * }
+     * var ct = custom_type(${{a: integer}}).aggregates("conv", ${{b: integer}}).constructor(ctor);
+     * ct.prototype - returns ${{a: integer}}
+     * ct.constructor - returns reference to ctor
+     */
     /// <summary>
     /// Represents custom type factory.
     /// This class cannot be inherited.
@@ -14,12 +24,12 @@ namespace DynamicScript.Modules.TypeSystem
     [ComVisible(false)]
     public sealed class CustomTypeFactory : ScriptContract, IScriptMetaContract
     {
-        public static IScriptCustomContract CreateContract(ScriptActionBase.ICombination constructor)
+        public static IScriptCustomContract CreateContract(ScriptFunctionBase.ICombination constructor)
         {
             return new ScriptCustomContract(constructor);
         }
 
-        public static IScriptCustomContract CreateContract(IScriptAction constructor)
+        public static IScriptCustomContract CreateContract(IScriptFunction constructor)
         {
             return new ScriptCustomContract(constructor);
         }
@@ -27,10 +37,10 @@ namespace DynamicScript.Modules.TypeSystem
         public override IScriptObject CreateObject(IList<IScriptObject> args, InterpreterState state)
         {
             var ctor = args.Count == 1 ? args[0] : null;
-            if (ctor is IScriptAction)
-                return CreateContract((IScriptAction)ctor);
-            else if (ctor is ScriptActionBase.ICombination)
-                return CreateContract((ScriptActionBase.ICombination)ctor);
+            if (ctor is IScriptFunction)
+                return CreateContract((IScriptFunction)ctor);
+            else if (ctor is ScriptFunctionBase.ICombination)
+                return CreateContract((ScriptFunctionBase.ICombination)ctor);
             else return Void;
         }
 

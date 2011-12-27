@@ -20,6 +20,11 @@ namespace DynamicScript
         public const bool IgnoreCase = true;
 
         /// <summary>
+        /// Represents access to the singleton instance of the comparer.
+        /// </summary>
+        public static readonly IEqualityComparer<string> Instance = new StringEqualityComparer();
+
+        /// <summary>
         /// Determines whether the two strings represents the same lexeme.
         /// </summary>
         /// <param name="lexeme1">The first lexeme to compare.</param>

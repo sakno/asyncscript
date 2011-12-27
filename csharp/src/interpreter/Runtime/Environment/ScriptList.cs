@@ -15,16 +15,16 @@ namespace DynamicScript.Runtime.Environment
     /// </summary>
     [ComVisible(false)]
     [CLSCompliant(false)]
-    public sealed class ScriptList: ScriptObject, IList<IScriptObject>, IScriptObjectCollection, IArraySlots
+    public sealed class ScriptList: ScriptObject, IList<IScriptObject>, IScriptObjectCollection, IScriptArray
     {
         #region Nested Types
 
         [ComVisible(false)]
-        private sealed class ReadListElementAction : ScriptGetItemAction
+        private sealed class ReadListElementFunction : ScriptGetItemFunction
         {
             private readonly IList<IScriptObject> m_elements;
 
-            public ReadListElementAction(IScriptContract elementContract, IList<IScriptObject> elements)
+            public ReadListElementFunction(IScriptContract elementContract, IList<IScriptObject> elements)
                 : base(elementContract, new[] { ScriptIntegerContract.Instance })
             {
                 m_elements = elements;
@@ -46,11 +46,11 @@ namespace DynamicScript.Runtime.Environment
         }
 
         [ComVisible(false)]
-        private sealed class WriteListElementAction : ScriptSetItemAction
+        private sealed class WriteListElementFunction : ScriptSetItemFunction
         {
             private readonly IList<IScriptObject> m_elements;
 
-            public WriteListElementAction(IScriptContract elementContract, IList<IScriptObject> elements)
+            public WriteListElementFunction(IScriptContract elementContract, IList<IScriptObject> elements)
                 : base(elementContract, new[] { ScriptIntegerContract.Instance })
             {
                 m_elements = elements;
@@ -74,63 +74,35 @@ namespace DynamicScript.Runtime.Environment
             }
         }
 
-        [ComVisible(false)]
-        private sealed class LengthSlot : RuntimeSlotBase, IEquatable<LengthSlot>
-        {
-            private readonly ICollection<IScriptObject> m_elements;
-
-            public LengthSlot(ICollection<IScriptObject> elements)
-            {
-                m_elements = elements;
-            }
-
-            public ScriptInteger Value
-            {
-                get { return new ScriptInteger(m_elements.Count); } 
-            }
-
-            public override IScriptObject GetValue(InterpreterState state)
-            {
-                return Value;
-            }
-
-            public override void SetValue(IScriptObject value, InterpreterState state)
-            {
-                throw new ConstantCannotBeChangedException(state);
-            }
-
-            public override IScriptContract ContractBinding
-            {
-                get { return ScriptIntegerContract.Instance; }
-            }
-
-            public override RuntimeSlotAttributes Attributes
-            {
-                get { return RuntimeSlotAttributes.Immutable; }
-            }
-
-            protected override ICollection<string> Slots
-            {
-                get { return Value.Slots; }
-            }
-
-            public override bool DeleteValue()
-            {
-                return false;
-            }
-
-            public bool Equals(LengthSlot other)
-            {
-                return other != null && ReferenceEquals(m_elements, other.m_elements);
-            }
-
-            public override bool Equals(IRuntimeSlot other)
-            {
-                return Equals(other as LengthSlot);
-            }
-        }
-
         #endregion
+
+        private static readonly AggregatedSlotCollection<ScriptList> StaticSlots = new AggregatedSlotCollection<ScriptList>
+        {
+            {ScriptArrayContract.LengthSlotName, (owner, state) => new ScriptInteger(owner.Count), ScriptIntegerContract.Instance},
+            {ScriptArrayContract.RankSlotName, (owner, state) => ScriptInteger.One, ScriptIntegerContract.Instance},
+            //Getter
+            {GetItemAction, (owner, state) => 
+                {
+                    if(owner.m_getter == null)owner.m_getter=new ReadListElementFunction(owner.ContractBinding, owner.m_elements);
+                    return owner.m_getter;
+                }},
+            //Setter
+            {SetItemAction, (owner, state) =>
+                {
+                    if (owner.m_setter == null) owner.m_setter = new WriteListElementFunction(owner.ContractBinding, owner.m_elements);
+                    return owner.m_setter;
+                }},
+                {ScriptArrayContract.UpperBoundSlotName, (owner, state) =>
+                    {
+                        if (owner.m_ubound == null) owner.m_ubound = new ScriptArray.UpperBoundFunction<List<IScriptObject>>(owner.m_elements);
+                        return owner.m_ubound;
+                    }},
+                    {ScriptArrayContract.IteratorAction, (owner, state) =>
+                        {
+                            if (owner.m_iterator == null) owner.m_iterator = new ScriptIteratorFunction(owner.m_elements, owner.ContractBinding.ElementContract);
+                            return owner.m_iterator;
+                        }}
+        };
 
         private volatile static int BufferSize = 100;
         private static readonly object SyncRoot = new object();
@@ -138,12 +110,10 @@ namespace DynamicScript.Runtime.Environment
         private readonly List<IScriptObject> m_elements;
         private ScriptArrayContract m_contract;
 
-        private IRuntimeSlot m_length;
-        private IRuntimeSlot m_rank;
-        private IRuntimeSlot m_getter;
-        private IRuntimeSlot m_setter;
-        private IRuntimeSlot m_ubound;
-        private IRuntimeSlot m_iterator;
+        private IScriptFunction m_getter;
+        private IScriptFunction m_setter;
+        private IScriptFunction m_ubound;
+        private IScriptFunction m_iterator;
 
         private ScriptList(List<IScriptObject> elements)
         {
@@ -296,7 +266,7 @@ namespace DynamicScript.Runtime.Environment
         /// <summary>
         /// Removes all items from collection.
         /// </summary>
-        public void Clear()
+        public new void Clear()
         {
             m_elements.Clear();
         }
@@ -348,7 +318,7 @@ namespace DynamicScript.Runtime.Environment
         /// Returns an enumerator through list elements.
         /// </summary>
         /// <returns>An enumerator through list elements.</returns>
-        public new IEnumerator<IScriptObject> GetEnumerator()
+        public IEnumerator<IScriptObject> GetEnumerator()
         {
             return m_elements.GetEnumerator();
         }
@@ -403,64 +373,6 @@ namespace DynamicScript.Runtime.Environment
             return ScriptArray.ToString(this);
         }
 
-        #region Runtime Slots
-
-        private IRuntimeSlot CreateLengthSlot()
-        {
-            return new LengthSlot(m_elements);
-        }
-
-        private ReadListElementAction CreateGetterSlot()
-        {
-            return new ReadListElementAction(ContractBinding.ElementContract, m_elements);
-        }
-
-        private WriteListElementAction CreateSetterSlot()
-        {
-            return new WriteListElementAction(ContractBinding.ElementContract, m_elements);
-        }
-
-        private ScriptArray.UpperBoundAction<List<IScriptObject>> CreateUpperBoundSlot()
-        {
-            return new ScriptArray.UpperBoundAction<List<IScriptObject>>(m_elements);
-        }
-
-        private ScriptIteratorAction CreateIteratorSlot()
-        {
-            return new ScriptIteratorAction(m_elements, ContractBinding.ElementContract);
-        }
-
-        IRuntimeSlot IArraySlots.Length
-        {
-            get { return Cache(ref m_length, CreateLengthSlot); }
-        }
-
-        IRuntimeSlot IArraySlots.Rank
-        {
-            get { return CacheConst(ref m_rank, () => new ScriptInteger(ContractBinding.Rank)); }
-        }
-
-        IRuntimeSlot IArraySlots.GetItem
-        {
-            get { return CacheConst(ref m_getter, CreateGetterSlot); }
-        }
-
-        IRuntimeSlot IArraySlots.SetItem
-        {
-            get { return CacheConst(ref m_setter, CreateSetterSlot); }
-        }
-
-        IRuntimeSlot IArraySlots.UpperBound
-        {
-            get { return CacheConst(ref m_ubound, CreateUpperBoundSlot); }
-        }
-
-        IRuntimeSlot IIterableSlots.Iterator
-        {
-            get { return CacheConst(ref m_iterator, CreateIteratorSlot); }
-        }
-        #endregion
-
         #region IScriptArray Members
 
         IScriptObject IScriptArray.this[long[] indicies, InterpreterState state]
@@ -489,5 +401,36 @@ namespace DynamicScript.Runtime.Environment
         }
 
         #endregion
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="slotName"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public override IScriptObject this[string slotName, InterpreterState state]
+        {
+            get { return StaticSlots.GetValue(this, slotName, state); }
+            set { StaticSlots.SetValue(this, slotName, value, state); }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="slotName"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        protected override IScriptObject GetSlotMetadata(string slotName, InterpreterState state)
+        {
+            return StaticSlots.GetSlotMetadata(this, slotName, state);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public override ICollection<string> Slots
+        {
+            get { return StaticSlots.Keys; }
+        }
     }
 }

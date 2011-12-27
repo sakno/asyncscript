@@ -32,13 +32,13 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         #region Nested Type
 
         [ComVisible(false)]
-        private sealed class ImportAction : ScriptAction<IScriptObject, IScriptCompositeObject>
+        private sealed class ImportFunction : ScriptAction<IScriptObject, IScriptCompositeObject>
         {
             public const string Name = "import";
             private const string FirstParamName = "source";
             private const string SecondParamName = "destination";
 
-            public ImportAction()
+            public ImportFunction()
                 : base(FirstParamName, ScriptSuperContract.Instance, SecondParamName, ScriptCompositeContract.Empty)
             {
             }
@@ -51,13 +51,13 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         }
 
         [ComVisible(false)]
-        private sealed class InvokeAction : ScriptFunc<IScriptObject, IScriptArray>
+        private sealed class InvokeFunction : ScriptFunc<IScriptObject, IScriptArray>
         {
             public const string Name = "__invoke";
             private const string FirstParamName = "target";
             private const string SecondParamName = "args";
 
-            public InvokeAction()
+            public InvokeFunction()
                 : base(FirstParamName, ScriptSuperContract.Instance, SecondParamName, new ScriptArrayContract(), ScriptSuperContract.Instance)
             {
             }
@@ -69,12 +69,12 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         }
 
         [ComVisible(false)]
-        private sealed class WeakRefAction : ScriptFunc<IScriptObject>
+        private sealed class WeakRefFunction : ScriptFunc<IScriptObject>
         {
             public const string Name = "weakref";
             private const string FirstParamName = "obj";
 
-            public WeakRefAction()
+            public WeakRefFunction()
                 : base(FirstParamName, ScriptSuperContract.Instance, ScriptSuperContract.Instance)
             {
             }
@@ -86,47 +86,47 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         }
 
         [ComVisible(false)]
-        private sealed class IsOverloadedAction : ScriptFunc<IScriptObject>
+        private sealed class IsOverloadedFunction : ScriptFunc<IScriptObject>
         {
             public const string Name = "__overloaded";
             private const string FirstParamName = "func";
 
-            public IsOverloadedAction()
+            public IsOverloadedFunction()
                 : base(FirstParamName, ScriptSuperContract.Instance, ScriptBooleanContract.Instance)
             {
             }
 
             protected override IScriptObject Invoke(IScriptObject func, InterpreterState state)
             {
-                return (ScriptBoolean)(func is ScriptActionBase.ICombination);
+                return (ScriptBoolean)(func is ScriptFunctionBase.ICombination);
             }
         }
 
         [ComVisible(false)]
-        private sealed class AdjustAction : ScriptFunc<IScriptAction, IScriptObject>
+        private sealed class BindFunction : ScriptFunc<IScriptFunction, IScriptObject>
         {
-            public const string Name = "adjust";
+            public const string Name = "bind";
             private const string FirstParamName = "act";
             private const string SecondParamName = "obj";
 
-            public AdjustAction()
+            public BindFunction()
                 : base(FirstParamName, ScriptSuperContract.Instance, SecondParamName, ScriptSuperContract.Instance, ScriptSuperContract.Instance)
             {
             }
 
-            protected override IScriptObject Invoke(IScriptAction action, IScriptObject @this, InterpreterState state)
+            protected override IScriptObject Invoke(IScriptFunction action, IScriptObject @this, InterpreterState state)
             {
                 return action.Bind(@this);
             }
         }
 
         [ComVisible(false)]
-        private sealed class GetDataAction : ScriptFunc<ScriptString>
+        private sealed class GetDataFunction : ScriptFunc<ScriptString>
         {
             public const string Name = "getdata";
             private const string FirstParamName = "name";
 
-            public GetDataAction()
+            public GetDataFunction()
                 : base(FirstParamName, ScriptStringContract.Instance, ScriptSuperContract.Instance)
             {
             }
@@ -138,13 +138,13 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         }
 
         [ComVisible(false)]
-        private sealed class SetDataAction : ScriptAction<ScriptString, IScriptObject>
+        private sealed class SetDataFunction : ScriptAction<ScriptString, IScriptObject>
         {
             public const string Name = "setdata";
             private const string FirstParamName = "name";
             private const string SecondParamName = "data";
 
-            public SetDataAction()
+            public SetDataFunction()
                 : base(FirstParamName, ScriptStringContract.Instance, SecondParamName, ScriptSuperContract.Instance)
             {
             }
@@ -156,12 +156,12 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         }
 
         [ComVisible(false)]
-        private sealed class ReflectAction : ScriptFunc<IScriptObject>
+        private sealed class ReflectFunction : ScriptFunc<IScriptObject>
         {
             public const string Name = "reflect";
             private const string FirstParamName = "obj";
 
-            public ReflectAction()
+            public ReflectFunction()
                 : base(FirstParamName, ScriptSuperContract.Instance, ScriptSuperContract.Instance)
             {
             }
@@ -172,7 +172,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                     return Reflect((ScriptCompositeContract)obj);
                 else if (obj is ScriptCompositeObject)
                     return ScriptModule.Reflect((ScriptCompositeObject)obj);
-                else return ScriptCompositeContract.Empty.CreateCompositeObject(new IScriptObject[0], state);
+                else return ScriptCompositeContract.Empty.CreateCompositeObject(EmptyArray, state);
             }
         }
 
@@ -181,7 +181,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// This class cannot be inherited.
         /// </summary>
         [ComVisible(false)]
-        private sealed class EvalAction : ScriptFunc<ScriptString, IScriptObject>
+        private sealed class EvalFunction : ScriptFunc<ScriptString, IScriptObject>
         {
             public const string Name = "eval";
             private const string FirstParamName = "script";
@@ -190,7 +190,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             /// <summary>
             /// Initializes a new instance of the action.
             /// </summary>
-            public EvalAction()
+            public EvalFunction()
                 : base(FirstParamName, ScriptStringContract.Instance, SecondParamName, ScriptSuperContract.Instance, ScriptSuperContract.Instance)
             {
             }
@@ -208,12 +208,12 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         }
 
         [ComVisible(false)]
-        private sealed class SplitAction : ScriptFunc<ScriptCompositeObject>
+        private sealed class SplitFunction : ScriptFunc<ScriptCompositeObject>
         {
             public const string Name = "split";
             private const string FirstParamName = "obj";
 
-            public SplitAction()
+            public SplitFunction()
                 : base(FirstParamName, ScriptCompositeContract.Empty, ScriptIterable.GetContractBinding())
             {
             }
@@ -225,14 +225,14 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         }
 
         [ComVisible(false)]
-        private sealed class ParseAction : ScriptFunc<ScriptString, IScriptContract, ScriptString>
+        private sealed class ParseFunction : ScriptFunc<ScriptString, IScriptContract, ScriptString>
         {
             private const string FirstParamName = "value";
             private const string SecondParamName = "t";
             private const string ThirdParamName = "lang";
             public const string Name = "parse";
 
-            public ParseAction()
+            public ParseFunction()
                 : base(FirstParamName, ScriptStringContract.Instance, SecondParamName, ScriptMetaContract.Instance, ThirdParamName, ScriptStringContract.Instance, ScriptSuperContract.Instance)
             {
             }
@@ -266,12 +266,12 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         }
 
         [ComVisible(false)]
-        private sealed class EnumAction : ScriptFunc<IScriptArray>
+        private sealed class EnumFunction : ScriptFunc<IScriptArray>
         {
             public const string Name = "enum";
             private const string FirstParamName = "elements";
 
-            public EnumAction()
+            public EnumFunction()
                 : base(FirstParamName, ScriptDimensionalContract.Instance, ScriptFinSetContract.Instance)
             {
             }
@@ -283,7 +283,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         }
 
         [ComVisible(false)]
-        private sealed class PutsAction : ScriptAction<IScriptObject>
+        private sealed class PutsFunction : ScriptAction<IScriptObject>
         {
             /// <summary>
             /// Represents name of the action.
@@ -291,7 +291,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             public const string Name = "puts";
             private static string FirstParamName = "obj";
 
-            public PutsAction()
+            public PutsFunction()
                 : base(FirstParamName, ScriptSuperContract.Instance)
             {
             }
@@ -303,11 +303,11 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         }
 
         [ComVisible(false)]
-        private sealed class GetsAction : ScriptFunc
+        private sealed class GetsFunction : ScriptFunc
         {
             public const string Name = "gets";
 
-            public GetsAction()
+            public GetsFunction()
                 : base(ScriptSuperContract.Instance)
             {
             }
@@ -319,13 +319,13 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         }
 
         [ComVisible(false)]
-        private sealed class NewObjAction : ScriptFunc<ScriptString, IScriptContract>
+        private sealed class NewObjFunction : ScriptFunc<ScriptString, IScriptContract>
         {
             public const string Name = "newobj";
             private const string FirstParamName = "name";
             private const string SecondParamName = "contract";
 
-            public NewObjAction()
+            public NewObjFunction()
                 : base(FirstParamName, ScriptStringContract.Instance, SecondParamName, ScriptMetaContract.Instance, ScriptSuperContract.Instance)
             {
             }
@@ -337,49 +337,87 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         }
 
         [ComVisible(false)]
-        private sealed class DebugSlot : ObservableSlot
+        private sealed class DebugSlot : RuntimeSlotBase, IStaticRuntimeSlot
         {
             public const string Name = "debug";
 
-            public DebugSlot()
-                : base(ScriptBoolean.False, ScriptBooleanContract.Instance, true)
-            {
-            }
-
-            protected override IScriptObject GetValue(IScriptObject value, InterpreterState state)
+            public override IScriptObject GetValue(InterpreterState state)
             {
                 return (ScriptBoolean)state.DebugMode;
-            } 
+            }
+
+            public IScriptContract ContractBinding
+            {
+                get { return ScriptBooleanContract.Instance; }
+            }
+
+            public override bool DeleteValue()
+            {
+                return false;
+            }
+
+            public override IScriptObject SetValue(IScriptObject value, InterpreterState state)
+            {
+                throw new ConstantCannotBeChangedException(state);
+            }
+
+            public override RuntimeSlotAttributes Attributes
+            {
+                get { return RuntimeSlotAttributes.Immutable; }
+            }
+
+            public override bool HasValue
+            {
+                get { return true; }
+                protected set { }
+            }
         }
 
         [ComVisible(false)]
-        private sealed class CompiledSlot : ObservableSlot
+        private sealed class CompiledSlot : RuntimeSlotBase, IStaticRuntimeSlot
         {
             public const string Name = "compiled";
 
-            public CompiledSlot()
-                : base(ScriptBoolean.True, ScriptBooleanContract.Instance, true)
-            {
-            }
-
-            protected override IScriptObject GetValue(IScriptObject value, InterpreterState state)
+            public override IScriptObject GetValue(InterpreterState state)
             {
                 return ScriptBoolean.True;
+            }
+
+            public IScriptContract ContractBinding
+            {
+                get { return ScriptBooleanContract.Instance; }
+            }
+
+            public override bool DeleteValue()
+            {
+                return false;
+            }
+
+            public override IScriptObject SetValue(IScriptObject value, InterpreterState state)
+            {
+                throw new ConstantCannotBeChangedException(state);
+            }
+
+            public override RuntimeSlotAttributes Attributes
+            {
+                get { return RuntimeSlotAttributes.Immutable; }
+            }
+
+            public override bool HasValue
+            {
+                get { return true; }
+                protected set { }
             }
         }
 
         [ComVisible(false)]
-        private sealed class ArgsSlot : ObservableSlot
+        private sealed class ArgsSlot : RuntimeSlotBase, IStaticRuntimeSlot
         {
             public const string Name = "args";
             private ScriptArray m_cached;
+            public readonly ScriptArrayContract ContractBinding = new ScriptArrayContract(ScriptStringContract.Instance);
 
-            public ArgsSlot()
-                : base(ScriptArray.Empty(ScriptStringContract.Instance), true)
-            {
-            }
-
-            protected override IScriptObject GetValue(IScriptObject value, InterpreterState state)
+            public override IScriptObject GetValue(InterpreterState state)
             {
                 if (m_cached == null || m_cached.GetLength(0) != state.Arguments.Count)
                 {
@@ -388,10 +426,37 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                 }
                 return m_cached;
             }
+
+            IScriptContract IStaticRuntimeSlot.ContractBinding
+            {
+                get { return ContractBinding; }
+            }
+
+            public override bool DeleteValue()
+            {
+                m_cached = null;
+                return true;
+            }
+
+            public override IScriptObject SetValue(IScriptObject value, InterpreterState state)
+            {
+                throw new ConstantCannotBeChangedException(state);
+            }
+
+            public override RuntimeSlotAttributes Attributes
+            {
+                get { return RuntimeSlotAttributes.Immutable; }
+            }
+
+            public override bool HasValue
+            {
+                get { return true; }
+                protected set { }
+            }
         }
 
         [ComVisible(false)]
-        private sealed class UseAction : ScriptFunc<ScriptString>
+        private sealed class LoadModuleFunction : ScriptFunc<ScriptString>
         {
             /// <summary>
             /// Represents name of the action.
@@ -400,7 +465,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             private const string FirstParamName = "scriptFile";
 
 
-            public UseAction()
+            public LoadModuleFunction()
                 : base(FirstParamName, ScriptStringContract.Instance, ScriptSuperContract.Instance)
             {
             }
@@ -412,13 +477,13 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         }
 
         [ComVisible(false)]
-        private sealed class PrepareAction : ScriptAction<ScriptString, ScriptBoolean>
+        private sealed class PrepareModuleFunction : ScriptAction<ScriptString, ScriptBoolean>
         {
             public const string Name = "prepare";
             private const string FirstParamName = "scriptFile";
             private const string SecondParamName = "pc";
 
-            public PrepareAction()
+            public PrepareModuleFunction()
                 : base(FirstParamName, ScriptStringContract.Instance, SecondParamName, ScriptBooleanContract.Instance)
             {
             }
@@ -430,12 +495,12 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         }
 
         [ComVisible(false)]
-        private sealed class QuitAction : ScriptAction<ScriptInteger>
+        private sealed class QuitFunction : ScriptAction<ScriptInteger>
         {
             public const string Name = "quit";
             private const string FirstParamName = "exitCode";
 
-            public QuitAction()
+            public QuitFunction()
                 : base(FirstParamName, ScriptIntegerContract.Instance)
             {
             }
@@ -447,14 +512,14 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         }
 
         [ComVisible(false)]
-        private sealed class CmdAction : ScriptFunc<ScriptString, ScriptString, ScriptInteger>
+        private sealed class CmdFunction : ScriptFunc<ScriptString, ScriptString, ScriptInteger>
         {
             public const string Name = "cmd";
             private const string FirstParamName = "command";
             private const string SecondParamName = "arguments";
             private const string ThirdParamName = "timeout";
 
-            public CmdAction()
+            public CmdFunction()
                 : base(FirstParamName, ScriptStringContract.Instance, SecondParamName, ScriptStringContract.Instance, ThirdParamName, ScriptIntegerContract.Instance, ScriptIntegerContract.Instance)
             {
             }
@@ -466,33 +531,56 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         }
 
         [ComVisible(false)]
-        private sealed class WorkingDirectorySlot : ObservableSlot
+        private sealed class WorkingDirectorySlot : RuntimeSlotBase, IStaticRuntimeSlot
         {
             public const string Name = "wdir";
 
-            public WorkingDirectorySlot()
-                : base(ScriptString.Empty)
-            {
-            }
-
-            protected override IScriptObject GetValue(IScriptObject value, InterpreterState state)
+            public override IScriptObject GetValue(InterpreterState state)
             {
                 return new ScriptString(SystemEnvironment.CurrentDirectory);
             }
 
-            protected override void SetValue(ref IScriptObject value, InterpreterState state)
+            public override IScriptObject SetValue(IScriptObject value, InterpreterState state)
             {
-                SystemEnvironment.CurrentDirectory = SystemConverter.ToString(value);
+                if (ScriptStringContract.TryConvert(ref value))
+                {
+                    SystemEnvironment.CurrentDirectory = SystemConverter.ToString(value);
+                    return value;
+                }
+                else if (state.Context == InterpretationContext.Unchecked)
+                    return value;
+                else throw new ContractBindingException(value, ScriptStringContract.Instance, state);
+            }
+
+            public IScriptContract ContractBinding
+            {
+                get { return ScriptStringContract.Instance; }
+            }
+
+            public override bool DeleteValue()
+            {
+                return false;
+            }
+
+            public override RuntimeSlotAttributes Attributes
+            {
+                get { return RuntimeSlotAttributes.Immutable; }
+            }
+
+            public override bool HasValue
+            {
+                get { return true; }
+                protected set { }
             }
         }
 
         [ComVisible(false)]
-        private sealed class ReadOnlyAction : ScriptFunc<IScriptCompositeObject>
+        private sealed class ReadOnlyFunction : ScriptFunc<IScriptCompositeObject>
         {
             public const string Name = "readonly";
             private const string FirstParamName = "obj";
 
-            public ReadOnlyAction()
+            public ReadOnlyFunction()
                 : base(FirstParamName, ScriptCompositeContract.Empty, ScriptSuperContract.Instance)
             {
             }
@@ -504,11 +592,11 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         } 
 
         [ComVisible(false)]
-        private sealed class RegexAction : ScriptFunc
+        private sealed class RegexFunction : ScriptFunc
         {
             public const string Name = "regex";
 
-            public RegexAction()
+            public RegexFunction()
                 : base(ScriptSuperContract.Instance)
             {
             }
@@ -532,36 +620,36 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             public ModuleSlots()
             {
                 AddConstant<ThreadingLibrary>(ThreadingLibrary.Name);
-                AddConstant<PutsAction>(PutsAction.Name);
+                AddConstant<PutsFunction>(PutsFunction.Name);
                 Add<DebugSlot>(DebugSlot.Name);
                 Add<CompiledSlot>(CompiledSlot.Name);
-                AddConstant<NewObjAction>(NewObjAction.Name);
-                AddConstant<UseAction>(UseAction.Name);
+                AddConstant<NewObjFunction>(NewObjFunction.Name);
+                AddConstant<LoadModuleFunction>(LoadModuleFunction.Name);
                 AddConstant<Math>(Math.Name);
-                AddConstant<GetsAction>(GetsAction.Name);
-                AddConstant<PrepareAction>(PrepareAction.Name);
+                AddConstant<GetsFunction>(GetsFunction.Name);
+                AddConstant<PrepareModuleFunction>(PrepareModuleFunction.Name);
                 Add<ArgsSlot>(ArgsSlot.Name);
-                AddConstant<CmdAction>(CmdAction.Name);
+                AddConstant<CmdFunction>(CmdFunction.Name);
                 AddConstant<GC>(GC.Name);
                 AddConstant<DebuggerModule>(DebuggerModule.Name);
                 Add<WorkingDirectorySlot>(WorkingDirectorySlot.Name);
                 AddConstant("ver", new ScriptInteger(DynamicScriptInterpreter.Version.Major));
-                AddConstant<ReadOnlyAction>(ReadOnlyAction.Name);
-                AddConstant<EnumAction>(EnumAction.Name);
-                AddConstant<SplitAction>(SplitAction.Name);
-                AddConstant<EvalAction>(EvalAction.Name);
-                AddConstant<SetDataAction>(SetDataAction.Name);
-                AddConstant<GetDataAction>(GetDataAction.Name);
-                AddConstant<RegexAction>(RegexAction.Name);
-                AddConstant<ReflectAction>(ReflectAction.Name);
-                AddConstant<AdjustAction>(AdjustAction.Name);
-                AddConstant<WeakRefAction>(WeakRefAction.Name);
-                AddConstant<ParseAction>(ParseAction.Name);
+                AddConstant<ReadOnlyFunction>(ReadOnlyFunction.Name);
+                AddConstant<EnumFunction>(EnumFunction.Name);
+                AddConstant<SplitFunction>(SplitFunction.Name);
+                AddConstant<EvalFunction>(EvalFunction.Name);
+                AddConstant<SetDataFunction>(SetDataFunction.Name);
+                AddConstant<GetDataFunction>(GetDataFunction.Name);
+                AddConstant<RegexFunction>(RegexFunction.Name);
+                AddConstant<ReflectFunction>(ReflectFunction.Name);
+                AddConstant<BindFunction>(BindFunction.Name);
+                AddConstant<WeakRefFunction>(WeakRefFunction.Name);
+                AddConstant<ParseFunction>(ParseFunction.Name);
                 AddConstant<RuntimeBehaviorSlots>(RuntimeBehaviorSlots.Name);
-                AddConstant<QuitAction>(QuitAction.Name);
-                AddConstant<ImportAction>(ImportAction.Name);
-                AddConstant<InvokeAction>(InvokeAction.Name);
-                AddConstant<IsOverloadedAction>(IsOverloadedAction.Name);
+                AddConstant<QuitFunction>(QuitFunction.Name);
+                AddConstant<ImportFunction>(ImportFunction.Name);
+                AddConstant<InvokeFunction>(InvokeFunction.Name);
+                AddConstant<IsOverloadedFunction>(IsOverloadedFunction.Name);
             }
         }
         #endregion

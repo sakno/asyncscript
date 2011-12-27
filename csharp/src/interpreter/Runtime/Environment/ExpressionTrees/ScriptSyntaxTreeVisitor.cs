@@ -8,10 +8,10 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
     [ComVisible(false)]
     sealed class ScriptSyntaxTreeVisitor
     {
-        private readonly IScriptAction m_visitor;
+        private readonly IScriptFunction m_visitor;
         private readonly InterpreterState m_state;
 
-        public ScriptSyntaxTreeVisitor(IScriptAction visitor, InterpreterState state)
+        public ScriptSyntaxTreeVisitor(IScriptFunction visitor, InterpreterState state)
         {
             m_visitor = visitor;
             m_state = state;

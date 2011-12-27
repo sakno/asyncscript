@@ -81,14 +81,14 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="catchVar"></param>
         /// <param name="state"></param>
         /// <returns></returns>
-        public static bool Catch(object exception, IRuntimeSlot catchVar, InterpreterState state)
+        public static bool Catch(object exception, IStaticRuntimeSlot catchVar, InterpreterState state)
         {
             return RuntimeHelpers.TrySetValue(catchVar, Unwrap(exception), state);
         }
 
         internal static MethodCallExpression BindCatch(ParameterExpression exception, ParameterExpression catchVar, ParameterExpression stateVar)
         {
-            var catchMethod = LinqHelpers.BodyOf<object, IRuntimeSlot, InterpreterState, bool, MethodCallExpression>((e, v, s) => Catch(e, v, s));
+            var catchMethod = LinqHelpers.BodyOf<object, IStaticRuntimeSlot, InterpreterState, bool, MethodCallExpression>((e, v, s) => Catch(e, v, s));
             return catchMethod.Update(null, new Expression[] { exception, catchVar, stateVar });
         }
     }

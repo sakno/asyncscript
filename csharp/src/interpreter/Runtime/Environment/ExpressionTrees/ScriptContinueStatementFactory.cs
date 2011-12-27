@@ -9,25 +9,31 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
     [ComVisible(false)]
     [Serializable]
-    sealed class ScriptContinueStatementFactory : ScriptStatementFactory<ScriptCodeContinueStatement, ScriptContinueStatement>, IFlowControlStatementFactorySlots
+    sealed class ScriptContinueStatementFactory : ScriptStatementFactory<ScriptCodeContinueStatement, ScriptContinueStatement>
     {
         #region Nested Types
         [ComVisible(false)]
-        private sealed class ModifyAction : ModifyActionBase
+        private sealed class ModifyFunction : ModifyFunctionBase
         {
             private const string SecondParamName = "values";
 
-            public ModifyAction()
-                : base( Instance, new ScriptActionContract.Parameter(SecondParamName, new ScriptArrayContract()))
+            public ModifyFunction()
+                : base( Instance, new ScriptFunctionContract.Parameter(SecondParamName, new ScriptArrayContract()))
             {
             }
         }
         #endregion
 
-        public new const string Name = "continuedef";
+        private static readonly AggregatedSlotCollection<ScriptContinueStatementFactory> StaticSlots = new AggregatedSlotCollection<ScriptContinueStatementFactory>
+        {
+             {ModifyFunction.Name, (owner, state) => LazyField<ModifyFunction, IScriptFunction>(ref owner.m_modify)},
+             {FlowControlStatementArgumentsFunction<ScriptCodeContinueStatement>.Name, (owner, state) => {if(owner.m_args == null)owner.m_args = new FlowControlStatementArgumentsFunction<ScriptCodeContinueStatement>(owner); return owner.m_args;}},
+        };
 
-        private IRuntimeSlot m_args;
-        private IRuntimeSlot m_modify;
+        public new const string Name = "`continue";
+
+        private IScriptFunction m_args;
+        private IScriptFunction m_modify;
 
         private ScriptContinueStatementFactory(SerializationInfo info, StreamingContext context)
             : base(info, context)
@@ -60,19 +66,5 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         {
             m_args = m_modify = null;
         }
-
-        #region Runtime Slots
-
-        IRuntimeSlot IFlowControlStatementFactorySlots.Args
-        {
-            get { return CacheConst(ref m_args, () => new FlowControlStatementArgumentsAction<ScriptCodeContinueStatement>(Instance)); }
-        }
-
-        protected override IRuntimeSlot Modify
-        {
-            get { return CacheConst<ModifyAction>(ref m_modify); }
-        }
-
-        #endregion
     }
 }

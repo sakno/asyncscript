@@ -6,7 +6,7 @@ namespace DynamicScript.Runtime.Environment
     using ScriptCodeUnaryOperatorType = Compiler.Ast.ScriptCodeUnaryOperatorType;
 
     [ComVisible(false)]
-    interface IUnaryOperatorInvoker : IScriptAction
+    interface IUnaryOperatorInvoker : IScriptFunction
     {
         ScriptCodeUnaryOperatorType Operator { get; }
     }

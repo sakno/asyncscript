@@ -1,21 +1,28 @@
 ﻿using System;
-using System.ComponentModel;
 
 namespace DynamicScript.Runtime.Environment
 {
-    using ScriptObjectConverter = Debugging.ScriptObjectConverter;
+    using ScriptObjectConverterAttribute = Debugging.ScriptObjectConverterAttribute;
     using CultureInfo = System.Globalization.CultureInfo;
+    using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
 
-    sealed class ContractConverter: ScriptObjectConverter
+    [ComVisible(false)]
+    [AttributeUsage(AttributeTargets.Class, Inherited = true, AllowMultiple = false)]
+    sealed class ContractConverterAttribute : ScriptObjectConverterAttribute
     {
-        public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
-        {
-            return Equals(destinationType, typeof(string));
-        }
 
-        protected override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, IScriptObject value, Type destinationType)
+        public override bool TryConvertTo(IScriptObject value, Type destinationType, InterpreterState state, out object result)
         {
-            return Equals(destinationType, typeof(string)) ? value.ToString() : null;
+            if (Type.GetTypeCode(destinationType) == TypeCode.String && value is IScriptContract)
+            {
+                result = value.ToString();
+                return true;
+            }
+            else
+            {
+                result = null;
+                return false;
+            }
         }
     }
 }

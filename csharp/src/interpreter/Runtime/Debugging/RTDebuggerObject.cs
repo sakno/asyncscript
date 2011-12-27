@@ -15,7 +15,7 @@ namespace DynamicScript.Runtime.Debugging
         #region Nested Types
         [ComVisible(false)]
         [TransparentAction]
-        private sealed class LocalsAction : ScriptAction
+        private sealed class LocalsFunction : ScriptAction
         {
             public const string Name = "locals";
 
@@ -26,9 +26,9 @@ namespace DynamicScript.Runtime.Debugging
                     {
                         DynamicScriptIO.Output.WriteLine(Resources.StorageName, slot.Key);
                         DynamicScriptIO.Output.WriteLine(Resources.StorageSemantics, slot.Value.Attributes);
-                        DynamicScriptIO.Output.WriteLine(Resources.StorageContract, slot.Value.GetContractBinding());
+                        DynamicScriptIO.Output.WriteLine(Resources.StorageContract, slot.Value.ContractBinding);
                         var value = default(string);
-                        DynamicScriptIO.Output.WriteLine(Resources.StorageValue, slot.Value.TryGetValue(out value, state) ? value : Resources.UnprintableValue);
+                        DynamicScriptIO.Output.WriteLine(Resources.StorageValue, slot.Value.TryGetValue(state, out value) ? value : Resources.UnprintableValue);
                         DynamicScriptIO.Output.WriteLine();
                     }
             }
@@ -36,11 +36,11 @@ namespace DynamicScript.Runtime.Debugging
 
         [ComVisible(false)]
         [TransparentAction]
-        private sealed class CallStackAction : ScriptAction
+        private sealed class CallStackFunction : ScriptAction
         {
             public const string Name = "cstack";
 
-            public CallStackAction()
+            public CallStackFunction()
                 : base()
             {
             }
@@ -54,7 +54,7 @@ namespace DynamicScript.Runtime.Debugging
 
         [ComVisible(false)]
         [TransparentAction]
-        private sealed class ModulesAction : ScriptAction
+        private sealed class ModulesFunction : ScriptAction
         {
             public const string Name = "modules";
 
@@ -68,7 +68,7 @@ namespace DynamicScript.Runtime.Debugging
 
         [ComVisible(false)]
         [TransparentAction]
-        private sealed class GetContextAction : ScriptAction
+        private sealed class GetContextFunction : ScriptAction
         {
             public const string Name = "getctx";
 
@@ -88,7 +88,7 @@ namespace DynamicScript.Runtime.Debugging
 
         [ComVisible(false)]
         [TransparentAction]
-        private sealed class ClearScreenAction : ScriptAction
+        private sealed class ClearScreenFunction : ScriptAction
         {
             public const string Name = "clrscr";
 
@@ -103,11 +103,11 @@ namespace DynamicScript.Runtime.Debugging
         {
             public Slots()
             {
-                AddConstant<LocalsAction>(LocalsAction.Name);
-                AddConstant<CallStackAction>(CallStackAction.Name);
-                AddConstant<ModulesAction>(ModulesAction.Name);
-                AddConstant<GetContextAction>(GetContextAction.Name);
-                AddConstant<ClearScreenAction>(ClearScreenAction.Name);
+                AddConstant<LocalsFunction>(LocalsFunction.Name);
+                AddConstant<CallStackFunction>(CallStackFunction.Name);
+                AddConstant<ModulesFunction>(ModulesFunction.Name);
+                AddConstant<GetContextFunction>(GetContextFunction.Name);
+                AddConstant<ClearScreenFunction>(ClearScreenFunction.Name);
             }
         }
         #endregion

@@ -7,6 +7,7 @@ namespace DynamicScript.Runtime.Environment.Threading
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
     using ClrEnvironment = System.Environment;
     using Enumerable = System.Linq.Enumerable;
+    using InterpretationContext = Compiler.Ast.InterpretationContext;
 
     [ComVisible(false)]
     sealed class ThreadingLibrary: ScriptCompositeObject
@@ -14,12 +15,12 @@ namespace DynamicScript.Runtime.Environment.Threading
         public const string Name = "threading";
         #region Nested Types
         [ComVisible(false)]
-        private sealed class IsLazyAction : ScriptFunc<IScriptObject>
+        private sealed class IsLazyFunction : ScriptFunc<IScriptObject>
         {
             public const string Name = "is_lazy";
             private const string FirstParamName = "obj";
 
-            public IsLazyAction()
+            public IsLazyFunction()
                 : base(FirstParamName, ScriptSuperContract.Instance, ScriptBooleanContract.Instance)
             {
             }
@@ -31,7 +32,7 @@ namespace DynamicScript.Runtime.Environment.Threading
         }
 
         [ComVisible(false)]
-        private sealed class SleepAction : ScriptAction<ScriptReal>
+        private sealed class SleepFunction : ScriptAction<ScriptReal>
         {
             /// <summary>
             /// Represents name of the action.
@@ -42,7 +43,7 @@ namespace DynamicScript.Runtime.Environment.Threading
             /// <summary>
             /// Initializes a new 'puts' action stub.
             /// </summary>
-            public SleepAction()
+            public SleepFunction()
                 : base(FirstParamName, ScriptRealContract.Instance)
             {
             }
@@ -54,11 +55,11 @@ namespace DynamicScript.Runtime.Environment.Threading
         }
 
         [ComVisible(false)]
-        private sealed class CreateLazyQueueAction : ScriptFunc
+        private sealed class CreateLazyQueueFunction : ScriptFunc
         {
             public const string Name = "create_lazy_queue";
 
-            public CreateLazyQueueAction()
+            public CreateLazyQueueFunction()
                 : base(ScriptNativeQueue.ContractBinding)
             {
             }
@@ -102,12 +103,12 @@ namespace DynamicScript.Runtime.Environment.Threading
         }
 
         [ComVisible(false)]
-        private sealed class UnwrapAction : ScriptFunc<IScriptObject>
+        private sealed class UnwrapFunction : ScriptFunc<IScriptObject>
         {
             public const string Name = "unwrap";
             private const string FirstParamName = "asyncobj";
 
-            public UnwrapAction()
+            public UnwrapFunction()
                 : base(FirstParamName, ScriptSuperContract.Instance, ScriptSuperContract.Instance)
             {
             }
@@ -119,7 +120,7 @@ namespace DynamicScript.Runtime.Environment.Threading
         }
 
         [ComVisible(false)]
-        private sealed class QueueSlot : RuntimeSlotBase
+        private sealed class QueueSlot : RuntimeSlotBase, IStaticRuntimeSlot
         {
             public const string Name = "queue";
 
@@ -129,12 +130,13 @@ namespace DynamicScript.Runtime.Environment.Threading
                 return queue is IScriptObject ? (IScriptObject)queue : new ScriptNativeQueue(queue);
             }
 
-            public override void SetValue(IScriptObject value, InterpreterState state)
+            public override IScriptObject SetValue(IScriptObject value, InterpreterState state)
             {
                 ThreadManager.Queue = ThreadManager.CreateQueue(value);
+                return value;
             }
 
-            public override IScriptContract ContractBinding
+            public IScriptContract ContractBinding
             {
                 get { return ScriptNativeQueue.ContractBinding; }
             }
@@ -144,46 +146,41 @@ namespace DynamicScript.Runtime.Environment.Threading
                 get { return RuntimeSlotAttributes.None; }
             }
 
-            protected override ICollection<string> Slots
-            {
-                get { return new string[0]; }
-            }
-
             public override bool DeleteValue()
             {
                 return false;
             }
 
-            public override bool Equals(IRuntimeSlot other)
+            public override bool HasValue
             {
-                return other is QueueSlot;
+                get { return true; }
+                protected set { }
             }
         }
 
         [ComVisible(false)]
-        private sealed class ThreadName : RuntimeSlotBase, IEquatable<ThreadName>
+        private sealed class ThreadName : RuntimeSlotBase, IStaticRuntimeSlot
         {
             public const string Name = "threadName";
-            /// <summary>
-            /// Gets or sets thread name.
-            /// </summary>
-            public static ScriptString Value
-            {
-                get { return Thread.CurrentThread.Name ?? string.Empty; }
-                set { if (Thread.CurrentThread.Name == null)Thread.CurrentThread.Name = value; }
-            }
 
             public override IScriptObject GetValue(InterpreterState state)
             {
-                return Value;
+                return new ScriptString(Thread.CurrentThread.Name ?? string.Empty);
             }
 
-            public override void SetValue(IScriptObject value, InterpreterState state)
+            public override IScriptObject SetValue(IScriptObject value, InterpreterState state)
             {
-                Value = value.ToString();
+                if (ScriptStringContract.TryConvert(ref value))
+                {
+                    if (Thread.CurrentThread.Name == null) Thread.CurrentThread.Name = (ScriptString)value;
+                    return value;
+                }
+                else if (state.Context == InterpretationContext.Unchecked)
+                    return Void;
+                else throw new ContractBindingException(value, ScriptStringContract.Instance, state);
             }
 
-            public override IScriptContract ContractBinding
+            public IScriptContract ContractBinding
             {
                 get { return ScriptStringContract.Instance; }
             }
@@ -193,29 +190,15 @@ namespace DynamicScript.Runtime.Environment.Threading
                 get { return RuntimeSlotAttributes.None; }
             }
 
-            protected override ICollection<string> Slots
-            {
-                get { return Value.Slots; }
-            }
-
             public override bool DeleteValue()
             {
                 return false;
             }
 
-            public bool Equals(ThreadName other)
+            public override bool HasValue
             {
-                return other != null;
-            }
-
-            public override bool Equals(IRuntimeSlot other)
-            {
-                return Equals(other as ThreadName);
-            }
-
-            public override int GetHashCode()
-            {
-                return Value.GetHashCode();
+                get { return true; }
+                protected set { }
             }
         }
 
@@ -227,12 +210,12 @@ namespace DynamicScript.Runtime.Environment.Threading
             public Slots()
             {
                 AddConstant(ProcessorsSlot, new ScriptInteger(ClrEnvironment.ProcessorCount));
-                AddConstant<SleepAction>(SleepAction.Name);
-                AddConstant<IsLazyAction>(IsLazyAction.Name);
+                AddConstant<SleepFunction>(SleepFunction.Name);
+                AddConstant<IsLazyFunction>(IsLazyFunction.Name);
                 AddConstant("timeout", ScriptWorkItemQueue.Timeout);
                 Add(QueueSlot.Name, new QueueSlot());
-                AddConstant<CreateLazyQueueAction>(CreateLazyQueueAction.Name);
-                AddConstant<UnwrapAction>(UnwrapAction.Name);
+                AddConstant<CreateLazyQueueFunction>(CreateLazyQueueFunction.Name);
+                AddConstant<UnwrapFunction>(UnwrapFunction.Name);
                 AddConstant<CreateDefaultQueue>(CreateDefaultQueue.Name);
                 AddConstant<CreateParallelQueue>(CreateParallelQueue.Name);
                 Add(ThreadName.Name, new ThreadName());

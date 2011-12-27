@@ -9,13 +9,15 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
     [ComVisible(false)]
     [Serializable]
-    sealed class ScriptSelectionExpressionFactory : ScriptExpressionFactory<ScriptCodeSelectionExpression, ScriptSelectionExpression>, ISelectionExpressionFactorySlots
+    sealed class ScriptSelectionExpressionFactory : ScriptExpressionFactory<ScriptCodeSelectionExpression, ScriptSelectionExpression>
     {
         #region Nested Types
         [ComVisible(false)]
-        private sealed class GetCasesCountAction : CodeElementPartProvider<ScriptInteger>
+        private sealed class GetCasesCountFunction : CodeElementPartProvider<ScriptInteger>
         {
-            public GetCasesCountAction()
+            public const string Name = "getCases";
+
+            public GetCasesCountFunction()
                 : base(Instance, ScriptIntegerContract.Instance)
             {
             }
@@ -27,9 +29,11 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class GetDefaultHandlerAction : CodeElementPartProvider<IScriptCodeElement<ScriptCodeExpression>>
+        private sealed class GetDefaultHandlerFunction : CodeElementPartProvider<IScriptCodeElement<ScriptCodeExpression>>
         {
-            public GetDefaultHandlerAction()
+            public const string Name = "getDefault";
+
+            public GetDefaultHandlerFunction()
                 : base(Instance, ScriptExpressionFactory.Instance)
             {
             }
@@ -41,12 +45,13 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class SetDefaultHandlerAction : ScriptAction<IScriptCodeElement<ScriptCodeSelectionExpression>, IScriptCodeElement<ScriptCodeExpression>>
+        private sealed class SetDefaultHandlerFunction : ScriptAction<IScriptCodeElement<ScriptCodeSelectionExpression>, IScriptCodeElement<ScriptCodeExpression>>
         {
+            public const string Name = "setDefault";
             private const string FirstParamName = "sel";
             private const string SecondParamName = "body";
 
-            public SetDefaultHandlerAction()
+            public SetDefaultHandlerFunction()
                 : base(FirstParamName, Instance, SecondParamName, new ScriptArrayContract(ScriptStatementFactory.Instance))
             {
             }
@@ -58,12 +63,13 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class GetCaseValuesAction : ScriptFunc<IScriptCodeElement<ScriptCodeSelectionExpression>, ScriptInteger>
+        private sealed class GetCaseValuesFunction : ScriptFunc<IScriptCodeElement<ScriptCodeSelectionExpression>, ScriptInteger>
         {
+            public const string Name = "getCaseValues";
             private const string FirstParamName = "sel";
             private const string SecondParamName = "idx";
 
-            public GetCaseValuesAction()
+            public GetCaseValuesFunction()
                 : base(FirstParamName, Instance, SecondParamName, ScriptIntegerContract.Instance, new ScriptArrayContract(ScriptExpressionFactory.Instance))
             {
             }
@@ -86,13 +92,14 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class SetCaseValuesAction : ScriptAction<IScriptCodeElement<ScriptCodeSelectionExpression>, ScriptInteger, IScriptArray>
+        private sealed class SetCaseValuesFunction : ScriptAction<IScriptCodeElement<ScriptCodeSelectionExpression>, ScriptInteger, IScriptArray>
         {
+            public const string Name = "setCaseValues";
             private const string FirstParamName = "sel";
             private const string SecondParamName = "idx";
             private const string ThirdParamName = "values";
 
-            public SetCaseValuesAction()
+            public SetCaseValuesFunction()
                 : base(FirstParamName, Instance, SecondParamName, ScriptIntegerContract.Instance, ThirdParamName, new ScriptArrayContract(ScriptExpressionFactory.Instance))
             {
             }
@@ -114,12 +121,13 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
         
         [ComVisible(false)]
-        private sealed class GetCaseBodyAction: ScriptFunc<IScriptCodeElement<ScriptCodeSelectionExpression>, ScriptInteger>
+        private sealed class GetCaseBodyFunction: ScriptFunc<IScriptCodeElement<ScriptCodeSelectionExpression>, ScriptInteger>
         {
+            public const string Name = "getCaseBody";
             private const string FirstParamName = "sel";
             private const string SecondParamName = "idx";
 
-            public GetCaseBodyAction()
+            public GetCaseBodyFunction()
                 : base(FirstParamName, Instance, SecondParamName, ScriptIntegerContract.Instance, new ScriptArrayContract(ScriptStatementFactory.Instance))
             {
             }
@@ -142,13 +150,14 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class SetCaseBodyAction : ScriptAction<IScriptCodeElement<ScriptCodeSelectionExpression>, ScriptInteger, IScriptCodeElement<ScriptCodeExpression>>
+        private sealed class SetCaseBodyFunction : ScriptAction<IScriptCodeElement<ScriptCodeSelectionExpression>, ScriptInteger, IScriptCodeElement<ScriptCodeExpression>>
         {
+            public const string Name = "setCaseBody";
             private const string FirstParamName = "sel";
             private const string SecondParamName = "idx";
             private const string ThirdParamName = "body";
 
-            public SetCaseBodyAction()
+            public SetCaseBodyFunction()
                 : base(FirstParamName, Instance, SecondParamName, ScriptIntegerContract.Instance, ThirdParamName, new ScriptArrayContract(ScriptStatementFactory.Instance))
             {
             }
@@ -167,15 +176,26 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
         #endregion
 
+        private static readonly AggregatedSlotCollection<ScriptSelectionExpressionFactory> StaticSlots = new AggregatedSlotCollection<ScriptSelectionExpressionFactory>
+        {
+             {GetCasesCountFunction.Name, (owner, state) => LazyField<GetCasesCountFunction, IScriptFunction>(ref owner.m_getcases)},
+             {GetDefaultHandlerFunction.Name, (owner, state) => LazyField<GetDefaultHandlerFunction, IScriptFunction>(ref owner.m_getdef)},
+             {SetDefaultHandlerFunction.Name, (owner, state) => LazyField<SetDefaultHandlerFunction, IScriptFunction>(ref owner.m_setdef)},
+             {GetCaseValuesFunction.Name, (owner, state) => LazyField<GetCaseValuesFunction, IScriptFunction>(ref owner.m_getcasevals)},
+             {SetCaseValuesFunction.Name, (owner, state) => LazyField<SetCaseValuesFunction, IScriptFunction>(ref owner.m_setcasevals)},
+             {GetCaseBodyFunction.Name, (owner, state) => LazyField<GetCaseBodyFunction, IScriptFunction>(ref owner.m_getcasebody)},
+             {SetCaseBodyFunction.Name, (owner, state) => LazyField<SetCaseBodyFunction, IScriptFunction>(ref owner.m_setcasebody)},
+        };
+
         public new const string Name = "selection";
 
-        private IRuntimeSlot m_getcases;
-        private IRuntimeSlot m_getdef;
-        private IRuntimeSlot m_setdef;
-        private IRuntimeSlot m_getcasevals;
-        private IRuntimeSlot m_setcasevals;
-        private IRuntimeSlot m_getcasebody;
-        private IRuntimeSlot m_setcasebody;
+        private IScriptFunction m_getcases;
+        private IScriptFunction m_getdef;
+        private IScriptFunction m_setdef;
+        private IScriptFunction m_getcasevals;
+        private IScriptFunction m_setcasevals;
+        private IScriptFunction m_getcasebody;
+        private IScriptFunction m_setcasebody;
 
         private ScriptSelectionExpressionFactory(SerializationInfo info, StreamingContext context)
             : base(info, context)
@@ -205,44 +225,20 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
                 m_setdef = null;
         }
 
-        protected override IRuntimeSlot Modify
+        public override ICollection<string> Slots
         {
-            get { return null; }
+            get { return StaticSlots.Keys; }
         }
 
-        IRuntimeSlot ISelectionExpressionFactorySlots.GetDef
+        public override IScriptObject this[string slotName, InterpreterState state]
         {
-            get { return CacheConst<GetDefaultHandlerAction>(ref m_getdef); }
+            get { return StaticSlots.GetValue(this, slotName, state); }
+            set { StaticSlots.SetValue(this, slotName, value, state); }
         }
 
-        IRuntimeSlot ISelectionExpressionFactorySlots.SetDef
+        protected override IScriptObject GetSlotMetadata(string slotName, InterpreterState state)
         {
-            get { return CacheConst<SetDefaultHandlerAction>(ref m_setdef); }
-        }
-
-        IRuntimeSlot ISelectionExpressionFactorySlots.GetCaseValues
-        {
-            get { return CacheConst<GetCaseValuesAction>(ref m_getcasevals); }
-        }
-
-        IRuntimeSlot ISelectionExpressionFactorySlots.SetCaseValues
-        {
-            get { return CacheConst<SetCaseValuesAction>(ref m_setcasevals); }
-        }
-
-        IRuntimeSlot ISelectionExpressionFactorySlots.GetCaseBody
-        {
-            get { return CacheConst<GetCaseBodyAction>(ref m_getcasebody); }
-        }
-
-        IRuntimeSlot ISelectionExpressionFactorySlots.SetCaseBody
-        {
-            get { return CacheConst<SetCaseBodyAction>(ref m_setcasebody); }
-        }
-
-        IRuntimeSlot ISelectionExpressionFactorySlots.Cases
-        {
-            get { return CacheConst<GetCasesCountAction>(ref m_getcases); }
+            return StaticSlots.GetSlotMetadata(this, slotName, state);
         }
     }
 }

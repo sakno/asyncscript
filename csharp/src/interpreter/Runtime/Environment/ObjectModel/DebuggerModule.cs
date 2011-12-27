@@ -16,26 +16,21 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
     {
         #region Nested Types
         [ComVisible(false)]
-        private sealed class IsEnabledSlot : RuntimeSlotBase, IEquatable<IsEnabledSlot>
+        private sealed class IsEnabledSlot : RuntimeSlotBase, IStaticRuntimeSlot
         {
             public const string Name = "IsEnabled";
 
-            public ScriptBoolean Value
-            {
-                get { return Monitoring.IsEnabled; }
-            }
-
             public override IScriptObject GetValue(InterpreterState state)
             {
-                return Value;
+                return (ScriptBoolean)Monitoring.IsEnabled;
             }
 
-            public override void SetValue(IScriptObject value, InterpreterState state)
+            public override IScriptObject SetValue(IScriptObject value, InterpreterState state)
             {
                 throw new ConstantCannotBeChangedException(state);
             }
 
-            public override IScriptContract ContractBinding
+            public IScriptContract ContractBinding
             {
                 get { return ScriptBooleanContract.Instance; }
             }
@@ -45,39 +40,20 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                 get { return RuntimeSlotAttributes.Immutable; ; }
             }
 
-            protected override ICollection<string> Slots
-            {
-                get { return Value.Slots; }
-            }
-
             public override bool DeleteValue()
             {
                 return false;
             }
 
-            public bool Equals(IsEnabledSlot other)
+            public override bool HasValue
             {
-                return other != null;
-            }
-
-            public override bool Equals(IRuntimeSlot other)
-            {
-                return Equals(other as IsEnabledSlot);
-            }
-
-            public override bool Equals(object other)
-            {
-                return Equals(other as IsEnabledSlot);
-            }
-
-            public override int GetHashCode()
-            {
-                return GetType().MetadataToken;
+                get { return true; }
+                protected set { }
             }
         }
 
         [ComVisible(false)]
-        private sealed class EnableAction : ScriptAction
+        private sealed class EnableFunction : ScriptAction
         {
             public const string Name = "enable";
 
@@ -88,26 +64,21 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         }
 
         [ComVisible(false)]
-        private sealed class AllocatedMemorySlot : RuntimeSlotBase, IEquatable<AllocatedMemorySlot>
+        private sealed class AllocatedMemorySlot : RuntimeSlotBase, IStaticRuntimeSlot
         {
             public const string Name = "allocated";
 
-            public ScriptInteger Value
-            {
-                get { return Monitoring.AllocatedMemory; }
-            }
-
             public override IScriptObject GetValue(InterpreterState state)
             {
-                return Value;
+                return (ScriptInteger)Monitoring.AllocatedMemory;
             }
 
-            public override void SetValue(IScriptObject value, InterpreterState state)
+            public override IScriptObject SetValue(IScriptObject value, InterpreterState state)
             {
                 throw new ConstantCannotBeChangedException(state);
             }
 
-            public override IScriptContract ContractBinding
+            public IScriptContract ContractBinding
             {
                 get { return ScriptIntegerContract.Instance; }
             }
@@ -117,58 +88,34 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                 get { return RuntimeSlotAttributes.Immutable; }
             }
 
-            protected override ICollection<string> Slots
-            {
-                get { return Value.Slots; }
-            }
-
             public override bool DeleteValue()
             {
                 return false;
             }
 
-            public bool Equals(AllocatedMemorySlot other)
+            public override bool HasValue
             {
-                return other != null;
-            }
-
-            public override bool Equals(IRuntimeSlot other)
-            {
-                return Equals(other as AllocatedMemorySlot);
-            }
-
-            public override bool Equals(object other)
-            {
-                return Equals(other as AllocatedMemorySlot);
-            }
-
-            public override int GetHashCode()
-            {
-                return GetType().MetadataToken;
+                get { return true; }
+                protected set { }
             }
         }
 
         [ComVisible(false)]
-        private sealed class SurvivedMemorySlot : RuntimeSlotBase, IEquatable<SurvivedMemorySlot>
+        private sealed class SurvivedMemorySlot : RuntimeSlotBase, IStaticRuntimeSlot
         {
             public const string Name = "survived";
 
-            public ScriptInteger Value
-            {
-                get { return Monitoring.SurvivedMemory; }
-            }
-
             public override IScriptObject GetValue(InterpreterState state)
             {
-                return Value;
+                return (ScriptInteger)Monitoring.SurvivedMemory;
             }
 
-            public override void SetValue(IScriptObject value, InterpreterState state)
+            public override IScriptObject SetValue(IScriptObject value, InterpreterState state)
             {
                 throw new ConstantCannotBeChangedException(state);
             }
 
-            public override IScriptContract ContractBinding
+            public IScriptContract ContractBinding
             {
                 get { return ScriptIntegerContract.Instance; }
             }
@@ -178,58 +125,34 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                 get { return RuntimeSlotAttributes.Immutable; }
             }
 
-            protected override ICollection<string> Slots
-            {
-                get { return Value.Slots; }
-            }
-
             public override bool DeleteValue()
             {
                 return false;
             }
 
-            public bool Equals(SurvivedMemorySlot other)
+            public override bool HasValue
             {
-                return other != null;
-            }
-
-            public override bool Equals(IRuntimeSlot other)
-            {
-                return Equals(other as SurvivedMemorySlot);
-            }
-
-            public override bool Equals(object other)
-            {
-                return Equals(other as SurvivedMemorySlot);
-            }
-
-            public override int GetHashCode()
-            {
-                return GetType().MetadataToken;
+                get { return true; }
+                protected set { }
             }
         }
 
         [ComVisible(false)]
-        private sealed class ProcessorTimeSlot : RuntimeSlotBase, IEquatable<ProcessorTimeSlot>
+        private sealed class ProcessorTimeSlot : RuntimeSlotBase, IStaticRuntimeSlot
         {
             public const string Name = "cputime";
 
-            public ScriptInteger Value
-            {
-                get { return Monitoring.ProcessorTime; }
-            }
-
             public override IScriptObject GetValue(InterpreterState state)
             {
-                return Value;
+                return (ScriptInteger)Monitoring.ProcessorTime;
             }
 
-            public override void SetValue(IScriptObject value, InterpreterState state)
+            public override IScriptObject SetValue(IScriptObject value, InterpreterState state)
             {
                 throw new ConstantCannotBeChangedException(state);
             }
 
-            public override IScriptContract ContractBinding
+            public IScriptContract ContractBinding
             {
                 get { return ScriptIntegerContract.Instance; }
             }
@@ -239,48 +162,31 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                 get { return RuntimeSlotAttributes.Immutable; }
             }
 
-            protected override ICollection<string> Slots
+            public override bool DeleteValue()
             {
-                get { return Value.Slots; }
+                return false;
             }
+
+            public override bool HasValue
+            {
+                get { return true; }
+                protected set { }
+            }
+        }
+
+        [ComVisible(false)]
+        private sealed class LocalsSlot : RuntimeSlotBase, IStaticRuntimeSlot
+        {
+            public const string Name = "locals";
+
+            public readonly ScriptArrayContract ContractBinding = new ScriptArrayContract(ScriptStringContract.Instance);
 
             public override bool DeleteValue()
             {
                 return false;
             }
 
-            public bool Equals(ProcessorTimeSlot other)
-            {
-                return other != null;
-            }
-
-            public override bool Equals(IRuntimeSlot other)
-            {
-                return Equals(other as ProcessorTimeSlot);
-            }
-
-            public override bool Equals(object other)
-            {
-                return Equals(other as ProcessorTimeSlot);
-            }
-
-            public override int GetHashCode()
-            {
-                return GetType().MetadataToken;
-            }
-        }
-
-        [ComVisible(false)]
-        private sealed class LocalsSlot : ObservableSlot
-        {
-            public const string Name = "locals";
-
-            public LocalsSlot()
-                : base(ScriptArray.Empty(ScriptStringContract.Instance), true)
-            {
-            }
-
-            protected override IScriptObject GetValue(IScriptObject value, InterpreterState state)
+            public override IScriptObject GetValue(InterpreterState state)
             {
                 switch (CallStack.Current != null && CallStack.Current.Storages.Count > 0)
                 {
@@ -291,16 +197,37 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                     default: return ScriptArray.Empty(ScriptStringContract.Instance);
                 }
             }
+
+            public override IScriptObject SetValue(IScriptObject value, InterpreterState state)
+            {
+                throw new ConstantCannotBeChangedException(state);
+            }
+
+            public override RuntimeSlotAttributes Attributes
+            {
+                get { return RuntimeSlotAttributes.Immutable; }
+            }
+
+            IScriptContract IStaticRuntimeSlot.ContractBinding
+            {
+                get { return ContractBinding; }
+            }
+
+            public override bool HasValue
+            {
+                get{  return true; }
+                protected set { }
+            }
         }
 
         [ComVisible(false)]
         [TransparentAction]
-        private sealed class GetLocAction : ScriptFunc<ScriptString>
+        private sealed class GetLocFunction : ScriptFunc<ScriptString>
         {
             public const string Name = "getloc";
             private const string FirstParamName = "name";
 
-            public GetLocAction()
+            public GetLocFunction()
                 : base(FirstParamName, ScriptStringContract.Instance, ScriptSuperContract.Instance)
             {
             }
@@ -326,13 +253,13 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
 
         [ComVisible(false)]
         [TransparentAction]
-        private sealed class SetLocAction : ScriptAction<ScriptString, IScriptObject>
+        private sealed class SetLocFunction : ScriptAction<ScriptString, IScriptObject>
         {
             public const string Name = "setloc";
             private const string FirstParamName = "name";
             private const string SecondParamName = "value";
 
-            public SetLocAction()
+            public SetLocFunction()
                 : base(FirstParamName, ScriptStringContract.Instance, SecondParamName, ScriptSuperContract.Instance)
             {
             }
@@ -358,12 +285,12 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
 
         [ComVisible(false)]
         [TransparentAction]
-        private sealed class BreakPointAction : ScriptAction<ScriptString>
+        private sealed class BreakPointFunction : ScriptAction<ScriptString>
         {
             public const string Name = "break";
             private const string FirstParamName = "comment";
 
-            public BreakPointAction()
+            public BreakPointFunction()
                 : base(FirstParamName, ScriptStringContract.Instance)
             {
             }
@@ -377,12 +304,12 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
 
         [ComVisible(false)]
         [TransparentAction]
-        private sealed class MarkFrameAction : ScriptAction<ScriptString>
+        private sealed class MarkFrameFunction : ScriptAction<ScriptString>
         {
             public const string Name = "markf";
             private const string FirstParamName = "id";
 
-            public MarkFrameAction()
+            public MarkFrameFunction()
                 : base(FirstParamName, ScriptStringContract.Instance)
             {
             }
@@ -399,16 +326,16 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             public Slots()
             {
                 Add<IsEnabledSlot>(IsEnabledSlot.Name);
-                AddConstant<EnableAction>(EnableAction.Name);
+                AddConstant<EnableFunction>(EnableFunction.Name);
                 Add<AllocatedMemorySlot>(AllocatedMemorySlot.Name);
                 Add<SurvivedMemorySlot>(SurvivedMemorySlot.Name);
                 Add<ProcessorTimeSlot>(ProcessorTimeSlot.Name);
                 AddConstant<CallStackManager>(CallStackManager.Name);
                 Add<LocalsSlot>(LocalsSlot.Name);
-                AddConstant<GetLocAction>(GetLocAction.Name);
-                AddConstant<SetLocAction>(SetLocAction.Name);
-                AddConstant<MarkFrameAction>(MarkFrameAction.Name);
-                AddConstant<BreakPointAction>(BreakPointAction.Name);
+                AddConstant<GetLocFunction>(GetLocFunction.Name);
+                AddConstant<SetLocFunction>(SetLocFunction.Name);
+                AddConstant<MarkFrameFunction>(MarkFrameFunction.Name);
+                AddConstant<BreakPointFunction>(BreakPointFunction.Name);
             }
         }
         #endregion

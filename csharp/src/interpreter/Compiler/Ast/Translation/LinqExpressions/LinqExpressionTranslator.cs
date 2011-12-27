@@ -57,7 +57,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
 
         private Expression AsRightSide(Expression rightSide, TranslationContext context)
         {
-            return RuntimeSlot.GetValue(rightSide, context.Scope.StateHolder);
+            return ScriptObject.AsRightSide(rightSide, context.Scope.StateHolder);
         }
 
         /// <summary>
@@ -111,18 +111,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         protected override Expression Translate(ScriptCodeCurrentQuoteExpression currentQuote, TranslationContext context)
         {
             var actionScope = context.Lookup<ActionScope>();
-            return actionScope != null ? ScriptObject.MakeConverter(actionScope.Expression) : ScriptObject.MakeVoid();
-        }
-
-        /// <summary>
-        /// Translates NO Operation(nop) statement.
-        /// </summary>
-        /// <param name="emptyStatement">The statement to be translated.</param>
-        /// <param name="context">Translation context.</param>
-        /// <returns>LINQ expression that represents empty statement.</returns>
-        protected override Expression Translate(ScriptCodeEmptyStatement emptyStatement, TranslationContext context)
-        {
-            return Expression.Empty();
+            return actionScope != null ? ScriptObject.MakeConverter(actionScope.Expression, context.Scope.StateHolder) : ScriptObject.MakeVoid();
         }
 
         /// <summary>
@@ -166,7 +155,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns></returns>
         protected override Expression Translate(ScriptCodeQuoteExpression expression, TranslationContext context)
         {
-            return ScriptObject.MakeConverter(LinqHelpers.Restore(expression.Signature.IsEmpty ? expression.Body.Expression : expression));
+            return ScriptObject.MakeConverter(LinqHelpers.Restore(expression.Signature.IsEmpty ? expression.Body.Expression : expression), context.Scope.StateHolder);
         }
 
         /// <summary>
@@ -297,7 +286,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             body.Label(currentScope.BeginOfScope);
             Translate(forkExpression.Body.UnwrapStatements(), context, GotoExpressionKind.Goto, ref body);
             body.Label(currentScope.EndOfScope, ScriptObject.MakeVoid());
-            var result = ScriptLazyObject.New(forkExpression.Queue != null ? Translate(forkExpression.Queue, context) : null, Expression.Lambda<ScriptWorkItem>(Expression.Block(body), (ParameterExpression)currentScope.ScopeVar, currentScope.StateHolder), AsRightSide(currentScope.Parent.ScopeVar, context), currentScope.Parent.StateHolder);
+            var result = ScriptFuture.New(forkExpression.Queue != null ? Translate(forkExpression.Queue, context) : null, Expression.Lambda<ScriptWorkItem>(Expression.Block(body), (ParameterExpression)currentScope.ScopeVar, currentScope.StateHolder), AsRightSide(currentScope.Parent.ScopeVar, context), currentScope.Parent.StateHolder);
             context.Pop();
             return result;
         }
@@ -467,7 +456,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         {
             //The first, try find out a variable through a scope.
             Expression @var = context.Scope[variableName];
-            return (resolved = @var != null) ? @var : ScriptObject.RuntimeSlotBase.Lookup(variableName, context.Scope.ScopeVar, context.Scope.StateHolder);
+            return (resolved = @var != null) ? @var : ScriptObject.RuntimeSlotBase.Lookup(variableName, context.Scope.StateHolder);
         }
 
         private Expression TranslateGrouping(ScriptCodeLoopExpression.OperatorGrouping grouping, TranslationContext context)
@@ -880,7 +869,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns></returns>
         protected override Expression Translate(ScriptCodeIndexerExpression indexer, TranslationContext context)
         {
-            return ScriptObject.BindIndexer(Translate(indexer.Target, context), from expr in indexer.ArgList select AsRightSide(Translate(expr, context), context), context.Scope.StateHolder);
+            return ScriptObject.GetValue(Translate(indexer.Target, context), from expr in indexer.ArgList select Translate(expr, context), context.Scope.StateHolder);
         }
 
         private Expression TranslateFor(IList<ScriptCodeStatement> forBody, ScriptCodeForLoopExpression.LoopVariable variable, ScriptCodeExpression condition, ScriptCodeForLoopExpression.YieldGrouping grouping, TranslationContext context)
@@ -1126,7 +1115,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         {
             //Parse test expression
             var test = RuntimeHelpers.BindIsTrue(Translate(conditional.Condition, context), context.Scope.StateHolder);
-            return Expression.Condition(test, Translate(conditional.ThenBranch, context), Translate(conditional.ElseBranch, context), typeof(IScriptObject));
+            return Expression.Condition(test, AsRightSide(Translate(conditional.ThenBranch, context), context), AsRightSide(Translate(conditional.ElseBranch, context), context), typeof(IScriptObject));
         }
 
         /// <summary>
@@ -1223,14 +1212,14 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns>LINQ expression that represents action contract.</returns>
         protected override Expression Translate(ScriptCodeActionContractExpression actionContract, TranslationContext context)
         {
-            return ScriptActionContract.New(Expression.NewArrayInit(typeof(ScriptActionContract.Parameter), actionContract.ParamList.Select(p => ScriptActionContract.Parameter.New(p.Name, AsRightSide(Translate(p.ContractBinding, context), context)))),
+            return ScriptFunctionContract.New(Expression.NewArrayInit(typeof(ScriptFunctionContract.Parameter), actionContract.ParamList.Select(p => ScriptFunctionContract.Parameter.New(p.Name, AsRightSide(Translate(p.ContractBinding, context), context)))),
                 actionContract.NoReturnValue ? ScriptObject.MakeVoid() : AsRightSide(Translate(actionContract.ReturnType, context), context));
         }
 
         private void Translate(IList<ScriptCodeStatement> statements, TranslationContext context, GotoExpressionKind exitKind, Func<Expression, Expression> exitTransform, ref IList<Expression> output)
         {
             if (output == null) output = new List<Expression>(statements.Count > 0 ? statements.Count : 1);
-            if (exitTransform == null) exitTransform = expr => typeof(IScriptObject).IsAssignableFrom(expr.Type) ? Expression.MakeGoto(exitKind, context.Scope.EndOfScope, AsRightSide(expr, context), typeof(IScriptObject)) : expr;
+            if (exitTransform == null) exitTransform = expr => typeof(IScriptObject).IsAssignableFrom(expr.Type) || RuntimeHelpers.IsRuntimeVariable(expr) ? Expression.MakeGoto(exitKind, context.Scope.EndOfScope, AsRightSide(expr, context), typeof(IScriptObject)) : expr;
             //Iterates through statements and emit
             switch (statements.Count)
             {
@@ -1279,7 +1268,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             IList<Expression> body = new List<Expression>(DefaultBodySize);
             var actionExpr = default(LambdaExpression);
             if (action.IsPrimitive)//Action has a trivial body consists of the returning value.
-                actionExpr = Expression.Lambda(Translate(action.Body, context), false, parameters);
+                actionExpr = Expression.Lambda(AsRightSide(Translate(action.Body, context), context), false, parameters);
             else
             {
                 body.Add(Expression.Label(currentScope.BeginOfScope));
@@ -1291,12 +1280,12 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             }
             context.Pop();  //Leave action scope
             return action.IsAsynchronous ?
-                ScriptLazyAction.New(
+                ScriptLazyFunction.New(
                 Translate(action.Signature, context),   //action contract
                 context.Scope.ScopeVar,           //'this' reference
                 actionExpr,                     //lambda that implements the action
                 action.ToString()) :
-                ScriptRuntimeAction.New(
+                ScriptRuntimeFunction.New(
                 Translate(action.Signature, context),   //action contract
                 context.Scope.ScopeVar,                //'this' reference
                 actionExpr,                             //lambda that implements the action
@@ -1343,7 +1332,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             var slots = ObjectScope.CreateSlotSet();
             foreach (ScriptCodeObjectExpression.Slot s in expression)
                 if (slots.Add(s.Name))
-                    yield return new KeyValuePair<string, Expression>(s.Name, BindToVariable(LinqHelpers.Null<IRuntimeSlot>(), s, context));
+                    yield return new KeyValuePair<string, Expression>(s.Name, BindToVariable(LinqHelpers.Null<IStaticRuntimeSlot>(), s, context));
         }
 
         /// <summary>
@@ -1358,24 +1347,6 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             var initializer = Expression.Lambda(ScriptCompositeObject.Bind(ExtractSlots(expression, context), (ParameterExpression)currentScope.ScopeVar), currentScope.StateHolder);
             context.Pop();
             return Expression.Invoke(initializer, context.Scope.StateHolder);
-        }
-
-        private Expression BindMemberAccess(Expression left, ScriptCodeExpression right, TranslationContext context)
-        {
-            if (right is ScriptCodeVariableReference)
-                return ScriptObject.BindSlotAccess(left, ((ScriptCodeVariableReference)right).VariableName, context.Scope.StateHolder);
-            else if (right is ScriptCodeStringExpression)
-                return ScriptObject.BindSlotAccess(left, ((ScriptCodeStringExpression)right).Value, context.Scope.StateHolder);
-            else return Expression.Convert(ScriptObject.BindBinaryOperation(left, ScriptCodeBinaryOperatorType.MemberAccess, Translate(right, context), context.Scope.StateHolder), typeof(IRuntimeSlot));
-        }
-
-        private MethodCallExpression BindMetadataDiscovery(Expression left, ScriptCodeExpression right, TranslationContext context)
-        {
-            if (right is ScriptCodeVariableReference)
-                return ScriptObject.BindSlotMetadata(left, ((ScriptCodeVariableReference)right).VariableName, context.Scope.StateHolder);
-            else if (right is ScriptCodeStringExpression)
-                return ScriptObject.BindSlotMetadata(left, ((ScriptCodeStringExpression)right).Value, context.Scope.StateHolder);
-            else return ScriptObject.BindBinaryOperation(left, ScriptCodeBinaryOperatorType.MetadataDiscovery, Translate(right, context), context.Scope.StateHolder);
         }
 
         private Expression DeleteValue(string variableName, TranslationContext context)
@@ -1401,33 +1372,40 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
              * then recognize it as variable erasure.
             */
             if (expression.Left is ScriptCodeVariableReference && expression.Right is ScriptCodeVoidExpression) return DeleteValue(((ScriptCodeVariableReference)expression.Left).VariableName, context);
-            switch (expression.Operator)
-            {
-                case ScriptCodeBinaryOperatorType.MemberAccess:
-                    var leftExpression = AsRightSide(Translate(expression.Left, context), context);
-                    return BindMemberAccess(leftExpression, expression.Right, context);
+            else switch (expression.Operator)
+                {
+                    case ScriptCodeBinaryOperatorType.MemberAccess:
+                        var leftExpression = default(Expression);
+                        if (expression.Right is ScriptCodeVariableReference)
+                            leftExpression = ScriptObject.GetValue(Translate(expression.Left, context), ((ScriptCodeVariableReference)expression.Right).VariableName, context.Scope.StateHolder);
+                        else if (expression.Right is ScriptCodeIntegerExpression)
+                            leftExpression = ScriptObject.GetValue(Translate(expression.Left, context), new[] { ConverterOf(((ScriptCodeIntegerExpression)expression.Right).Value) }, context.Scope.StateHolder);
+                        else leftExpression = ScriptObject.RtlGetValue(Translate(expression.Left, context), Translate(expression.Right, context), context.Scope.StateHolder);
+                        return leftExpression;
+                    case ScriptCodeBinaryOperatorType.AndAlso:
+                        leftExpression = AsRightSide(Translate(expression.Left, context), context);
+                        return Expression.Condition(RuntimeHelpers.BindIsTrue(leftExpression, context.Scope.StateHolder), //test
+                            AsRightSide(Translate(expression.Right, context), context), //then
+                            ConverterOf(false), //else
+                            typeof(IScriptObject));
+                    case ScriptCodeBinaryOperatorType.OrElse:
+                        leftExpression = AsRightSide(Translate(expression.Left, context), context);
+                        return Expression.Condition(RuntimeHelpers.BindIsTrue(leftExpression, context.Scope.StateHolder), //test
+                            ConverterOf(true),  //then
+                            AsRightSide(Translate(expression.Right, context), context), //else
+                            typeof(IScriptObject));
+                    case ScriptCodeBinaryOperatorType.Initializer:
+                        leftExpression = Translate(expression.Left, context);
+                        return ScriptObject.RuntimeSlotBase.Initialize(leftExpression, Translate(expression.Right, context), context.Scope.StateHolder);
                 case ScriptCodeBinaryOperatorType.MetadataDiscovery:
-                    leftExpression = AsRightSide(Translate(expression.Left, context), context);
-                    return BindMetadataDiscovery(leftExpression, expression.Right, context);
-                case ScriptCodeBinaryOperatorType.AndAlso:
-                    leftExpression = AsRightSide(Translate(expression.Left, context), context);
-                    return Expression.Condition(RuntimeHelpers.BindIsTrue(leftExpression, context.Scope.StateHolder), //test
-                        AsRightSide(Translate(expression.Right, context), context), //then
-                        ConverterOf(false), //else
-                        typeof(IScriptObject));
-                case ScriptCodeBinaryOperatorType.OrElse:
-                    leftExpression = AsRightSide(Translate(expression.Left, context), context);
-                    return Expression.Condition(RuntimeHelpers.BindIsTrue(leftExpression, context.Scope.StateHolder), //test
-                        ConverterOf(true),  //then
-                        AsRightSide(Translate(expression.Right, context), context), //else
-                        typeof(IScriptObject));
-                case ScriptCodeBinaryOperatorType.Initializer:
-                    leftExpression = Translate(expression.Left, context);
-                    return ScriptObject.RuntimeSlotBase.Initialize(leftExpression, Translate(expression.Right, context), context.Scope.StateHolder);
-                default:
-                    leftExpression = Translate(expression.Left, context);
-                    return ScriptObject.BindBinaryOperation(leftExpression, expression.Operator, Translate(expression.Right, context), context.Scope.StateHolder);
-            }
+                        if (expression.Right is ScriptCodeVariableReference)
+                            leftExpression = ScriptObject.BinaryOperation(Translate(expression.Left, context), ScriptCodeBinaryOperatorType.MetadataDiscovery, ConverterOf(((ScriptCodeVariableReference)expression.Right).VariableName), context.Scope.StateHolder);
+                        else leftExpression = ScriptObject.BinaryOperation(Translate(expression.Left, context), ScriptCodeBinaryOperatorType.MetadataDiscovery, Translate(expression.Right, context), context.Scope.StateHolder);
+                        return leftExpression;
+                    default:
+                        leftExpression = Translate(expression.Left, context);
+                        return ScriptObject.BinaryOperation(leftExpression, expression.Operator, Translate(expression.Right, context), context.Scope.StateHolder);
+                }
         }
 
         private Expression CreateCompositeContract(ScriptCodeObjectExpression expr, TranslationContext context)
@@ -1447,7 +1425,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         {
             if (expression.Operator == ScriptCodeUnaryOperatorType.TypeOf && expression.Operand is ScriptCodeObjectExpression)
                 return CreateCompositeContract((ScriptCodeObjectExpression)expression.Operand, context);
-            else return ScriptObject.BindUnaryOperation(Translate(expression.Operand, context), expression.Operator, context.Scope.StateHolder);
+            else return ScriptObject.UnaryOperation(Translate(expression.Operand, context), expression.Operator, context.Scope.StateHolder);
         }
 
         /// <summary>

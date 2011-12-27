@@ -18,11 +18,11 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
     /// </summary>
     [ComVisible(false)]
     [Serializable]
-    public sealed class ScriptExpressionFactory : ScriptBuiltinContract, IScriptMetaContract, IExpressionFactorySlots
+    public sealed class ScriptExpressionFactory : ScriptBuiltinContract, IScriptMetaContract
     {
         #region Nested Types
         [ComVisible(false)]
-        private sealed class DeduceAction : ScriptFunc<IScriptCodeElement<ScriptCodeExpression>, IScriptArray>
+        private sealed class DeduceFunction : ScriptFunc<IScriptCodeElement<ScriptCodeExpression>, IScriptArray>
         {
             #region Nested Types
             [ComVisible(false)]
@@ -69,10 +69,11 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             }
             #endregion
 
+            public const string Name = "deduce";
             private const string FirstParamName = "tree";
             private const string SecondParamName = "expressions";
 
-            public DeduceAction()
+            public DeduceFunction()
                 : base(FirstParamName, Instance, SecondParamName, new ScriptArrayContract(Instance), Instance)
             {
             }
@@ -92,28 +93,30 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class VisitAction : ScriptFunc<IScriptCodeElement<ScriptCodeExpression>, IScriptAction>
+        private sealed class VisitFunction : ScriptFunc<IScriptCodeElement<ScriptCodeExpression>, IScriptFunction>
         {
+            public const string Name = "visit";
             private const string FirstParamName = "tree";
             private const string SecondParamName = "visitor";
 
-            public VisitAction()
+            public VisitFunction()
                 : base(FirstParamName, Instance, SecondParamName, ScriptSuperContract.Instance, Instance)
             {
             }
 
-            protected override IScriptObject Invoke(IScriptCodeElement<ScriptCodeExpression> tree, IScriptAction visitor, InterpreterState state)
+            protected override IScriptObject Invoke(IScriptCodeElement<ScriptCodeExpression> tree, IScriptFunction visitor, InterpreterState state)
             {
                 return Convert(tree.CodeObject.Visit(null, new ScriptSyntaxTreeVisitor(visitor, state)));
             }
         }
 
         [ComVisible(false)]
-        private sealed class CloneAction : ScriptFunc<IScriptCodeElement<ScriptCodeExpression>>
+        private sealed class CloneFunction : ScriptFunc<IScriptCodeElement<ScriptCodeExpression>>
         {
+            public const string Name = "clone";
             private const string FirstParamName = "tree";
 
-            public CloneAction()
+            public CloneFunction()
                 : base(FirstParamName, Instance, Instance)
             {
             }
@@ -125,11 +128,12 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class ParseAction : ScriptFunc<ScriptString>
+        private sealed class ParseFunction : ScriptFunc<ScriptString>
         {
+            public const string Name = "parse";
             private const string FirstParamName = "code";
 
-            public ParseAction()
+            public ParseFunction()
                 : base(FirstParamName, ScriptStringContract.Instance, Instance)
             {
             }
@@ -141,11 +145,12 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class ReduceAction : ScriptFunc<IScriptExpression<ScriptCodeExpression>>
+        private sealed class ReduceFunction : ScriptFunc<IScriptExpression<ScriptCodeExpression>>
         {
+            public const string Name = "reduce";
             private const string FirstParamName = "e";
 
-            public ReduceAction()
+            public ReduceFunction()
                 : base(FirstParamName, Instance, Instance)
             {
             }
@@ -157,11 +162,12 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class CompileAction : ScriptFunc<IScriptExpression<ScriptCodeExpression>>
+        private sealed class CompileFunction : ScriptFunc<IScriptExpression<ScriptCodeExpression>>
         {
+            public const string Name = "compile";
             private const string FirstParamName = "expression";
 
-            public CompileAction()
+            public CompileFunction()
                 : base(FirstParamName, Instance, ScriptSuperContract.Instance)
             {
             }
@@ -224,9 +230,9 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
                 else if (input is ScriptCodeObjectExpression)
                     result = new ScriptObjectExpression((ScriptCodeObjectExpression)input);
                 else if (input is ScriptCodeActionContractExpression)
-                    result = new ScriptActionContractExpression((ScriptCodeActionContractExpression)input);
+                    result = new ScriptFunctionSignatureExpression((ScriptCodeActionContractExpression)input);
                 else if (input is ScriptCodeActionImplementationExpression)
-                    result = new ScriptActionExpression((ScriptCodeActionImplementationExpression)input);
+                    result = new ScriptFunctionExpression((ScriptCodeActionImplementationExpression)input);
                 else if (input is ScriptCodeTryElseFinallyExpression)
                     result = new ScriptSehExpression((ScriptCodeTryElseFinallyExpression)input);
                 else if (input is ScriptCodePlaceholderExpression)
@@ -241,12 +247,13 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class ValueEqualityAction : ScriptFunc<IScriptExpression<ScriptCodeExpression>, IScriptExpression<ScriptCodeExpression>>
+        private sealed class ValueEqualityFunction : ScriptFunc<IScriptExpression<ScriptCodeExpression>, IScriptExpression<ScriptCodeExpression>>
         {
+            public const string Name = "equ";
             private const string FirstParamName = "value1";
             private const string SecondParamName = "value2";
 
-            public ValueEqualityAction()
+            public ValueEqualityFunction()
                 : base(FirstParamName, Instance, SecondParamName, Instance, ScriptBooleanContract.Instance)
             {
             }
@@ -258,12 +265,13 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class ReferenceEqualityAction : ScriptFunc<IScriptExpression<ScriptCodeExpression>, IScriptExpression<ScriptCodeExpression>>
+        private sealed class ReferenceEqualityFunction : ScriptFunc<IScriptExpression<ScriptCodeExpression>, IScriptExpression<ScriptCodeExpression>>
         {
+            public const string Name = "requ";
             private const string FirstParamName = "value1";
             private const string SecondParamName = "value2";
 
-            public ReferenceEqualityAction()
+            public ReferenceEqualityFunction()
                 : base(FirstParamName, Instance, SecondParamName, Instance, ScriptBooleanContract.Instance)
             {
             }
@@ -275,8 +283,9 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class InitAction : ScriptAction
+        private sealed class InitFunction : ScriptAction
         {
+            public const string Name = "init";
 
             protected override void Invoke(InterpreterState state)
             {
@@ -284,6 +293,45 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             }
         }
         #endregion
+
+        private static AggregatedSlotCollection<ScriptExpressionFactory> StaticSlots = new AggregatedSlotCollection<ScriptExpressionFactory>
+        {
+            //Functions
+            {ReduceFunction.Name, (owner, state) => LazyField<ReduceFunction, IScriptFunction>(ref owner.m_reduce) },
+            {CompileFunction.Name, (owner, state)=> LazyField<CompileFunction, IScriptFunction>(ref owner.m_compile)},
+            {ParseFunction.Name, (owner, state) => LazyField<ParseFunction, IScriptFunction>(ref owner.m_parse)},
+            {VisitFunction.Name, (owner, state) => LazyField<VisitFunction, IScriptFunction>(ref owner.m_visit)},
+            {DeduceFunction.Name, (owner, state) =>LazyField<DeduceFunction, IScriptFunction>(ref owner.m_deduce)},
+            {CloneFunction.Name, (owner, state) => LazyField<CloneFunction, IScriptFunction>(ref owner.m_deduce)},
+            {ValueEqualityFunction.Name, (owner, state) => LazyField<ValueEqualityFunction, IScriptFunction>(ref owner.m_equ)},
+            {ReferenceEqualityFunction.Name, (owner, state) => LazyField<ReferenceEqualityFunction, IScriptFunction>(ref owner.m_requ)},
+            {InitFunction.Name, (owner, state) => LazyField<InitFunction, IScriptFunction>(ref owner.m_init)},
+            //slots
+            {ScriptConstantExpressionFactory.Name, (owner, state) => Constant},
+            {ScriptNameTokenExpressionFactory.Name, (owner, state) => NameToken},
+            {ScriptBinaryExpressionFactory.Name, (owner, state) => Binary},
+            {ScriptUnaryExpressionFactory.Name, (owner, state) => Unary},
+            {ScriptAsyncExpressionFactory.Name, (owner, state) => Async},
+            {ScriptCurrentActionExpressionFactory.Name, (owner, state) => CurrentAction},
+            {ScriptArrayExpressionFactory.Name, (owner, state) => ArrayContract},
+            {ScriptThisExpressionFactory.Name, (owner, state) => ThisRef},
+            {ScriptArrayExpressionFactory.Name, (owner, state) => ArrayExpr},
+            {ScriptForExpressionFactory.Name, (owner, state) => ForkExpr},
+            {ScriptConditionalExpressionFactory.Name, (owner, state) => Conditional},
+            {ScriptInvocationExpressionFactory.Name, (owner, state) => Invocation},
+            {ScriptIndexerExpressionFactory.Name, (owner, state) => Indexer},
+            {ScriptForEachExpressionFactory.Name, (owner, state) => ForEach},
+            {ScriptForExpressionFactory.Name, (owner, state) => For},
+            {ScriptWhileExpressionFactory.Name, (owner, state) => While},
+            {ScriptObjectExpressionFactory.Name, (owner, state) => Obj},
+            {ScriptFunctionSignatureExpressionFactory.Name, (owner, state) => Signature},
+            {ScriptSehExpressionFactory.Name, (owner, state) => SEH},
+            {ScriptSelectionExpressionFactory.Name, (owner, state) => Selection},
+            {ScriptPlaceholderExpressionFactory.Name, (owner, state) => Placeholder},
+            {ScriptComplexExpressionFactory.Name, (owner, state) => Complex},
+            {ScriptExpandExpressionFactory.Name, (owner, state) => Expandq},
+            {ScriptFunctionExpressionFactory.Name, (owner, state) => FunctionExpr}
+        };
 
         static ScriptExpressionFactory()
         {
@@ -298,39 +346,15 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             get { return Keyword.Expr; }
         }
 
-        private IRuntimeSlot m_reduce;
-        private IRuntimeSlot m_compile;
-        private IRuntimeSlot m_constant;
-        private IRuntimeSlot m_nmtok;
-        private IRuntimeSlot m_binop;
-        private IRuntimeSlot m_unop;
-        private IRuntimeSlot m_async;
-        private IRuntimeSlot m_equ;
-        private IRuntimeSlot m_requ;
-        private IRuntimeSlot m_ca;
-        private IRuntimeSlot m_arcon;
-        private IRuntimeSlot m_thisref;
-        private IRuntimeSlot m_array;
-        private IRuntimeSlot m_fork;
-        private IRuntimeSlot m_conditional;
-        private IRuntimeSlot m_inv;
-        private IRuntimeSlot m_indexer;
-        private IRuntimeSlot m_init;
-        private IRuntimeSlot m_foreach;
-        private IRuntimeSlot m_for;
-        private IRuntimeSlot m_while;
-        private IRuntimeSlot m_obj;
-        private IRuntimeSlot m_sig;
-        private IRuntimeSlot m_action;
-        private IRuntimeSlot m_parse;
-        private IRuntimeSlot m_seh;
-        private IRuntimeSlot m_selection;
-        private IRuntimeSlot m_clone;
-        private IRuntimeSlot m_visit;
-        private IRuntimeSlot m_placeholder;
-        private IRuntimeSlot m_deduce;
-        private IRuntimeSlot m_cplx;
-        private IRuntimeSlot m_expand;
+        private IScriptFunction m_reduce;
+        private IScriptFunction m_compile;
+        private IScriptFunction m_parse;
+        private IScriptFunction m_visit;
+        private IScriptFunction m_deduce;
+        private IScriptFunction m_clone;
+        private IScriptFunction m_equ;
+        private IScriptFunction m_requ;
+        private IScriptFunction m_init;
 
         /// <summary>
         /// Deserializes runtime expression factory.
@@ -690,7 +714,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         /// <summary>
         /// Gets an expression factory that produces indexer expression.
         /// </summary>
-        public static new IScriptExpressionContract<ScriptCodeIndexerExpression> Indexer
+        public static IScriptExpressionContract<ScriptCodeIndexerExpression> Indexer
         {
             get{return ScriptIndexerExpressionFactory.Instance;}
         }
@@ -732,15 +756,15 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         /// </summary>
         public static IScriptExpressionContract<ScriptCodeActionContractExpression> Signature
         {
-            get { return ScriptActionContractExpressionFactory.Instance; }
+            get { return ScriptFunctionSignatureExpressionFactory.Instance; }
         }
 
         /// <summary>
         /// Gets an expression factory that produces an action.
         /// </summary>
-        public static IScriptExpressionContract<ScriptCodeActionImplementationExpression> Action
+        public static IScriptExpressionContract<ScriptCodeActionImplementationExpression> FunctionExpr
         {
-            get { return ScriptActionExpressionFactory.Instance; }
+            get { return ScriptFunctionExpressionFactory.Instance; }
         }
 
         /// <summary>
@@ -802,35 +826,16 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         /// <summary>
         /// Releases all memory associated with the cached runtime slots.
         /// </summary>
-        public void Clear()
+        public override void Clear()
         {
-            m_reduce = m_compile = m_constant =
-            m_nmtok = m_binop = m_unop = m_async =
-            m_equ = m_requ = m_ca =
-            m_arcon = m_thisref = m_array =
-            m_fork = m_conditional =
-            m_inv =
-            m_indexer =
-            m_foreach =
-            m_for =
-            m_while =
-            m_obj =
-            m_sig =
-            m_action =
-            m_seh =
-            m_clone =
-            m_visit =
-            m_placeholder = m_deduce =
-            m_selection =
-            m_cplx =
-            m_expand = null;
+            m_clone=m_compile=m_deduce=m_equ=m_init=m_parse=m_reduce=m_requ=m_visit=null;
             ScriptExpandExpressionFactory.Instance.Clear();
             ScriptComplexExpressionFactory.Instance.Clear();
             ScriptPlaceholderExpressionFactory.Instance.Clear();
             ScriptSelectionExpressionFactory.Instance.Clear();
             ScriptSehExpressionFactory.Instance.Clear();
-            ScriptActionExpressionFactory.Instance.Clear();
-            ScriptActionContractExpressionFactory.Instance.Clear();
+            ScriptFunctionExpressionFactory.Instance.Clear();
+            ScriptFunctionSignatureExpressionFactory.Instance.Clear();
             ScriptObjectExpressionFactory.Instance.Clear();
             ScriptWhileExpressionFactory.Instance.Clear();
             ScriptForExpressionFactory.Instance.Clear();
@@ -848,175 +853,37 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             ScriptNameTokenExpressionFactory.Instance.Clear();
             ScriptConstantExpressionFactory.Instance.Clear();
             ScriptConditionalExpressionFactory.Instance.Clear();
-            GC.Collect();
         }
 
-        #region Runtime Slots
-        IRuntimeSlot IExpressionFactorySlots.Expand
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="slotName"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public override IScriptObject this[string slotName, InterpreterState state]
         {
-            get { return CacheConst(ref m_expand, () => Expandq); }
+            get { return StaticSlots.GetValue(this, slotName, state); }
+            set { StaticSlots.SetValue(this, slotName, value, state); }
         }
 
-        IRuntimeSlot IExpressionFactorySlots.Cplx
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="slotName"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        protected override IScriptObject GetSlotMetadata(string slotName, InterpreterState state)
         {
-            get { return CacheConst(ref m_cplx, () => Complex); }
+            return StaticSlots.GetSlotMetadata(this, slotName, state);
         }
 
-        IRuntimeSlot IExpressionFactorySlots.Deduce
+        /// <summary>
+        /// 
+        /// </summary>
+        public override ICollection<string> Slots
         {
-            get { return CacheConst<DeduceAction>(ref m_deduce); }
+            get { return StaticSlots.Keys; }
         }
-
-        IRuntimeSlot IExpressionFactorySlots.Placeholder
-        {
-            get { return CacheConst(ref m_placeholder, () => Placeholder); }
-        }
-
-        IRuntimeSlot IExpressionFactorySlots.Visit
-        {
-            get { return CacheConst<VisitAction>(ref m_visit); }
-        }
-
-        IRuntimeSlot IExpressionFactorySlots.Clone
-        {
-            get { return CacheConst<CloneAction>(ref m_clone); }
-        }
-
-        IRuntimeSlot IExpressionFactorySlots.Selection
-        {
-            get { return CacheConst(ref m_selection, () => Selection); }
-        }
-
-        IRuntimeSlot IExpressionFactorySlots.Seh
-        {
-            get { return CacheConst(ref m_seh, () => SEH); }
-        }
-
-        IRuntimeSlot IExpressionFactorySlots.Parse
-        {
-            get { return CacheConst<ParseAction>(ref m_parse); }
-        }
-
-        IRuntimeSlot IExpressionFactorySlots.Action
-        {
-            get { return CacheConst(ref m_action, () => Action); }
-        }
-
-        IRuntimeSlot IExpressionFactorySlots.Signature
-        {
-            get { return CacheConst(ref m_sig, () => Signature); }
-        }
-
-        IRuntimeSlot IExpressionFactorySlots.Obj
-        {
-            get { return CacheConst(ref m_obj, () => Obj); }
-        }
-
-        IRuntimeSlot IExpressionFactorySlots.WhileLoop
-        {
-            get { return CacheConst(ref m_while, () => While); }
-        }
-
-        IRuntimeSlot IExpressionFactorySlots.ForLoop
-        {
-            get { return CacheConst(ref m_for, () => For); }
-        }
-
-        IRuntimeSlot IExpressionFactorySlots.ForEach
-        {
-            get { return CacheConst(ref m_foreach, () => ForEach); }
-        }
-
-        IRuntimeSlot IExpressionFactorySlots.Init
-        {
-            get { return CacheConst<InitAction>(ref m_init); }
-        }
-
-        IRuntimeSlot IExpressionFactorySlots.Indexer
-        {
-            get { return CacheConst(ref m_indexer, () => Indexer); }
-        }
-
-        IRuntimeSlot IExpressionFactorySlots.Inv
-        {
-            get { return CacheConst(ref m_inv, () => Invocation); }
-        }
-
-        IRuntimeSlot IExpressionFactorySlots.Cond
-        {
-            get { return CacheConst(ref m_conditional, () => Conditional); }
-        }
-
-        IRuntimeSlot IExpressionFactorySlots.ForkDef
-        {
-            get { return CacheConst(ref m_fork, () => ForkExpr); }
-        }
-
-        IRuntimeSlot IExpressionFactorySlots.Array
-        {
-            get { return CacheConst(ref m_array, () => ArrayExpr); }
-        }
-
-        IRuntimeSlot IExpressionFactorySlots.ThisRef
-        {
-            get { return CacheConst(ref m_thisref, () => ThisRef); }
-        }
-
-        IRuntimeSlot IExpressionFactorySlots.Arcon
-        {
-            get { return CacheConst(ref m_arcon, () => ArrayContract); }
-        }
-
-        IRuntimeSlot IExpressionFactorySlots.Ca
-        {
-            get { return CacheConst(ref m_ca, () => CurrentAction); }
-        }
-
-        IRuntimeSlot IExpressionFactorySlots.AsyncDef
-        {
-            get { return CacheConst(ref m_async, () => Async); }
-        }
-
-        IRuntimeSlot IExpressionFactorySlots.UnOp
-        {
-            get { return CacheConst(ref m_unop, () => Unary); }
-        }
-
-        IRuntimeSlot IExpressionFactorySlots.BinOp
-        {
-            get { return CacheConst(ref m_binop, () => Binary); }
-        }
-
-        IRuntimeSlot IExpressionFactorySlots.Compile
-        {
-            get { return CacheConst<CompileAction>(ref m_compile); }
-        }
-
-        IRuntimeSlot IExpressionFactorySlots.Constant
-        {
-            get { return CacheConst(ref m_constant, () => Constant); }
-        }
-
-        IRuntimeSlot IExpressionFactorySlots.NmToken
-        {
-            get { return CacheConst(ref m_nmtok, () => NameToken); }
-        }
-
-        IRuntimeSlot IExpressionFactorySlots.Equ
-        {
-            get { return CacheConst<ValueEqualityAction>(ref m_equ); }
-        }
-
-        IRuntimeSlot IExpressionFactorySlots.REqu
-        {
-            get { return CacheConst<ReferenceEqualityAction>(ref m_requ); }
-        }
-
-        IRuntimeSlot IExpressionFactorySlots.Reduce
-        {
-            get { return CacheConst<ReduceAction>(ref m_reduce); }
-        }
-        #endregion
-
     }
 }

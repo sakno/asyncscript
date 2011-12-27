@@ -20,16 +20,16 @@ namespace DynamicScript.Runtime.Environment
     /// </summary>
     [ComVisible(false)]
     [Serializable]
-    public sealed class ScriptArray : ScriptObject, ISerializable, IScriptArray, IScriptObjectCollection, IArraySlots
+    public sealed class ScriptArray : ScriptObject, ISerializable, IScriptArray, IScriptObjectCollection
     {
         #region Nested Types
 
         [ComVisible(false)]
-        private sealed class ReadArrayElementAction : ScriptGetItemAction
+        private sealed class ReadArrayElementFunction : ScriptGetItemFunction
         {
             private readonly Array m_elements;
 
-            public ReadArrayElementAction(ScriptArrayContract contract, Array elements)
+            public ReadArrayElementFunction(ScriptArrayContract contract, Array elements)
                 : base(contract.ElementContract, contract.Indicies)
             {
                 m_elements = elements;
@@ -47,11 +47,11 @@ namespace DynamicScript.Runtime.Environment
         }
 
         [ComVisible(false)]
-        private sealed class WriteArrayElementAction : ScriptSetItemAction
+        private sealed class WriteArrayElementFunction : ScriptSetItemFunction
         {
             private readonly Array m_elements;
 
-            public WriteArrayElementAction(ScriptArrayContract contract, Array elements)
+            public WriteArrayElementFunction(ScriptArrayContract contract, Array elements)
                 : base(contract.ElementContract, contract.Indicies)
             {
                 m_elements = elements;
@@ -69,13 +69,13 @@ namespace DynamicScript.Runtime.Environment
         }
 
         [ComVisible(false)]
-        internal sealed class UpperBoundAction<T> : ScriptFunc<ScriptInteger>
+        internal sealed class UpperBoundFunction<T> : ScriptFunc<ScriptInteger>
             where T: class, ICollection
         {
             private const string FirstParamName = "dimension";
             private readonly T m_elements;
 
-            public UpperBoundAction(T elements)
+            public UpperBoundFunction(T elements)
                 : base(FirstParamName, ScriptIntegerContract.Instance, ScriptIntegerContract.Instance)
             {
                 m_elements=elements;
@@ -120,18 +120,47 @@ namespace DynamicScript.Runtime.Environment
         }
         #endregion
 
+        /// <summary>
+        /// Represents collection of static slots.
+        /// </summary>
+        private static readonly AggregatedSlotCollection<ScriptArray> StaticSlots = new AggregatedSlotCollection<ScriptArray>
+        {
+            {ScriptArrayContract.RankSlotName, (owner, state) => new ScriptInteger(owner.m_contract.Rank), ScriptIntegerContract.Instance},
+            //Getter
+            {GetItemAction, (owner, state)=>
+                {
+                    if(owner.m_getter == null)owner.m_getter=new ReadArrayElementFunction(owner.m_contract, owner.m_elements);
+                    return owner.m_getter;
+                }},
+            //Setter
+            {SetItemAction, (owner, state)=>
+                {
+                    if(owner.m_setter == null) owner.m_setter = new WriteArrayElementFunction(owner.m_contract, owner.m_elements);
+                    return owner.m_setter;
+                }},
+            {ScriptArrayContract.LengthSlotName, (owner, state) => new ScriptInteger(GetTotalLength(owner)), ScriptIntegerContract.Instance},
+            {ScriptArrayContract.UpperBoundSlotName, (owner, state) =>
+                {
+                    if(owner.m_ubound == null) owner.m_ubound = new UpperBoundFunction<Array>(owner.m_elements);
+                    return owner.m_ubound;
+                }},
+                {IteratorAction, (owner, state) =>
+                    {
+                        if(owner.m_iterator == null) owner.m_iterator = new ScriptIteratorFunction(owner.m_elements, owner.m_contract.ElementContract);
+                        return owner.m_iterator;
+                    }}
+        };
+
         private const string ArraySerializationSlot = "Elements";
         private const string ArrayContractSerializationSlot = "ElementContract";
 
         private readonly Array m_elements;
         private readonly ScriptArrayContract m_contract;
 
-        private IRuntimeSlot m_rank;
-        private IRuntimeSlot m_getter;
-        private IRuntimeSlot m_setter;
-        private IRuntimeSlot m_length;
-        private IRuntimeSlot m_ubound;
-        private IRuntimeSlot m_iterator;
+        private IScriptFunction m_getter;
+        private IScriptFunction m_setter;
+        private IScriptFunction m_ubound;
+        private IScriptFunction m_iterator;
 
         private ScriptArray(Array elements, ScriptArrayContract contract)
         {
@@ -156,7 +185,7 @@ namespace DynamicScript.Runtime.Environment
         /// </summary>
         /// <param name="elements">The elements of the single-dimensional array.</param>
         public ScriptArray(params IScriptObject[] elements)
-            : this(elements ?? new IScriptObject[0], new ScriptArrayContract(InferContract(elements), elements.Rank))
+            : this(elements ?? EmptyArray, new ScriptArrayContract(InferContract(elements), elements.Rank))
         {
         }
 
@@ -178,7 +207,7 @@ namespace DynamicScript.Runtime.Environment
         /// <returns>A new instance of DynamicScript array.</returns>
         public static ScriptArray Create(ICollection<IScriptObject> elements)
         {
-            if (elements == null) elements = new IScriptObject[0];
+            if (elements == null) elements = EmptyArray;
             var array = new IScriptObject[elements.Count];
             elements.CopyTo(array, 0);
             return new ScriptArray(array);
@@ -422,7 +451,7 @@ namespace DynamicScript.Runtime.Environment
         /// Returns an enumerator through all array elements.
         /// </summary>
         /// <returns></returns>
-        public new IEnumerator<IScriptObject> GetEnumerator()
+        public IEnumerator<IScriptObject> GetEnumerator()
         {
             foreach (IScriptObject element in m_elements)
                 yield return element;
@@ -451,72 +480,6 @@ namespace DynamicScript.Runtime.Environment
         {
             return ToString(this);
         }
-
-        #region Runtime Slots
-
-        private IRuntimeSlot CreateRankSlot()
-        {
-            return new ScriptConstant(new ScriptInteger(m_contract.Rank));
-        }
-
-        private IRuntimeSlot CreateGetterSlot()
-        {
-            return new ScriptConstant(new ReadArrayElementAction(m_contract, m_elements));
-        }
-
-        private IRuntimeSlot CreateSetterSlot()
-        {
-            return new ScriptConstant(new WriteArrayElementAction(m_contract, m_elements));
-        }
-
-        private IRuntimeSlot CreateLengthSlot()
-        {
-            var length = default(long);
-            for (var i = 0; i < m_elements.Rank; i++) length += m_elements.GetLength(i);
-            return new ScriptConstant(new ScriptInteger(length));
-        }
-
-        private IRuntimeSlot CreateUpperBoundSlot()
-        {
-            return new ScriptConstant(new UpperBoundAction<Array>(m_elements));
-        }
-
-        private IRuntimeSlot CreateIteratorSlot()
-        {
-            return new ScriptConstant(new ScriptIteratorAction(m_elements, m_contract.ElementContract));
-        }
-
-        IRuntimeSlot IArraySlots.Rank
-        {
-            get { return Cache(ref m_rank, CreateRankSlot); }
-        }
-
-        IRuntimeSlot IArraySlots.GetItem
-        {
-            get { return Cache(ref m_getter, CreateGetterSlot); }
-        }
-
-        IRuntimeSlot IArraySlots.SetItem
-        {
-            get { return Cache(ref m_setter, CreateSetterSlot); }
-        }
-
-        IRuntimeSlot IArraySlots.Length
-        {
-            get { return Cache(ref m_length, CreateLengthSlot); }
-        }
-
-        IRuntimeSlot IArraySlots.UpperBound
-        {
-            get { return Cache(ref m_ubound, CreateUpperBoundSlot); }
-        }
-
-        IRuntimeSlot IIterableSlots.Iterator
-        {
-            get { return Cache(ref m_iterator, CreateIteratorSlot); }
-        }
-
-        #endregion
 
         /// <summary>
         /// Creates a new script array from array of bytes.
@@ -568,6 +531,37 @@ namespace DynamicScript.Runtime.Environment
             else if (state.Context == InterpretationContext.Unchecked)
                 return Void;
             else throw new UnsupportedOperationException(state);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="slotName"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public override IScriptObject this[string slotName, InterpreterState state]
+        {
+            get { return StaticSlots.GetValue(this, slotName, state); }
+            set { StaticSlots.SetValue(this, slotName, value, state); }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public override ICollection<string> Slots
+        {
+            get { return StaticSlots.Keys; }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="slotName"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        protected override IScriptObject GetSlotMetadata(string slotName, InterpreterState state)
+        {
+            return StaticSlots.GetSlotMetadata(this, slotName, state);
         }
     }
 }

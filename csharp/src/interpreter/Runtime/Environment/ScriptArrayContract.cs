@@ -40,7 +40,7 @@ namespace DynamicScript.Runtime.Environment
 
         #region Nested Types
         [ComVisible(false)]
-        internal sealed class UppedBoundActionContract : ScriptActionContract
+        internal sealed class UppedBoundActionContract : ScriptFunctionContract
         {
             private const string DimensionParameterName = "dimension";
 
@@ -62,10 +62,10 @@ namespace DynamicScript.Runtime.Environment
             {
                 yield return ScriptCompositeContract.DefineSlot(RankSlotName, RankSlotContract, true);
                 yield return DefineSlot(LengthSlotName, ScriptIntegerContract.Instance, true);
-                yield return DefineSlot(SetItemAction, ScriptSetItemAction.GetContractBinding(elementContract, ScriptIntegerContract.Instance.AsArray(rank)));
-                yield return DefineSlot(GetItemAction, ScriptGetItemAction.GetContractBinding(elementContract, ScriptIntegerContract.Instance.AsArray(rank)));
+                yield return DefineSlot(SetItemAction, ScriptSetItemFunction.GetContractBinding(elementContract, ScriptIntegerContract.Instance.AsArray(rank)));
+                yield return DefineSlot(GetItemAction, ScriptGetItemFunction.GetContractBinding(elementContract, ScriptIntegerContract.Instance.AsArray(rank)));
                 yield return DefineSlot(UpperBoundSlotName, new UppedBoundActionContract());
-                yield return DefineSlot(IteratorAction, ScriptIteratorAction.GetContractBinding(elementContract), true);
+                yield return DefineSlot(IteratorAction, ScriptIteratorFunction.GetContractBinding(elementContract), true);
             }
         }
         #endregion
@@ -168,7 +168,7 @@ namespace DynamicScript.Runtime.Environment
         public override IScriptObject CreateObject(IList<IScriptObject> args, InterpreterState state)
         {
             if (args.Count != Rank)
-                throw new ActionArgumentsMistmatchException(state);
+                throw new FunctionArgumentsMistmatchException(state);
             return new ScriptArray(this, CreateLengths(args, state));
         }
 

@@ -22,13 +22,14 @@ namespace DynamicScript.Runtime.Environment
     /// </summary>
     [ComVisible(false)]
     [Serializable]
-    public sealed class ScriptStringContract : ScriptBuiltinContract, IStringContractSlots
+    public sealed class ScriptStringContract : ScriptBuiltinContract
     {
         #region Nested Types
 
         [ComVisible(false)]
         private sealed class InsertAction : ScriptFunc<ScriptString, ScriptInteger, ScriptString>
         {
+            public const string Name = "insert";
             private const string FirstParamName = "str";
             private const string SecondParamName = "index";
             private const string ThirdParamName = "value";
@@ -52,6 +53,7 @@ namespace DynamicScript.Runtime.Environment
         [ComVisible(false)]
         private sealed class IndexOfAction : ScriptFunc<ScriptString, ScriptString, ScriptInteger>
         {
+            public const string Name = "indexof";
             private const string FirstParamName = "str";
             private const string SecondParamName = "value";
             private const string ThirdParamName = "startIndex";
@@ -73,24 +75,9 @@ namespace DynamicScript.Runtime.Environment
         }
 
         [ComVisible(false)]
-        private sealed class LengthAction : ScriptFunc<ScriptString>
-        {
-            private const string FirstParamName = "str";
-
-            public LengthAction()
-                : base(FirstParamName, Instance, ScriptIntegerContract.Instance)
-            {
-            }
-
-            protected override IScriptObject Invoke(ScriptString str, InterpreterState state)
-            {
-                return new ScriptInteger(str.Length);
-            }
-        }
-
-        [ComVisible(false)]
         private sealed class SubstringAction : ScriptFunc<ScriptString, ScriptInteger, ScriptInteger>
         {
+            public const string Name = "substr";
             private const string FirstParamName = "str";
             private const string SecondParamName = "startIndex";
             private const string ThirdParamName = "length";
@@ -114,6 +101,7 @@ namespace DynamicScript.Runtime.Environment
         [ComVisible(false)]
         private sealed class IsInternedAction : ScriptFunc<ScriptString>
         {
+            public const string Name = "isinterned";
             private const string FirstParamName = "str";
 
             public IsInternedAction()
@@ -130,6 +118,7 @@ namespace DynamicScript.Runtime.Environment
         [ComVisible(false)]
         private sealed class ConcatAction : ScriptFunc<IScriptArray>
         {
+            public const string Name = "concat";
             private const string FirstParamName = "strings";
 
             public ConcatAction()
@@ -152,53 +141,30 @@ namespace DynamicScript.Runtime.Environment
         }
 
         [ComVisible(false)]
-        private sealed class LanguageSlot : RuntimeSlotBase
+        private sealed class LanguageSlot : AggregatedSlot<ScriptStringContract, ScriptString>
         {
-            private static ScriptString Value
+            public const string Name = "language";
+
+            public override ScriptString GetValue(ScriptStringContract owner, InterpreterState state)
             {
-                get { return new ScriptString(Thread.CurrentThread.CurrentCulture.IetfLanguageTag); }
-                set { Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfoByIetfLanguageTag(value); }
+                return new ScriptString(Thread.CurrentThread.CurrentCulture.IetfLanguageTag);
             }
 
-            public override IScriptObject GetValue(InterpreterState state)
+            public override void SetValue(ScriptStringContract owner, ScriptString value, InterpreterState state)
             {
-                return Value;
+                Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfoByIetfLanguageTag(value);
             }
 
-            public override void SetValue(IScriptObject value, InterpreterState state)
+            public override IScriptContract GetContractBinding(ScriptStringContract owner, InterpreterState state)
             {
-                Value = (ScriptString)value;
-            }
-
-            public override IScriptContract ContractBinding
-            {
-                get { return Instance; }
-            }
-
-            public override RuntimeSlotAttributes Attributes
-            {
-                get { return RuntimeSlotAttributes.None; }
-            }
-
-            protected override ICollection<string> Slots
-            {
-                get { return Value.Slots; }
-            }
-
-            public override bool DeleteValue()
-            {
-                return false;
-            }
-
-            public override bool Equals(IRuntimeSlot other)
-            {
-                return other is LanguageSlot;
+                return Instance;
             }
         }
 
         [ComVisible(false)]
         private sealed class EqualityAction : ScriptFunc<ScriptString, ScriptString, ScriptString>
         {
+            public const string Name = "equ";
             private const string FirstParamName = "a";
             private const string SecondParamName = "b";
             private const string ThirdParamName = "lang";
@@ -217,6 +183,7 @@ namespace DynamicScript.Runtime.Environment
         [ComVisible(false)]
         private sealed class ComparisonAction : ScriptFunc<ScriptString, ScriptString, ScriptString>
         {
+            public const string Name = "cmp";
             private const string FirstParamName = "a";
             private const string SecondParamName = "b";
             private const string ThirdParamName = "lang";
@@ -233,16 +200,26 @@ namespace DynamicScript.Runtime.Environment
         }
         #endregion
 
-        private IRuntimeSlot m_empty;
-        private IRuntimeSlot m_concat;
-        private IRuntimeSlot m_language;
-        private IRuntimeSlot m_isint;
-        private IRuntimeSlot m_equ;
-        private IRuntimeSlot m_cmp;
-        private IRuntimeSlot m_length;
-        private IRuntimeSlot m_substr;
-        private IRuntimeSlot m_indexOf;
-        private IRuntimeSlot m_insert;
+        private static AggregatedSlotCollection<ScriptStringContract> StaticSlots = new AggregatedSlotCollection<ScriptStringContract>
+        {
+            {"empty", (owner, state) => ScriptString.Empty},
+            {InsertAction.Name, (owner, state) => LazyField<InsertAction, IScriptFunction>(ref owner.m_insert)},
+            {IndexOfAction.Name, (owner, state) => LazyField<IndexOfAction, IScriptFunction>(ref owner.m_indexof)},
+            {SubstringAction.Name, (owner, state) => LazyField<SubstringAction, IScriptFunction>(ref owner.m_substr)},
+            {IsInternedAction.Name, (owner, state) => LazyField<IsInternedAction, IScriptFunction>(ref owner.m_interned)},
+            {ConcatAction.Name, (owner, state) => LazyField<ConcatAction, IScriptFunction>(ref owner.m_concat)},
+            {LanguageSlot.Name, new LanguageSlot()},
+            {EqualityAction.Name, (owner, state) => LazyField<EqualityAction, IScriptFunction>(ref owner.m_equ)},
+            {ComparisonAction.Name, (owner, state) => LazyField<ComparisonAction, IScriptFunction>(ref owner.m_cmp)}
+        };
+
+        private IScriptFunction m_insert;
+        private IScriptFunction m_indexof;
+        private IScriptFunction m_substr;
+        private IScriptFunction m_interned;
+        private IScriptFunction m_concat;
+        private IScriptFunction m_equ;
+        private IScriptFunction m_cmp;
 
         private ScriptStringContract(SerializationInfo info, StreamingContext context)
         {
@@ -280,6 +257,14 @@ namespace DynamicScript.Runtime.Environment
         }
 
         /// <summary>
+        /// Clears all internal fields.
+        /// </summary>
+        public override void Clear()
+        {
+            m_cmp = m_concat = m_equ = m_indexof = m_insert = m_interned = m_substr = null;
+        }
+
+        /// <summary>
         /// Returns a string default value.
         /// </summary>
         /// <param name="state">Internal interpreter state.</param>
@@ -289,7 +274,12 @@ namespace DynamicScript.Runtime.Environment
             return Void;
         }
 
-        private static bool Convert(ref IScriptObject value)
+        /// <summary>
+        /// Attempts to convert the specified script object to the string.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public static bool TryConvert(ref IScriptObject value)
         {
             if (value is ScriptString)
                 return true;
@@ -308,7 +298,7 @@ namespace DynamicScript.Runtime.Environment
         /// <returns></returns>
         protected override bool Mapping(ref IScriptObject value)
         {
-            return Convert(ref value);
+            return TryConvert(ref value);
         }
 
         /// <summary>
@@ -318,7 +308,7 @@ namespace DynamicScript.Runtime.Environment
         /// <returns></returns>
         public new static ScriptString ToString(IScriptObject value)
         {
-            if (Convert(ref value))
+            if (TryConvert(ref value))
                 return (ScriptString)value;
             else if (value is IConvertible)
                 return new ScriptString(SystemConverter.ToString((IConvertible)value));
@@ -404,58 +394,35 @@ namespace DynamicScript.Runtime.Environment
             return Compare(a, b, language) == 0;
         }
 
-        #region Runtime Slots
-
-        IRuntimeSlot IStringContractSlots.Length
+        /// <summary>
+        /// Gets collection of aggregated slots.
+        /// </summary>
+        public override ICollection<string> Slots
         {
-            get { return CacheConst<LengthAction>(ref m_length); }
+            get { return StaticSlots.Keys; }
         }
 
-        IRuntimeSlot IStringContractSlots.Substr
+        /// <summary>
+        /// Gets or sets value of the aggregated object.
+        /// </summary>
+        /// <param name="slotName"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public override IScriptObject this[string slotName, InterpreterState state]
         {
-            get { return CacheConst<SubstringAction>(ref m_substr); }
+            get { return StaticSlots.GetValue(this, slotName, state); }
+            set { StaticSlots.SetValue(this, slotName, value, state); }
         }
 
-        IRuntimeSlot IStringContractSlots.Equ
+        /// <summary>
+        /// Returns metadata of the aggregated slot.
+        /// </summary>
+        /// <param name="slotName"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        protected override IScriptObject GetSlotMetadata(string slotName, InterpreterState state)
         {
-            get { return CacheConst<EqualityAction>(ref m_equ); }
+            return StaticSlots.GetSlotMetadata(this, slotName, state);
         }
-
-        IRuntimeSlot IStringContractSlots.Cmp
-        {
-            get { return CacheConst<ComparisonAction>(ref m_cmp); }
-        }
-
-        IRuntimeSlot IStringContractSlots.IsInterned
-        {
-            get { return CacheConst<IsInternedAction>(ref m_isint); }
-        }
-
-        IRuntimeSlot IStringContractSlots.Empty
-        {
-            get { return CacheConst(ref m_empty, () => ScriptString.Empty); }
-        }
-
-        IRuntimeSlot IStringContractSlots.Concat
-        {
-            get { return CacheConst<ConcatAction>(ref m_concat); }
-        }
-
-        IRuntimeSlot IStringContractSlots.Language
-        {
-            get { return Cache<LanguageSlot>(ref m_language); }
-        }
-
-        IRuntimeSlot IStringContractSlots.IndexOf
-        {
-            get { return CacheConst<IndexOfAction>(ref m_indexOf); }
-        }
-
-        IRuntimeSlot IStringContractSlots.Insert
-        {
-            get { return CacheConst<InsertAction>(ref m_insert); }
-        }
-
-        #endregion
     }
 }

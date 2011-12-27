@@ -2,6 +2,7 @@
 using System.Dynamic;
 using System.Linq.Expressions;
 using System.Runtime.Serialization;
+using System.Collections.Generic;
 
 namespace DynamicScript.Runtime.Environment
 {
@@ -18,12 +19,13 @@ namespace DynamicScript.Runtime.Environment
     /// </summary>
     [ComVisible(false)]
     [Serializable]
-    public sealed class ScriptIntegerContract: ScriptBuiltinContract, IIntegerContractSlots
+    public sealed class ScriptIntegerContract: ScriptBuiltinContract
     {
         #region Nested Types
         [ComVisible(false)]
         private sealed class IsInternedAction : ScriptFunc<ScriptInteger>
         {
+            public const string Name = "isInterned";
             private const string FirstParamName = "int";
 
             public IsInternedAction()
@@ -38,11 +40,12 @@ namespace DynamicScript.Runtime.Environment
         }
 
         [ComVisible(false)]
-        private sealed class EvenAction : ScriptFunc<ScriptInteger>
+        private sealed class EvenFunction : ScriptFunc<ScriptInteger>
         {
+            public const string Name = "even";
             private const string FirstParamName = "int";
 
-            public EvenAction()
+            public EvenFunction()
                 : base(FirstParamName, Instance, ScriptBooleanContract.Instance)
             {
             }
@@ -54,11 +57,12 @@ namespace DynamicScript.Runtime.Environment
         }
 
         [ComVisible(false)]
-        private sealed class OddAction : ScriptFunc<ScriptInteger>
+        private sealed class OddFunction : ScriptFunc<ScriptInteger>
         {
+            public const string Name = "odd";
             private const string FirstParamName = "int";
 
-            public OddAction()
+            public OddFunction()
                 : base(FirstParamName, Instance, ScriptBooleanContract.Instance)
             {
             }
@@ -70,11 +74,12 @@ namespace DynamicScript.Runtime.Environment
         }
 
         [ComVisible(false)]
-        private sealed class AbsAction : ScriptFunc<ScriptInteger>
+        private sealed class AbsFunction : ScriptFunc<ScriptInteger>
         {
+            public const string Name = "abs";
             private const string FirstParamName = "int";
 
-            public AbsAction()
+            public AbsFunction()
                 : base(FirstParamName, Instance, Instance)
             {
             }
@@ -86,11 +91,12 @@ namespace DynamicScript.Runtime.Environment
         }
 
         [ComVisible(false)]
-        private sealed class SumAction : ScriptFunc<IScriptArray>
+        private sealed class SumFunction : ScriptFunc<IScriptArray>
         {
+            public const string Name = "sum";
             private const string FirstParamName = "ints";
 
-            public SumAction()
+            public SumFunction()
                 : base(FirstParamName, new ScriptArrayContract(Instance), Instance)
             {
             }
@@ -112,11 +118,12 @@ namespace DynamicScript.Runtime.Environment
         }
 
         [ComVisible(false)]
-        private sealed class RemAction : ScriptFunc<IScriptArray>
+        private sealed class RemFunction : ScriptFunc<IScriptArray>
         {
+            public const string Name = "rem";
             private const string FirstParamName = "ints";
 
-            public RemAction()
+            public RemFunction()
                 : base(FirstParamName, new ScriptArrayContract(Instance), Instance)
             {
             }
@@ -143,17 +150,28 @@ namespace DynamicScript.Runtime.Environment
         }
         #endregion
 
-        private IRuntimeSlot m_size;
-        private IRuntimeSlot m_max;
-        private IRuntimeSlot m_min;
-        private IRuntimeSlot m_even;
-        private IRuntimeSlot m_odd;
-        private IRuntimeSlot m_abs;
-        private IRuntimeSlot m_sum;
-        private IRuntimeSlot m_rem;
-        private IRuntimeSlot m_isint;
+        private readonly AggregatedSlotCollection<ScriptIntegerContract> StaticSlots = new AggregatedSlotCollection<ScriptIntegerContract>()
+            {
+                {"size", () => new ScriptInteger(sizeof(long))},
+                {"max", (owner, state) => ScriptInteger.MaxValue},
+                {"min", (owner, state) => ScriptInteger.MinValue},
+                {IsInternedAction.Name, (owner, state) => LazyField<IsInternedAction, IScriptFunction>(ref owner.m_interned)},
+                {EvenFunction.Name, (owner, state) => LazyField<EvenFunction, IScriptFunction>(ref owner.m_even)},
+                {OddFunction.Name, (owner, state) => LazyField<OddFunction, IScriptFunction>(ref owner.m_odd)},
+                {AbsFunction.Name, (owner, state) => LazyField<AbsFunction, IScriptFunction>(ref owner.m_abs)},
+                {SumFunction.Name, (owner, state) => LazyField<SumFunction, IScriptFunction>(ref owner.m_sum)},
+                {RemFunction.Name, (owner, state) => LazyField<RemFunction, IScriptFunction>(ref owner.m_rem)}
+            };
+
+        private IScriptFunction m_interned;
+        private IScriptFunction m_even;
+        private IScriptFunction m_odd;
+        private IScriptFunction m_abs;
+        private IScriptFunction m_sum;
+        private IScriptFunction m_rem;
 
         private ScriptIntegerContract(SerializationInfo info, StreamingContext context)
+            :this()
         {
         }
 
@@ -349,52 +367,43 @@ namespace DynamicScript.Runtime.Environment
             return state.IsInterned(value);
         }
 
-        #region Runtime Slots
-
-        IRuntimeSlot IIntegerContractSlots.IsInterned
+        /// <summary>
+        /// Clears all internal data.
+        /// </summary>
+        public override void Clear()
         {
-            get { return CacheConst<IsInternedAction>(ref m_isint); }
+            m_abs = m_even = m_interned = m_odd = m_rem = m_sum = null;
         }
 
-        IRuntimeSlot IIntegerContractSlots.Rem
+        /// <summary>
+        /// Gets or sets value of the aggregated object.
+        /// </summary>
+        /// <param name="slotName"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public override IScriptObject this[string slotName, InterpreterState state]
         {
-            get { return CacheConst<RemAction>(ref m_rem); }
+            get { return StaticSlots.GetValue(this, slotName, state); }
+            set { StaticSlots.SetValue(this, slotName, value, state); }
         }
 
-        IRuntimeSlot IIntegerContractSlots.Sum
+        /// <summary>
+        /// Gets collection of predefined slots.
+        /// </summary>
+        public override ICollection<string> Slots
         {
-            get { return CacheConst<SumAction>(ref m_sum); }
+            get { return StaticSlots.Keys; }
         }
 
-        IRuntimeSlot IIntegerContractSlots.Size
+        /// <summary>
+        /// Returns metadata of the aggregated slot.
+        /// </summary>
+        /// <param name="slotName"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        protected override IScriptObject GetSlotMetadata(string slotName, InterpreterState state)
         {
-            get { return CacheConst(ref m_size, () => Size); }
+            return StaticSlots.GetSlotMetadata(this, slotName, state);
         }
-
-        IRuntimeSlot IIntegerContractSlots.Max
-        {
-            get { return CacheConst(ref m_max, () => ScriptInteger.MaxValue); }
-        }
-
-        IRuntimeSlot IIntegerContractSlots.Min
-        {
-            get { return CacheConst(ref m_min, () => ScriptInteger.MinValue); }
-        }
-
-        IRuntimeSlot IIntegerContractSlots.Even
-        {
-            get { return CacheConst<EvenAction>(ref m_even); }
-        }
-
-        IRuntimeSlot IIntegerContractSlots.Odd
-        {
-            get { return CacheConst<OddAction>(ref m_odd); }
-        }
-
-        IRuntimeSlot IIntegerContractSlots.Abs
-        {
-            get { return CacheConst<AbsAction>(ref m_abs); }
-        }
-        #endregion
     }
 }

@@ -13,16 +13,16 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
     {
         #region Nested Types
         [ComVisible(false)]
-        private sealed class ModifyAction : ModifyActionBase
+        private sealed class ModifyFunction : ModifyFunctionBase
         {
             private const string SecondParamName = "name";
             private const string ThirdParamName = "temp";
             private const string FourthParamName = "init";
 
-            public ModifyAction()
-                : base(Instance, new ScriptActionContract.Parameter(SecondParamName, ScriptStringContract.Instance),
-                new ScriptActionContract.Parameter(ThirdParamName, ScriptBooleanContract.Instance),
-                new ScriptActionContract.Parameter(FourthParamName, ScriptExpressionFactory.Instance))
+            public ModifyFunction()
+                : base(Instance, new ScriptFunctionContract.Parameter(SecondParamName, ScriptStringContract.Instance),
+                new ScriptFunctionContract.Parameter(ThirdParamName, ScriptBooleanContract.Instance),
+                new ScriptFunctionContract.Parameter(FourthParamName, ScriptExpressionFactory.Instance))
             {
             }
         }
@@ -30,7 +30,12 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
         public new const string Name = "loopvar";
 
-        private IRuntimeSlot m_modify;
+        private IScriptFunction m_modify;
+
+        private static readonly AggregatedSlotCollection<ScriptLoopVariableStatementFactory> StaticSlots = new AggregatedSlotCollection<ScriptLoopVariableStatementFactory>
+        {
+             {ModifyFunction.Name, (owner, state) => LazyField<ModifyFunction, IScriptFunction>(ref owner.m_modify)},
+        };
 
         private ScriptLoopVariableStatementFactory(SerializationInfo info, StreamingContext context)
             : base(info, context)
@@ -70,9 +75,20 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             m_modify = null;
         }
 
-        protected override IRuntimeSlot Modify
+        public override ICollection<string> Slots
         {
-            get { return CacheConst<ModifyAction>(ref m_modify); }
+            get { return StaticSlots.Keys; }
+        }
+
+        public override IScriptObject this[string slotName, InterpreterState state]
+        {
+            get { return StaticSlots.GetValue(this, slotName, state); }
+            set { StaticSlots.SetValue(this, slotName, value, state); }
+        }
+
+        protected override IScriptObject GetSlotMetadata(string slotName, InterpreterState state)
+        {
+            return StaticSlots.GetSlotMetadata(this, slotName, state);
         }
     }
 }

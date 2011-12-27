@@ -11,7 +11,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
     [ComVisible(false)]
     sealed class ScriptCurrentActionExpressionFactory : ScriptExpressionFactory<ScriptCodeCurrentActionExpression, ScriptCurrentActionExpression>
     {
-        private new const string Name = "ca";
+        public new const string Name = "callee";
 
         private ScriptCurrentActionExpressionFactory(SerializationInfo info, StreamingContext context)
             : base(info, context)
@@ -28,11 +28,6 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         public override ScriptCurrentActionExpression CreateCodeElement(IList<IScriptObject> args, InterpreterState state)
         {
             return ScriptCurrentActionExpression.Instance;
-        }
-
-        protected override IRuntimeSlot Modify
-        {
-            get { return null; }
         }
     }
 }

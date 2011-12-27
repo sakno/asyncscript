@@ -48,12 +48,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Runtime\Environment\ReflectionEngine.cs" />
-    <Compile Include="Runtime\Environment\ScriptArrayIndexer.cs" />
     <Compile Include="Runtime\Environment\ScriptAssembly.cs" />
     <Compile Include="Runtime\Environment\ScriptClass.cs" />
     <Compile Include="Runtime\Environment\ScriptEvent.cs" />
     <Compile Include="Runtime\Environment\ScriptGeneric.cs" />
-    <Compile Include="Runtime\Environment\ScriptMember.cs" />
     <Compile Include="Runtime\Environment\ScriptMethod.cs" />
     <Compile Include="Runtime\INativeObject.cs" />
     <Compile Include="Module.cs" />

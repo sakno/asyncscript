@@ -6,7 +6,7 @@ namespace DynamicScript.Runtime.Environment
     using ScriptCodeBinaryOperatorType = Compiler.Ast.ScriptCodeBinaryOperatorType;
 
     [ComVisible(false)]
-    interface IBinaryOperatorInvoker: IScriptAction
+    interface IBinaryOperatorInvoker: IScriptFunction
     {
         ScriptCodeBinaryOperatorType Operator { get; }
     }

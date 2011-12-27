@@ -30,10 +30,5 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         {
             return ScriptEmptyStatement.Instance;
         }
-
-        protected override IRuntimeSlot Modify
-        {
-            get { return null; }
-        }
     }
 }

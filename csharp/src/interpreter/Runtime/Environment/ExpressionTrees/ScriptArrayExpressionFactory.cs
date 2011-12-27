@@ -10,27 +10,28 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
     [ComVisible(false)]
     [Serializable]
-    sealed class ScriptArrayExpressionFactory: ScriptExpressionFactory<ScriptCodeArrayExpression, ScriptArrayExpression>, IArrayExpressionFactorySlots
+    sealed class ScriptArrayExpressionFactory: ScriptExpressionFactory<ScriptCodeArrayExpression, ScriptArrayExpression>
     {
         #region Nested Types
         [ComVisible(false)]
-        private sealed class ModifyAction : ModifyActionBase
+        private sealed class ModifyFunction : ModifyFunctionBase
         {
             private const string FirstParamName = "elems";
 
-            public ModifyAction()
-                : base(Instance, new ScriptActionContract.Parameter(FirstParamName, Instance))
+            public ModifyFunction()
+                : base(Instance, new ScriptFunctionContract.Parameter(FirstParamName, Instance))
             {
             }
         }
 
         [ComVisible(false)]
-        private sealed class GetElementAction : ScriptFunc<IScriptExpression<ScriptCodeArrayExpression>, ScriptInteger>
+        private sealed class GetElementFunction : ScriptFunc<IScriptExpression<ScriptCodeArrayExpression>, ScriptInteger>
         {
+            public const string Name = "elementAt";
             private const string FirstParamName = "array";
             private const string SecondParamName = "index";
 
-            public GetElementAction()
+            public GetElementFunction()
                 : base(FirstParamName, Instance, SecondParamName, ScriptIntegerContract.Instance, ScriptExpressionFactory.Instance)
             {
             }
@@ -49,9 +50,11 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class GetLengthAction : CodeElementPartProvider<ScriptInteger>
+        private sealed class GetLengthFunction : CodeElementPartProvider<ScriptInteger>
         {
-            public GetLengthAction()
+            public const string Name = "length";
+
+            public GetLengthFunction()
                 : base(Instance, ScriptIntegerContract.Instance)
             {
             }
@@ -63,11 +66,18 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
         #endregion
 
+        private static readonly AggregatedSlotCollection<ScriptArrayExpressionFactory> StaticSlots = new AggregatedSlotCollection<ScriptArrayExpressionFactory>
+        {
+            {ModifyFunction.Name, (owner, state) =>LazyField<ModifyFunction, IScriptFunction>(ref owner.m_modify)},
+            {GetElementFunction.Name, (owner, state) => LazyField<GetElementFunction, IScriptFunction>(ref owner.m_element)},
+            {GetLengthFunction.Name, (owner, state) => LazyField<GetLengthFunction, IScriptFunction>(ref owner.m_length)}
+        };
+
         public new const string Name = "array";
 
-        private IRuntimeSlot m_modify;
-        private IRuntimeSlot m_element;
-        private IRuntimeSlot m_length;
+        private IScriptFunction m_modify;
+        private IScriptFunction m_element;
+        private IScriptFunction m_length;
 
         private ScriptArrayExpressionFactory(SerializationInfo info, StreamingContext context)
             : base(info, context)
@@ -97,24 +107,20 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             }
         }
 
-        protected override IRuntimeSlot Modify
+        public override ICollection<string> Slots
         {
-            get { return CacheConst<ModifyAction>(ref m_modify); }
+            get { return StaticSlots.Keys; }
         }
 
-        public override void Clear()
+        public override IScriptObject this[string slotName, InterpreterState state]
         {
-            m_element = m_length = m_modify = null;
+            get { return StaticSlots.GetValue(this, slotName, state); }
+            set { StaticSlots.SetValue(this, slotName, value, state); }
         }
 
-        IRuntimeSlot IArrayExpressionFactorySlots.ElementAt
+        protected override IScriptObject GetSlotMetadata(string slotName, InterpreterState state)
         {
-            get { return CacheConst<GetElementAction>(ref m_element); }
-        }
-
-        IRuntimeSlot IArrayExpressionFactorySlots.Length
-        {
-            get { return CacheConst<GetLengthAction>(ref m_length); }
+            return StaticSlots.GetSlotMetadata(this, slotName, state);
         }
     }
 }

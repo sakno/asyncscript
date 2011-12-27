@@ -8,31 +8,33 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
 
     [ComVisible(false)]
-    sealed class ScriptForExpressionFactory : ScriptLoopExpressionFactory<ScriptCodeForLoopExpression, ScriptForExpression>, IForExpressionFactorySlots
+    sealed class ScriptForExpressionFactory : ScriptLoopExpressionFactory<ScriptCodeForLoopExpression, ScriptForExpression>
     {
         #region Nested Types
         [ComVisible(false)]
-        private sealed class ModifyAction : ModifyActionBase
+        private sealed class ModifyFunction : ModifyFunctionBase
         {
             private const string SecondParamName = "loopVar";
             private const string ThirdParamName = "condition";
             private const string FourthParamName = "grouping";
             private const string FifthParamName = "body";
 
-            public ModifyAction()
+            public ModifyFunction()
                 : base(Instance,
-                new ScriptActionContract.Parameter(SecondParamName, ScriptLoopVariableStatementFactory.Instance),
-                new ScriptActionContract.Parameter(ThirdParamName, ScriptExpressionFactory.Instance),
-                new ScriptActionContract.Parameter(FourthParamName, ScriptSuperContract.Instance),
-                new ScriptActionContract.Parameter(FifthParamName, ScriptExpressionFactory.Instance))
+                new ScriptFunctionContract.Parameter(SecondParamName, ScriptLoopVariableStatementFactory.Instance),
+                new ScriptFunctionContract.Parameter(ThirdParamName, ScriptExpressionFactory.Instance),
+                new ScriptFunctionContract.Parameter(FourthParamName, ScriptSuperContract.Instance),
+                new ScriptFunctionContract.Parameter(FifthParamName, ScriptExpressionFactory.Instance))
             {
             }
         }
 
         [ComVisible(false)]
-        private sealed class UseTemporaryVarAction : CodeElementPartProvider<ScriptBoolean>
+        private sealed class UseTemporaryVarFunction : CodeElementPartProvider<ScriptBoolean>
         {
-            public UseTemporaryVarAction()
+            public const string Name = "tempvar";
+
+            public UseTemporaryVarFunction()
                 : base(Instance, ScriptBooleanContract.Instance)
             {
             }
@@ -44,9 +46,11 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class GetLoopVariableAction : CodeElementPartProvider<IScriptStatement<ScriptCodeLoopWithVariableExpression.LoopVariable>>
+        private sealed class GetLoopVariableFunction : CodeElementPartProvider<IScriptStatement<ScriptCodeLoopWithVariableExpression.LoopVariable>>
         {
-            public GetLoopVariableAction()
+            public const string Name = "loopvar";
+
+            public GetLoopVariableFunction()
                 : base(Instance, ScriptVariableDeclarationFactory.Instance)
             {
             }
@@ -58,27 +62,29 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class GetGroupingAction : GetGroupingActionBase
+        private sealed class GetGroupingFunction : GetGroupingFunctionBase
         {
-            public GetGroupingAction()
+            public GetGroupingFunction()
                 : base(Instance)
             {
             }
         }
 
         [ComVisible(false)]
-        private sealed class GetBodyAction : GetBodyActionBase
+        private sealed class GetBodyFunction : GetBodyFunctionBase
         {
-            public GetBodyAction()
+            public GetBodyFunction()
                 : base(Instance)
             {
             }
         }
 
         [ComVisible(false)]
-        private sealed class GetConditionAction : CodeElementPartProvider<IScriptExpression<ScriptCodeExpression>>
+        private sealed class GetConditionFunction : CodeElementPartProvider<IScriptExpression<ScriptCodeExpression>>
         {
-            public GetConditionAction()
+            public const string Name = "condition";
+
+            public GetConditionFunction()
                 : base(Instance, ScriptExpressionFactory.Instance)
             {
             }
@@ -90,13 +96,22 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
         #endregion
 
-        public new const string Name = "forloop";
+        private static readonly AggregatedSlotCollection<ScriptForExpressionFactory> StaticSlots = new AggregatedSlotCollection<ScriptForExpressionFactory>
+        {
+            {ModifyFunction.Name, (owner, state) =>LazyField<ModifyFunction, IScriptFunction>(ref owner.m_modify)},
+            {GetLoopVariableFunction.Name, (owner, state) => LazyField<GetLoopVariableFunction, IScriptFunction>(ref owner.m_loopvar)},
+            {GetBodyFunction.Name, (owner, state) => LazyField<GetBodyFunction, IScriptFunction>(ref owner.m_getbody)},
+            {GetGroupingFunction.Name, (owner, state) => LazyField<GetGroupingFunction, IScriptFunction>(ref owner.m_grouping)},
+            {GetConditionFunction.Name, (owner, state) => LazyField<GetConditionFunction, IScriptFunction>(ref owner.m_condition)}
+        };
 
-        private IRuntimeSlot m_modify;
-        private IRuntimeSlot m_getgrouping;
-        private IRuntimeSlot m_getbody;
-        private IRuntimeSlot m_loopvar;
-        private IRuntimeSlot m_getcond;
+        public new const string Name = "`for";
+
+        private IScriptFunction m_modify;
+        private IScriptFunction m_grouping;
+        private IScriptFunction m_getbody;
+        private IScriptFunction m_loopvar;
+        private IScriptFunction m_condition;
 
         private ScriptForExpressionFactory(SerializationInfo info, StreamingContext context)
             : base(info, context)
@@ -123,37 +138,27 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
         public override void Clear()
         {
-            m_getcond =
+            m_condition =
                 m_getbody =
-                m_getgrouping =
+                m_grouping =
                 m_loopvar =
                 m_modify = null;
         }
 
-        protected override IRuntimeSlot Modify
+        public override ICollection<string> Slots
         {
-            get { return CacheConst<ModifyAction>(ref m_modify); }
+            get { return StaticSlots.Keys; }
         }
 
-        protected override IRuntimeSlot Grouping
+        public override IScriptObject this[string slotName, InterpreterState state]
         {
-            get { return CacheConst<GetGroupingAction>(ref m_getgrouping); }
+            get { return StaticSlots.GetValue(this, slotName, state); }
+            set { StaticSlots.SetValue(this, slotName, value, state); }
         }
 
-        protected override IRuntimeSlot Body
+        protected override IScriptObject GetSlotMetadata(string slotName, InterpreterState state)
         {
-            get { return CacheConst<GetBodyAction>(ref m_getbody); }
-        }
-
-        IRuntimeSlot IForExpressionFactorySlots.LoopVar
-        {
-            get { return CacheConst<GetLoopVariableAction>(ref m_loopvar); }
-        }
-
-
-        IRuntimeSlot IForExpressionFactorySlots.Condition
-        {
-            get { return CacheConst<GetConditionAction>(ref m_getcond); }
+            return StaticSlots.GetSlotMetadata(this, slotName, state);
         }
     }
 }

@@ -7,7 +7,6 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 {
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
     using Compiler.Ast;
-    using ScriptAsyncObject = Threading.ScriptLazyObject;
 
     [ComVisible(false)]
     [Serializable]
@@ -26,7 +25,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
         public override ScriptFunc Compile(InterpreterState state)
         {
-            return ScriptActionInvoker.Compile(Expression);
+            return ScriptFunctionInvoker.Compile(Expression);
         }
 
         public static ScriptCodeForkExpression CreateExpression(IScriptCodeElement<ScriptCodeExpression> body)

@@ -8,13 +8,15 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
 
     [ComVisible(false)]
-    sealed class ScriptArrayContractExpressionFactory : ScriptExpressionFactory<ScriptCodeArrayContractExpression, ScriptArrayContractExpression>, IArrayContractExpressionFactorySlots
+    sealed class ScriptArrayContractExpressionFactory : ScriptExpressionFactory<ScriptCodeArrayContractExpression, ScriptArrayContractExpression>
     {
         #region Nested Types
         [ComVisible(false)]
-        private sealed class GetElementContractAction : CodeElementPartProvider<IScriptExpression<ScriptCodeExpression>>
+        private sealed class GetElementContractFunction : CodeElementPartProvider<IScriptExpression<ScriptCodeExpression>>
         {
-            public GetElementContractAction()
+            public const string Name = "elem";
+
+            public GetElementContractFunction()
                 : base(Instance, ScriptExpressionFactory.Instance)
             {
             }
@@ -26,9 +28,11 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class GetRankAction : CodeElementPartProvider<ScriptInteger>
+        private sealed class GetRankFunction : CodeElementPartProvider<ScriptInteger>
         {
-            public GetRankAction()
+            public const string Name = "rank";
+
+            public GetRankFunction()
                 : base(Instance, ScriptIntegerContract.Instance)
             {
             }
@@ -40,22 +44,29 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class ModifyAction : ModifyActionBase
+        private sealed class ModifyFunction : ModifyFunctionBase
         {
             private const string SecondParamName = "contract";
             private const string ThirdParamName = "rank";
 
-            public ModifyAction()
-                : base(Instance, new ScriptActionContract.Parameter(SecondParamName, ScriptExpressionFactory.Instance), new ScriptActionContract.Parameter(ThirdParamName, ScriptIntegerContract.Instance))
+            public ModifyFunction()
+                : base(Instance, new ScriptFunctionContract.Parameter(SecondParamName, ScriptExpressionFactory.Instance), new ScriptFunctionContract.Parameter(ThirdParamName, ScriptIntegerContract.Instance))
             {
             }
         }
         #endregion
 
-        public new const string Name = "arcon";
-        private IRuntimeSlot m_elem;
-        private IRuntimeSlot m_rank;
-        private IRuntimeSlot m_modify;
+        private static readonly AggregatedSlotCollection<ScriptArrayContractExpressionFactory> StaticSlots = new AggregatedSlotCollection<ScriptArrayContractExpressionFactory>
+        {
+            {ModifyFunction.Name, (owner, state) => LazyField<ModifyFunction, IScriptFunction>(ref owner.m_modify)},
+            {GetElementContractFunction.Name, (owner, state) => LazyField<GetElementContractFunction, IScriptFunction>(ref owner.m_elem)},
+            {GetRankFunction.Name, (owner, state) => LazyField<GetRankFunction, IScriptFunction>(ref owner.m_rank)}
+        };
+
+        public new const string Name = "array_type";
+        private IScriptFunction m_elem;
+        private IScriptFunction m_rank;
+        private IScriptFunction m_modify;
 
         private ScriptArrayContractExpressionFactory(SerializationInfo info, StreamingContext context)
             : base(info, context)
@@ -80,24 +91,26 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             return args.Count == 2 ? CreateExpression(args[0], args[1] as ScriptInteger) : null;
         }
 
-        protected override IRuntimeSlot Modify
-        {
-            get { return CacheConst<ModifyAction>(ref m_modify); }
-        }
 
         public override void Clear()
         {
             m_elem = m_modify = m_rank = null;
         }
 
-        IRuntimeSlot IArrayContractExpressionFactorySlots.Elem
+        public override IScriptObject this[string slotName, InterpreterState state]
         {
-            get { return CacheConst<GetElementContractAction>(ref m_elem); }
+            get { return StaticSlots.GetValue(this, slotName, state); }
+            set { StaticSlots.SetValue(this, slotName, value, state); }
         }
 
-        IRuntimeSlot IArrayContractExpressionFactorySlots.Rank
+        protected override IScriptObject GetSlotMetadata(string slotName, InterpreterState state)
         {
-            get { return CacheConst<GetElementContractAction>(ref m_rank); }
+            return StaticSlots.GetSlotMetadata(this, slotName, state);
+        }
+
+        public override ICollection<string> Slots
+        {
+            get { return StaticSlots.Keys; }
         }
     }
 }

@@ -19,138 +19,19 @@ namespace DynamicScript.Runtime.Environment
     /// </summary>
     [ComVisible(false)]
     [Serializable]
-    [TypeConverter(typeof(CompositeObjectConverter))]
+    [CompositeObjectConverter]
     public class ScriptCompositeObject: ScriptObject, ISerializable, IScriptCompositeObject, IScriptSetFactory
     {
         #region Nested Types
-
-        /// <summary>
-        /// Represents an observable runtime slot that supports notification
-        /// </summary>
-        [ComVisible(false)]
-        [Serializable]
-        protected class ObservableSlot : RuntimeSlot
-        {
-            private ObservableSlot(SerializationInfo info, StreamingContext context)
-                : base(info, context)
-            {
-            }
-
-            private ObservableSlot(RuntimeSlot slot)
-                : base(slot.ContractBinding)
-            {
-                if (slot == null) throw new ArgumentNullException("slot");
-                Value = slot;
-            }
-
-            /// <summary>
-            /// Initializes a new observable slot.
-            /// </summary>
-            /// <param name="contract">The contract binding for the slot.</param>
-            public ObservableSlot(ScriptContract contract = null)
-                : this(new ScriptVariable(contract))
-            {
-
-            }
-
-            /// <summary>
-            /// Initializes a new observable slot.
-            /// </summary>
-            /// <param name="value">The initial value written to the slot.</param>
-            /// <param name="isConst">Specifies that the object stored in the slot cannot be changed.</param>
-            public ObservableSlot(ScriptObject value, bool isConst = false)
-                : this(isConst ? (RuntimeSlot)new ScriptConstant(value) : new ScriptVariable(value))
-            {
-            }
-
-            /// <summary>
-            /// Initializes a new observable slot.
-            /// </summary>
-            /// <param name="value">The initial value written to the slot.</param>
-            /// <param name="contract">The contract binding for the slot.</param>
-            /// <param name="isConst">Specifies that the object stored in the slot cannot be changed.</param>
-            public ObservableSlot(ScriptObject value, ScriptContract contract, bool isConst = false)
-                : this(isConst ? (RuntimeSlot)new ScriptConstant(value, contract) : new ScriptVariable(value, contract))
-            {
-            }
-
-            private new RuntimeSlot Value
-            {
-                get { return (RuntimeSlot)base.Value; }
-                set { base.Value = value; }
-            }
-
-            /// <summary>
-            /// Gets a value indicating that the current slot is immutable.
-            /// </summary>
-            protected internal override bool IsConstant
-            {
-                get { return Value.IsConstant; }
-            }
-
-            /// <summary>
-            /// Restores an object from the slot.
-            /// </summary>
-            /// <param name="state">Internal interpreter state.</param>
-            /// <returns>An object restored from the slot.</returns>
-            public sealed override IScriptObject GetValue(InterpreterState state)
-            {
-                return GetValue(Value.GetValue(state), state);
-            }
-
-            /// <summary>
-            /// Provides processing of the value to be obtained from the slot.
-            /// </summary>
-            /// <param name="value">The value to be processed.</param>
-            /// <param name="state">Internal interpreter state.</param>
-            /// <returns>The preprocessed value.</returns>
-            protected virtual IScriptObject GetValue(IScriptObject value, InterpreterState state)
-            {
-                return value;
-            }
-
-            /// <summary>
-            /// Stores an object into the slot.
-            /// </summary>
-            /// <param name="value">The value to be stored.</param>
-            /// <param name="state">Internal interpreter state.</param>
-            public sealed override void SetValue(IScriptObject value, InterpreterState state)
-            {
-                SetValue(ref value, state);
-                Value.SetValue(value, state);
-            }
-
-            /// <summary>
-            /// Provides processing of the value to be stored to the slot.
-            /// </summary>
-            /// <param name="value">The value to set.</param>
-            /// <param name="state">Internal interpreter state.</param>
-            [CLSCompliant(false)]
-            protected virtual void SetValue(ref IScriptObject value, InterpreterState state)
-            {
-            }
-
-            /// <summary>
-            /// Gets a value indicating that the slot contains value.
-            /// </summary>
-            public sealed override bool HasValue
-            {
-                get
-                {
-                    return Value.HasValue;
-                }
-                protected set { }
-            }
-        }
 
         /// <summary>
         /// Represents collection of object slots.
         /// </summary>
         [ComVisible(false)]
         [Serializable]
-        public class ObjectSlotCollection : ICollection<KeyValuePair<string, IRuntimeSlot>>, IEquatable<ObjectSlotCollection>
+        public class ObjectSlotCollection : ICollection<KeyValuePair<string, IStaticRuntimeSlot>>, IEquatable<ObjectSlotCollection>
         {
-            private readonly IDictionary<string, IRuntimeSlot> m_slots;
+            private readonly IDictionary<string, IStaticRuntimeSlot> m_slots;
 
             /// <summary>
             /// Initializes a new empty collection.
@@ -158,17 +39,17 @@ namespace DynamicScript.Runtime.Environment
             public ObjectSlotCollection()
             {
                 const int DefaultCapacity = 10;
-                m_slots = new Dictionary<string, IRuntimeSlot>(DefaultCapacity, new StringEqualityComparer());
+                m_slots = new Dictionary<string, IStaticRuntimeSlot>(DefaultCapacity, new StringEqualityComparer());
             }
 
             /// <summary>
             /// Initializes a new collection with predefined set of slots.
             /// </summary>
             /// <param name="slots">The collection with object slots.</param>
-            public ObjectSlotCollection(IEnumerable<KeyValuePair<string, IRuntimeSlot>> slots)
+            public ObjectSlotCollection(IEnumerable<KeyValuePair<string, IStaticRuntimeSlot>> slots)
                 : this()
             {
-                foreach (var s in slots ?? new KeyValuePair<string, IRuntimeSlot>[0])
+                foreach (var s in slots ?? new KeyValuePair<string, IStaticRuntimeSlot>[0])
                     Add(s);
             }
 
@@ -182,16 +63,16 @@ namespace DynamicScript.Runtime.Environment
 
             internal static MethodCallExpression Add(Expression collection, KeyValuePair<string, Expression> slot)
             {
-                var call = LinqHelpers.BodyOf<Action<ObjectSlotCollection, string, IRuntimeSlot>, MethodCallExpression>((slots, name, s) => slots.Add(name, s));
+                var call = LinqHelpers.BodyOf<Action<ObjectSlotCollection, string, IStaticRuntimeSlot>, MethodCallExpression>((slots, name, s) => slots.Add(name, s));
                 return call.Update(collection, new[] { LinqHelpers.Constant(slot.Key), slot.Value });
             }
 
-            private IEnumerable<KeyValuePair<string, ScriptCompositeContract.SlotMeta>> GetSlotSurrogates()
+            private IEnumerable<KeyValuePair<string, SlotMeta>> GetSlotSurrogates()
             {
-                return m_slots.Select(t => new KeyValuePair<string, ScriptCompositeContract.SlotMeta>(t.Key, new ScriptCompositeContract.SlotMeta(t.Value.GetContractBinding(), (t.Value.Attributes & RuntimeSlotAttributes.Immutable) != 0)));
+                return m_slots.Select(t => new KeyValuePair<string, SlotMeta>(t.Key, new ScriptCompositeContract.SlotMeta(t.Value.ContractBinding, (t.Value.Attributes & RuntimeSlotAttributes.Immutable) != 0)));
             }
 
-            private void Add<T>(DynamicScriptProxy<T> proxy, Func<string, IScriptAction, bool> invoker)
+            private void Add<T>(DynamicScriptProxy<T> proxy, Func<string, IScriptFunction, bool> invoker)
                 where T : class
             {
                 if (proxy == null) throw new ArgumentNullException("proxy");
@@ -306,7 +187,7 @@ namespace DynamicScript.Runtime.Environment
             /// <returns><see langword="true"/> if slot is registered successfully; <see langword="false"/> 
             /// if <paramref name="slotName"/> is <see langword="null"/> or empty, or <paramref name="slot"/> is <see langword="null"/>
             /// or slot with the specified name is already registered.</returns>
-            public bool Add(string slotName, IRuntimeSlot slot)
+            public bool Add(string slotName, IStaticRuntimeSlot slot)
             {
                 if (string.IsNullOrEmpty(slotName) || slot == null || m_slots.ContainsKey(slotName)) return false;
                 m_slots.Add(slotName, slot);
@@ -320,7 +201,7 @@ namespace DynamicScript.Runtime.Environment
             /// <param name="slotName"></param>
             /// <returns></returns>
             public bool Add<TRuntimeSlot>(string slotName)
-                where TRuntimeSlot : IRuntimeSlot, new()
+                where TRuntimeSlot : IStaticRuntimeSlot, new()
             {
                 return Add(slotName, new TRuntimeSlot());
             }
@@ -334,7 +215,7 @@ namespace DynamicScript.Runtime.Environment
             /// <returns></returns>
             public bool TrySetValue(string slotName, IScriptObject value, InterpreterState state)
             {
-                var slot = default(IRuntimeSlot);
+                var slot = default(IStaticRuntimeSlot);
                 switch (m_slots.TryGetValue(slotName, out slot))
                 {
                     case true: slot.SetValue(value, state); return true;
@@ -351,7 +232,7 @@ namespace DynamicScript.Runtime.Environment
             /// <returns></returns>
             public bool TryGetValue(string slotName, out IScriptObject value, InterpreterState state)
             {
-                var slot = default(IRuntimeSlot);
+                var slot = default(IStaticRuntimeSlot);
                 switch (m_slots.TryGetValue(slotName, out slot))
                 {
                     case true: value = slot.GetValue(state); return true;
@@ -364,11 +245,11 @@ namespace DynamicScript.Runtime.Environment
             /// </summary>
             /// <param name="slotName">The slot name.</param>
             /// <returns>DynamicScript object holder; or <see langword="null"/> is slot with the specified name is not registered.</returns>
-            public IRuntimeSlot this[string slotName]
+            public IStaticRuntimeSlot this[string slotName]
             {
                 get
                 {
-                    var slot = default(IRuntimeSlot);
+                    var slot = default(IStaticRuntimeSlot);
                     return m_slots.TryGetValue(slotName, out slot) && slot != null ? slot : null;
                 }
             }
@@ -377,12 +258,12 @@ namespace DynamicScript.Runtime.Environment
             /// Adds a new named slot to this collection.
             /// </summary>
             /// <param name="namedSlot">A named slot to be added.</param>
-            public void Add(KeyValuePair<string, IRuntimeSlot> namedSlot)
+            public void Add(KeyValuePair<string, IStaticRuntimeSlot> namedSlot)
             {
                 Add(namedSlot.Key, namedSlot.Value);
             }
 
-            void ICollection<KeyValuePair<string, IRuntimeSlot>>.Add(KeyValuePair<string, IRuntimeSlot> item)
+            void ICollection<KeyValuePair<string, IStaticRuntimeSlot>>.Add(KeyValuePair<string, IStaticRuntimeSlot> item)
             {
                 Add(item);
             }
@@ -405,12 +286,12 @@ namespace DynamicScript.Runtime.Environment
                 return m_slots.ContainsKey(slotName);
             }
 
-            bool ICollection<KeyValuePair<string, IRuntimeSlot>>.Contains(KeyValuePair<string, IRuntimeSlot> item)
+            bool ICollection<KeyValuePair<string, IStaticRuntimeSlot>>.Contains(KeyValuePair<string, IStaticRuntimeSlot> item)
             {
                 return m_slots.Contains(item);
             }
 
-            void ICollection<KeyValuePair<string, IRuntimeSlot>>.CopyTo(KeyValuePair<string, IRuntimeSlot>[] array, int arrayIndex)
+            void ICollection<KeyValuePair<string, IStaticRuntimeSlot>>.CopyTo(KeyValuePair<string, IStaticRuntimeSlot>[] array, int arrayIndex)
             {
                 m_slots.CopyTo(array, arrayIndex);
             }
@@ -423,7 +304,7 @@ namespace DynamicScript.Runtime.Environment
                 get { return m_slots.Count; }
             }
 
-            bool ICollection<KeyValuePair<string, IRuntimeSlot>>.IsReadOnly
+            bool ICollection<KeyValuePair<string, IStaticRuntimeSlot>>.IsReadOnly
             {
                 get { return m_slots.IsReadOnly; }
             }
@@ -438,7 +319,7 @@ namespace DynamicScript.Runtime.Environment
                 return m_slots.Remove(slotName);
             }
 
-            bool ICollection<KeyValuePair<string, IRuntimeSlot>>.Remove(KeyValuePair<string, IRuntimeSlot> item)
+            bool ICollection<KeyValuePair<string, IStaticRuntimeSlot>>.Remove(KeyValuePair<string, IStaticRuntimeSlot> item)
             {
                 return m_slots.Remove(item);
             }
@@ -447,7 +328,7 @@ namespace DynamicScript.Runtime.Environment
             /// Returns an enumerator through registered slots.
             /// </summary>
             /// <returns>The enumerator through registered slots.</returns>
-            public IEnumerator<KeyValuePair<string, IRuntimeSlot>> GetEnumerator()
+            public IEnumerator<KeyValuePair<string, IStaticRuntimeSlot>> GetEnumerator()
             {
                 return m_slots.GetEnumerator();
             }
@@ -531,7 +412,7 @@ namespace DynamicScript.Runtime.Environment
         /// Initializes a new custom object with the specified set of slots.
         /// </summary>
         /// <param name="slots">A collection with object slots.</param>
-        public ScriptCompositeObject(IEnumerable<KeyValuePair<string, IRuntimeSlot>> slots)
+        public ScriptCompositeObject(IEnumerable<KeyValuePair<string, IStaticRuntimeSlot>> slots)
         {
             if (slots == null)
                 m_slots = new ObjectSlotCollection();
@@ -547,11 +428,11 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="value">The value of the constant.</param>
         /// <returns>A new constant slot.</returns>
         /// <exception cref="System.ArgumentNullException"><paramref name="slotName"/> is <see langword="null"/> or empty.</exception>
-        protected static KeyValuePair<string, IRuntimeSlot> Constant(string slotName, IScriptObject value)
+        protected static KeyValuePair<string, IStaticRuntimeSlot> Constant(string slotName, IScriptObject value)
         {
             if (string.IsNullOrEmpty(slotName)) throw new ArgumentNullException("slotName");
             if (value == null) value = Void;
-            return new KeyValuePair<string, IRuntimeSlot>(slotName, new ScriptConstant(value));
+            return new KeyValuePair<string, IStaticRuntimeSlot>(slotName, new ScriptConstant(value));
         }
 
         /// <summary>
@@ -562,12 +443,12 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="contract">The static contract binding of the constant.</param>
         /// <returns>A new constant slot.</returns>
         /// <exception cref="System.ArgumentNullException"><paramref name="slotName"/> is <see langword="null"/> or empty.</exception>
-        protected static KeyValuePair<string, IRuntimeSlot> Constant(string slotName, IScriptObject value, IScriptContract contract)
+        protected static KeyValuePair<string, IStaticRuntimeSlot> Constant(string slotName, IScriptObject value, IScriptContract contract)
         {
             if (string.IsNullOrEmpty(slotName)) throw new ArgumentNullException("slotName");
             if (value == null) value = Void;
             if (contract == null) value = Void;
-            return new KeyValuePair<string, IRuntimeSlot>(slotName, new ScriptConstant(value, contract));
+            return new KeyValuePair<string, IStaticRuntimeSlot>(slotName, new ScriptConstant(value, contract));
         }
 
         /// <summary>
@@ -577,11 +458,11 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="value">The value of the variable.</param>
         /// <returns>A new variable slot.</returns>
         /// <exception cref="System.ArgumentNullException"><paramref name="slotName"/> is <see langword="null"/> or empty.</exception>
-        protected static KeyValuePair<string, IRuntimeSlot> Variable(string slotName, IScriptObject value)
+        protected static KeyValuePair<string, IStaticRuntimeSlot> Variable(string slotName, IScriptObject value)
         {
             if (string.IsNullOrEmpty(slotName)) throw new ArgumentNullException("slotName");
             if (value == null) value = Void;
-            return new KeyValuePair<string, IRuntimeSlot>(slotName, new ScriptVariable(value));
+            return new KeyValuePair<string, IStaticRuntimeSlot>(slotName, new ScriptVariable(value));
         }
 
         /// <summary>
@@ -592,12 +473,12 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="contract">The contract binding of the variable.</param>
         /// <returns>A new variable slot.</returns>
         /// <exception cref="System.ArgumentNullException"><paramref name="slotName"/> is <see langword="null"/> or empty.</exception>
-        protected static KeyValuePair<string, IRuntimeSlot> Variable(string slotName, IScriptObject value, IScriptContract contract)
+        protected static KeyValuePair<string, IStaticRuntimeSlot> Variable(string slotName, IScriptObject value, IScriptContract contract)
         {
             if (string.IsNullOrEmpty(slotName)) throw new ArgumentNullException("slotName");
             if (value == null) value = Void;
             if (contract == null) contract = Void;
-            return new KeyValuePair<string, IRuntimeSlot>(slotName, new ScriptVariable(value, contract));
+            return new KeyValuePair<string, IStaticRuntimeSlot>(slotName, new ScriptVariable(value, contract));
         }
 
         /// <summary>
@@ -607,11 +488,11 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="contract">The contract binding of the variable.</param>
         /// <returns>A new variable slot.</returns>
         /// <exception cref="System.ArgumentNullException"><paramref name="slotName"/> is <see langword="null"/> or empty.</exception>
-        protected static KeyValuePair<string, IRuntimeSlot> Variable(string slotName, IScriptContract contract = null)
+        protected static KeyValuePair<string, IStaticRuntimeSlot> Variable(string slotName, IScriptContract contract = null)
         {
             if (string.IsNullOrEmpty(slotName)) throw new ArgumentNullException("slotName");
             if (contract == null) contract = Void;
-            return new KeyValuePair<string, IRuntimeSlot>(slotName, new ScriptVariable(contract));
+            return new KeyValuePair<string, IStaticRuntimeSlot>(slotName, new ScriptVariable(contract));
         }
 
         /// <summary>
@@ -649,7 +530,7 @@ namespace DynamicScript.Runtime.Environment
 
         private static NewExpression New(Expression slots)
         {
-            var ctor = LinqHelpers.BodyOf<IEnumerable<KeyValuePair<string, IRuntimeSlot>>, ScriptCompositeObject, NewExpression>(s => new ScriptCompositeObject(s));
+            var ctor = LinqHelpers.BodyOf<IEnumerable<KeyValuePair<string, IStaticRuntimeSlot>>, ScriptCompositeObject, NewExpression>(s => new ScriptCompositeObject(s));
             return ctor.Update(new[] { slots });
         }
 
@@ -672,7 +553,7 @@ namespace DynamicScript.Runtime.Environment
 
         internal static NewExpression Bind(IEnumerable<KeyValuePair<string, ParameterExpression>> slots)
         {
-            return New(Expression.NewArrayInit(typeof(KeyValuePair<string, IRuntimeSlot>), Enumerable.Select(slots, s => LinqHelpers.CreateKeyValuePair<string, IRuntimeSlot>(s.Key, s.Value))));
+            return New(Expression.NewArrayInit(typeof(KeyValuePair<string, IStaticRuntimeSlot>), Enumerable.Select(slots, s => LinqHelpers.CreateKeyValuePair<string, IStaticRuntimeSlot>(s.Key, s.Value))));
         }
         #endregion
 
@@ -681,9 +562,9 @@ namespace DynamicScript.Runtime.Environment
         /// </summary>
         /// <param name="slotName">The name of the slot.</param>
         /// <returns>Runtime slot holder.</returns>
-        public IRuntimeSlot this[string slotName]
+        public IStaticRuntimeSlot this[string slotName]
         {
-            get { return m_slots[slotName] ?? RuntimeSlotBase.Missing(slotName); }
+            get { return m_slots[slotName]; }
         }
 
         /// <summary>
@@ -692,11 +573,23 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="slotName">The name of the slot.</param>
         /// <param name="state">Internal interpreter state.</param>
         /// <returns>Runtime slot holder.</returns>
-        public sealed override IRuntimeSlot this[string slotName, InterpreterState state]
+        public sealed override IScriptObject this[string slotName, InterpreterState state]
         {
-            get 
+            get
             {
-                return this[slotName];
+                IRuntimeSlot slot = this[slotName];
+                if (slot != null) return slot.GetValue(state);
+                else if (state.Context == InterpretationContext.Unchecked)
+                    return Void;
+                else throw new SlotNotFoundException(slotName, state);
+            }
+            set
+            {
+                IRuntimeSlot slot = this[slotName];
+                if (slot != null) slot.SetValue(value, state);
+                else if (state.Context == InterpretationContext.Unchecked)
+                    m_slots.Add(slotName, new ScriptVariable(value));
+                else throw new SlotNotFoundException(slotName, state);
             }
         }
 
@@ -732,18 +625,30 @@ namespace DynamicScript.Runtime.Environment
             return contract.GetSlotMetadata(slotName);
         }
 
+        void IScriptCompositeObject.Import(IScriptObject obj, InterpreterState state)
+        {
+            if (obj is IScriptCompositeObject)
+                Import((IScriptCompositeObject)obj, state);
+            else foreach (var foreignSlotName in obj.Slots)
+                    switch (m_slots.Contains(foreignSlotName))
+                    {
+                        case true: m_slots[foreignSlotName].SetValue(obj[foreignSlotName, state], state); continue;
+                        default: m_slots.AddVariable(foreignSlotName, obj[foreignSlotName, state]); continue;
+                    }
+        }
+
         /// <summary>
         /// Imports the specified composite object into the current composite object.
         /// </summary>
         /// <param name="obj"></param>
         /// <param name="state"></param>
-        public void Import(IScriptObject obj, InterpreterState state)
+        public void Import(IScriptCompositeObject obj, InterpreterState state)
         {
             foreach (var foreignSlotName in obj.Slots)
                 switch (m_slots.Contains(foreignSlotName))
                 {
                     case true: m_slots[foreignSlotName].SetValue(obj[foreignSlotName, state], state); continue;
-                    default: m_slots.Add(foreignSlotName, obj[foreignSlotName, state]); continue;
+                    default: m_slots.Add(foreignSlotName, obj[foreignSlotName]); continue;
                 }
         }
 
@@ -764,7 +669,7 @@ namespace DynamicScript.Runtime.Environment
         /// <returns>The composite object where each slot is immutable.</returns>
         public ScriptCompositeObject AsReadOnly(InterpreterState state)
         {
-            return new ScriptCompositeObject(m_slots.Select(t => new KeyValuePair<string, IRuntimeSlot>(t.Key, new ScriptConstant(t.Value.GetValue(state), t.Value.GetContractBinding(), state))));
+            return new ScriptCompositeObject(m_slots.Select(t => new KeyValuePair<string, IStaticRuntimeSlot>(t.Key, new ScriptConstant(t.Value.GetValue(state), t.Value.ContractBinding, state))));
         }
 
         private ScriptBoolean Equals(ScriptCompositeObject right, InterpreterState state)

@@ -66,11 +66,11 @@ namespace DynamicScript.Runtime.Environment
         }
 
         /// <summary>
-        /// 
+        /// Attempts to convert the specified script object to boolean implicitly.
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        protected override bool Mapping(ref IScriptObject value)
+        public static bool TryConvert(ref IScriptObject value)
         {
             if (value is ScriptBoolean)
                 return true;
@@ -85,6 +85,16 @@ namespace DynamicScript.Runtime.Environment
                 return true;
             }
             else return false;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        protected override bool Mapping(ref IScriptObject value)
+        {
+            return TryConvert(ref value);
         }
 
 

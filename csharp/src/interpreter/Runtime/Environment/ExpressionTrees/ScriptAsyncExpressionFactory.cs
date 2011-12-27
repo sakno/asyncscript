@@ -9,24 +9,26 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
     [ComVisible(false)]
     [Serializable]
-    sealed class ScriptAsyncExpressionFactory: ScriptExpressionFactory<ScriptCodeAsyncExpression, ScriptAsyncExpression>, IAsyncExpressionFactorySlots
+    sealed class ScriptAsyncExpressionFactory: ScriptExpressionFactory<ScriptCodeAsyncExpression, ScriptAsyncExpression>
     {
         #region Nested Types
         [ComVisible(false)]
-        private sealed class ModifyAction : ModifyActionBase
+        private sealed class ModifyFunction : ModifyFunctionBase
         {
             private const string SecondParamName = "contract";
 
-            public ModifyAction()
-                : base( Instance, new ScriptActionContract.Parameter(SecondParamName, ScriptExpressionFactory.Instance))
+            public ModifyFunction()
+                : base( Instance, new ScriptFunctionContract.Parameter(SecondParamName, ScriptExpressionFactory.Instance))
             {
             }
         }
 
         [ComVisible(false)]
-        private sealed class GetContractAction : CodeElementPartProvider<IScriptExpression<ScriptCodeExpression>>
+        private sealed class GetContractFunction : CodeElementPartProvider<IScriptExpression<ScriptCodeExpression>>
         {
-            public GetContractAction()
+            public const string Name = "contract";
+
+            public GetContractFunction()
                 : base(Instance, ScriptExpressionFactory.Instance)
             {
             }
@@ -38,10 +40,16 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
         #endregion
 
-        private new const string Name = "asyncdef";
+        private static readonly AggregatedSlotCollection<ScriptAsyncExpressionFactory> StaticSlots = new AggregatedSlotCollection<ScriptAsyncExpressionFactory>
+        {
+            {ModifyFunction.Name, (owner, state) => LazyField<ModifyFunction, IScriptFunction>(ref owner.m_modify)},
+            {GetContractFunction.Name, (owner, state) => LazyField<GetContractFunction, IScriptFunction>(ref owner.m_contract)}
+        };
 
-        private IRuntimeSlot m_modify;
-        private IRuntimeSlot m_contract;
+        public new const string Name = "`async";
+
+        private IScriptFunction m_modify;
+        private IScriptFunction m_contract;
 
         private ScriptAsyncExpressionFactory(SerializationInfo info, StreamingContext context)
             : base(info, context)
@@ -71,18 +79,20 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             m_contract = m_modify = null;
         }
 
-        #region Runtime Slots
-
-        protected override IRuntimeSlot Modify
+        protected override IScriptObject GetSlotMetadata(string slotName, InterpreterState state)
         {
-            get { return CacheConst<ModifyAction>(ref m_modify); }
+            return StaticSlots.GetSlotMetadata(this, slotName, state);
         }
 
-        IRuntimeSlot IAsyncExpressionFactorySlots.Contract
+        public override IScriptObject this[string slotName, InterpreterState state]
         {
-            get { return CacheConst<GetContractAction>(ref m_contract); }
+            get { return StaticSlots.GetValue(this, slotName, state); }
+            set { StaticSlots.SetValue(this, slotName, value, state); }
         }
 
-        #endregion
+        public override ICollection<string> Slots
+        {
+            get { return StaticSlots.Keys; }
+        }
     }
 }

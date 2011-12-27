@@ -7,9 +7,9 @@ namespace DynamicScript.Runtime.Debugging.Interaction
 {
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
     using LexemeAnalyzer = Compiler.LexemeAnalyzer;
-    using QScriptIO = Hosting.DynamicScriptIO;
+    using DScriptIO = Hosting.DynamicScriptIO;
     using LinqExpressionTranslator = Compiler.Ast.Translation.LinqExpressions.LinqExpressionTranslator;
-    using QScriptCompositeObject = Environment.ScriptCompositeObject;
+    using ScriptCompositeObject = Environment.ScriptCompositeObject;
 
     [ComVisible(false)]
     sealed class DbgExecCommand: IDebuggerCommand
@@ -32,17 +32,17 @@ namespace DynamicScript.Runtime.Debugging.Interaction
             if(CallStack.Current!=null)
             try
             {
-                var rtdbg = new KeyValuePair<string, IRuntimeSlot>(RTDebuggerObject.Name, RTDebuggerObject.Storage);
-                var result = m_compiled.Invoke(bp.State.Update(new QScriptCompositeObject(CallStack.Current.Select(slot => new KeyValuePair<string, IRuntimeSlot>(slot.Key, slot.Value)).Concat(new[] { rtdbg }))));
-                if (!QScriptCompositeObject.IsVoid(result))
-                    QScriptIO.WriteLine(result);
+                var rtdbg = new KeyValuePair<string, IStaticRuntimeSlot>(RTDebuggerObject.Name, RTDebuggerObject.Storage);
+                var result = m_compiled.Invoke(bp.State.Update(new ScriptCompositeObject(CallStack.Current.Select(slot => new KeyValuePair<string, IStaticRuntimeSlot>(slot.Key, slot.Value)).Concat(new[] { rtdbg }))));
+                if (!ScriptCompositeObject.IsVoid(result))
+                    DScriptIO.WriteLine(result);
             }
             catch (Exception e)
             {
 #if DEBUG
-                QScriptIO.Output.WriteLine(DebuggerStrings.DebuggerError, e);
+                DScriptIO.Output.WriteLine(DebuggerStrings.DebuggerError, e);
 #else
-                QScriptIO.Output.WriteLine(DebuggerStrings.DebuggerError, e.Message);
+                DScriptIO.Output.WriteLine(DebuggerStrings.DebuggerError, e.Message);
 #endif
             }
             return true;
@@ -57,7 +57,7 @@ namespace DynamicScript.Runtime.Debugging.Interaction
             }
             catch (Exception e)
             {
-                QScriptIO.Output.WriteLine(DebuggerStrings.DebuggerError, e.Message);
+                DScriptIO.Output.WriteLine(DebuggerStrings.DebuggerError, e.Message);
                 return DbgCommandStub.Instance;
             }
         }

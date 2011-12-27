@@ -11,7 +11,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
     using MemberExpression = System.Linq.Expressions.MemberExpression;
     using Compiler.Ast;
     using ObjectSlot = Compiler.Ast.ScriptCodeObjectExpression.Slot;
-    using ActionParameter = Compiler.Ast.ScriptCodeActionContractExpression.Parameter;
+    using FunctionParameter = Compiler.Ast.ScriptCodeActionContractExpression.Parameter;
 
     /// <summary>
     /// Represents runtime statement factory.
@@ -19,7 +19,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
     /// </summary>
     [ComVisible(false)]
     [Serializable]
-    public sealed class ScriptStatementFactory: ScriptBuiltinContract, IScriptMetaContract, IStatementFactorySlots
+    public sealed class ScriptStatementFactory: ScriptBuiltinContract, IScriptMetaContract
     {
         #region Nested Types
 
@@ -30,7 +30,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             {
                 if (input is ObjectSlot)
                     result = new ScriptVariableDeclaration(input);
-                else if (input is ActionParameter)
+                else if (input is FunctionParameter)
                     result = new ScriptVariableDeclaration(input);
                 else result = null;
                 return result != null;
@@ -38,11 +38,12 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class CloneAction : ScriptFunc<IScriptCodeElement<ScriptCodeStatement>>
+        private sealed class CloneFunction : ScriptFunc<IScriptCodeElement<ScriptCodeStatement>>
         {
+            public const string Name = "clone";
             private const string FirstParamName = "tree";
 
-            public CloneAction()
+            public CloneFunction()
                 : base(FirstParamName, Instance, Instance)
             {
             }
@@ -80,31 +81,51 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class VisitAction : ScriptFunc<IScriptCodeElement<ScriptCodeStatement>, IScriptAction>
+        private sealed class VisitFunction : ScriptFunc<IScriptCodeElement<ScriptCodeStatement>, IScriptFunction>
         {
+            public const string Name = "visit";
             private const string FirstParamName = "tree";
             private const string SecondParamName = "visitor";
 
-            public VisitAction()
+            public VisitFunction()
                 : base(FirstParamName, Instance, SecondParamName, ScriptSuperContract.Instance, Instance)
             {
             }
 
-            protected override IScriptObject Invoke(IScriptCodeElement<ScriptCodeStatement> tree, IScriptAction visitor, InterpreterState state)
+            protected override IScriptObject Invoke(IScriptCodeElement<ScriptCodeStatement> tree, IScriptFunction visitor, InterpreterState state)
             {
                 return Convert(tree.CodeObject.Visit(null, new ScriptSyntaxTreeVisitor(visitor, state)));
             }
         }
 
         [ComVisible(false)]
-        private sealed class InitAction : ScriptAction
+        private sealed class InitFunction : ScriptAction
         {
+            public const string Name = "init";
+
             protected override void Invoke(InterpreterState state)
             {
                 Instance.Clear();
             }
         }
         #endregion
+
+        private static readonly AggregatedSlotCollection<ScriptStatementFactory> StaticSlots = new AggregatedSlotCollection<ScriptStatementFactory>
+        {
+            //functions
+            {CloneFunction.Name, (owner, state) => LazyField<CloneFunction, IScriptFunction>(ref owner.m_clone)},
+            {VisitFunction.Name, (owner, state) => LazyField<VisitFunction, IScriptFunction>(ref owner.m_visit)},
+            {InitFunction.Name, (owner, state) => LazyField<InitFunction, IScriptFunction>(ref owner.m_init)},
+            //slots
+            {ScriptFaultStatementFactory.Name, (owner, state) => Fault},
+            {ScriptContinueStatementFactory.Name, (owner, state) => Continue},
+            {ScriptBreakStatementFactory.Name, (owner, state) => Leave},
+            {ScriptReturnStatementFactory.Name, (owner, state) => Return},
+            {ScriptEmptyStatementFactory.Name, (owner, state) => Empty},
+            {ScriptExpressionStatementFactory.Name, (owner, state) => ExpressionStmt},
+            {ScriptVariableDeclarationFactory.Name, (owner, state) => VariableDecl},
+            {ScriptLoopVariableStatementFactory.Name, (owner, state) => LoopVar}
+        };
 
         static ScriptStatementFactory()
         {
@@ -120,17 +141,9 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             get { return Keyword.Stmt; }
         }
 
-        private IRuntimeSlot m_fault;
-        private IRuntimeSlot m_continue;
-        private IRuntimeSlot m_leave;
-        private IRuntimeSlot m_return;
-        private IRuntimeSlot m_empty;
-        private IRuntimeSlot m_expression;
-        private IRuntimeSlot m_variable;
-        private IRuntimeSlot m_init;
-        private IRuntimeSlot m_clone;
-        private IRuntimeSlot m_loopvar;
-        private IRuntimeSlot m_visit;
+        private IScriptFunction m_clone;
+        private IScriptFunction m_visit;
+        private IScriptFunction m_init;
 
         private ScriptStatementFactory(SerializationInfo info, StreamingContext context)
             : this()
@@ -313,19 +326,11 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         /// <summary>
         /// Releases a memory associated with statement factories.
         /// </summary>
-        public void Clear()
+        public override void Clear()
         {
-            m_continue =
-                m_empty =
-                m_expression =
-                m_fault =
-                m_leave =
-                m_return =
-                m_variable =
-                m_clone =
-                m_loopvar=
-                m_visit=
-                m_init = null;
+            m_clone =
+            m_visit =
+            m_init = null;
             ScriptLoopVariableStatementFactory.Instance.Clear();
             ScriptReturnStatementFactory.Instance.Clear();
             ScriptBreakStatementFactory.Instance.Clear();
@@ -334,65 +339,37 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             ScriptEmptyStatementFactory.Instance.Clear();
             ScriptContinueStatementFactory.Instance.Clear();
             ScriptVariableDeclarationFactory.Instance.Clear();
-            GC.Collect();
         }
 
-        #region Runtime Slots
-        IRuntimeSlot IStatementFactorySlots.Visit
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="slotName"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public override IScriptObject this[string slotName, InterpreterState state]
         {
-            get { return CacheConst<VisitAction>(ref m_visit); }
+            get { return StaticSlots.GetValue(this, slotName, state); }
+            set { StaticSlots.SetValue(this, slotName, value, state); }
         }
 
-        IRuntimeSlot IStatementFactorySlots.LoopVar
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="slotName"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        protected override IScriptObject GetSlotMetadata(string slotName, InterpreterState state)
         {
-            get { return CacheConst(ref m_loopvar, () => LoopVar); }
+            return StaticSlots.GetSlotMetadata(this, slotName, state);
         }
 
-        IRuntimeSlot IStatementFactorySlots.Clone
+        /// <summary>
+        /// 
+        /// </summary>
+        public override ICollection<string> Slots
         {
-            get { return CacheConst<CloneAction>(ref m_clone); }
+            get { return StaticSlots.Keys; }
         }
-
-        IRuntimeSlot IStatementFactorySlots.Init
-        {
-            get { return CacheConst<InitAction>(ref m_init); }
-        }
-
-        IRuntimeSlot IStatementFactorySlots.Variable
-        {
-            get { return CacheConst(ref m_variable, () => VariableDecl); }
-        }
-
-        IRuntimeSlot IStatementFactorySlots.Expression
-        {
-            get { return CacheConst(ref m_expression, () => ExpressionStmt); }
-        }
-
-        IRuntimeSlot IStatementFactorySlots.Empty
-        {
-            get { return CacheConst(ref m_empty, () => Empty); }
-        }
-
-        IRuntimeSlot IStatementFactorySlots.ReturnDef
-        {
-            get { return CacheConst(ref m_return, () => Return); }
-        }
-
-        IRuntimeSlot IStatementFactorySlots.LeaveDef
-        {
-            get { return CacheConst(ref m_leave, () => Leave); }
-        }
-
-        IRuntimeSlot IStatementFactorySlots.FaultDef
-        {
-            get { return CacheConst(ref m_fault, () => Fault); }
-        }
-
-        IRuntimeSlot IStatementFactorySlots.ContinueDef
-        {
-            get { return CacheConst(ref m_continue, () => Continue); }
-        }
-
-        #endregion
     }
 }

@@ -34,6 +34,11 @@ namespace DynamicScript.Runtime.Environment
         }
         #endregion
 
+        private static readonly AggregatedSlotCollection<ScriptString> StaticSlots = new AggregatedSlotCollection<ScriptString>
+        {
+            {"length", (owner, state) => new ScriptInteger(owner.Length), ScriptIntegerContract.Instance}
+        };
+
         private ScriptString(SerializationInfo info, StreamingContext context)
             : this(Deserialize(info))
         {
@@ -51,6 +56,16 @@ namespace DynamicScript.Runtime.Environment
 
         internal ScriptString(StringBuilder builder)
             : this(builder != null ? builder.ToString() : string.Empty)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new script string.
+        /// </summary>
+        /// <param name="c"></param>
+        /// <param name="count"></param>
+        public ScriptString(char c, int count = 1)
+            : this(new string(c, count))
         {
         }
 
@@ -107,6 +122,27 @@ namespace DynamicScript.Runtime.Environment
         public char this[int index]
         {
             get { return Value[index]; }
+        }
+
+        /// <summary>
+        /// Gets a string that represents a single characted at the specified position.
+        /// </summary>
+        /// <param name="indicies"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public override IScriptObject this[IList<IScriptObject> indicies, InterpreterState state]
+        {
+            get
+            {
+                if (indicies.Count == 1)
+                {
+                    var index = indicies[0] as ScriptInteger;
+                    if (index != null && index.IsInt32) return new ScriptString(this[(int)index]);
+                    else throw new UnsupportedOperationException(state);
+                }
+                return base[indicies, state];
+            }
+            set { base[indicies, state] = value; }
         }
 
         /// <summary>
@@ -376,7 +412,7 @@ namespace DynamicScript.Runtime.Environment
             return byref ? false : Contains(obj as ScriptString);
         }
 
-        private new IEnumerator<IScriptObject> GetEnumerator()
+        private IEnumerator<IScriptObject> GetEnumerator()
         {
             switch (Value.Length)
             {
@@ -384,7 +420,7 @@ namespace DynamicScript.Runtime.Environment
                 case 1: yield return this; break;
                 default:
                     foreach (var c in Value)
-                        yield return new ScriptString(new string(new[] { c }));
+                        yield return new ScriptString(c);
                     break;
             }
         }
@@ -397,6 +433,37 @@ namespace DynamicScript.Runtime.Environment
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
+        }
+
+        /// <summary>
+        /// Gets collection of aggregated slots.
+        /// </summary>
+        public override ICollection<string> Slots
+        {
+            get { return StaticSlots.Keys; }
+        }
+
+        /// <summary>
+        /// Gets or sets value of the aggregated object.
+        /// </summary>
+        /// <param name="slotName"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public override IScriptObject this[string slotName, InterpreterState state]
+        {
+            get { return StaticSlots.GetValue(this, slotName, state); }
+            set { StaticSlots.SetValue(this, slotName, value, state); }
+        }
+
+        /// <summary>
+        /// Returns metadata of the 
+        /// </summary>
+        /// <param name="slotName"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        protected override IScriptObject GetSlotMetadata(string slotName, InterpreterState state)
+        {
+            return StaticSlots.GetSlotMetadata(this, slotName, state);
         }
     }
 }

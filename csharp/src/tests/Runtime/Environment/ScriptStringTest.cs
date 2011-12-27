@@ -60,5 +60,12 @@ namespace DynamicScript.Runtime.Environment
             bool result = Run("return 'ab' in 'abc';");
             Assert.IsTrue(result);
         }
+
+        [Test(Description = "LENGTH function test.")]
+        public void LengthTest()
+        {
+            long len = Run("return 'abc'.length;");
+            Assert.AreEqual(3L, len);
+        }
     }
 }

@@ -9,30 +9,32 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
     [ComVisible(false)]
     [Serializable]
-    sealed class ScriptVariableDeclarationFactory : ScriptStatementFactory<ScriptCodeVariableDeclaration, ScriptVariableDeclaration>, IVariableDeclarationFactorySlots
+    sealed class ScriptVariableDeclarationFactory : ScriptStatementFactory<ScriptCodeVariableDeclaration, ScriptVariableDeclaration>
     {
         #region Nested Types
         [ComVisible(false)]
-        private sealed class ModifyAction : ModifyActionBase
+        private sealed class ModifyFunction : ModifyFunctionBase
         {
             private const string SecondParamName = "name";
             private const string ThirdParamName = "constant";
             private const string FourthParamName = "initExpr";
             private const string FifthParamName = "contractExpr";
 
-            public ModifyAction()
-                : base(Instance, new ScriptActionContract.Parameter(SecondParamName, ScriptNameTokenExpressionFactory.Instance),
-                new ScriptActionContract.Parameter(ThirdParamName, ScriptBooleanContract.Instance),
-                new ScriptActionContract.Parameter(FourthParamName, ScriptExpressionFactory.Instance),
-                new ScriptActionContract.Parameter(FifthParamName, ScriptExpressionFactory.Instance))
+            public ModifyFunction()
+                : base(Instance, new ScriptFunctionContract.Parameter(SecondParamName, ScriptNameTokenExpressionFactory.Instance),
+                new ScriptFunctionContract.Parameter(ThirdParamName, ScriptBooleanContract.Instance),
+                new ScriptFunctionContract.Parameter(FourthParamName, ScriptExpressionFactory.Instance),
+                new ScriptFunctionContract.Parameter(FifthParamName, ScriptExpressionFactory.Instance))
             {
             }
         }
 
         [ComVisible(false)]
-        private sealed class GetNameAction : CodeElementPartProvider<ScriptString>
+        private sealed class GetNameFunction : CodeElementPartProvider<ScriptString>
         {
-            public GetNameAction()
+            public const string Name = "name";
+
+            public GetNameFunction()
                 : base(Instance, ScriptStringContract.Instance)
             {
             }
@@ -44,9 +46,11 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class IsConstantAction : CodeElementPartProvider<ScriptBoolean>
+        private sealed class IsConstantFunction : CodeElementPartProvider<ScriptBoolean>
         {
-            public IsConstantAction()
+            public const string Name = "isconst";
+
+            public IsConstantFunction()
                 : base(Instance, ScriptBooleanContract.Instance)
             {
             }
@@ -58,9 +62,11 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class GetInitExpressionAction : CodeElementPartProvider<IScriptExpression<ScriptCodeExpression>>
+        private sealed class GetInitExpressionFunction : CodeElementPartProvider<IScriptExpression<ScriptCodeExpression>>
         {
-            public GetInitExpressionAction()
+            public const string Name = "initexpr";
+
+            public GetInitExpressionFunction()
                 : base(Instance, ScriptExpressionFactory.Instance)
             {
             }
@@ -72,9 +78,11 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class GetContractAction : CodeElementPartProvider<IScriptExpression<ScriptCodeExpression>>
+        private sealed class GetContractFunction : CodeElementPartProvider<IScriptExpression<ScriptCodeExpression>>
         {
-            public GetContractAction()
+            public const string Name = "contract";
+
+            public GetContractFunction()
                 : base(Instance, ScriptExpressionFactory.Instance)
             {
             }
@@ -86,12 +94,21 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
         #endregion
 
+        private static readonly AggregatedSlotCollection<ScriptVariableDeclarationFactory> StaticSlots = new AggregatedSlotCollection<ScriptVariableDeclarationFactory>
+        {
+             {ModifyFunction.Name, (owner, state) => LazyField<ModifyFunction, IScriptFunction>(ref owner.m_modify)},
+             {GetNameFunction.Name, (owner, state) => LazyField<GetNameFunction, IScriptFunction>(ref owner.m_name)},
+             {IsConstantFunction.Name, (owner, state) => LazyField<IsConstantFunction, IScriptFunction>(ref owner.m_isconst)},
+             {GetInitExpressionFunction.Name, (owner, state) => LazyField<GetInitExpressionFunction, IScriptFunction>(ref owner.m_initexpr)},
+             {GetContractFunction.Name, (owner, state) => LazyField<GetContractFunction, IScriptFunction>(ref owner.m_getcontract)}
+        };
+
         public new const string Name = "variable";
-        private IRuntimeSlot m_modify;
-        private IRuntimeSlot m_name;
-        private IRuntimeSlot m_isconst;
-        private IRuntimeSlot m_initexpr;
-        private IRuntimeSlot m_getcontract;
+        private IScriptFunction m_modify;
+        private IScriptFunction m_name;
+        private IScriptFunction m_isconst;
+        private IScriptFunction m_initexpr;
+        private IScriptFunction m_getcontract;
 
         private ScriptVariableDeclarationFactory(SerializationInfo info, StreamingContext context)
             : base(info, context)
@@ -123,29 +140,20 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
                 m_initexpr = null;
         }
 
-        protected override IRuntimeSlot Modify
+        public override ICollection<string> Slots
         {
-            get { return CacheConst<ModifyAction>(ref m_modify); }
+            get { return StaticSlots.Keys; }
         }
 
-        IRuntimeSlot IVariableDeclarationFactorySlots.Name
+        public override IScriptObject this[string slotName, InterpreterState state]
         {
-            get { return CacheConst<GetNameAction>(ref m_name); }
+            get { return StaticSlots.GetValue(this, slotName, state); }
+            set { StaticSlots.SetValue(this, slotName, value, state); }
         }
 
-        IRuntimeSlot IVariableDeclarationFactorySlots.IsConst
+        protected override IScriptObject GetSlotMetadata(string slotName, InterpreterState state)
         {
-            get { return CacheConst<IsConstantAction>(ref m_isconst); }
-        }
-
-        IRuntimeSlot IVariableDeclarationFactorySlots.InitExpr
-        {
-            get { return CacheConst<GetInitExpressionAction>(ref m_initexpr); }
-        }
-
-        IRuntimeSlot IVariableDeclarationFactorySlots.Contract
-        {
-            get { return CacheConst<GetContractAction>(ref m_getcontract); }
+            return StaticSlots.GetSlotMetadata(this, slotName, state);
         }
     }
 }

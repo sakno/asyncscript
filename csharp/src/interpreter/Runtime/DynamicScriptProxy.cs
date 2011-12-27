@@ -10,7 +10,7 @@ namespace DynamicScript.Runtime
     /// </summary>
     /// <typeparam name="T">A type to wrap into DynamicScript-compliant representation.</typeparam>
     [ComVisible(false)]
-    public abstract class DynamicScriptProxy<T>: IEnumerable<KeyValuePair<string, IScriptAction>>
+    public abstract class DynamicScriptProxy<T>: IEnumerable<KeyValuePair<string, IScriptFunction>>
         where T : class
     {
         private readonly T m_obj;
@@ -39,18 +39,18 @@ namespace DynamicScript.Runtime
         /// <param name="slotName"></param>
         /// <param name="action"></param>
         /// <returns></returns>
-        protected static KeyValuePair<string, IScriptAction> DefineAction(string slotName, IScriptAction action)
+        protected static KeyValuePair<string, IScriptFunction> DefineAction(string slotName, IScriptFunction action)
         {
             if (string.IsNullOrEmpty(slotName)) throw new ArgumentNullException("slotName");
             if (action == null) throw new ArgumentNullException("action");
-            return new KeyValuePair<string, IScriptAction>(slotName, action);
+            return new KeyValuePair<string, IScriptFunction>(slotName, action);
         }
 
         /// <summary>
         /// Returns an enumerator through all actions.
         /// </summary>
         /// <returns></returns>
-        public abstract IEnumerator<KeyValuePair<string, IScriptAction>> GetEnumerator();
+        public abstract IEnumerator<KeyValuePair<string, IScriptFunction>> GetEnumerator();
 
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
         {

@@ -124,7 +124,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         }
 
         [ComVisible(false)]
-        private sealed class SplitAction : ScriptFunc<ScriptString, ScriptString>
+        private sealed class SplitFunction : ScriptFunc<ScriptString, ScriptString>
         {
             public const string Name = "split";
             private const string FirstParamName="input";
@@ -132,7 +132,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
 
             private readonly RegexProxy m_proxy;
 
-            public SplitAction(RegexProxy proxy)
+            public SplitFunction(RegexProxy proxy)
                 : base(FirstParamName, ScriptStringContract.Instance, SecondParamName, ScriptStringContract.Instance, ScriptStringContract.Instance)
             {
                 m_proxy = proxy;
@@ -145,7 +145,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         }
 
         [ComVisible(false)]
-        private sealed class ReplaceAction : ScriptFunc<ScriptString, ScriptString, ScriptString>
+        private sealed class ReplaceFunction : ScriptFunc<ScriptString, ScriptString, ScriptString>
         {
             public const string Name = "replace";
             private const string FirstParamName = "input";
@@ -154,7 +154,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
 
             private readonly RegexProxy m_proxy;
 
-            public ReplaceAction(RegexProxy proxy)
+            public ReplaceFunction(RegexProxy proxy)
                 : base(FirstParamName, ScriptStringContract.Instance, SecondParamName, ScriptStringContract.Instance, ThirdParamName, ScriptStringContract.Instance, ScriptStringContract.Instance)
             {
                 m_proxy = proxy;
@@ -167,7 +167,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         }
 
         [ComVisible(false)]
-        private sealed class IsMatchAction : ScriptFunc<ScriptString, ScriptString>
+        private sealed class IsMatchFunction : ScriptFunc<ScriptString, ScriptString>
         {
             public const string Name = "ismatch";
             private const string FirstParamName="input";
@@ -175,7 +175,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
 
             private readonly RegexProxy m_proxy;
 
-            public IsMatchAction(RegexProxy proxy)
+            public IsMatchFunction(RegexProxy proxy)
                 : base(FirstParamName, ScriptStringContract.Instance, SecondParamName, ScriptStringContract.Instance, ScriptBooleanContract.Instance)
             {
                 m_proxy = proxy;
@@ -188,7 +188,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         }
 
         [ComVisible(false)]
-        private abstract class RegexOptionSlot : RuntimeSlotBase, IEquatable<RegexOptionSlot>
+        private abstract class RegexOptionSlot : RuntimeSlotBase, IStaticRuntimeSlot
         {
             protected readonly RegexProxy Proxy;
 
@@ -208,12 +208,13 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                 return Value;
             }
 
-            public sealed override void SetValue(IScriptObject value, InterpreterState state)
+            public sealed override IScriptObject SetValue(IScriptObject value, InterpreterState state)
             {
-                if (value is ScriptBoolean) Value = (ScriptBoolean)value;
+                if (ScriptBooleanContract.TryConvert(ref value)) Value = (ScriptBoolean)value;
+                return value;
             }
 
-            public sealed override IScriptContract ContractBinding
+            public IScriptContract ContractBinding
             {
                 get { return ScriptBooleanContract.Instance; }
             }
@@ -223,34 +224,9 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                 get { return RuntimeSlotAttributes.None; }
             }
 
-            protected sealed override ICollection<string> Slots
-            {
-                get { return Value.Slots; }
-            }
-
             public sealed override bool DeleteValue()
             {
                 return false;
-            }
-
-            public bool Equals(RegexOptionSlot other)
-            {
-                return other != null && Equals(GetType(), other.GetType()) && Equals(Proxy, other.Proxy);
-            }
-
-            public sealed override bool Equals(IRuntimeSlot other)
-            {
-                return Equals(other as RegexOptionSlot);
-            }
-
-            public sealed override bool Equals(object other)
-            {
-                return Equals(other as RegexOptionSlot);
-            }
-
-            public sealed override int GetHashCode()
-            {
-                return Proxy.GetHashCode() ^ GetType().MetadataToken; 
             }
         }
 
@@ -398,15 +374,15 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             public Slots()
             {
                 var proxy = new RegexProxy();
-                AddConstant(IsMatchAction.Name, new IsMatchAction(proxy));
+                AddConstant(IsMatchFunction.Name, new IsMatchFunction(proxy));
                 Add(MultilineSlot.Name, new MultilineSlot(proxy));
                 Add(IgnoreCaseSlot.Name, new IgnoreCaseSlot(proxy));
                 Add(SinglelineSlot.Name, new SinglelineSlot(proxy));
                 Add(IgnorePatternWhitespaceSlot.Name, new IgnorePatternWhitespaceSlot(proxy));
                 Add(RightToLeftSlot.Name, new RightToLeftSlot(proxy));
                 Add(CultureInvariantSlot.Name, new CultureInvariantSlot(proxy));
-                AddConstant(ReplaceAction.Name, new ReplaceAction(proxy));
-                AddConstant(SplitAction.Name, new SplitAction(proxy));
+                AddConstant(ReplaceFunction.Name, new ReplaceFunction(proxy));
+                AddConstant(SplitFunction.Name, new SplitFunction(proxy));
                 AddConstant(MatchAction.Name, new MatchAction(proxy));
             }
         }

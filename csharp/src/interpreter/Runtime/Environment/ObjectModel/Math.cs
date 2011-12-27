@@ -293,7 +293,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         }
         #endregion
 
-        private static new IEnumerable<KeyValuePair<string, IRuntimeSlot>> Slots
+        private static new IEnumerable<KeyValuePair<string, IStaticRuntimeSlot>> Slots
         {
             get
             {

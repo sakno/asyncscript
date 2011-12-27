@@ -13,7 +13,7 @@ namespace DynamicScript.Runtime.Environment
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
     using CallSiteBinder = System.Runtime.CompilerServices.CallSiteBinder;
     using QCodeUnaryOperatorType = Compiler.Ast.ScriptCodeUnaryOperatorType;
-    using QCodeBinaryOperatorType = Compiler.Ast.ScriptCodeBinaryOperatorType;
+    using ScriptCodeBinaryOperatorType = Compiler.Ast.ScriptCodeBinaryOperatorType;
     using InterpretationContext = Compiler.Ast.InterpretationContext;
     using SystemConverter = System.Convert;
     using SystemEnvironment = System.Environment;
@@ -94,12 +94,6 @@ namespace DynamicScript.Runtime.Environment
             return OneOf<T1, T2, T2>(obj);
         }
 
-        internal static IScriptObject Normalize(this IScriptObject obj, InterpreterState state)
-        {
-            while (obj is IRuntimeSlot) obj = ((IRuntimeSlot)obj).GetValue(state);
-            return obj;
-        }
-
         /// <summary>
         /// Determines whether the specified object is <see langword="true"/> operator.
         /// </summary>
@@ -108,12 +102,26 @@ namespace DynamicScript.Runtime.Environment
         /// <returns></returns>
         public static bool IsTrue(this IScriptObject value, InterpreterState state)
         {
-            value = Normalize(value, state);
-            if (value is IConvertible)
-                return SystemConverter.ToBoolean((IConvertible)value);
-            else if (value is IScriptProxyObject)
-                return IsTrue(((IScriptProxyObject)value).Unwrap(state), state);
-            else return !ScriptObject.IsVoid(value);
+            switch (SystemConverter.GetTypeCode(value))
+            {
+                case TypeCode.String: return true;
+                case TypeCode.Int16:
+                    return SystemConverter.ToInt16(value) != 0;
+                case TypeCode.Int32:
+                    return SystemConverter.ToInt32(value) != 0;
+                case TypeCode.Int64:
+                    return SystemConverter.ToInt64(value) != 0;
+                case TypeCode.Boolean:
+                    return SystemConverter.ToBoolean(value);
+                case TypeCode.Double:
+                    return SystemConverter.ToDouble(value) != 0.0;
+                case TypeCode.Single:
+                    return SystemConverter.ToSingle(value) != 0.0F;
+                default:
+                    return value is IScriptProxyObject ?
+                        IsTrue(((IScriptProxyObject)value).Unwrap(state), state) :
+                        !ScriptObject.IsVoid(value);
+            }
         }
 
         /// <summary>
@@ -158,7 +166,7 @@ namespace DynamicScript.Runtime.Environment
         public static IScriptObject Subtract(this IScriptObject left, IScriptObject right, InterpreterState state)
         {
             if (left == null) throw new ArgumentNullException("left");
-            return left.BinaryOperation(QCodeBinaryOperatorType.Subtract, right, state);
+            return left.BinaryOperation(ScriptCodeBinaryOperatorType.Subtract, right, state);
         }
 
         /// <summary>
@@ -184,7 +192,7 @@ namespace DynamicScript.Runtime.Environment
         public static IScriptObject Convert(this IScriptObject value, IScriptContract contract, InterpreterState state)
         {
             if (contract == null) throw new ArgumentNullException("contract");
-            return value.BinaryOperation(QCodeBinaryOperatorType.TypeCast, contract, state);
+            return value.BinaryOperation(ScriptCodeBinaryOperatorType.TypeCast, contract, state);
         }
 
         /// <summary>
@@ -210,7 +218,7 @@ namespace DynamicScript.Runtime.Environment
         public static IScriptObject NotEquals(this IScriptObject left, IScriptObject right, InterpreterState state)
         {
             if (left == null) throw new ArgumentNullException("left");
-            return left.BinaryOperation(QCodeBinaryOperatorType.ValueInequality, right, state);
+            return left.BinaryOperation(ScriptCodeBinaryOperatorType.ValueInequality, right, state);
         }
 
         /// <summary>
@@ -236,7 +244,7 @@ namespace DynamicScript.Runtime.Environment
         public static IScriptObject Multiply(this IScriptObject left, IScriptObject right, InterpreterState state)
         {
             if (left == null) throw new ArgumentNullException("left");
-            return left.BinaryOperation(QCodeBinaryOperatorType.Multiply, right, state);
+            return left.BinaryOperation(ScriptCodeBinaryOperatorType.Multiply, right, state);
         }
 
         /// <summary>
@@ -262,7 +270,7 @@ namespace DynamicScript.Runtime.Environment
         public static IScriptObject Modulo(this IScriptObject left, IScriptObject right, InterpreterState state)
         {
             if (left == null) throw new ArgumentNullException("left");
-            return left.BinaryOperation(QCodeBinaryOperatorType.Modulo, right, state);
+            return left.BinaryOperation(ScriptCodeBinaryOperatorType.Modulo, right, state);
         }
 
         /// <summary>
@@ -288,7 +296,7 @@ namespace DynamicScript.Runtime.Environment
         public static IScriptObject LessThanOrEqual(this IScriptObject left, IScriptObject right, InterpreterState state)
         {
             if (left == null) throw new ArgumentNullException("left");
-            return left.BinaryOperation(QCodeBinaryOperatorType.LessThanOrEqual, right, state);
+            return left.BinaryOperation(ScriptCodeBinaryOperatorType.LessThanOrEqual, right, state);
         }
 
         /// <summary>
@@ -314,7 +322,7 @@ namespace DynamicScript.Runtime.Environment
         public static IScriptObject LessThan(this IScriptObject left, IScriptObject right, InterpreterState state)
         {
             if (left == null) throw new ArgumentNullException("left");
-            return left.BinaryOperation(QCodeBinaryOperatorType.LessThan, right, state);
+            return left.BinaryOperation(ScriptCodeBinaryOperatorType.LessThan, right, state);
         }
 
         /// <summary>
@@ -340,7 +348,7 @@ namespace DynamicScript.Runtime.Environment
         public static IScriptObject GreaterThanOrEqual(this IScriptObject left, IScriptObject right, InterpreterState state)
         {
             if (left == null) throw new ArgumentNullException("left");
-            return left.BinaryOperation(QCodeBinaryOperatorType.GreaterThanOrEqual, right, state);
+            return left.BinaryOperation(ScriptCodeBinaryOperatorType.GreaterThanOrEqual, right, state);
         }
 
         /// <summary>
@@ -366,7 +374,7 @@ namespace DynamicScript.Runtime.Environment
         public static IScriptObject GreaterThan(this IScriptObject left, IScriptObject right, InterpreterState state)
         {
             if (left == null) throw new ArgumentNullException("left");
-            return left.BinaryOperation(QCodeBinaryOperatorType.GreaterThan, right, state);
+            return left.BinaryOperation(ScriptCodeBinaryOperatorType.GreaterThan, right, state);
         }
 
         /// <summary>
@@ -392,7 +400,7 @@ namespace DynamicScript.Runtime.Environment
         public static IScriptObject ExclusiveOr(this IScriptObject left, IScriptObject right, InterpreterState state)
         {
             if (left == null) throw new ArgumentNullException("left");
-            return left.BinaryOperation(QCodeBinaryOperatorType.Exclusion, right, state);
+            return left.BinaryOperation(ScriptCodeBinaryOperatorType.Exclusion, right, state);
         }
 
         /// <summary>
@@ -418,7 +426,7 @@ namespace DynamicScript.Runtime.Environment
         public static IScriptObject Equals(this IScriptObject left, IScriptObject right, InterpreterState state)
         {
             if (left == null) throw new ArgumentNullException("left");
-            return left.BinaryOperation(QCodeBinaryOperatorType.ValueEquality, right, state);
+            return left.BinaryOperation(ScriptCodeBinaryOperatorType.ValueEquality, right, state);
         }
 
         /// <summary>
@@ -432,7 +440,7 @@ namespace DynamicScript.Runtime.Environment
         public static IScriptObject Divide(this IScriptObject left, IScriptObject right, InterpreterState state)
         {
             if (left == null) throw new ArgumentNullException("left");
-            return left.BinaryOperation(QCodeBinaryOperatorType.Divide, right, state);
+            return left.BinaryOperation(ScriptCodeBinaryOperatorType.Divide, right, state);
         }
 
         /// <summary>
@@ -458,7 +466,7 @@ namespace DynamicScript.Runtime.Environment
         public static IScriptObject Coalesce(this IScriptObject left, IScriptObject right, InterpreterState state)
         {
             if (left == null) throw new ArgumentNullException("left");
-            return left.BinaryOperation(QCodeBinaryOperatorType.Coalesce, right, state);
+            return left.BinaryOperation(ScriptCodeBinaryOperatorType.Coalesce, right, state);
         }
 
         /// <summary>
@@ -473,6 +481,8 @@ namespace DynamicScript.Runtime.Environment
             return Coalesce(left, right, InterpreterState.Current);
         }
 
+        
+
         /// <summary>
         /// Computes logical or, bitwise or, or union.
         /// </summary>
@@ -484,7 +494,7 @@ namespace DynamicScript.Runtime.Environment
         public static IScriptObject Or(this IScriptObject left, IScriptObject right, InterpreterState state)
         {
             if (left == null) throw new ArgumentNullException("left");
-            return left.BinaryOperation(QCodeBinaryOperatorType.Union, right, state);
+            return left.BinaryOperation(ScriptCodeBinaryOperatorType.Union, right, state);
         }
 
         /// <summary>
@@ -510,7 +520,7 @@ namespace DynamicScript.Runtime.Environment
         public static IScriptObject And(this IScriptObject left, IScriptObject right, InterpreterState state)
         {
             if (left == null) throw new ArgumentNullException("left");
-            return left.BinaryOperation(QCodeBinaryOperatorType.Intersection, right, state);
+            return left.BinaryOperation(ScriptCodeBinaryOperatorType.Intersection, right, state);
         }
 
         /// <summary>
@@ -536,7 +546,7 @@ namespace DynamicScript.Runtime.Environment
         public static IScriptObject Add(this IScriptObject left, IScriptObject right, InterpreterState state)
         {
             if (left == null) throw new ArgumentNullException("left");
-            return left.BinaryOperation(QCodeBinaryOperatorType.Add, right, state);
+            return left.BinaryOperation(ScriptCodeBinaryOperatorType.Add, right, state);
         }
 
         /// <summary>
@@ -575,7 +585,7 @@ namespace DynamicScript.Runtime.Environment
         public static IScriptObject PartOf(this IScriptObject left, IScriptObject right, InterpreterState state)
         {
             if (left == null) throw new ArgumentNullException("left");
-            return left.BinaryOperation(QCodeBinaryOperatorType.PartOf, right, state);
+            return left.BinaryOperation(ScriptCodeBinaryOperatorType.PartOf, right, state);
         }
 
         /// <summary>
@@ -886,43 +896,43 @@ namespace DynamicScript.Runtime.Environment
             switch (@operator)
             {
                 case ExpressionType.Add:
-                    return left.BinaryOperation(QCodeBinaryOperatorType.Add, right, state);
+                    return left.BinaryOperation(ScriptCodeBinaryOperatorType.Add, right, state);
                 case ExpressionType.AddChecked:
-                    return left.BinaryOperation(QCodeBinaryOperatorType.Add, right, state.Update(InterpretationContext.Checked));
+                    return left.BinaryOperation(ScriptCodeBinaryOperatorType.Add, right, state.Update(InterpretationContext.Checked));
                 case ExpressionType.And:
-                    return left.BinaryOperation(QCodeBinaryOperatorType.Intersection, right, state);
+                    return left.BinaryOperation(ScriptCodeBinaryOperatorType.Intersection, right, state);
                 case ExpressionType.Or:
-                    return left.BinaryOperation(QCodeBinaryOperatorType.Union, right, state);
+                    return left.BinaryOperation(ScriptCodeBinaryOperatorType.Union, right, state);
                 case ExpressionType.Coalesce:
-                    return left.BinaryOperation(QCodeBinaryOperatorType.Coalesce, right, state);
+                    return left.BinaryOperation(ScriptCodeBinaryOperatorType.Coalesce, right, state);
                 case ExpressionType.Divide:
-                    return left.BinaryOperation(QCodeBinaryOperatorType.Divide, right, state);
+                    return left.BinaryOperation(ScriptCodeBinaryOperatorType.Divide, right, state);
                 case ExpressionType.Equal:
-                    return left.BinaryOperation(QCodeBinaryOperatorType.ValueEquality, right, state);
+                    return left.BinaryOperation(ScriptCodeBinaryOperatorType.ValueEquality, right, state);
                 case ExpressionType.ExclusiveOr:
-                    return left.BinaryOperation(QCodeBinaryOperatorType.Exclusion, right, state);
+                    return left.BinaryOperation(ScriptCodeBinaryOperatorType.Exclusion, right, state);
                 case ExpressionType.GreaterThan:
-                    return left.BinaryOperation(QCodeBinaryOperatorType.GreaterThan, right, state);
+                    return left.BinaryOperation(ScriptCodeBinaryOperatorType.GreaterThan, right, state);
                 case ExpressionType.GreaterThanOrEqual:
-                    return left.BinaryOperation(QCodeBinaryOperatorType.GreaterThanOrEqual, right, state);
+                    return left.BinaryOperation(ScriptCodeBinaryOperatorType.GreaterThanOrEqual, right, state);
                 case ExpressionType.LessThan:
-                    return left.BinaryOperation(QCodeBinaryOperatorType.LessThan, right, state);
+                    return left.BinaryOperation(ScriptCodeBinaryOperatorType.LessThan, right, state);
                 case ExpressionType.LessThanOrEqual:
-                    return left.BinaryOperation(QCodeBinaryOperatorType.LessThanOrEqual, right, state);
+                    return left.BinaryOperation(ScriptCodeBinaryOperatorType.LessThanOrEqual, right, state);
                 case ExpressionType.Modulo:
-                    return left.BinaryOperation(QCodeBinaryOperatorType.Modulo, right, state);
+                    return left.BinaryOperation(ScriptCodeBinaryOperatorType.Modulo, right, state);
                 case ExpressionType.Multiply:
-                    return left.BinaryOperation(QCodeBinaryOperatorType.Multiply, right, state);
+                    return left.BinaryOperation(ScriptCodeBinaryOperatorType.Multiply, right, state);
                 case ExpressionType.MultiplyChecked:
-                    return left.BinaryOperation(QCodeBinaryOperatorType.Multiply, right, state.Update(InterpretationContext.Checked));
+                    return left.BinaryOperation(ScriptCodeBinaryOperatorType.Multiply, right, state.Update(InterpretationContext.Checked));
                 case ExpressionType.NotEqual:
-                    return left.BinaryOperation(QCodeBinaryOperatorType.ValueInequality, right, state);
+                    return left.BinaryOperation(ScriptCodeBinaryOperatorType.ValueInequality, right, state);
                 case ExpressionType.Subtract:
-                    return left.BinaryOperation(QCodeBinaryOperatorType.Subtract, right, state);
+                    return left.BinaryOperation(ScriptCodeBinaryOperatorType.Subtract, right, state);
                 case ExpressionType.SubtractChecked:
-                    return left.BinaryOperation(QCodeBinaryOperatorType.Subtract, right, state.Update(InterpretationContext.Checked));
+                    return left.BinaryOperation(ScriptCodeBinaryOperatorType.Subtract, right, state.Update(InterpretationContext.Checked));
                 case ExpressionType.TypeAs:
-                    return left.BinaryOperation(QCodeBinaryOperatorType.TypeCast, right, state);
+                    return left.BinaryOperation(ScriptCodeBinaryOperatorType.TypeCast, right, state);
                 default:
                     if (state.Context == InterpretationContext.Unchecked)
                         return left;
@@ -967,29 +977,29 @@ namespace DynamicScript.Runtime.Environment
             switch (@operator)
             {
                 case ExpressionType.Assign:
-                    return slot.BinaryOperation(QCodeBinaryOperatorType.Assign, right, state);
+                    return slot.SetValue(right, state);
                 case ExpressionType.AddAssign:
-                    return slot.BinaryOperation(QCodeBinaryOperatorType.AdditiveAssign, right, state);
+                    return slot.SetValue(slot.GetValue(state).BinaryOperation(ScriptCodeBinaryOperatorType.Add, right, state), state);
                 case ExpressionType.AddAssignChecked:
-                    return slot.BinaryOperation(QCodeBinaryOperatorType.AdditiveAssign, right, state.Update(InterpretationContext.Checked));
+                    return slot.SetValue(slot.GetValue(state).BinaryOperation(ScriptCodeBinaryOperatorType.Add, right, state.Update(InterpretationContext.Checked)), state);
                 case ExpressionType.SubtractAssign:
-                    return slot.BinaryOperation(QCodeBinaryOperatorType.SubtractiveAssign, right, state);
+                    return slot.SetValue(slot.GetValue(state).BinaryOperation(ScriptCodeBinaryOperatorType.Subtract, right, state), state);
                 case ExpressionType.SubtractAssignChecked:
-                    return slot.BinaryOperation(QCodeBinaryOperatorType.SubtractiveAssign, right, state.Update(InterpretationContext.Checked));
+                    return slot.SetValue(slot.GetValue(state).BinaryOperation(ScriptCodeBinaryOperatorType.Subtract, right, state.Update(InterpretationContext.Checked)), state);
                 case ExpressionType.OrAssign:
-                    return slot.BinaryOperation(QCodeBinaryOperatorType.Expansion, right, state);
+                    return slot.SetValue(slot.GetValue(state).BinaryOperation(ScriptCodeBinaryOperatorType.Union, right, state), state);
                 case ExpressionType.AndAssign:
-                    return slot.BinaryOperation(QCodeBinaryOperatorType.Reduction, right, state);
+                    return slot.SetValue(slot.GetValue(state).BinaryOperation(ScriptCodeBinaryOperatorType.Intersection, right, state), state);
                 case ExpressionType.ModuloAssign:
-                    return slot.BinaryOperation(QCodeBinaryOperatorType.ModuloAssign, right, state);
+                    return slot.SetValue(slot.GetValue(state).BinaryOperation(ScriptCodeBinaryOperatorType.Modulo, right, state), state);
                 case ExpressionType.DivideAssign:
-                    return slot.BinaryOperation(QCodeBinaryOperatorType.DivideAssign, right, state);
+                    return slot.SetValue(slot.GetValue(state).BinaryOperation(ScriptCodeBinaryOperatorType.Divide, right, state), state);
                 case ExpressionType.MultiplyAssign:
-                    return slot.BinaryOperation(QCodeBinaryOperatorType.MultiplicativeAssign, right, state);
+                    return slot.SetValue(slot.GetValue(state).BinaryOperation(ScriptCodeBinaryOperatorType.Multiply, right, state), state);
                 case ExpressionType.MultiplyAssignChecked:
-                    return slot.BinaryOperation(QCodeBinaryOperatorType.MultiplicativeAssign, right, state.Update(InterpretationContext.Checked));
+                    return slot.SetValue(slot.GetValue(state).BinaryOperation(ScriptCodeBinaryOperatorType.Multiply, right, state.Update(InterpretationContext.Checked)), state);
                 default:
-                    return BinaryOperation((IScriptObject)slot, @operator, right, state);
+                    return BinaryOperation(slot.GetValue(state), @operator, right, state);
             }
         }
 
@@ -1000,16 +1010,20 @@ namespace DynamicScript.Runtime.Environment
             {
                 case ExpressionType.PreDecrementAssign:
                 case ExpressionType.Decrement:
-                    return slot.UnaryOperation(QCodeUnaryOperatorType.DecrementPrefix, state);
+                    return slot.SetValue(slot.GetValue(state).UnaryOperation(QCodeUnaryOperatorType.DecrementPrefix, state), state);
                 case ExpressionType.PostDecrementAssign:
-                    return slot.UnaryOperation(QCodeUnaryOperatorType.DecrementPostfix, state);
+                    var value = slot.GetValue(state);
+                    slot.SetValue(value.UnaryOperation(QCodeUnaryOperatorType.DecrementPrefix, state), state);
+                    return value;
                 case ExpressionType.PreIncrementAssign:
                 case ExpressionType.Increment:
-                    return slot.UnaryOperation(QCodeUnaryOperatorType.IncrementPrefix, state);
+                    return slot.SetValue(slot.GetValue(state).UnaryOperation(QCodeUnaryOperatorType.IncrementPrefix, state), state);
                 case ExpressionType.PostIncrementAssign:
-                    return slot.UnaryOperation(QCodeUnaryOperatorType.IncrementPostfix, state);
+                    value = slot.GetValue(state);
+                    slot.SetValue(value.UnaryOperation(QCodeUnaryOperatorType.IncrementPostfix, state), state);
+                    return value;
                 default:
-                    return UnaryOperation((IScriptObject)slot, @operator, state);
+                    return UnaryOperation(slot.GetValue(state), @operator, state);
             }
         }
 
@@ -1020,11 +1034,11 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="value">The value to store to the slot.</param>
         /// <param name="state">Internal interpreter state.</param>
         /// <returns><see langword="true"/> if <paramref name="value"/> is stored to the slot; otherwise, <see langword="false"/>.</returns>
-        public static bool TrySetValue(this IRuntimeSlot slot, IScriptObject value, InterpreterState state)
+        public static bool TrySetValue(this IStaticRuntimeSlot slot, IScriptObject value, InterpreterState state)
         {
             if (slot == null) throw new ArgumentNullException("slot");
             if (value == null) value = ScriptObject.Void;
-            switch (slot.GetContractBinding().IsAssignableFrom(value.GetContractBinding()))
+            switch (slot.ContractBinding.IsAssignableFrom(value.GetContractBinding()))
             {
                 case true:
                     slot.SetValue(value, state);
@@ -1044,13 +1058,6 @@ namespace DynamicScript.Runtime.Environment
             return LinqHelpers.Call<IScriptObject, InterpreterState, bool>((ob, state) => IsFalse(ob, state), null, arg, stateVar);
         }
 
-        internal static T[] AsArray<T>(this T value, long size)
-        {
-            var result = new T[size];
-            Parallel.For(0L, result.LongLength, i => result[i] = value);
-            return result;
-        }
-
         internal static InterpreterState GetState(this CallSiteBinder binder)
         {
             return binder is IScriptRuntimeBinder ? ((IScriptRuntimeBinder)binder).State : InterpreterState.Current;
@@ -1063,7 +1070,7 @@ namespace DynamicScript.Runtime.Environment
         /// <returns><see langword="true"/> if the specified parameter represents runtime variable; otherwise, <see langword="false"/>.</returns>
         public static bool IsRuntimeVariable(this Expression p)
         {
-            return p != null && typeof(IRuntimeSlot).IsAssignableFrom(p.Type);
+            return p != null && typeof(IStaticRuntimeSlot).IsAssignableFrom(p.Type);
         }
 
         /// <summary>
@@ -1113,7 +1120,7 @@ namespace DynamicScript.Runtime.Environment
         internal static IScriptObject[] GetValues(this IRuntimeSlot[] slots, InterpreterState state)
         {
             var result = new IScriptObject[slots.LongLength];
-            Parallel.For(0, result.LongLength, i => result[i] = slots[i]);
+            Parallel.For(0, result.LongLength, i => result[i] = slots[i].GetValue(state));
             return result;
         }
 

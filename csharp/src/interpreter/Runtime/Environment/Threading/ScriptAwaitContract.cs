@@ -11,7 +11,7 @@ namespace DynamicScript.Runtime.Environment.Threading
     /// This class cannot be inherited.
     /// </summary>
     [ComVisible(false)]
-    public sealed class ScriptAwaitContract: ScriptActionContract
+    public sealed class ScriptAwaitContract: ScriptFunctionContract
     {
         //@timeout: real, failure: object -> object;
         private ScriptAwaitContract()

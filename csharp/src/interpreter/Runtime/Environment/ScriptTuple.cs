@@ -115,7 +115,7 @@ namespace DynamicScript.Runtime.Environment
                     return new ScriptTuple(args);
                 else if (state.Context == InterpretationContext.Unchecked)
                     return Void;
-                else throw new ActionArgumentsMistmatchException(state);
+                else throw new FunctionArgumentsMistmatchException(state);
             }
 
             /// <summary>
@@ -145,7 +145,7 @@ namespace DynamicScript.Runtime.Environment
             /// Returns an enumerator through all contracts participated in cartesian product.
             /// </summary>
             /// <returns>An enumerator through all contracts participated in cartesian product.</returns>
-            public new IEnumerator<IScriptContract> GetEnumerator()
+            public IEnumerator<IScriptContract> GetEnumerator()
             {
                 return Contracts.GetEnumerator();
             }
@@ -178,7 +178,7 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="value2">The second value to store. </param>
         /// <param name="values"></param>
         public ScriptTuple(IScriptObject value1, IScriptObject value2, params IScriptObject[] values)
-            : this(Enumerable.Concat(new[] { value1, value2 }, values ?? new IScriptObject[0]))
+            : this(Enumerable.Concat(new[] { value1, value2 }, values ?? EmptyArray))
         {
 
         }
@@ -212,25 +212,38 @@ namespace DynamicScript.Runtime.Environment
         }
 
         /// <summary>
-        /// Gets slot by its name.
+        /// 
         /// </summary>
         /// <param name="slotName"></param>
         /// <param name="state"></param>
         /// <returns></returns>
-        public override IRuntimeSlot this[string slotName, InterpreterState state]
+        protected override IScriptObject GetSlotMetadata(string slotName, InterpreterState state)
         {
-            get { return m_values[slotName, state]; }
+            return ((IScriptObject)m_values).BinaryOperation(Compiler.Ast.ScriptCodeBinaryOperatorType.MetadataDiscovery, new ScriptString(slotName), state);
         }
 
         /// <summary>
-        /// Gets tuple element accessor.
+        /// 
         /// </summary>
-        /// <param name="args"></param>
+        /// <param name="slotName"></param>
         /// <param name="state"></param>
         /// <returns></returns>
-        public override RuntimeSlotBase this[IScriptObject[] args, InterpreterState state]
+        public override IScriptObject this[string slotName, InterpreterState state]
         {
-            get { return m_values[args, state]; }
+            get { return m_values[slotName, state]; }
+            set { m_values[slotName, state] = value; }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="indicies"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public override IScriptObject this[IList<IScriptObject> indicies, InterpreterState state]
+        {
+            get { return m_values[indicies, state]; }
+            set { m_values[indicies, state] = value; }
         }
 
         /// <summary>

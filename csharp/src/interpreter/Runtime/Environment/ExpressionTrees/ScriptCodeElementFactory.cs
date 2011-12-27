@@ -46,33 +46,34 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        protected class ModifyActionBase : ScriptRuntimeAction
+        protected class ModifyFunctionBase : ScriptRuntimeFunction
         {
+            public const string Name = "modify";
             private const string FirstParamName = "element";
 
 
-            public ModifyActionBase(ScriptCodeElementFactory<TCodeObject, TRuntimeElement> param0, ScriptActionContract.Parameter param1)
-                : base(Modify, new ScriptActionContract.Parameter(FirstParamName, param0), param1)
+            public ModifyFunctionBase(ScriptCodeElementFactory<TCodeObject, TRuntimeElement> param0, ScriptFunctionContract.Parameter param1)
+                : base(Modify, new ScriptFunctionContract.Parameter(FirstParamName, param0), param1)
             {
             }
 
-            public ModifyActionBase(ScriptCodeElementFactory<TCodeObject, TRuntimeElement> param0, ScriptActionContract.Parameter param1, ScriptActionContract.Parameter param2)
-                : base(Modify, new ScriptActionContract.Parameter(FirstParamName, param0), param1, param2)
+            public ModifyFunctionBase(ScriptCodeElementFactory<TCodeObject, TRuntimeElement> param0, ScriptFunctionContract.Parameter param1, ScriptFunctionContract.Parameter param2)
+                : base(Modify, new ScriptFunctionContract.Parameter(FirstParamName, param0), param1, param2)
             {
             }
 
-            public ModifyActionBase(ScriptCodeElementFactory<TCodeObject, TRuntimeElement> param0, ScriptActionContract.Parameter param1, ScriptActionContract.Parameter param2, ScriptActionContract.Parameter param3)
-                : base(Modify, new ScriptActionContract.Parameter(FirstParamName, param0), param1, param2, param3)
+            public ModifyFunctionBase(ScriptCodeElementFactory<TCodeObject, TRuntimeElement> param0, ScriptFunctionContract.Parameter param1, ScriptFunctionContract.Parameter param2, ScriptFunctionContract.Parameter param3)
+                : base(Modify, new ScriptFunctionContract.Parameter(FirstParamName, param0), param1, param2, param3)
             {
             }
 
-            public ModifyActionBase(ScriptCodeElementFactory<TCodeObject, TRuntimeElement> param0, ScriptActionContract.Parameter param1, ScriptActionContract.Parameter param2, ScriptActionContract.Parameter param3, ScriptActionContract.Parameter param4)
-                : base(Modify, new ScriptActionContract.Parameter(FirstParamName, param0), param1, param2, param3, param4)
+            public ModifyFunctionBase(ScriptCodeElementFactory<TCodeObject, TRuntimeElement> param0, ScriptFunctionContract.Parameter param1, ScriptFunctionContract.Parameter param2, ScriptFunctionContract.Parameter param3, ScriptFunctionContract.Parameter param4)
+                : base(Modify, new ScriptFunctionContract.Parameter(FirstParamName, param0), param1, param2, param3, param4)
             {
             }
 
-            public ModifyActionBase(ScriptCodeElementFactory<TCodeObject, TRuntimeElement> param0, ScriptActionContract.Parameter param1, ScriptActionContract.Parameter param2, ScriptActionContract.Parameter param3, ScriptActionContract.Parameter param4, ScriptActionContract.Parameter param5)
-                : base(Modify, new ScriptActionContract.Parameter(FirstParamName, param0), param1, param2, param3, param4, param5)
+            public ModifyFunctionBase(ScriptCodeElementFactory<TCodeObject, TRuntimeElement> param0, ScriptFunctionContract.Parameter param1, ScriptFunctionContract.Parameter param2, ScriptFunctionContract.Parameter param3, ScriptFunctionContract.Parameter param4, ScriptFunctionContract.Parameter param5)
+                : base(Modify, new ScriptFunctionContract.Parameter(FirstParamName, param0), param1, param2, param3, param4, param5)
             {
             }
 
@@ -170,13 +171,6 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         /// <summary>
-        /// Releases a memory associated with cached runtime slots.
-        /// </summary>
-        public virtual void Clear()
-        {
-        }
-
-        /// <summary>
         /// Computes a hash code for this contract.
         /// </summary>
         /// <returns>A hash code of this contract.</returns>
@@ -189,23 +183,5 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         {
             info.AddValue(NameHolder, m_name);
         }
-
-        #region Runtime Slots
-
-        /// <summary>
-        /// Gets runtime slot that holds implementation of Modify action.
-        /// </summary>
-        protected abstract IRuntimeSlot Modify
-        {
-            get;
-        }
-
-        IRuntimeSlot ICodeElementFactorySlots.Modify
-        {
-            get { return Modify; }
-        }
-
-        #endregion
-
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Dynamic;
 using System.Threading.Tasks;
+using System.Linq.Expressions;
 
 namespace DynamicScript.Runtime.Environment.Threading
 {
@@ -15,7 +16,7 @@ namespace DynamicScript.Runtime.Environment.Threading
     /// </summary>
     /// <seealso href="http://en.wikipedia.org/wiki/Future_%28programming%29"/>
     [ComVisible(false)]
-    public abstract class ScriptFuture: DynamicObject, IScriptProxyObject
+    public class ScriptFuture: DynamicObject, IScriptProxyObject
     {
         /// <summary>
         /// Represents maximum timeout for the future wrapper.
@@ -51,6 +52,18 @@ namespace DynamicScript.Runtime.Environment.Threading
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="queue"></param>
+        /// <param name="this"></param>
+        /// <param name="workItem"></param>
+        /// <param name="state"></param>
+        public ScriptFuture(IScriptObject queue, IScriptObject @this, ScriptWorkItem workItem, InterpreterState state)
+            : this(ThreadManager.CreateQueue(queue), @this, workItem, state)
+        {
+        }
+
+        /// <summary>
         /// Creates a new instance of the future object.
         /// </summary>
         /// <param name="queue">Target queue.</param>
@@ -58,25 +71,10 @@ namespace DynamicScript.Runtime.Environment.Threading
         /// <param name="task">The task that implements computation logic.</param>
         /// <param name="state">Internal interpreter state.</param>
         /// <returns>A new future script object.</returns>
-        protected abstract ScriptFuture Create(IScriptWorkItemQueue queue, IScriptObject target, ScriptWorkItem task, InterpreterState state);
-
-        /// <summary>
-        /// Creates a new future runtime slot.
-        /// </summary>
-        /// <param name="queue">Target queue.</param>
-        /// <param name="slotName"></param>
-        /// <param name="state"></param>
-        /// <returns></returns>
-        protected abstract IRuntimeSlot Create(IScriptWorkItemQueue queue, string slotName, InterpreterState state);
-
-        /// <summary>
-        /// Creates a new future indexer.
-        /// </summary>
-        /// <param name="queue">Target queue.</param>
-        /// <param name="indicies"></param>
-        /// <param name="state"></param>
-        /// <returns></returns>
-        protected abstract IRuntimeSlot Create(IScriptWorkItemQueue queue, IScriptObject[] indicies, InterpreterState state);
+        protected virtual ScriptFuture Create(IScriptWorkItemQueue queue, IScriptObject target, ScriptWorkItem task, InterpreterState state)
+        {
+            return new ScriptFuture(queue, target, task, state);
+        }
 
         /// <summary>
         /// Applies additional operations on the synchronized object.
@@ -133,6 +131,16 @@ namespace DynamicScript.Runtime.Environment.Threading
                 return result;
             else throw new ContractBindingException(result, m_requirement, state);
         }
+
+        #region Runtime Helpers        
+        internal static NewExpression New(Expression queue, Expression<ScriptWorkItem> task, Expression @this, ParameterExpression stateVar)
+        {
+            queue = queue != null ? ScriptObject.AsRightSide(queue, stateVar) : ScriptObject.Null;
+            @this = ScriptObject.AsRightSide(@this, stateVar);
+            var ctor = LinqHelpers.BodyOf<IScriptObject, IScriptObject, ScriptWorkItem, InterpreterState, ScriptFuture, NewExpression>((q, o, t, s) => new ScriptFuture(q, o, t, s));
+            return ctor.Update(new Expression[] { queue, @this, task, stateVar });
+        }     
+        #endregion
 
         /// <summary>
         /// Synchronizes with the underlying value.
@@ -219,21 +227,24 @@ namespace DynamicScript.Runtime.Environment.Threading
                 Create(OwnerQueue, this, (target, s) => target.Invoke(args, s), state);
         }
 
-        IRuntimeSlot IScriptObject.this[string slotName, InterpreterState state]
+        IScriptObject IScriptObject.this[string slotName, InterpreterState state]
         {
-            get { return Await.IsCompleted ? Await.Result[slotName, state] : Create(OwnerQueue, slotName, state); }
+            get { return Await.IsCompleted ? Await.Result[slotName, state] : Create(OwnerQueue, this, (obj, s) => obj[slotName, s], state); }
+            set
+            {
+                if (Await.IsCompleted) Await.Result[slotName, state] = value;
+                else Create(OwnerQueue, this, (obj, s) => obj[slotName, s] = value, state);
+            }
         }
 
-        IScriptObject IScriptObject.GetRuntimeDescriptor(string slotName, InterpreterState state)
+        IScriptObject IScriptObject.this[IList<IScriptObject> indicies, InterpreterState state]
         {
-            return Await.IsCompleted ?
-                Await.Result.GetRuntimeDescriptor(slotName, state) :
-                Create(OwnerQueue, this, (target, s) => target.GetRuntimeDescriptor(slotName, s), state);
-        }
-
-        IRuntimeSlot IScriptObject.this[IScriptObject[] args, InterpreterState state]
-        {
-            get { return IsCompleted ? Await.Result[args, state] : Create(OwnerQueue, args, state); }
+            get { return Await.IsCompleted ? Await.Result[indicies, state] : Create(OwnerQueue, this, (obj, s) => obj[indicies, s], state); }
+            set
+            {
+                if (Await.IsCompleted) Await.Result[indicies, state] = value;
+                else Create(OwnerQueue, this, (obj, s) => obj[indicies, s] = value, state);
+            }
         }
 
         /// <summary>

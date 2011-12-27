@@ -144,12 +144,12 @@ namespace DynamicScript.Runtime.Environment
             else return relationship == ContractRelationshipType.TheSame ? ContractRelationshipType.Superset : relationship;
         }
 
-        private static ContractRelationshipType GetRelationship(ScriptActionContract sourceSignature, ScriptActionContract destSignature)
+        private static ContractRelationshipType GetRelationship(ScriptFunctionContract sourceSignature, ScriptFunctionContract destSignature)
         {
             return sourceSignature.GetRelationship(destSignature);
         }
 
-        private static ContractRelationshipType GetRelationship(Type sourceDelegate, ScriptActionContract destSignature)
+        private static ContractRelationshipType GetRelationship(Type sourceDelegate, ScriptFunctionContract destSignature)
         {
             var invokeMethod = sourceDelegate.GetMethod("Invoke");
             return invokeMethod != null ?
@@ -186,8 +186,8 @@ namespace DynamicScript.Runtime.Environment
                         return ContractRelationshipType.Superset;
                     else if (contract.OneOf<IScriptComplementation, IScriptUnionContract>())
                         return Inverse(contract.GetRelationship(this));
-                    else if (contract is ScriptActionContract && typeof(Delegate).IsAssignableFrom(NativeType))
-                        return GetRelationship(NativeType, (ScriptActionContract)contract);
+                    else if (contract is ScriptFunctionContract && typeof(Delegate).IsAssignableFrom(NativeType))
+                        return GetRelationship(NativeType, (ScriptFunctionContract)contract);
                     else return ContractRelationshipType.None;
             }
         }
@@ -201,14 +201,14 @@ namespace DynamicScript.Runtime.Environment
             return new ScriptClass(NativeType.MakeGenericType(Enumerable.ToArray(genericTypes)));
         }
 
-        private static IScriptObject CreateDelegate(Type delegateType, IScriptAction implementation, InterpreterState state)
+        private static IScriptObject CreateDelegate(Type delegateType, IScriptFunction implementation, InterpreterState state)
         {
             return new NativeObject(ScriptMethod.CreateDelegate(delegateType, implementation, state));
         }
 
         private static IScriptObject CreateDelegate(Type delegateType, IList<IScriptObject> args, InterpreterState state)
         {
-            return args.Count == 1 ? CreateDelegate(delegateType, args[0] as IScriptAction, state) : Void;
+            return args.Count == 1 ? CreateDelegate(delegateType, args[0] as IScriptFunction, state) : Void;
         }
 
         private INativeObject CreateArray(Type arrayType, IList<IScriptObject> args, InterpreterState state)
@@ -283,12 +283,105 @@ namespace DynamicScript.Runtime.Environment
             get { return ReflectionEngine.GetMemberNames(NativeType, MemberFlags); }
         }
 
-        public IRuntimeSlot this[string slotName, BindingFlags flags, INativeObject @this, InterpreterState state]
+        #region Member Accessors
+
+        private static IScriptObject GetValue(FieldInfo fi, object @this)
+        {
+            return NativeObject.ConvertFrom(fi.GetValue(@this));
+        }
+
+        private static IScriptObject GetValue(PropertyInfo pi, object @this, IList<IScriptObject> arguments, InterpreterState state)
+        {
+            var propertyIndicies = default(object[]);
+            var parameters = Array.ConvertAll(pi.GetIndexParameters(), p => p.ParameterType);
+            switch (NativeObject.TryConvert(arguments, out propertyIndicies, parameters, state))
+            {
+                case true:
+                    var result = pi.GetValue(@this, propertyIndicies);
+                    return pi.PropertyType == null || Equals(pi.PropertyType, typeof(void)) ? ScriptObject.Void : NativeObject.ConvertFrom(result, pi.PropertyType);
+                default:
+                    throw new UnsupportedOperationException(state);
+            }
+        }
+
+        private static IScriptClass GetValue(Type nestedType)
+        {
+            return (ScriptClass)nestedType;
+        }
+
+        private static IScriptCompositeObject GetValue(EventInfo ei, INativeObject owner)
+        {
+            return new ScriptEvent(ei, owner);
+        }
+
+        private static IScriptObject GetValue(MethodInfo[] methods, INativeObject @this, InterpreterState state)
+        {
+            return methods.LongLength > 1L ? ScriptMethod.Overload(methods, @this, state) : new ScriptMethod(methods[0], @this);
+        }
+
+        private static void SetValue(IScriptObject value, FieldInfo fi, object @this, InterpreterState state)
+        {
+            var fieldObject = default(object);
+            if (NativeObject.TryConvert(value, fi.FieldType, state, out fieldObject))
+                fi.SetValue(@this, fieldObject);
+            else throw new UnsupportedOperationException(state);
+        }
+
+        private static void SetValue(IScriptObject value, PropertyInfo pi, object @this, IList<IScriptObject> arguments, InterpreterState state)
+        {
+            var propertyIndicies = default(object[]);
+            var propertyValue = default(object);
+            var parameters = Array.ConvertAll(pi.GetIndexParameters(), p => p.ParameterType);
+            switch (NativeObject.TryConvert(value, state, out propertyValue) && NativeObject.TryConvert(arguments, out propertyIndicies, parameters, state))
+            {
+                case true:
+                    pi.SetValue(@this, propertyValue, propertyIndicies);
+                    return;
+                default:
+                    throw new UnsupportedOperationException(state);
+            }
+        }
+        #endregion
+
+        public IScriptObject this[string slotName, BindingFlags flags, INativeObject @this, InterpreterState state]
         {
             get
             {
                 var members = NativeType.GetMember(slotName, flags);
-                return members.LongLength > 0L ? new ScriptMember(members, @this) : RuntimeSlotBase.Missing(slotName);
+                if (members.LongLength > 0L)
+                    switch (members[0].MemberType)
+                    {
+                        case MemberTypes.Field:
+                            return GetValue((FieldInfo)members[0], @this != null ? @this.Instance : null);
+                        case MemberTypes.Property:
+                            return GetValue((PropertyInfo)members[0], @this != null ? @this.Instance : null, EmptyArray, state);
+                        case MemberTypes.NestedType:
+                            return GetValue((Type)members[0]);
+                        case MemberTypes.Event:
+                            return GetValue((EventInfo)members[0], @this);
+                        case MemberTypes.Method:
+                            return GetValue(Array.ConvertAll(members, m => (MethodInfo)m), @this, state);
+                        default:
+                            throw new UnsupportedOperationException(state);
+                    }
+                else if (state.Context == Compiler.Ast.InterpretationContext.Unchecked)
+                    return Void;
+                else throw new SlotNotFoundException(slotName, state);
+            }
+            set
+            {
+                var members = NativeType.GetMember(slotName, flags);
+                if (members.LongLength > 0L)
+                    switch (members[0].MemberType)
+                    {
+                        case MemberTypes.Field:
+                            SetValue(value, (FieldInfo)members[0], @this != null ? @this.Instance : null, state); return;
+                        case MemberTypes.Property:
+                            SetValue(value, (PropertyInfo)members[0], @this != null ? @this.Instance : null, EmptyArray, state); return;
+                        default: throw new UnsupportedOperationException(state);
+                    }
+                else if (state.Context == Compiler.Ast.InterpretationContext.Checked)
+                    throw new SlotNotFoundException(slotName, state);
             }
         }
 
@@ -298,9 +391,10 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="slotName"></param>
         /// <param name="state"></param>
         /// <returns></returns>
-        public override IRuntimeSlot this[string slotName, InterpreterState state]
+        public override IScriptObject this[string slotName, InterpreterState state]
         {
             get { return this[slotName, MemberFlags, null, state]; }
+            set { this[slotName, MemberFlags, null, state] = value; }
         }
 
         public IScriptObject GetSlotMetadata(string slotName, BindingFlags flags, InterpreterState state)
@@ -320,22 +414,75 @@ namespace DynamicScript.Runtime.Environment
             return GetSlotMetadata(slotName, MemberFlags, state);
         }
 
-        public RuntimeSlotBase this[IScriptObject[] args, BindingFlags flags, INativeObject @this, InterpreterState state]
+        public IScriptObject this[IList<IScriptObject> indicies, INativeObject @this, InterpreterState state]
         {
             get
             {
                 var members = NativeType.GetDefaultMembers();
                 if (members.LongLength > 0L)
-                    return new ScriptMember(members, @this, args);
-                else if (@this != null && @this.Instance is Array)
-                    return new ScriptArrayIndexer((Array)@this.Instance, args);
-                else return RuntimeSlotBase.Missing("this");
+                    switch (members[0].MemberType)
+                    {
+                        case MemberTypes.Field:
+                            return GetValue((FieldInfo)members[0], @this != null ? @this.Instance : null);
+                        case MemberTypes.Property:
+                            return GetValue((PropertyInfo)members[0], @this != null ? @this.Instance : null, indicies, state);
+                        case MemberTypes.NestedType:
+                            return GetValue((Type)members[0]);
+                        case MemberTypes.Event:
+                            return GetValue((EventInfo)members[0], @this);
+                        case MemberTypes.Method:
+                            return GetValue(Array.ConvertAll(members, m => (MethodInfo)m), @this, state);
+                        default:
+                            throw new UnsupportedOperationException(state);
+                    }
+                else if (NativeType.IsArray && @this != null)
+                {
+                    var args = default(Array);
+                    switch (NativeObject.TryConvert(indicies, out args, typeof(long), state))
+                    {
+                        case true:
+                            return NativeObject.ConvertFrom(((Array)@this.Instance).GetValue((long[])args), NativeType);
+                        default:
+                            throw new UnsupportedOperationException(state);
+                    }
+                }
+                else if (state.Context == Compiler.Ast.InterpretationContext.Unchecked)
+                    return Void;
+                else throw new SlotNotFoundException(GetItemAction, state);
+            }
+            set
+            {
+                var members = NativeType.GetDefaultMembers();
+                if (members.LongLength > 0L)
+                    switch (members[0].MemberType)
+                    {
+                        case MemberTypes.Field:
+                            SetValue(value, (FieldInfo)members[0], @this != null ? @this.Instance : null, state); return;
+                        case MemberTypes.Property:
+                            SetValue(value, (PropertyInfo)members[0], @this != null ? @this.Instance : null, indicies, state); return;
+                        default: throw new UnsupportedOperationException(state);
+                    }
+                else if (NativeType.IsArray && @this != null)
+                {
+                    var args = default(Array);
+                    var v = default(object);
+                    switch (NativeObject.TryConvert(value, NativeType, state, out v) && NativeObject.TryConvert(indicies, out args, typeof(long), state))
+                    {
+                        case true:
+                            ((Array)@this.Instance).SetValue(v, (long[])args); return;
+                        default:
+                            throw new UnsupportedOperationException(state);
+                    }
+                }
+                else if (state.Context == Compiler.Ast.InterpretationContext.Checked)
+                    throw new SlotNotFoundException(SetItemAction, state);
             }
         }
 
-        public override RuntimeSlotBase this[IScriptObject[] args, InterpreterState state]
+        public override IScriptObject this[IList<IScriptObject> indicies, InterpreterState state]
         {
-            get { return this[args, MemberFlags, null, state]; }
+            get { return this[indicies, null, state]; }
+            set { this[indicies, null, state] = value; }
         }
 
         IEnumerator IScriptIterable.GetIterator(InterpreterState state)

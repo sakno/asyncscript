@@ -9,15 +9,17 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
     [ComVisible(false)]
     [Serializable]
-    abstract class ScriptLoopExpressionFactory<TLoopKind, TRuntimeExpression> : ScriptExpressionFactory<TLoopKind, TRuntimeExpression>, ILoopExpressionFactorySlots
+    abstract class ScriptLoopExpressionFactory<TLoopKind, TRuntimeExpression> : ScriptExpressionFactory<TLoopKind, TRuntimeExpression>
         where TLoopKind : ScriptCodeLoopExpression
         where TRuntimeExpression : ScriptObject, IScriptExpression<TLoopKind>
     {
         #region Nested Types
         [ComVisible(false)]
-        protected abstract class GetBodyActionBase : CodeElementPartProvider<IScriptCodeElement<ScriptCodeExpression>>
+        protected abstract class GetBodyFunctionBase : CodeElementPartProvider<IScriptCodeElement<ScriptCodeExpression>>
         {
-            protected GetBodyActionBase(ScriptCodeElementFactory<TLoopKind, TRuntimeExpression> firstParam)
+            public const string Name = "body";
+
+            protected GetBodyFunctionBase(ScriptCodeElementFactory<TLoopKind, TRuntimeExpression> firstParam)
                 : base(firstParam, new ScriptArrayContract(ScriptStatementFactory.Instance))
             {
             }
@@ -29,9 +31,11 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        protected abstract class GetGroupingActionBase : CodeElementPartProvider<IScriptObject>
+        protected abstract class GetGroupingFunctionBase : CodeElementPartProvider<IScriptObject>
         {
-            protected GetGroupingActionBase(ScriptCodeElementFactory<TLoopKind, TRuntimeExpression> firstParam)
+            public const string Name = "grouping";
+
+            protected GetGroupingFunctionBase(ScriptCodeElementFactory<TLoopKind, TRuntimeExpression> firstParam)
                 : base(firstParam)
             {
             }
@@ -54,26 +58,6 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         protected ScriptLoopExpressionFactory(string contractName)
             : base(contractName)
         {
-        }
-
-        IRuntimeSlot ILoopExpressionFactorySlots.Grouping
-        {
-            get { return Grouping; }
-        }
-
-        protected abstract IRuntimeSlot Grouping
-        {
-            get;
-        }
-
-        IRuntimeSlot IComplexExpressionFactorySlots.Body
-        {
-            get { return Body; }
-        }
-
-        protected abstract IRuntimeSlot Body
-        {
-            get;
         }
     }
 }

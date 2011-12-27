@@ -9,24 +9,26 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
     [ComVisible(false)]
     [Serializable]
-    sealed class ScriptForkExpressionFactory : ScriptExpressionFactory<ScriptCodeForkExpression, ScriptForkExpression>, IForkExpressionFactorySlots
+    sealed class ScriptForkExpressionFactory : ScriptExpressionFactory<ScriptCodeForkExpression, ScriptForkExpression>
     {
         #region Nested Types
         [ComVisible(false)]
-        private sealed class ModifyAction : ModifyActionBase
+        private sealed class ModifyFunction : ModifyFunctionBase
         {
             private const string FirstParamName = "stmts";
 
-            public ModifyAction()
-                : base(Instance, new ScriptActionContract.Parameter(FirstParamName, ScriptExpressionFactory.Instance))
+            public ModifyFunction()
+                : base(Instance, new ScriptFunctionContract.Parameter(FirstParamName, ScriptExpressionFactory.Instance))
             {
             }
         }
 
         [ComVisible(false)]
-        private sealed class GetBodyAction : CodeElementPartProvider<IScriptCodeElement<ScriptCodeExpression>>
+        private sealed class GetBodyFunction : CodeElementPartProvider<IScriptCodeElement<ScriptCodeExpression>>
         {
-            public GetBodyAction()
+            public const string Name = "body";
+
+            public GetBodyFunction()
                 : base(Instance, new ScriptArrayContract(ScriptStatementFactory.Instance))
             {
             }
@@ -38,10 +40,16 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
         #endregion
 
-        public new const string Name = "forkdef";
+        private static readonly AggregatedSlotCollection<ScriptForkExpressionFactory> StaticSlots = new AggregatedSlotCollection<ScriptForkExpressionFactory>
+        {
+             {ModifyFunction.Name, (owner, state) => LazyField<ModifyFunction, IScriptFunction>(ref owner.m_modify)},
+             {GetBodyFunction.Name, (owner, state) => LazyField<GetBodyFunction, IScriptFunction>(ref owner.m_getbody)},
+        };
 
-        private IRuntimeSlot m_modify;
-        private IRuntimeSlot m_getbody;
+        public new const string Name = "`fork";
+
+        private IScriptFunction m_modify;
+        private IScriptFunction m_getbody;
 
         private ScriptForkExpressionFactory(SerializationInfo info, StreamingContext context)
             : base(info, context)
@@ -65,19 +73,20 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             return args.Count == 1 ? CreateExpression(args[0] as IScriptCodeElement<ScriptCodeExpression>) : null;
         }
 
-        protected override IRuntimeSlot Modify
-        {
-            get { return CacheConst<ModifyAction>(ref m_modify); }
-        }
-
         public override void Clear()
         {
             m_getbody = m_modify = null;
         }
 
-        IRuntimeSlot IForkExpressionFactorySlots.Body
+        protected override IScriptObject GetSlotMetadata(string slotName, InterpreterState state)
         {
-            get { return CacheConst<GetBodyAction>(ref m_getbody); }
+            return StaticSlots.GetSlotMetadata(this, slotName, state);
+        }
+
+        public override IScriptObject this[string slotName, InterpreterState state]
+        {
+            get { return StaticSlots.GetValue(this, slotName, state); }
+            set { StaticSlots.SetValue(this, slotName, value, state); }
         }
     }
 }

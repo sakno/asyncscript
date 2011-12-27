@@ -159,7 +159,7 @@ namespace DynamicScript.Runtime.Environment
         /// Returns an enumerator through set elements.
         /// </summary>
         /// <returns>An enumerator through set elements.</returns>
-        public new IEnumerator<IScriptObject> GetEnumerator()
+        public IEnumerator<IScriptObject> GetEnumerator()
         {
             return Elements.GetEnumerator();
         }

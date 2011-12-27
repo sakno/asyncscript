@@ -419,19 +419,18 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         /// <summary>
-        /// Constructs a new runtime representation of the access operation.
+        /// 
         /// </summary>
-        /// <param name="slotName">The name of the slot.</param>
-        /// <param name="state">Internal interpreter state.</param>
+        /// <param name="slotName"></param>
+        /// <param name="state"></param>
         /// <returns></returns>
-        /// <remarks>Result of this index will be unwrapped automatically because <see cref="ScriptObject.Behavior"/> is overridden in this class.</remarks>
-        public sealed override IRuntimeSlot this[string slotName, InterpreterState state]
+        public sealed override IScriptObject this[string slotName, InterpreterState state]
         {
-            get
-            {
-                return new ScriptConstant(BinaryOperation(ScriptCodeBinaryOperatorType.MemberAccess, Convert(new ScriptCodeVariableReference { VariableName = slotName }) as IScriptExpression<ScriptCodeVariableReference>));
-            }
+            get { return Convert(new ScriptCodeBinaryOperatorExpression(Expression, ScriptCodeBinaryOperatorType.MemberAccess, new ScriptCodeVariableReference(slotName))); }
+            set { throw new ConstantCannotBeChangedException(state); }
         }
+
+        
 
         /// <summary>
         /// Constructs a new runtime representation of the instance checking operation.
@@ -479,10 +478,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         /// </summary>
         public sealed override ICollection<string> Slots
         {
-            get
-            {
-                return new string[0];
-            }
+            get { return new string[0]; }
         }
 
         /// <summary>
@@ -524,11 +520,11 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             return Convert(invocation);
         }
 
-        private IScriptObject Indexing(ScriptCodeExpression[] args)
+        private IScriptObject Indexing(IList<ScriptCodeExpression> args)
         {
             var indexing = new ScriptCodeIndexerExpression();
             indexing.Target = Expression;
-            indexing.ArgList.AddRange(args);
+            foreach (var a in args) indexing.ArgList.Add(a);
             return Convert(indexing);
         }
 
@@ -556,24 +552,23 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         /// <summary>
-        /// Constructs a new runtime representation of the indexer expression.
+        /// 
         /// </summary>
-        /// <param name="args">Indexer arguments.</param>
-        /// <param name="state">Internal interpreter state.</param>
-        /// <returns>A new runtime representation of the indexer expression.</returns>
-        public sealed override RuntimeSlotBase this[IScriptObject[] args, InterpreterState state]
+        /// <param name="indicies"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public sealed override IScriptObject this[IList<IScriptObject> indicies, InterpreterState state]
         {
             get
             {
-                return new ScriptConstant(Indexing(Array.ConvertAll<IScriptObject, ScriptCodeExpression>(args, delegate(IScriptObject a)
-                {
-                    switch (a is IScriptExpression<ScriptCodeExpression>)
-                    {
-                        case true: return ((IScriptExpression<ScriptCodeExpression>)a).CodeObject;
-                        default: throw new UnsupportedOperationException(state);
-                    }
-                })));
+                var args = new List<ScriptCodeExpression>(indicies.Count);
+                foreach(var a in indicies)
+                    if (a is IScriptExpression<ScriptCodeExpression>)
+                        args.Add(((IScriptExpression<ScriptCodeExpression>)a).CodeObject);
+                    else throw new UnsupportedOperationException(state);
+                return Indexing(args);
             }
+            set { throw new SlotNotFoundException(SetItemAction, state); }
         }
 
         /// <summary>

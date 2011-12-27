@@ -8,10 +8,10 @@ namespace DynamicScript.Runtime.Environment
     [ComVisible(false)]
     public interface IScriptCustomContract: IScriptContract, IScriptMetaContract
     {
-        IScriptAction GetOverloadedOperator(ScriptCodeUnaryOperatorType @operator);
+        IScriptFunction GetOverloadedOperator(ScriptCodeUnaryOperatorType @operator);
 
-        IScriptAction OverloadedInvoke { get; }
+        IScriptFunction OverloadedInvoke { get; }
 
-        IScriptAction GetOverloadedOperator(ScriptCodeBinaryOperatorType @operator);
+        IScriptFunction GetOverloadedOperator(ScriptCodeBinaryOperatorType @operator);
     }
 }

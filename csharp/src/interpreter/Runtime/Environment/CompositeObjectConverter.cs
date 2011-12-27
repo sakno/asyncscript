@@ -1,44 +1,44 @@
 ﻿using System;
-using System.ComponentModel;
 using System.Linq;
 
 namespace DynamicScript.Runtime.Environment
 {
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
     using CultureInfo = System.Globalization.CultureInfo;
-    using ScriptObjectConverter = Debugging.ScriptObjectConverter;
+    using ScriptObjectConverterAttribute = Debugging.ScriptObjectConverterAttribute;
     using IDebuggerEditable = Debugging.IDebuggerBrowsable;
     using Resources = Properties.Resources;
     using Punctuation = Compiler.Punctuation;
 
     [ComVisible(false)]
-    sealed class CompositeObjectConverter: ScriptObjectConverter
+    [AttributeUsage(AttributeTargets.Class, Inherited = true, AllowMultiple = false)]
+    sealed class CompositeObjectConverterAttribute : ScriptObjectConverterAttribute
     {
-        public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
-        {
-            return Equals(destinationType, typeof(string));
-        }
 
-        private static string ToString(string slotName, IRuntimeSlot slot, InterpreterState state)
+        private static string ToString(string slotName, IScriptObject slot, InterpreterState state)
         {
             const string KeyValueFormat = "{0} = {1}";
-            switch (slot is IDebuggerEditable)
-            {
-                case true:
-                    var value = default(string);
-                    return String.Format(KeyValueFormat, slotName, ((IDebuggerEditable)slot).TryGetValue(out value, state) ? value : Resources.UnprintableValue);
-                default: return String.Format(KeyValueFormat, slotName, Resources.UnprintableValue);
-            }
+            var value = default(object);
+            return ConvertTo(slot, typeof(string), state, out value) ? string.Format(KeyValueFormat, slotName, value) : Resources.UnprintableValue;
         }
 
-        private static string ToString(IScriptObject obj, InterpreterState state)
+        private static string ToString(IScriptCompositeObject obj, InterpreterState state)
         {
             return string.Concat(Punctuation.LeftBrace, string.Join<string>(Punctuation.Comma, obj.Slots.Select(s => ToString(s, obj[s, state], state))), Punctuation.RightBrace);
         }
 
-        protected override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, IScriptObject value, Type destinationType)
+        public override bool TryConvertTo(IScriptObject value, Type destinationType, InterpreterState state, out object result)
         {
-            return Equals(destinationType, typeof(string)) && State != null ? ToString(value, State) : null;
+            if (value is IScriptCompositeObject && Type.GetTypeCode(destinationType) == TypeCode.String)
+            {
+                result = ToString((IScriptCompositeObject)value, state);
+                return true;
+            }
+            else
+            {
+                result = null;
+                return false;
+            }
         }
     }
 }

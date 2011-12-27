@@ -9,15 +9,16 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
     [ComVisible(false)]
     [Serializable]
-    sealed class ScriptBinaryExpressionFactory : ScriptExpressionFactory<ScriptCodeBinaryOperatorExpression, ScriptBinaryExpression>, IBinaryExpressionFactorySlots
+    sealed class ScriptBinaryExpressionFactory : ScriptExpressionFactory<ScriptCodeBinaryOperatorExpression, ScriptBinaryExpression>
     {
         #region Nested Types
         [ComVisible(false)]
-        private sealed class CreateInvokerAction : ScriptFunc<ScriptString>
+        private sealed class CreateInvokerFunction : ScriptFunc<ScriptString>
         {
+            public const string Name = "invoker";
             private const string FirstParamName = "oper";
 
-            public CreateInvokerAction()
+            public CreateInvokerFunction()
                 : base(FirstParamName, ScriptStringContract.Instance, ScriptSuperContract.Instance)
             {
             }
@@ -31,9 +32,11 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class GetLeftOperandAction : CodeElementPartProvider<IScriptExpression<ScriptCodeExpression>>
+        private sealed class GetLeftOperandFunction : CodeElementPartProvider<IScriptExpression<ScriptCodeExpression>>
         {
-            public GetLeftOperandAction()
+            public const string Name = "left";
+
+            public GetLeftOperandFunction()
                 : base(Instance, ScriptExpressionFactory.Instance)
             {
             }
@@ -45,17 +48,17 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class ModifyAction : ModifyActionBase
+        private sealed class ModifyFunction : ModifyFunctionBase
         {
             private const string SecondParamName = "left";
             private const string ThirdParamName = "operator";
             private const string FourthParamName = "right";
 
-            public ModifyAction()
+            public ModifyFunction()
                 : base(Instance,
-                new ScriptActionContract.Parameter(SecondParamName, ScriptExpressionFactory.Instance),
-                new ScriptActionContract.Parameter(ThirdParamName, ScriptStringContract.Instance),
-                new ScriptActionContract.Parameter(FourthParamName, ScriptExpressionFactory.Instance))
+                new ScriptFunctionContract.Parameter(SecondParamName, ScriptExpressionFactory.Instance),
+                new ScriptFunctionContract.Parameter(ThirdParamName, ScriptStringContract.Instance),
+                new ScriptFunctionContract.Parameter(FourthParamName, ScriptExpressionFactory.Instance))
             {
             }
         }
@@ -63,6 +66,8 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         [ComVisible(false)]
         private sealed class GetRightOperandAction : CodeElementPartProvider<IScriptExpression<ScriptCodeExpression>>
         {
+            public const string Name = "right";
+
             public GetRightOperandAction()
                 : base(Instance, ScriptExpressionFactory.Instance)
             {
@@ -77,6 +82,8 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         [ComVisible(false)]
         private sealed class GetOperatorAction : CodeElementPartProvider<ScriptString>
         {
+            public const string Name = "operator";
+
             public GetOperatorAction()
                 : base(Instance, ScriptStringContract.Instance)
             {
@@ -91,11 +98,19 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
         public new const string Name = "binop";
 
-        private IRuntimeSlot m_invoker;
-        private IRuntimeSlot m_left;
-        private IRuntimeSlot m_right;
-        private IRuntimeSlot m_operator;
-        private IRuntimeSlot m_modify;
+        private static readonly AggregatedSlotCollection<ScriptBinaryExpressionFactory> StaticSlots = new AggregatedSlotCollection<ScriptBinaryExpressionFactory>
+        {
+            {CreateInvokerFunction.Name, (owner, state) => LazyField<CreateInvokerFunction, IScriptFunction>(ref owner.m_invoker)},
+            {GetLeftOperandFunction.Name, (owner, state) => LazyField<GetLeftOperandFunction, IScriptFunction>(ref owner.m_left)},
+            {GetRightOperandAction.Name, (owner, state) => LazyField<GetRightOperandAction, IScriptFunction>(ref owner.m_right)},
+            {ModifyFunction.Name, (owner, state) => LazyField<ModifyFunction, IScriptFunction>(ref owner.m_modify)}
+        };
+
+        private IScriptFunction m_invoker;
+        private IScriptFunction m_left;
+        private IScriptFunction m_right;
+        private IScriptFunction m_operator;
+        private IScriptFunction m_modify;
 
         private ScriptBinaryExpressionFactory(SerializationInfo info, StreamingContext context)
             : base(info, context)
@@ -138,33 +153,20 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
                 m_right = null;
         }
 
-        #region Runtime Slots
-
-        IRuntimeSlot IBinaryExpressionFactorySlots.Invoker
+        public override ICollection<string> Slots
         {
-            get { return CacheConst<CreateInvokerAction>(ref m_invoker); }
+            get { return StaticSlots.Keys; }
         }
 
-        IRuntimeSlot IBinaryExpressionFactorySlots.Left
+        protected override IScriptObject GetSlotMetadata(string slotName, InterpreterState state)
         {
-            get { return CacheConst<GetLeftOperandAction>(ref m_left); }
+            return StaticSlots.GetSlotMetadata(this, slotName, state);
         }
 
-        IRuntimeSlot IBinaryExpressionFactorySlots.Right
+        public override IScriptObject this[string slotName, InterpreterState state]
         {
-            get { return CacheConst<GetRightOperandAction>(ref m_right); }
+            get { return StaticSlots.GetValue(this, slotName, state); }
+            set { StaticSlots.SetValue(this, slotName, value, state); }
         }
-
-        IRuntimeSlot IBinaryExpressionFactorySlots.Operator
-        {
-            get { return CacheConst<GetOperatorAction>(ref m_operator); }
-        }
-
-        protected override IRuntimeSlot Modify
-        {
-            get { return CacheConst<ModifyAction>(ref m_modify); }
-        }
-
-        #endregion
     }
 }

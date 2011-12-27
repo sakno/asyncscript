@@ -10,7 +10,7 @@ namespace DynamicScript.Runtime.Environment
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
 
     [ComVisible(false)]
-    sealed class ScriptMethod : ScriptActionBase, IScriptMethod
+    sealed class ScriptMethod : ScriptFunctionBase, IScriptMethod
     {
         #region Nested Types
 
@@ -40,10 +40,10 @@ namespace DynamicScript.Runtime.Environment
         private sealed class ScriptDelegate
         {
             public readonly InterpreterState State;
-            public readonly IScriptAction Implementation;
+            public readonly IScriptFunction Implementation;
             private readonly Type DelegateType;
 
-            public ScriptDelegate(Type delegateType, IScriptAction action, InterpreterState state)
+            public ScriptDelegate(Type delegateType, IScriptFunction action, InterpreterState state)
             {
                 if (delegateType == null) throw new ArgumentNullException("delegateType");
                 if (action == null) throw new ArgumentNullException("action");
@@ -149,27 +149,27 @@ namespace DynamicScript.Runtime.Environment
             get { return IsVoid(base.This) ? null : ((INativeObject)base.This).Instance; }
         }
 
-        private static ScriptActionContract.Parameter CreateParameter(ParameterInfo pi)
+        private static ScriptFunctionContract.Parameter CreateParameter(ParameterInfo pi)
         {
-            return new ScriptActionContract.Parameter(pi.Name, ScriptClass.GetContractBinding(pi.ParameterType));
+            return new ScriptFunctionContract.Parameter(pi.Name, ScriptClass.GetContractBinding(pi.ParameterType));
         }
 
-        private static ScriptActionContract GetContractBinding(ParameterInfo[] parameters, Type returnType)
+        private static ScriptFunctionContract GetContractBinding(ParameterInfo[] parameters, Type returnType)
         {
-            return new ScriptActionContract(Enumerable.Select(parameters, CreateParameter), ScriptClass.GetContractBinding(returnType));
+            return new ScriptFunctionContract(Enumerable.Select(parameters, CreateParameter), ScriptClass.GetContractBinding(returnType));
         }
 
-        private static ScriptActionContract.Parameter CreateParameter(Type genericParameter)
+        private static ScriptFunctionContract.Parameter CreateParameter(Type genericParameter)
         {
-            return new ScriptActionContract.Parameter(genericParameter.Name, new ScriptGeneric(genericParameter, null, false));
+            return new ScriptFunctionContract.Parameter(genericParameter.Name, new ScriptGeneric(genericParameter, null, false));
         }
 
-        private static ScriptActionContract GetContractBinding(Type[] genericParameters)
+        private static ScriptFunctionContract GetContractBinding(Type[] genericParameters)
         {
-            return new ScriptActionContract(Enumerable.Select(genericParameters, CreateParameter), ScriptSuperContract.Instance);
+            return new ScriptFunctionContract(Enumerable.Select(genericParameters, CreateParameter), ScriptSuperContract.Instance);
         }
 
-        public static ScriptActionContract GetContractBinding(MethodInfo mi)
+        public static ScriptFunctionContract GetContractBinding(MethodInfo mi)
         {
             return mi.IsGenericMethodDefinition ?
                 GetContractBinding(mi.GetGenericArguments()) :
@@ -259,7 +259,7 @@ namespace DynamicScript.Runtime.Environment
             return true;
         }
 
-        public static Delegate CreateDelegate(Type delegateType, IScriptAction implementation, InterpreterState state)
+        public static Delegate CreateDelegate(Type delegateType, IScriptFunction implementation, InterpreterState state)
         {
             if (implementation is IScriptMethod)
             {

@@ -12,13 +12,10 @@ namespace DynamicScript.Runtime.Environment.Threading
         [ComVisible(false)]
         private sealed class ScriptAwaitFunction : ScriptFunc<ScriptReal, IScriptObject>
         {
-            private const string FirstParamName = "timeout";
-            private const string SecondParamName = "Failure";
-
             private readonly IWorkItemState<TimeSpan, IScriptObject> m_state;
 
             public ScriptAwaitFunction(IWorkItemState<TimeSpan, IScriptObject> workItemState)
-                : base(FirstParamName, ScriptRealContract.Instance, SecondParamName, ScriptSuperContract.Instance, ScriptSuperContract.Instance)
+                : base(AwaitFunctionContract.FirstParamName, ScriptRealContract.Instance, AwaitFunctionContract.SecondParamName, ScriptSuperContract.Instance, ScriptSuperContract.Instance)
             {
                 m_state = workItemState;
             }
@@ -35,7 +32,7 @@ namespace DynamicScript.Runtime.Environment.Threading
         }
 
         [ComVisible(false)]
-        private sealed class ScriptEnqueueAction : ScriptFunc<IScriptAction>
+        private sealed class ScriptEnqueueAction : ScriptFunc<IScriptFunction>
         {
             public const string Name = EnqueueActionName;
             private const string FirstParamName = "workItem";
@@ -48,9 +45,9 @@ namespace DynamicScript.Runtime.Environment.Threading
                 m_queue = queue;
             }
 
-            protected override IScriptObject Invoke(IScriptAction workItem, InterpreterState state)
+            protected override IScriptObject Invoke(IScriptFunction workItem, InterpreterState state)
             {
-                return new ScriptAwaitFunction(m_queue.Enqueue(workItem.This, (t, s) => workItem.Invoke(new IScriptObject[0], s), state));
+                return new ScriptAwaitFunction(m_queue.Enqueue(workItem.This, (t, s) => workItem.Invoke(EmptyArray, s), state));
             }
         }
 

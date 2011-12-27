@@ -25,7 +25,7 @@ namespace DynamicScript.Modules.ClrTypes
             private const string FirstParamName = "name";
 
             public FromGacAction()
-                : base(new ScriptActionContract.Parameter(FirstParamName, ScriptStringContract.Instance), ScriptSuperContract.Instance)
+                : base(new ScriptFunctionContract.Parameter(FirstParamName, ScriptStringContract.Instance), ScriptSuperContract.Instance)
             {
             }
 
@@ -50,7 +50,7 @@ namespace DynamicScript.Modules.ClrTypes
             private const string FirstParamName = "fileName";
 
             public FromFileAction()
-                : base(new ScriptActionContract.Parameter(FirstParamName, ScriptStringContract.Instance), ScriptSuperContract.Instance)
+                : base(new ScriptFunctionContract.Parameter(FirstParamName, ScriptStringContract.Instance), ScriptSuperContract.Instance)
             {
             }
 
@@ -74,7 +74,7 @@ namespace DynamicScript.Modules.ClrTypes
             private const string FirstParamName = "t";
 
             public IsGenericDefinitionAction()
-                : base(new ScriptActionContract.Parameter(FirstParamName, ScriptMetaContract.Instance), ScriptBooleanContract.Instance)
+                : base(new ScriptFunctionContract.Parameter(FirstParamName, ScriptMetaContract.Instance), ScriptBooleanContract.Instance)
             {
             }
 
@@ -93,9 +93,9 @@ namespace DynamicScript.Modules.ClrTypes
             private const string ThirdParamName = "defctor";
 
             public MakeGenericAction()
-                : base(new ScriptActionContract.Parameter(FirstParamName, ScriptMetaContract.Instance),
-                new ScriptActionContract.Parameter(SecondParamName, new ScriptArrayContract(ScriptMetaContract.Instance)),
-                new ScriptActionContract.Parameter(ThirdParamName, ScriptBooleanContract.Instance),
+                : base(new ScriptFunctionContract.Parameter(FirstParamName, ScriptMetaContract.Instance),
+                new ScriptFunctionContract.Parameter(SecondParamName, new ScriptArrayContract(ScriptMetaContract.Instance)),
+                new ScriptFunctionContract.Parameter(ThirdParamName, ScriptBooleanContract.Instance),
                 ScriptMetaContract.Instance)
             {
             }

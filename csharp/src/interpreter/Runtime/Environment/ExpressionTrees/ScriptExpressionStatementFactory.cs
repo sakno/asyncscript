@@ -9,24 +9,26 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
     [ComVisible(false)]
     [Serializable]
-    sealed class ScriptExpressionStatementFactory : ScriptStatementFactory<ScriptCodeExpressionStatement, ScriptExpressionStatement>, IExpressionStatementFactorySlots
+    sealed class ScriptExpressionStatementFactory : ScriptStatementFactory<ScriptCodeExpressionStatement, ScriptExpressionStatement>
     {
         #region Nested Types
         [ComVisible(false)]
-        private sealed class ModifyAction : ModifyActionBase
+        private sealed class ModifyFunction : ModifyFunctionBase
         {
             private const string FirstParamName = "e";
 
-            public ModifyAction()
-                : base(Instance, new ScriptActionContract.Parameter(FirstParamName, ScriptExpressionFactory.Instance))
+            public ModifyFunction()
+                : base(Instance, new ScriptFunctionContract.Parameter(FirstParamName, ScriptExpressionFactory.Instance))
             {
             }
         }
 
         [ComVisible(false)]
-        private sealed class ExtractAction : CodeElementPartProvider<IScriptExpression<ScriptCodeExpression>>
+        private sealed class ExtractFunction : CodeElementPartProvider<IScriptExpression<ScriptCodeExpression>>
         {
-            public ExtractAction()
+            public const string Name = "extract";
+
+            public ExtractFunction()
                 : base(Instance, ScriptExpressionFactory.Instance)
             {
             }
@@ -40,8 +42,14 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
         public new const string Name = "expression";
 
-        private IRuntimeSlot m_modify;
-        private IRuntimeSlot m_extract;
+        private static readonly AggregatedSlotCollection<ScriptExpressionStatementFactory> StaticSlots = new AggregatedSlotCollection<ScriptExpressionStatementFactory>
+        {
+            {ModifyFunction.Name, (owner, state) => LazyField<ModifyFunction, IScriptFunction>(ref owner.m_modify)},
+            {ExtractFunction.Name, (owner, state) => LazyField<ExtractFunction, IScriptFunction>(ref owner.m_extract)}
+        };
+
+        private IScriptFunction m_modify;
+        private IScriptFunction m_extract;
 
         private ScriptExpressionStatementFactory(SerializationInfo info, StreamingContext context)
             : base(info, context)
@@ -66,19 +74,25 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             return args.Count == 1 ? CreateStatement(args[0]) : null;
         }
 
-        protected override IRuntimeSlot Modify
-        {
-            get { return CacheConst<ModifyAction>(ref m_modify); }
-        }
-
         public override void Clear()
         {
             m_modify = m_extract = null;
         }
 
-        IRuntimeSlot IExpressionStatementFactorySlots.Extract
+        public override ICollection<string> Slots
         {
-            get { return CacheConst<ExtractAction>(ref m_extract); }
+            get { return StaticSlots.Keys; }
+        }
+
+        public override IScriptObject this[string slotName, InterpreterState state]
+        {
+            get { return StaticSlots.GetValue(this, slotName, state); }
+            set { StaticSlots.SetValue(this, slotName, value, state); }
+        }
+
+        protected override IScriptObject GetSlotMetadata(string slotName, InterpreterState state)
+        {
+            return StaticSlots.GetSlotMetadata(this, slotName, state);
         }
     }
 }

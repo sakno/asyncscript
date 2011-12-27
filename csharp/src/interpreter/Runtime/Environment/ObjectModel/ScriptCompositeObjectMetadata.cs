@@ -12,16 +12,16 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         #region Nested Types
 
         [ComVisible(false)]
-        private sealed class GetSlotValueAction : ScriptGetItemAction<IScriptCompositeObject>
+        private sealed class GetSlotValueFunction : ScriptGetItemFunction<IScriptCompositeObject>
         {
-            public GetSlotValueAction(IScriptCompositeObject obj)
+            public GetSlotValueFunction(IScriptCompositeObject obj)
                 : base(ScriptSuperContract.Instance, new[] { ScriptStringContract.Instance }, obj)
             {
             }
 
             private static IScriptObject GetItem(IScriptCompositeObject obj, ScriptString name, InterpreterState state)
             {
-                return name != null ? obj[name, state].GetValue(state) : Void;
+                return name != null ? obj[name, state] : Void;
             }
 
             protected override IScriptObject GetItem(IScriptObject[] indicies, InterpreterState state)
@@ -30,16 +30,16 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             }
         }
 
-        private sealed class SetSlotValueAction : ScriptSetItemAction<IScriptCompositeObject>
+        private sealed class SetSlotValueFunction : ScriptSetItemAction<IScriptCompositeObject>
         {
-            public SetSlotValueAction(IScriptCompositeObject obj)
+            public SetSlotValueFunction(IScriptCompositeObject obj)
                 : base(ScriptSuperContract.Instance, new IScriptContract[] { ScriptStringContract.Instance, ScriptSuperContract.Instance }, obj)
             {
             }
 
             private static void SetItem(IScriptCompositeObject obj, ScriptString name, IScriptObject value, InterpreterState state)
             {
-                obj[name, state].SetValue(value, state);
+                obj[name, state] = value;
             }
 
             protected override void SetItem(IScriptObject value, IScriptObject[] indicies, InterpreterState state)
@@ -58,8 +58,8 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                 var names = new string[obj.Slots.Count];
                 obj.Slots.CopyTo(names, 0);
                 AddConstant(NamesSlot, ScriptArray.Create(names));
-                AddConstant(GetItemAction, new GetSlotValueAction(obj));
-                AddConstant(SetItemAction, new SetSlotValueAction(obj));
+                AddConstant(GetItemAction, new GetSlotValueFunction(obj));
+                AddConstant(SetItemAction, new SetSlotValueFunction(obj));
             }
         }
         #endregion

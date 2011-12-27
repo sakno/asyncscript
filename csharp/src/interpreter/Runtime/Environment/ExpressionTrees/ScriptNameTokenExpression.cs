@@ -36,7 +36,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         /// <returns></returns>
         public override IScriptObject Compile(InterpreterState state)
         {
-            return state.Global[Expression.VariableName, state].GetValue(state) ?? Void;
+            return state.Global[Expression.VariableName, state] ?? Void;
         }
 
         /// <summary>

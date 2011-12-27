@@ -62,7 +62,7 @@ namespace DynamicScript.Runtime.Debugging
         /// <summary>
         /// Gets caller of the currently executed action.
         /// </summary>
-        public static IScriptAction Caller
+        public static IScriptFunction Caller
         {
             get { return m_stack != null && m_stack.Last != null && m_stack.Last.Previous != null ? m_stack.Last.Previous.Value.Action : null; }
         }
@@ -96,7 +96,7 @@ namespace DynamicScript.Runtime.Debugging
             m_stack.AddLast(frame);
         }
 
-        internal static void Push(IScriptAction action, InterpreterState state)
+        internal static void Push(IScriptFunction action, InterpreterState state)
         {
             if (Monitoring.IsEnabled)
                 Push(new CallStackFrame(action, state));

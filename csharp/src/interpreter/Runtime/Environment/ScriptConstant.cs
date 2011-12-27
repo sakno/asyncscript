@@ -70,7 +70,7 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="value">The object to be stored.</param>
         /// <param name="state">Internal interpreter state.</param>
         /// <exception cref="ConstantCannotBeChangedException">The value of the constant cannot be changed.</exception>
-        public override void SetValue(IScriptObject value, InterpreterState state)
+        public override IScriptObject SetValue(IScriptObject value, InterpreterState state)
         {
             switch (state.Context)
             {
@@ -78,12 +78,12 @@ namespace DynamicScript.Runtime.Environment
                 default:
                     throw new ConstantCannotBeChangedException(state);
                 case InterpretationContext.Unchecked:
-                    return;
+                    return GetValue(state);
             }
         }
 
         #region Runtime Helpers
-        private static IRuntimeSlot IntrnlBindToConstant(IRuntimeSlot slot, string constantName, object value, object contractBinding, InterpreterState state)
+        private static IStaticRuntimeSlot IntrnlBindToConstant(IStaticRuntimeSlot slot, string constantName, object value, object contractBinding, InterpreterState state)
         {
             if (slot == null)
             {
@@ -105,7 +105,7 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="state"></param>
         /// <returns></returns>
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public static IRuntimeSlot RtlBindToConstant(IRuntimeSlot slot, string constantName, IScriptObject value, IScriptContract contractBinding, InterpreterState state)
+        public static IStaticRuntimeSlot RtlBindToConstant(IStaticRuntimeSlot slot, string constantName, IScriptObject value, IScriptContract contractBinding, InterpreterState state)
         {
             return IntrnlBindToConstant(slot, constantName, value, contractBinding, state);
         }
@@ -120,7 +120,7 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="state">Internal interpreter state.</param>
         /// <returns>The runtime bounded constant.</returns>
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public static IRuntimeSlot RtlBindToConstant(IRuntimeSlot slot, string constantName, ScriptValueProvider value, ScriptContractProvider contractBinding, InterpreterState state)
+        public static IStaticRuntimeSlot RtlBindToConstant(IStaticRuntimeSlot slot, string constantName, ScriptValueProvider value, ScriptContractProvider contractBinding, InterpreterState state)
         {
             return IntrnlBindToConstant(slot, constantName, value, contractBinding, state);
         }
@@ -135,7 +135,7 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="state">Internal interpreter state.</param>
         /// <returns>The runtime bounded constant.</returns>
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public static IRuntimeSlot RtlBindToConstant(IRuntimeSlot slot, string constantName, ScriptValueProvider value, IScriptContract contractBinding, InterpreterState state)
+        public static IStaticRuntimeSlot RtlBindToConstant(IStaticRuntimeSlot slot, string constantName, ScriptValueProvider value, IScriptContract contractBinding, InterpreterState state)
         {
             return IntrnlBindToConstant(slot, constantName, value, contractBinding, state);
         }
@@ -150,7 +150,7 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="state">Internal interpreter state.</param>
         /// <returns>The runtime bounded constant.</returns>
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public static IRuntimeSlot RtlBindToConstant(IRuntimeSlot slot, string constantName, IScriptObject value, ScriptContractProvider contractBinding, InterpreterState state)
+        public static IStaticRuntimeSlot RtlBindToConstant(IStaticRuntimeSlot slot, string constantName, IScriptObject value, ScriptContractProvider contractBinding, InterpreterState state)
         {
             return IntrnlBindToConstant(slot, constantName, value, contractBinding, state);
         }
@@ -163,13 +163,13 @@ namespace DynamicScript.Runtime.Environment
             {
                 case true:
                     rvalue = contractBinding is Expression<ScriptContractProvider> ?
-                        LinqHelpers.BodyOf<IRuntimeSlot, string, ScriptValueProvider, ScriptContractProvider, InterpreterState, IRuntimeSlot, MethodCallExpression>((c, n, v, t, s) => RtlBindToConstant(c, n, v, t, s)) :
-                        LinqHelpers.BodyOf<IRuntimeSlot, string, ScriptValueProvider, IScriptContract, InterpreterState, IRuntimeSlot, MethodCallExpression>((c, n, v, t, s) => RtlBindToConstant(c, n, v, t, s));
+                        LinqHelpers.BodyOf<IStaticRuntimeSlot, string, ScriptValueProvider, ScriptContractProvider, InterpreterState, IStaticRuntimeSlot, MethodCallExpression>((c, n, v, t, s) => RtlBindToConstant(c, n, v, t, s)) :
+                        LinqHelpers.BodyOf<IStaticRuntimeSlot, string, ScriptValueProvider, IScriptContract, InterpreterState, IStaticRuntimeSlot, MethodCallExpression>((c, n, v, t, s) => RtlBindToConstant(c, n, v, t, s));
                     break;
                 default:
                     rvalue = contractBinding is Expression<ScriptContractProvider> ?
-                        LinqHelpers.BodyOf<IRuntimeSlot, string, IScriptObject, ScriptContractProvider, InterpreterState, IRuntimeSlot, MethodCallExpression>((c, n, v, t, s) => RtlBindToConstant(c, n, v, t, s)) :
-                        LinqHelpers.BodyOf<IRuntimeSlot, string, IScriptObject, IScriptContract, InterpreterState, IRuntimeSlot, MethodCallExpression>((c, n, v, t, s) => RtlBindToConstant(c, n, v, t, s));
+                        LinqHelpers.BodyOf<IStaticRuntimeSlot, string, IScriptObject, ScriptContractProvider, InterpreterState, IStaticRuntimeSlot, MethodCallExpression>((c, n, v, t, s) => RtlBindToConstant(c, n, v, t, s)) :
+                        LinqHelpers.BodyOf<IStaticRuntimeSlot, string, IScriptObject, IScriptContract, InterpreterState, IStaticRuntimeSlot, MethodCallExpression>((c, n, v, t, s) => RtlBindToConstant(c, n, v, t, s));
                     break;
             }
             rvalue = rvalue.Update(null, new Expression[] { constantRef, LinqHelpers.Constant(constantName), value, contractBinding, state });

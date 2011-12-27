@@ -253,7 +253,7 @@ namespace DynamicScript.Compiler.Ast
                         { expression = lexer.MoveNext() ? ParseQuoteExpression(lexer, terminator) : ScriptCodeCurrentQuoteExpression.Instance; continue; }
                         break;
                     case Punctuation.HashCodes.lxmLeftSquareBracket://parse indexer or array type or array
-                        if (expression == null && InterpreterServices.HighestPriority > priority)
+                        if (expression == null || InterpreterServices.HighestPriority > priority)
                             ParseIndexer(lexer, ref expression);
                         else return expression;
                         break;
@@ -276,7 +276,12 @@ namespace DynamicScript.Compiler.Ast
                     case Keyword.HashCodes.lxmIs:
                     case Keyword.HashCodes.lxmIn:
                     case Keyword.HashCodes.lxmTo:
-                        if (ParseOperator(lexer, priority, ref expression, terminator)) continue;
+                        switch (ParseOperator(lexer, priority, ref expression, terminator))
+                        {
+                            case 0: break;
+                            case 1: continue;
+                            default: return expression;
+                        }
                         break;
                     default:
                         if (lexer.Current.Value is NameToken && expression == null)
@@ -292,7 +297,12 @@ namespace DynamicScript.Compiler.Ast
                         else if (lexer.Current.Value is PlaceholderID && expression == null)
                             expression = new ScriptCodePlaceholderExpression((PlaceholderID)lexer.Current.Value);
                         else if (lexer.Current.Value is Operator)//Parse operator
-                            if(ParseOperator(lexer, priority, ref expression, terminator))continue;
+                            switch (ParseOperator(lexer, priority, ref expression, terminator))
+                            {
+                                case 0: break;
+                                case 1: continue;
+                                default: return expression;
+                            }
                         else throw CodeAnalysisException.InvalidExpressionTerm(lexer.Current); //Invalid expression term
                         break;
                 }
@@ -302,7 +312,7 @@ namespace DynamicScript.Compiler.Ast
             return expression;
         }
 
-        private static bool ParseOperator(IEnumerator<KeyValuePair<Lexeme.Position, Lexeme>> lexer, int priority, ref ScriptCodeExpression expression, Lexeme[] terminator)
+        private static byte ParseOperator(IEnumerator<KeyValuePair<Lexeme.Position, Lexeme>> lexer, int priority, ref ScriptCodeExpression expression, Lexeme[] terminator)
         {
             var @operator = GetOperator(lexer.Current.Value, expression != null);
             if (@operator != null)
@@ -312,20 +322,20 @@ namespace DynamicScript.Compiler.Ast
                         {
                             case true:
                                 expression = new ScriptCodeUnaryOperatorExpression((ScriptCodeUnaryOperatorType)@operator, expression);
-                                break;
+                                return 0;
                             default:
                                 lexer.MoveNext(true);   //expression expected
                                 expression = new ScriptCodeUnaryOperatorExpression((ScriptCodeUnaryOperatorType)@operator, Parse(lexer, GetPriority(@operator), terminator));
-                                return true;
+                                return 1;
                         }
                     else if (@operator is ScriptCodeBinaryOperatorType)//Handles binary operator
                     {
                         lexer.MoveNext(true); //Pass through operator token
                         var leftOperand = expression;
                         expression = new ScriptCodeBinaryOperatorExpression(leftOperand, (ScriptCodeBinaryOperatorType)@operator, Parse(lexer, GetPriority(@operator), terminator));
-                        return true;
+                        return 1;
                     }
-            return false;
+            return 2;
         }
 
         public static ScriptCodeLoopWithVariableExpression ParseForLoop(IEnumerator<KeyValuePair<Lexeme.Position, Lexeme>> lexer, params Lexeme[] terminator)

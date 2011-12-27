@@ -189,7 +189,7 @@ return try
 return try
 {
     fault 2;
-}else(var s: string) s else(var i: integer) i;
+} else(var s: string) s else(var i: integer) i;
 ");
             Assert.AreEqual(new ScriptInteger(2), r);
         }

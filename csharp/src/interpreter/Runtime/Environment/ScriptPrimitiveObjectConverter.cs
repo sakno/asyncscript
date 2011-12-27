@@ -4,24 +4,32 @@ using System.ComponentModel;
 namespace DynamicScript.Runtime.Environment
 {
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
-    using ScriptObjectConverter = Debugging.ScriptObjectConverter;
+    using ScriptObjectConverterAttribute = Debugging.ScriptObjectConverterAttribute;
     using Punctuation = Compiler.Punctuation;
 
     [ComVisible(false)]
-    sealed class ScriptPrimitiveObjectConverter : ScriptObjectConverter
+    [AttributeUsage(AttributeTargets.Class, Inherited = true, AllowMultiple = false)]
+    sealed class ScriptPrimitiveObjectConverterAttribute : ScriptObjectConverterAttribute
     {
-        public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
-        {
-            return Equals(destinationType, typeof(string));
-        }
 
-        protected override object ConvertTo(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, IScriptObject value, Type destinationType)
+        public override bool TryConvertTo(IScriptObject value, Type destinationType, InterpreterState state, out object result)
         {
-            switch (Equals(destinationType, typeof(string)))
+            switch (Type.GetTypeCode(destinationType))
             {
-                case true:
-                    return Convert.GetTypeCode(value) == TypeCode.String ? String.Concat(Punctuation.CQuote, Convert.ToString(value), Punctuation.CQuote) : Convert.ToString(value);
-                default: return null;
+                case TypeCode.Int64:
+                case TypeCode.Int32:
+                case TypeCode.Boolean:
+                case TypeCode.Single:
+                case TypeCode.Double:
+                case TypeCode.Int16:
+                    result =  value.ToString();
+                    return true;
+                case TypeCode.String:
+                    result = string.Concat(Punctuation.CQuote, value, Punctuation.CQuote);
+                    return true;
+                default:
+                    result = null;
+                    return false;
             }
         }
     }

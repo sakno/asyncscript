@@ -13,7 +13,7 @@ namespace DynamicScript.Runtime.Environment.Threading
     /// This class cannot be inherited.
     /// </summary>
     [ComVisible(false)]
-    public sealed class ScriptAcceptorContract : ScriptActionContract
+    public sealed class ScriptAcceptorContract : ScriptFunctionContract
     {
         /// <summary>
         /// Initializes a new acceptor contract.

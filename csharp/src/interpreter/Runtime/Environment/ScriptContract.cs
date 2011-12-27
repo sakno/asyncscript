@@ -10,14 +10,13 @@ namespace DynamicScript.Runtime.Environment
     using InterpretationContext = Compiler.Ast.InterpretationContext;
     using QCodeBinaryOperatorType = Compiler.Ast.ScriptCodeBinaryOperatorType;
     using QCodeUnaryOperatorType = Compiler.Ast.ScriptCodeUnaryOperatorType;
-    using TypeConverterAttribute = System.ComponentModel.TypeConverterAttribute;
     using Operator = Compiler.Operator;
 
     /// <summary>
     /// Represents DynamicScript contract at runtime.
     /// </summary>
     [ComVisible(false)]
-    [TypeConverter(typeof(ContractConverter))]
+    [ContractConverter]
     public abstract class ScriptContract : ScriptObject, IScriptContract
     {
         #region Nested Types
@@ -94,7 +93,7 @@ namespace DynamicScript.Runtime.Environment
                     else yield return c;
             }
 
-            public new IEnumerator<IScriptContract> GetEnumerator()
+            public IEnumerator<IScriptContract> GetEnumerator()
             {
                 return GetEnumerator(new[] { m_contract1, m_contract2 });
             }

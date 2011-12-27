@@ -9,7 +9,7 @@ namespace DynamicScript.Runtime
     /// Represents runtime slot that represents proxy object for another object.
     /// </summary>
     [ComVisible(false)]
-    public interface IRuntimeSlot : IScriptObject, IScopeVariable, IEquatable<IRuntimeSlot>
+    public interface IRuntimeSlot : IScopeVariable
     {
         /// <summary>
         /// Unwraps object from the container.
@@ -23,14 +23,8 @@ namespace DynamicScript.Runtime
         /// </summary>
         /// <param name="value">The value to store in the slot.</param>
         /// <param name="state">Internal interpreter state.</param>
-        void SetValue(IScriptObject value, InterpreterState state);
-
-        /// <summary>
-        /// Returns static contract binding for the slot that is not changed
-        /// during changing of the stored object.
-        /// </summary>
-        /// <returns>The static contract binding for the slot.</returns>
-        new IScriptContract GetContractBinding();
+        /// <returns>Script object stored to the slot.</returns>
+        IScriptObject SetValue(IScriptObject value, InterpreterState state);
 
         /// <summary>
         /// Gets semantic of the runtime slot.

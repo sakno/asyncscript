@@ -11,19 +11,25 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
     {
         #region Nested Types
         [ComVisible(false)]
-        private sealed class ModifyAction : ModifyActionBase
+        private sealed class ModifyFunction : ModifyFunctionBase
         {
             private const string SecondParamName = "value";
 
-            public ModifyAction()
-                : base(Instance, new ScriptActionContract.Parameter(SecondParamName, ScriptSuperContract.Instance))
+            public ModifyFunction()
+                : base(Instance, new ScriptFunctionContract.Parameter(SecondParamName, ScriptSuperContract.Instance))
             {
             }
         }
         #endregion
+
+        private static readonly AggregatedSlotCollection<ScriptConstantExpressionFactory> StaticSlots = new AggregatedSlotCollection<ScriptConstantExpressionFactory>
+        {
+             {ModifyFunction.Name, (owner, state) => LazyField<ModifyFunction, IScriptFunction>(ref owner.m_modify)}
+        };
+
         public new const string Name = "constant";
 
-        private IRuntimeSlot m_modify;
+        private IScriptFunction m_modify;
         
         private ScriptConstantExpressionFactory()
             : base(Name)
@@ -44,7 +50,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             switch (args.Count)
             {
                 case 1: return CreateExpression(args[0]);
-                default: throw new ActionArgumentsMistmatchException(state);
+                default: throw new FunctionArgumentsMistmatchException(state);
             }
         }
 
@@ -69,9 +75,20 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             m_modify = null;
         }
 
-        protected override IRuntimeSlot Modify
+        public override ICollection<string> Slots
         {
-            get { return CacheConst<ModifyAction>(ref m_modify); }
+            get { return StaticSlots.Keys; }
+        }
+
+        protected override IScriptObject GetSlotMetadata(string slotName, InterpreterState state)
+        {
+            return StaticSlots.GetSlotMetadata(this, slotName, state);
+        }
+
+        public override IScriptObject this[string slotName, InterpreterState state]
+        {
+            get { return StaticSlots.GetValue(this, slotName, state); }
+            set { StaticSlots.SetValue(this, slotName, value, state); }
         }
     }
 }

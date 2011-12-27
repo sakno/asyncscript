@@ -9,40 +9,40 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
     [ComVisible(false)]
     [Serializable]
-    sealed class ScriptWhileExpressionFactory : ScriptLoopExpressionFactory<ScriptCodeWhileLoopExpression, ScriptWhileExpression>, IWhileExpressionFactorySlots
+    sealed class ScriptWhileExpressionFactory : ScriptLoopExpressionFactory<ScriptCodeWhileLoopExpression, ScriptWhileExpression>
     {
         #region Nested Types
         [ComVisible(false)]
-        private sealed class ModifyAction : ModifyActionBase
+        private sealed class ModifyFunction : ModifyFunctionBase
         {
             private const string SecondParamName = "postEval";
             private const string ThirdParamName = "condition";
             private const string FourthParamName = "grouping";
             private const string FifthParamName = "body";
 
-            public ModifyAction()
+            public ModifyFunction()
                 : base(Instance,
-                new ScriptActionContract.Parameter(SecondParamName, ScriptBooleanContract.Instance),
-                new ScriptActionContract.Parameter(ThirdParamName, ScriptExpressionFactory.Instance),
-                new ScriptActionContract.Parameter(FourthParamName, ScriptSuperContract.Instance),
-                new ScriptActionContract.Parameter(FifthParamName, ScriptExpressionFactory.Instance))
+                new ScriptFunctionContract.Parameter(SecondParamName, ScriptBooleanContract.Instance),
+                new ScriptFunctionContract.Parameter(ThirdParamName, ScriptExpressionFactory.Instance),
+                new ScriptFunctionContract.Parameter(FourthParamName, ScriptSuperContract.Instance),
+                new ScriptFunctionContract.Parameter(FifthParamName, ScriptExpressionFactory.Instance))
             {
             }
         }
 
         [ComVisible(false)]
-        private sealed class GetGroupingAction : GetGroupingActionBase
+        private sealed class GetGroupingFunction : GetGroupingFunctionBase
         {
-            public GetGroupingAction()
+            public GetGroupingFunction()
                 : base(Instance)
             {
             }
         }
 
         [ComVisible(false)]
-        private sealed class GetBodyAction : GetBodyActionBase
+        private sealed class GetBodyFunction : GetBodyFunctionBase
         {
-            public GetBodyAction()
+            public GetBodyFunction()
                 : base(Instance)
             {
             }
@@ -51,6 +51,8 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         [ComVisible(false)]
         private sealed class HasPostEvaluationAction : CodeElementPartProvider<ScriptBoolean>
         {
+            public const string Name = "post_condition";
+
             public HasPostEvaluationAction()
                 : base(Instance, ScriptBooleanContract.Instance)
             {
@@ -63,9 +65,11 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         [ComVisible(false)]
-        private sealed class GetConditionAction : CodeElementPartProvider<IScriptExpression<ScriptCodeExpression>>
+        private sealed class GetConditionFunction : CodeElementPartProvider<IScriptExpression<ScriptCodeExpression>>
         {
-            public GetConditionAction()
+            public const string Name = "condition";
+
+            public GetConditionFunction()
                 : base(Instance, ScriptExpressionFactory.Instance)
             {
             }
@@ -77,13 +81,22 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
         #endregion
 
-        public new const string Name = "whileloop";
+        private static readonly AggregatedSlotCollection<ScriptWhileExpressionFactory> StaticSlots = new AggregatedSlotCollection<ScriptWhileExpressionFactory>
+        {
+             {ModifyFunction.Name, (owner, state) => LazyField<ModifyFunction, IScriptFunction>(ref owner.m_modify)},
+             {GetBodyFunction.Name, (owner, state) => LazyField<GetBodyFunction, IScriptFunction>(ref owner.m_getbody)},
+             {GetGroupingFunction.Name, (owner, state) => LazyField<GetGroupingFunction, IScriptFunction>(ref owner.m_grouping)},
+             {HasPostEvaluationAction.Name, (owner, state) => LazyField<HasPostEvaluationAction, IScriptFunction>(ref owner.m_posteval)},
+             {GetConditionFunction.Name, (owner, state) => LazyField<GetConditionFunction, IScriptFunction>(ref owner.m_condition)}
+        };
 
-        private IRuntimeSlot m_modify;
-        private IRuntimeSlot m_getbody;
-        private IRuntimeSlot m_grouping;
-        private IRuntimeSlot m_posteval;
-        private IRuntimeSlot m_condition;
+        public new const string Name = "`while";
+
+        private IScriptFunction m_modify;
+        private IScriptFunction m_getbody;
+        private IScriptFunction m_grouping;
+        private IScriptFunction m_posteval;
+        private IScriptFunction m_condition;
 
         private ScriptWhileExpressionFactory(SerializationInfo info, StreamingContext context)
             : base(info, context)
@@ -108,31 +121,6 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             return args.Count == 4 ? CreateExpression(args[0] as ScriptBoolean, args[1] as IScriptCodeElement<ScriptCodeExpression>, args[2], args[3]) : null;
         }
 
-        protected override IRuntimeSlot Modify
-        {
-            get { return CacheConst<ModifyAction>(ref m_modify); }
-        }
-
-        protected override IRuntimeSlot Grouping
-        {
-            get { return CacheConst<GetGroupingAction>(ref m_grouping); }
-        }
-
-        protected override IRuntimeSlot Body
-        {
-            get { return CacheConst<GetBodyAction>(ref m_getbody); }
-        }
-
-        IRuntimeSlot IWhileExpressionFactorySlots.Condition
-        {
-            get { return CacheConst<GetConditionAction>(ref m_condition); }
-        }
-
-        IRuntimeSlot IWhileExpressionFactorySlots.PostEval
-        {
-            get { return CacheConst<HasPostEvaluationAction>(ref m_posteval); }
-        }
-
         public override void Clear()
         {
             m_condition =
@@ -140,6 +128,22 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
                 m_grouping =
                 m_modify =
                 m_posteval = null;
+        }
+
+        public override ICollection<string> Slots
+        {
+            get { return StaticSlots.Keys; }
+        }
+
+        public override IScriptObject this[string slotName, InterpreterState state]
+        {
+            get { return StaticSlots.GetValue(this, slotName, state); }
+            set { StaticSlots.SetValue(this, slotName, value, state); }
+        }
+
+        protected override IScriptObject GetSlotMetadata(string slotName, InterpreterState state)
+        {
+            return StaticSlots.GetSlotMetadata(this, slotName, state);
         }
     }
 }

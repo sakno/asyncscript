@@ -8,7 +8,6 @@ namespace DynamicScript.Runtime.Environment
 {
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
     using InterpretationContext = Compiler.Ast.InterpretationContext;
-    using TypeConverterAttribute = System.ComponentModel.TypeConverterAttribute;
 
     /// <summary>
     /// Represents DynamicScript literal object.
@@ -16,9 +15,8 @@ namespace DynamicScript.Runtime.Environment
     /// <typeparam name="TContract">Type of the contract of the primitive object.</typeparam>
     /// <typeparam name="TValue">Type of the underlying value.</typeparam>
     [ComVisible(false)]
-    
     [Serializable]
-    [TypeConverter(typeof(ScriptPrimitiveObjectConverter))]
+    [ScriptPrimitiveObjectConverter]
     public abstract class ScriptPrimitiveObject<TContract, TValue> : ScriptObjectWithStaticBinding<TContract>, IEquatable<TValue>, ISerializable
         where TContract : ScriptBuiltinContract
     {
@@ -99,7 +97,7 @@ namespace DynamicScript.Runtime.Environment
             {
                 case 0: return this;
                 default: if (state.Context == InterpretationContext.Unchecked) return null;
-                    else throw new ActionArgumentsMistmatchException(state);
+                    else throw new FunctionArgumentsMistmatchException(state);
             }
         }
 

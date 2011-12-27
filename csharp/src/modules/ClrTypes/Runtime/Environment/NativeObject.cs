@@ -86,8 +86,8 @@ namespace DynamicScript.Runtime.Environment
                         ((IScriptConvertible)obj).TryConvert(out result);
                         break;
                 }
-            else if (typeof(Delegate).IsAssignableFrom(conversionType) && obj is IScriptAction)
-                result = ScriptMethod.CreateDelegate(conversionType, (IScriptAction)obj, state);
+            else if (typeof(Delegate).IsAssignableFrom(conversionType) && obj is IScriptFunction)
+                result = ScriptMethod.CreateDelegate(conversionType, (IScriptFunction)obj, state);
             else result = null;
             return result != null;
         }
@@ -315,19 +315,16 @@ namespace DynamicScript.Runtime.Environment
             else throw new UnsupportedOperationException(state);
         }
 
-        public IRuntimeSlot this[string slotName, InterpreterState state]
+        public IScriptObject this[string slotName, InterpreterState state]
         {
             get { return ContractBinding[slotName, MemberFlags, this, state]; }
+            set { ContractBinding[slotName, MemberFlags, this, state] = value; }
         }
 
-        IScriptObject IScriptObject.GetRuntimeDescriptor(string slotName, InterpreterState state)
+        public IScriptObject this[IList<IScriptObject> indicies, InterpreterState state]
         {
-            return ContractBinding.GetSlotMetadata(slotName, MemberFlags, state);
-        }
-
-        public IRuntimeSlot this[IScriptObject[] args, InterpreterState state]
-        {
-            get { return ContractBinding[args, MemberFlags, this, state]; }
+            get { return ContractBinding[indicies, this, state]; }
+            set { ContractBinding[indicies, this, state] = value; }
         }
 
         /// <summary>

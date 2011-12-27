@@ -32,7 +32,7 @@ namespace DynamicScript.Runtime.Environment
         }
 
         [ComVisible(false)]
-        private sealed class TargetSlot : RuntimeSlotBase, IEquatable<TargetSlot>
+        private sealed class TargetSlot : RuntimeSlotBase, IStaticRuntimeSlot
         {
             public const string Name = "target";
             private readonly WeakReferenceHolder m_reference;
@@ -49,12 +49,12 @@ namespace DynamicScript.Runtime.Environment
                 return m_reference.IsAlive ? m_reference.Target : m_contract.FromVoid(state);
             }
 
-            public override void SetValue(IScriptObject value, InterpreterState state)
+            public override IScriptObject SetValue(IScriptObject value, InterpreterState state)
             {
                 throw new ConstantCannotBeChangedException(state);
             }
 
-            public override IScriptContract ContractBinding
+            public IScriptContract ContractBinding
             {
                 get { return m_contract; }
             }
@@ -64,39 +64,20 @@ namespace DynamicScript.Runtime.Environment
                 get { return RuntimeSlotAttributes.Immutable; }
             }
 
-            protected override ICollection<string> Slots
-            {
-                get { return m_reference.Target.Slots; }
-            }
-
             public override bool DeleteValue()
             {
                 return false;
             }
 
-            public bool Equals(TargetSlot other)
+            public override bool HasValue
             {
-                return other != null && ReferenceEquals(m_reference, other.m_reference);
-            }
-
-            public override bool Equals(IRuntimeSlot other)
-            {
-                return Equals(other as TargetSlot);
-            }
-
-            public override bool Equals(object other)
-            {
-                return Equals(other as TargetSlot);
-            }
-
-            public override int GetHashCode()
-            {
-                return m_reference.GetHashCode();
+                get { return true; }
+                protected set { }
             }
         }
 
         [ComVisible(false)]
-        private sealed class IsAliveSlot : RuntimeSlotBase, IEquatable<IsAliveSlot>
+        private sealed class IsAliveSlot : RuntimeSlotBase, IStaticRuntimeSlot
         {
             public const string Name = "isalive";
             private readonly WeakReferenceHolder m_reference;
@@ -111,12 +92,12 @@ namespace DynamicScript.Runtime.Environment
                 return (ScriptBoolean)m_reference.IsAlive;
             }
 
-            public override void SetValue(IScriptObject value, InterpreterState state)
+            public override IScriptObject SetValue(IScriptObject value, InterpreterState state)
             {
                 throw new ConstantCannotBeChangedException(state);
             }
 
-            public override IScriptContract ContractBinding
+            public IScriptContract ContractBinding
             {
                 get { return ScriptBooleanContract.Instance; }
             }
@@ -126,34 +107,15 @@ namespace DynamicScript.Runtime.Environment
                 get { return RuntimeSlotAttributes.Immutable; }
             }
 
-            protected override ICollection<string> Slots
-            {
-                get { return m_reference.Target.Slots; }
-            }
-
             public override bool DeleteValue()
             {
                 return false;
             }
 
-            public bool Equals(IsAliveSlot other)
+            public override bool HasValue
             {
-                return other != null && ReferenceEquals(m_reference, other.m_reference);
-            }
-
-            public override bool Equals(IRuntimeSlot other)
-            {
-                return Equals(other as IsAliveSlot);
-            }
-
-            public override bool Equals(object other)
-            {
-                return Equals(other as IsAliveSlot);
-            }
-
-            public override int GetHashCode()
-            {
-                return m_reference.GetHashCode();
+                get { return true; }
+                protected set { }
             }
         }
 

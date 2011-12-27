@@ -10,7 +10,7 @@ namespace DynamicScript.Runtime
     /// Represents DynamicScript action.
     /// </summary>
     [ComVisible(false)]
-    public interface IScriptAction : IScriptObject
+    public interface IScriptFunction : IScriptObject
     {
         /// <summary>
         /// Gets action owner.
@@ -51,7 +51,7 @@ namespace DynamicScript.Runtime
         /// <param name="left">The left part of composition.</param>
         /// <param name="right">The right part of composition.</param>
         /// <returns><see langword="true"/> if this action is composite action; otherwise, <see langword="false"/>.</returns>
-        bool Decompose(out IScriptAction left, out IScriptAction right);
+        bool Decompose(out IScriptFunction left, out IScriptFunction right);
 
         /// <summary>
         /// Composes this action with the specified action.
@@ -59,13 +59,13 @@ namespace DynamicScript.Runtime
         /// <param name="right">The action to be composed with this action.</param>
         /// <param name="result">The composite action.</param>
         /// <returns><see langword="true"/> if composition is applicable; otherwise, <see langword="false"/>.</returns>
-        bool Compose(IScriptAction right, out IScriptAction result);
+        bool Compose(IScriptFunction right, out IScriptFunction result);
 
         /// <summary>
         /// Binds the current function to the specified object.
         /// </summary>
         /// <param name="this"></param>
         /// <returns></returns>
-        IScriptAction Bind(IScriptObject @this);
+        IScriptFunction Bind(IScriptObject @this);
     }
 }

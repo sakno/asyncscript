@@ -10,14 +10,14 @@ namespace DynamicScript.Runtime.Environment
     /// Represents parameterless script action without return value.
     /// </summary>
     [ComVisible(false)]
-    public abstract class ScriptAction : ScriptActionBase
+    public abstract class ScriptAction : ScriptFunctionBase
     {
         /// <summary>
         /// Initializes a new paremeterless action without return value.
         /// </summary>
         /// <param name="this"></param>
         protected ScriptAction(IScriptObject @this = null)
-            : base(new ScriptActionContract(Enumerable.Empty<ScriptActionContract.Parameter>()), @this)
+            : base(new ScriptFunctionContract(Enumerable.Empty<ScriptFunctionContract.Parameter>()), @this)
         {
         }
 
@@ -45,7 +45,7 @@ namespace DynamicScript.Runtime.Environment
     /// </summary>
     /// <typeparam name="T">Type of the first action parameter.</typeparam>
     [ComVisible(false)]
-    public abstract class ScriptAction<T> : ScriptActionBase
+    public abstract class ScriptAction<T> : ScriptFunctionBase
         where T: class, IScriptObject
     {
         /// <summary>
@@ -53,13 +53,13 @@ namespace DynamicScript.Runtime.Environment
         /// </summary>
         /// <param name="param0">The description of the first parameter.</param>
         /// <param name="this">An action owner.</param>
-        protected ScriptAction(ScriptActionContract.Parameter param0, IScriptObject @this = null)
-            : base(new ScriptActionContract(new[] { param0 }), @this)
+        protected ScriptAction(ScriptFunctionContract.Parameter param0, IScriptObject @this = null)
+            : base(new ScriptFunctionContract(new[] { param0 }), @this)
         {
         }
 
         internal ScriptAction(string firstParamName, IScriptContract firstParamType, IScriptObject @this = null)
-            : this(new ScriptActionContract.Parameter(firstParamName, firstParamType), @this)
+            : this(new ScriptFunctionContract.Parameter(firstParamName, firstParamType), @this)
         {
         }
 
@@ -89,7 +89,7 @@ namespace DynamicScript.Runtime.Environment
     /// <typeparam name="T1"></typeparam>
     /// <typeparam name="T2"></typeparam>
     [ComVisible(false)]
-    public abstract class ScriptAction<T1, T2> : ScriptActionBase
+    public abstract class ScriptAction<T1, T2> : ScriptFunctionBase
         where T1 : class, IScriptObject
         where T2 : class, IScriptObject
     {
@@ -99,13 +99,13 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="param0"></param>
         /// <param name="param1"></param>
         /// <param name="this"></param>
-        protected ScriptAction(ScriptActionContract.Parameter param0, ScriptActionContract.Parameter param1, IScriptObject @this = null)
-            : base(new ScriptActionContract(new[] { param0, param1 }), @this)
+        protected ScriptAction(ScriptFunctionContract.Parameter param0, ScriptFunctionContract.Parameter param1, IScriptObject @this = null)
+            : base(new ScriptFunctionContract(new[] { param0, param1 }), @this)
         {
         }
 
         internal ScriptAction(string firstParamName, IScriptContract firstParamType, string secondParamName, IScriptContract secondParamType, IScriptObject @this = null)
-            : this(new ScriptActionContract.Parameter(firstParamName, firstParamType), new ScriptActionContract.Parameter(secondParamName, secondParamType), @this)
+            : this(new ScriptFunctionContract.Parameter(firstParamName, firstParamType), new ScriptFunctionContract.Parameter(secondParamName, secondParamType), @this)
         {
         }
 
@@ -137,7 +137,7 @@ namespace DynamicScript.Runtime.Environment
     /// <typeparam name="T2"></typeparam>
     /// <typeparam name="T3"></typeparam>
     [ComVisible(false)]
-    public abstract class ScriptAction<T1, T2, T3> : ScriptActionBase
+    public abstract class ScriptAction<T1, T2, T3> : ScriptFunctionBase
         where T1 : class, IScriptObject
         where T2 : class, IScriptObject
         where T3 : class, IScriptObject
@@ -149,13 +149,13 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="param1"></param>
         /// <param name="param2"></param>
         /// <param name="this"></param>
-        protected ScriptAction(ScriptActionContract.Parameter param0, ScriptActionContract.Parameter param1, ScriptActionContract.Parameter param2, IScriptObject @this = null)
-            : base(new ScriptActionContract(new[] { param0, param1, param2 }), @this)
+        protected ScriptAction(ScriptFunctionContract.Parameter param0, ScriptFunctionContract.Parameter param1, ScriptFunctionContract.Parameter param2, IScriptObject @this = null)
+            : base(new ScriptFunctionContract(new[] { param0, param1, param2 }), @this)
         {
         }
 
         internal ScriptAction(string firstParamName, IScriptContract firstParamContract, string secondParamName, IScriptContract secondParamContract, string thirdParamName, IScriptContract thirdParamContract, IScriptObject @this = null)
-            : this(new ScriptActionContract.Parameter(firstParamName, firstParamContract), new ScriptActionContract.Parameter(secondParamName, secondParamContract), new ScriptActionContract.Parameter(thirdParamName, thirdParamContract), @this)
+            : this(new ScriptFunctionContract.Parameter(firstParamName, firstParamContract), new ScriptFunctionContract.Parameter(secondParamName, secondParamContract), new ScriptFunctionContract.Parameter(thirdParamName, thirdParamContract), @this)
         {
         }
 

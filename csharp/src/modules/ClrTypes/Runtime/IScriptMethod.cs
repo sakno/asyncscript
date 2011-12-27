@@ -9,7 +9,7 @@ namespace DynamicScript.Runtime
     /// Represents a script wrapper for the managed method.
     /// </summary>
     [ComVisible(false)]
-    public interface IScriptMethod : IScriptAction, IScriptConvertible
+    public interface IScriptMethod : IScriptFunction, IScriptConvertible
     {
         /// <summary>
         /// Gets an object for the instance method.

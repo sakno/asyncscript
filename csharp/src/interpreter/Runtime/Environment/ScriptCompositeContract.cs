@@ -37,67 +37,6 @@ namespace DynamicScript.Runtime.Environment
     {
         #region Nested Types
 
-        /// <summary>
-        /// Represents metadata of the slot.
-        /// </summary>
-        [ComVisible(false)]
-        [Serializable]
-        internal protected struct SlotMeta: IEquatable<SlotMeta>
-        {
-            private readonly bool m_constant;
-            private readonly IScriptContract m_contract;
-
-            /// <summary>
-            /// Initializes a new slot metadata.
-            /// </summary>
-            /// <param name="contract">The contract of the slot.</param>
-            /// <param name="constant">Specifies that the contract is immutable.</param>
-            public SlotMeta(IScriptContract contract, bool constant = false)
-            {
-                m_constant = constant;
-                m_contract = contract;
-            }
-
-            /// <summary>
-            /// Gets a value indicating that the slot is immutable.
-            /// </summary>
-            public bool IsConstant 
-            {
-                get { return m_constant; }
-            }
-
-            /// <summary>
-            /// Gets contract binding of the slot.
-            /// </summary>
-            public IScriptContract ContractBinding
-            {
-                get { return m_contract ?? Void; }
-            }
-
-            /// <summary>
-            /// Creates a new runtime slot using this metadata specification.
-            /// </summary>
-            /// <returns>A new runtime slot using this metadata specification.</returns>
-            public IRuntimeSlot CreateSlot()
-            {
-                switch (IsConstant)
-                {
-                    case true: return new ScriptConstant(Void, ContractBinding);
-                    default: return new ScriptVariable(Void, ContractBinding);
-                }
-            }
-
-            /// <summary>
-            /// Determines whether the current slot metadata is equal to another.
-            /// </summary>
-            /// <param name="other">Other slot metadata to compare.</param>
-            /// <returns><see langword="true"/> if the current slot metadata is equal to another; otherwise, <see langword="false"/>.</returns>
-            public bool Equals(SlotMeta other)
-            {
-                return IsConstant == other.IsConstant && ContractBinding.Equals(other.ContractBinding);
-            }
-        }
-
         [ComVisible(false)]
         [Serializable]
         private sealed class SlotAggregator : ParallelAggregator<KeyValuePair<string, SlotMeta>, long>
@@ -344,11 +283,20 @@ namespace DynamicScript.Runtime.Environment
             else throw new UnsupportedOperationException(state);
         }
 
-        internal virtual ScriptCompositeObject CreateCompositeObject(IList<IScriptObject> args, InterpreterState state)
+        /// <summary>
+        /// Creates a new runtime slot using this metadata specification.
+        /// </summary>
+        /// <returns>A new runtime slot using this metadata specification.</returns>
+        internal protected static IStaticRuntimeSlot CreateSlot(SlotMeta s)
+        {
+            return s.IsConstant.IfThenElse<IStaticRuntimeSlot>(new ScriptConstant(Void, s.ContractBinding), new ScriptVariable(Void, s.ContractBinding));
+        }
+
+        internal virtual ScriptCompositeObject CreateCompositeObject(ICollection<IScriptObject> args, InterpreterState state)
         {
             if (args.Count == 0)
-                return new ScriptCompositeObject(from s in m_slots select new KeyValuePair<string, IRuntimeSlot>(s.Key, s.Value.CreateSlot()));
-            else throw new ActionArgumentsMistmatchException(state);
+                return new ScriptCompositeObject(from s in m_slots select new KeyValuePair<string, IStaticRuntimeSlot>(s.Key, CreateSlot(s.Value)));
+            else throw new FunctionArgumentsMistmatchException(state);
         }
 
         /// <summary>
