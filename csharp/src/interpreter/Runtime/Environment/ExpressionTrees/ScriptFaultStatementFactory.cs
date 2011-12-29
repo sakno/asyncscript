@@ -66,7 +66,8 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         {
             {ModifyFunction.Name, (owner, state) => LazyField<ModifyFunction, IScriptFunction>(ref owner.m_modify)},
             {ExecuteFunction.Name, (owner, state) => LazyField<ExecuteFunction, IScriptFunction>(ref owner.m_exec)},
-            {GetErrorFunction.Name, (owner, state) => LazyField<GetErrorFunction, IScriptFunction>(ref owner.m_geterr)}
+            {GetErrorFunction.Name, (owner, state) => LazyField<GetErrorFunction, IScriptFunction>(ref owner.m_geterr)},
+            {FlowControlStatementArgumentsFunction<ScriptCodeFaultStatement>.Name, (owner, state) => {if(owner.m_args == null)owner.m_args = new FlowControlStatementArgumentsFunction<ScriptCodeFaultStatement>(owner); return owner.m_args;}}
         };
 
         /// <summary>
@@ -77,6 +78,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         private IScriptFunction m_exec;
         private IScriptFunction m_geterr;
         private IScriptFunction m_modify;
+        private IScriptFunction m_args;
 
         private ScriptFaultStatementFactory(SerializationInfo info, StreamingContext context)
             : base(info, context)

@@ -24,8 +24,8 @@ namespace DynamicScript.Runtime.Environment
         {
             private readonly IList<IScriptObject> m_elements;
 
-            public ReadListElementFunction(IScriptContract elementContract, IList<IScriptObject> elements)
-                : base(elementContract, new[] { ScriptIntegerContract.Instance })
+            public ReadListElementFunction(IScriptArrayContract elementContract, IList<IScriptObject> elements)
+                : base(elementContract.ElementContract, new[] { ScriptIntegerContract.Instance })
             {
                 m_elements = elements;
             }
@@ -50,8 +50,8 @@ namespace DynamicScript.Runtime.Environment
         {
             private readonly IList<IScriptObject> m_elements;
 
-            public WriteListElementFunction(IScriptContract elementContract, IList<IScriptObject> elements)
-                : base(elementContract, new[] { ScriptIntegerContract.Instance })
+            public WriteListElementFunction(IScriptArrayContract elementContract, IList<IScriptObject> elements)
+                : base(elementContract.ElementContract, new[] { ScriptIntegerContract.Instance })
             {
                 m_elements = elements;
             }

@@ -294,7 +294,12 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
         #endregion
 
-        private static AggregatedSlotCollection<ScriptExpressionFactory> StaticSlots = new AggregatedSlotCollection<ScriptExpressionFactory>
+        private static AggregatedSlotCollection<ScriptExpressionFactory> StaticSlots;
+
+        static ScriptExpressionFactory()
+        {
+            RegisterConverter<ExpressionConverter>();
+            StaticSlots = new AggregatedSlotCollection<ScriptExpressionFactory>
         {
             //Functions
             {ReduceFunction.Name, (owner, state) => LazyField<ReduceFunction, IScriptFunction>(ref owner.m_reduce) },
@@ -313,10 +318,10 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             {ScriptUnaryExpressionFactory.Name, (owner, state) => Unary},
             {ScriptAsyncExpressionFactory.Name, (owner, state) => Async},
             {ScriptCurrentActionExpressionFactory.Name, (owner, state) => CurrentAction},
-            {ScriptArrayExpressionFactory.Name, (owner, state) => ArrayContract},
+            {ScriptArrayContractExpressionFactory.Name, (owner, state) => ArrayContract},
             {ScriptThisExpressionFactory.Name, (owner, state) => ThisRef},
             {ScriptArrayExpressionFactory.Name, (owner, state) => ArrayExpr},
-            {ScriptForExpressionFactory.Name, (owner, state) => ForkExpr},
+            {ScriptForkExpressionFactory.Name, (owner, state) => ForkExpr},
             {ScriptConditionalExpressionFactory.Name, (owner, state) => Conditional},
             {ScriptInvocationExpressionFactory.Name, (owner, state) => Invocation},
             {ScriptIndexerExpressionFactory.Name, (owner, state) => Indexer},
@@ -332,10 +337,6 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             {ScriptExpandExpressionFactory.Name, (owner, state) => Expandq},
             {ScriptFunctionExpressionFactory.Name, (owner, state) => FunctionExpr}
         };
-
-        static ScriptExpressionFactory()
-        {
-            RegisterConverter<ExpressionConverter>();
         }
 
         /// <summary>

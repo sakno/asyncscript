@@ -103,7 +103,8 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             {CreateInvokerFunction.Name, (owner, state) => LazyField<CreateInvokerFunction, IScriptFunction>(ref owner.m_invoker)},
             {GetLeftOperandFunction.Name, (owner, state) => LazyField<GetLeftOperandFunction, IScriptFunction>(ref owner.m_left)},
             {GetRightOperandAction.Name, (owner, state) => LazyField<GetRightOperandAction, IScriptFunction>(ref owner.m_right)},
-            {ModifyFunction.Name, (owner, state) => LazyField<ModifyFunction, IScriptFunction>(ref owner.m_modify)}
+            {ModifyFunction.Name, (owner, state) => LazyField<ModifyFunction, IScriptFunction>(ref owner.m_modify)},
+            {GetOperatorAction.Name, (owner, state) => LazyField<GetOperatorAction, IScriptFunction>(ref owner.m_operator)}
         };
 
         private IScriptFunction m_invoker;

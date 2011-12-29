@@ -29,8 +29,8 @@ namespace DynamicScript.Runtime.Environment
         {
             private readonly Array m_elements;
 
-            public ReadArrayElementFunction(ScriptArrayContract contract, Array elements)
-                : base(contract.ElementContract, contract.Indicies)
+            public ReadArrayElementFunction(IScriptArrayContract contract, Array elements)
+                : base(contract.ElementContract, ScriptIntegerContract.Instance.AsArray(elements.Rank))
             {
                 m_elements = elements;
             }
@@ -51,8 +51,8 @@ namespace DynamicScript.Runtime.Environment
         {
             private readonly Array m_elements;
 
-            public WriteArrayElementFunction(ScriptArrayContract contract, Array elements)
-                : base(contract.ElementContract, contract.Indicies)
+            public WriteArrayElementFunction(IScriptArrayContract contract, Array elements)
+                : base(contract.ElementContract, ScriptIntegerContract.Instance.AsArray(elements.Rank))
             {
                 m_elements = elements;
             }

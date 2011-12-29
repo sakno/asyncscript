@@ -13,7 +13,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         [Test(Description = "@ expression test.")]
         public void CurrentActionExpressionContractTest()
         {
-            Assert.IsTrue(ReferenceEquals(ScriptExpressionFactory.CurrentAction, Run("return expr.ca;")));
+            Assert.IsTrue(ReferenceEquals(ScriptExpressionFactory.CurrentAction, Run("return expr.callee;")));
         }
 
         [Test(Description = "Expression equality test.")]
@@ -80,7 +80,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         [Test(Description = "Test for async expression contract.")]
         public void AsyncExpressionContractTest()
         {
-            Assert.IsTrue(ReferenceEquals(ScriptExpressionFactory.Async, Run("return expr.asyncdef;")));
+            Assert.IsTrue(ReferenceEquals(ScriptExpressionFactory.Async, Run("return expr.`async;")));
         }
     }
 }

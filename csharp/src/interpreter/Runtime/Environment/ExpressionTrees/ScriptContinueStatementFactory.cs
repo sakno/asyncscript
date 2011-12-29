@@ -66,5 +66,21 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         {
             m_args = m_modify = null;
         }
+
+        public override ICollection<string> Slots
+        {
+            get { return StaticSlots.Keys; }
+        }
+
+        protected override IScriptObject GetSlotMetadata(string slotName, InterpreterState state)
+        {
+            return StaticSlots.GetSlotMetadata(this, slotName, state);
+        }
+
+        public override IScriptObject this[string slotName, InterpreterState state]
+        {
+            get { return StaticSlots.GetValue(this, slotName, state); }
+            set { StaticSlots.SetValue(this, slotName, value, state); }
+        }
     }
 }

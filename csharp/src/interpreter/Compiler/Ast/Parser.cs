@@ -186,7 +186,7 @@ namespace DynamicScript.Compiler.Ast
                         if (expression == null) expression = ScriptCodeFinSetContractExpression.Instance;
                         break;
                     case Keyword.HashCodes.lxmExpr:
-                        if (expression == null) expression = ScriptCodeFinSetContractExpression.Instance;
+                        if (expression == null) expression = ScriptCodeExpressionContractExpression.Instance;
                         break;
                     case Keyword.HashCodes.lxmStmt:
                         if (expression == null) expression = ScriptCodeStatementContractExpression.Instance;
