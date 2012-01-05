@@ -35,6 +35,12 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             public readonly ScriptTypeCode TypeCode;
 
             /// <summary>
+            /// Represents function inlining information.
+            /// </summary>
+            /// <remarks>This field is used in conjuction with constant declaration.</remarks>
+            public FunctionCallInfo CallInfo;
+
+            /// <summary>
             /// Initializes a new local variable descriptor.
             /// </summary>
             /// <param name="expr"></param>
@@ -56,6 +62,8 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                 foreach (var a in attributes)
                     if (a is ScriptTypeCode)
                         TypeCode = (ScriptTypeCode)a;
+                    else if (a is FunctionCallInfo)
+                        CallInfo = (FunctionCallInfo)a;
             }
         }
 
@@ -457,9 +465,19 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// </summary>
         /// <param name="variableName"></param>
         /// <returns></returns>
-        public ScriptTypeCode GetType(string variableName)
+        public ScriptTypeCode GetTypeCode(string variableName)
         {
             return (ScriptTypeCode)GetAttribute(typeof(ScriptTypeCode), variableName);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="variableName"></param>
+        /// <returns></returns>
+        public FunctionCallInfo GetFunctionCallInfo(string variableName)
+        {
+            return (FunctionCallInfo)GetAttribute(typeof(FunctionCallInfo), variableName);
         }
 
         private object GetAttribute(Type attributeType, string variableName)
@@ -467,6 +485,8 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             var info = this[variableName];
             if (Equals(attributeType, typeof(ScriptTypeCode)))
                 return info != null ? info.TypeCode : ScriptTypeCode.Unknown;
+            else if (Equals(attributeType, typeof(FunctionCallInfo)))
+                return info != null ? info.CallInfo : null;
             else if (attributeType.IsValueType) return Activator.CreateInstance(attributeType);
             else return null;
         }
@@ -474,6 +494,30 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         T ILexicalScope.GetAttribute<T>(string variableName)
         {
             return (T)GetAttribute(typeof(T), variableName);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="variableName"></param>
+        /// <param name="fi"></param>
+        /// <returns></returns>
+        public bool SetAttribute(string variableName, FunctionCallInfo fi)
+        {
+            var info = this[variableName];
+            if (info != null)
+            {
+                info.CallInfo = fi;
+                return true;
+            }
+            else return false;
+        }
+
+        bool ILexicalScope.SetAttribute(string variableName, object attribute)
+        {
+            if (attribute is FunctionCallInfo)
+                return SetAttribute(variableName, (FunctionCallInfo)attribute);
+            else return false;
         }
 
         /// <summary>

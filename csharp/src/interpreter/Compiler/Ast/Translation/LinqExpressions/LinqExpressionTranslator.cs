@@ -302,7 +302,15 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             switch (context.Scope.DeclareVariable(variableDeclaration.Name, out variableRef, variableDeclaration.GetTypeCode()) && variableRef != null)
             {
                 case true:
-                    return variableDeclaration.IsConst ? BindToConstant(variableRef, variableDeclaration, context) : BindToVariable(variableRef, variableDeclaration, context);
+                    context.UserData.FunctionInfo = null;   //resets previously collected function data.
+                    if (variableDeclaration.IsConst)
+                    {
+                        var expr = BindToConstant(variableRef, variableDeclaration, context);
+                        //save function call info if it is available
+                        context.Scope.SetAttribute(variableDeclaration.Name, context.UserData.FunctionInfo);
+                        return expr;
+                    }
+                    else return BindToVariable(variableRef, variableDeclaration, context);
                 default:
                     //Duplicate variable declaration
                     throw CodeAnalysisException.DuplicateIdentifier(variableDeclaration.Name, variableDeclaration.LinePragma);
@@ -780,11 +788,42 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns>Translated invocation expression.</returns>
         protected override Expression Translate(ScriptCodeInvocationExpression invocation, TranslationContext context)
         {
-            var target = AsRightSide(Translate(invocation.Target, context), context);
-            var args = new List<Expression>(from a in invocation.ArgList
-                                            where a is ScriptCodeExpression
-                                            select AsRightSide(Translate(a, context), context));
-            return ScriptObject.BindInvoke(target, args, context.Scope.StateHolder);
+            //If invocation operation is performed on constant with stored function then inline calling
+            var inlining = default(FunctionCallInfo);
+            if (invocation.Target is ScriptCodeVariableReference && (inlining = context.Scope.GetFunctionCallInfo(((ScriptCodeVariableReference)invocation.Target).VariableName)) != null)
+            {
+                var arguments = new List<Expression>(inlining.Signature.ParamList.Count + 1) { context.Scope.StateHolder };
+                for (var i = 0; i < inlining.Signature.ParamList.Count; i++)
+                    arguments.Add(ScriptVariable.BindToVariable(LinqHelpers.Null<IStaticRuntimeSlot>(), null, Translate(invocation.ArgList[i], context), Translate(inlining.Signature.ParamList[i].ContractBinding, context), context.Scope.StateHolder));
+                var returnContract = default(Expression);
+                if (inlining.Signature.IsAsynchronous)  //synchronous call
+                {
+                    if (inlining.Signature.ParamList.Count != invocation.ArgList.Count + 1) return FunctionArgumentsMistmatchException.Throw(context.Scope.StateHolder);
+                    returnContract = LinqHelpers.BodyOf<Func<ScriptAwaitContract>, MemberExpression>(() => ScriptAwaitContract.Instance);
+                    //Add callback
+                    arguments.Add(ScriptVariable.BindToVariable(null,
+                        null,
+                        Translate(invocation.ArgList[inlining.Signature.ParamList.Count], context),
+                        ScriptAcceptorContract.New(Translate(inlining.Signature.ReturnType, context), context.Scope.StateHolder),
+                        context.Scope.StateHolder));
+                }
+                else
+                {
+                    if (inlining.Signature.ParamList.Count != invocation.ArgList.Count) return FunctionArgumentsMistmatchException.Throw(context.Scope.StateHolder);
+                    returnContract = Translate(inlining.Signature.ReturnType, context);
+                    //iterate through each argument and bind it to the parameter type
+                }
+                return ScriptFunctionBase.BindResult(returnContract, Expression.Invoke(inlining.FunctionImpl, arguments), context.Scope.StateHolder);
+            }
+            else
+            {
+                //Late-bound execution of the function.
+                var target = AsRightSide(Translate(invocation.Target, context), context);
+                var args = new List<Expression>(from a in invocation.ArgList
+                                                where a is ScriptCodeExpression
+                                                select AsRightSide(Translate(a, context), context));
+                return ScriptObject.BindInvoke(target, args, context.Scope.StateHolder);
+            }
         }
 
         #region .NET-to-DynamicScript Compile-time Conversion Routines
@@ -1071,6 +1110,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns>LINQ expression that references the current action.</returns>
         protected override Expression Translate(ScriptCodeCurrentActionExpression currentAction, TranslationContext context)
         {
+            context.UserData.Recursive = true;
             var actionScope = context.Lookup<FunctionScope>();
             return actionScope != null ? actionScope.CurrentAction : ScriptObject.MakeVoid();
         }
@@ -1256,6 +1296,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         protected override Expression Translate(ScriptCodeActionImplementationExpression action, TranslationContext context)
         {
             var currentScope = context.Push(parent => FunctionScope.Create(parent, action)); //Create a new lexical scope for action
+            context.UserData.Recursive = false; //this indicator determines whether the function uses @ or @@ objects in its body
             //Declare all parameters
             var parameters = PopulateActionParameters(action, currentScope);
             //The first parameter of the lambda is invocation context.
@@ -1277,6 +1318,8 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                 actionExpr = Expression.Lambda(Expression.Block(LexicalScope.GetExpressions(currentScope.Locals.Values), body), false, parameters);
             }
             context.Pop();  //Leave action scope
+            //If function is recursive then inlining is not possible
+            context.UserData.FunctionInfo = context.UserData.Recursive ? null : new FunctionCallInfo(actionExpr, action.Signature); //save function call info
             return action.IsAsynchronous ?
                 ScriptLazyFunction.New(
                 Translate(action.Signature, context),   //action contract
@@ -1570,7 +1613,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns></returns>
         protected override ScriptTypeCode GetType(string variableName, TranslationContext context)
         {
-            return context.Scope.GetType(variableName);
+            return context.Scope.GetTypeCode(variableName);
         }
     }
 }

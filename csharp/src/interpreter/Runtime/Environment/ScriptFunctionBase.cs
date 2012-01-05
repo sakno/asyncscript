@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
 using System.IO;
+using System.Linq.Expressions;
 
 namespace DynamicScript.Runtime.Environment
 {
@@ -650,13 +651,27 @@ namespace DynamicScript.Runtime.Environment
             return CanInvoke(args, null);
         }
 
-        private static IScriptObject BindResult(IScriptContract returnContract, IScriptObject returnValue, InterpreterState state)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="returnContract"></param>
+        /// <param name="returnValue"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public static IScriptObject BindResult(IScriptContract returnContract, IScriptObject returnValue, InterpreterState state)
         {
             switch (returnContract.IsCompatible(returnValue))
             {
                 case true: return returnContract.Convert(Conversion.Implicit, returnValue, state);
                 default: throw new ContractBindingException(returnValue, returnContract, state);
             }
+        }
+
+        internal static MethodCallExpression BindResult(Expression returnContract, Expression returnValue, ParameterExpression state)
+        {
+            returnContract = ScriptContract.RequiresContract(returnContract);
+            return LinqHelpers.BodyOf<IScriptContract, IScriptObject, InterpreterState, IScriptObject, MethodCallExpression>((c, v, s) => BindResult(c, v, s)).
+                Update(null, new Expression[] { returnContract, returnValue, state });
         }
 
         /// <summary>

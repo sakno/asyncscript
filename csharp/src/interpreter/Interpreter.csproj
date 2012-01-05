@@ -136,6 +136,7 @@
     <Compile Include="Compiler\Ast\ISlot.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeWhileLoopExpression.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeGlobalObjectExpression.cs" />
+    <Compile Include="Compiler\Ast\Translation\LinqExpressions\FunctionCallInfo.cs" />
     <Compile Include="Compiler\Ast\Translation\LinqExpressions\GenericScope.cs" />
     <Compile Include="Compiler\Ast\Translation\LinqExpressions\SynchronizerScope.cs" />
     <Compile Include="Compiler\Macro.cs" />

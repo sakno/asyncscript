@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Linq.Expressions;
 
 namespace DynamicScript.Runtime.Environment
 {
@@ -18,6 +17,12 @@ namespace DynamicScript.Runtime.Environment
         internal FunctionArgumentsMistmatchException(InterpreterState state)
             : base(ErrorMessages.ArgumentMistmatch, InterpreterErrorCode.ArgumentMistmatch, state)
         {
+        }
+
+        internal static Expression Throw(ParameterExpression state)
+        {
+            var ctor = LinqHelpers.BodyOf<InterpreterState, FunctionArgumentsMistmatchException, NewExpression>(s => new FunctionArgumentsMistmatchException(s));
+            return Expression.Block(Expression.Throw(ctor.Update(new[] { state })), ScriptObject.Null);
         }
     }
 }

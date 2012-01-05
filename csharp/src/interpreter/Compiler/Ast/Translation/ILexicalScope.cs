@@ -26,6 +26,14 @@ namespace DynamicScript.Compiler.Ast.Translation
         T GetAttribute<T>(string variableName);
 
         /// <summary>
+        /// Assigns dynamic semantics attribute to the specifed attribute.
+        /// </summary>
+        /// <param name="variableName">The name of the variable.</param>
+        /// <param name="attribute">An instance of the attribute.</param>
+        /// <returns><see langword="true"/> if attribute is assigned successfully; otherwise, <see langword="false"/>.</returns>
+        bool SetAttribute(string variableName, object attribute);
+
+        /// <summary>
         /// Declares a new variable with the specified type.
         /// </summary>
         /// <typeparam name="T">Type of the variable holder.</typeparam>
