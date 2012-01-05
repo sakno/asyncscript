@@ -1413,6 +1413,14 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                             leftExpression = ScriptObject.BinaryOperation(Translate(expression.Left, context), ScriptCodeBinaryOperatorType.MetadataDiscovery, ConverterOf(((ScriptCodeVariableReference)expression.Right).VariableName), context.Scope.StateHolder);
                         else leftExpression = ScriptObject.BinaryOperation(Translate(expression.Left, context), ScriptCodeBinaryOperatorType.MetadataDiscovery, Translate(expression.Right, context), context.Scope.StateHolder);
                         return leftExpression;
+                case ScriptCodeBinaryOperatorType.ReferenceEquality:
+                        leftExpression = Translate(expression.Left, context);
+                        leftExpression = AsRightSide(leftExpression, context);
+                        return Expression.ReferenceEqual(leftExpression, AsRightSide(Translate(expression.Right, context), context));
+                case ScriptCodeBinaryOperatorType.ReferenceInequality:
+                     leftExpression = Translate(expression.Left, context);
+                        leftExpression = AsRightSide(leftExpression, context);
+                        return Expression.ReferenceNotEqual(leftExpression, AsRightSide(Translate(expression.Right, context), context));
                     default:
                         var ltype = ScriptTypeCode.Unknown;
                         var rtype = ScriptTypeCode.Unknown;
