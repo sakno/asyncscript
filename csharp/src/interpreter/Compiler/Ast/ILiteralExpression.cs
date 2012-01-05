@@ -8,7 +8,8 @@ namespace DynamicScript.Compiler.Ast
     /// Represents literal expression.
     /// </summary>
     [ComVisible(false)]
-    interface ILiteralExpression: ISyntaxTreeNode
+    interface ILiteralExpression<out TContract>: ISyntaxTreeNode, IStaticContractBinding<TContract>
+        where TContract: ScriptCodeExpression
     {
         /// <summary>
         /// Gets literal value.

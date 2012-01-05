@@ -16,7 +16,7 @@ namespace DynamicScript.Compiler.Ast
     [Serializable]
     public sealed class ScriptCodeBooleanExpression : ScriptCodePrimitiveExpression, 
         IStaticContractBinding<ScriptCodeBooleanContractExpression>,
-        ILiteralExpression
+        ILiteralExpression<ScriptCodeBooleanContractExpression>
     {
         /// <summary>
         /// Initializes a new boolean literal.
@@ -49,7 +49,7 @@ namespace DynamicScript.Compiler.Ast
             get { return ScriptCodeBooleanContractExpression.Instance; }
         }
 
-        IConvertible ILiteralExpression.Value
+        IConvertible ILiteralExpression<ScriptCodeBooleanContractExpression>.Value
         {
             get { return Value; }
         }

@@ -567,6 +567,12 @@ namespace DynamicScript.Runtime.Environment
             else throw new UnsupportedOperationException(state);
         }
 
+        ScriptTypeCode IScriptContract.GetTypeCode()
+        {
+            var attr = Attribute.GetCustomAttribute(GetType(), typeof(WellKnownContractInfoAttribute), true) as WellKnownContractInfoAttribute;
+            return attr != null ? attr.TypeCode : ScriptTypeCode.Unknown;
+        }
+
         internal static IScriptContract Unite(IEnumerable<IScriptContract> contracts, InterpreterState state)
         {
             return (IScriptContract)ScriptObject.Unite(contracts, state);

@@ -48,6 +48,17 @@ namespace DynamicScript.Runtime.Environment
             get { return typeof(TValue); }
         }
 
+        /// <summary>
+        /// Returns an expression that represents access to the underlying .NET value.
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        internal static Expression UnderlyingValue(Expression obj)
+        {
+            var field = LinqHelpers.BodyOf<ScriptPrimitiveObject<TContract, TValue>, TValue, MemberExpression>(v => v.Value);
+            return field.Update(obj);
+        }
+
         #region IEquatable<TValue> Members
 
         /// <summary>

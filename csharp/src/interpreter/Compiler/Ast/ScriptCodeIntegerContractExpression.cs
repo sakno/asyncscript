@@ -11,8 +11,13 @@ namespace DynamicScript.Compiler.Ast
     /// </summary>
     [Serializable]
     [ComVisible(false)]
-    public sealed class ScriptCodeIntegerContractExpression : ScriptCodeBuiltInContractExpression, IStaticContractBinding<ScriptCodeMetaContractExpression>
+    public sealed class ScriptCodeIntegerContractExpression : ScriptCodeBuiltInContractExpression, IStaticContractBinding<ScriptCodeMetaContractExpression>, IWellKnownContractInfo
     {
+        /// <summary>
+        /// Represents compile-time type exposed by this expression.
+        /// </summary>
+        public const ScriptTypeCode TypeCode = ScriptTypeCode.Integer;
+
         private ScriptCodeIntegerContractExpression()
             : base(Keyword.Integer)
         {
@@ -47,6 +52,11 @@ namespace DynamicScript.Compiler.Ast
         protected override ScriptCodeExpression Clone()
         {
             return Instance;
+        }
+
+        ScriptTypeCode IWellKnownContractInfo.GetTypeCode()
+        {
+            return TypeCode;
         }
     }
 }

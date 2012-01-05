@@ -195,7 +195,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             {
                 if (input is ScriptCodeBuiltInContractExpression)
                     result = new ScriptConstantExpression((ScriptCodeBuiltInContractExpression)input);
-                else if (input is ScriptCodePrimitiveExpression && input is ILiteralExpression)
+                else if (input is ScriptCodePrimitiveExpression && input is ILiteralExpression<ScriptCodeExpression>)
                     result = new ScriptConstantExpression((ScriptCodePrimitiveExpression)input);
                 else if (input is ScriptCodeBinaryOperatorExpression)
                     result = new ScriptBinaryExpression((ScriptCodeBinaryOperatorExpression)input);

@@ -12,8 +12,13 @@ namespace DynamicScript.Compiler.Ast
     
     [ComVisible(false)]
     [Serializable]
-    public sealed class ScriptCodeRealContractExpression: ScriptCodeBuiltInContractExpression, IStaticContractBinding<ScriptCodeMetaContractExpression>
+    public sealed class ScriptCodeRealContractExpression: ScriptCodeBuiltInContractExpression, IStaticContractBinding<ScriptCodeMetaContractExpression>, IWellKnownContractInfo
     {
+        /// <summary>
+        /// Represents compile-time type.
+        /// </summary>
+        public const ScriptTypeCode TypeCode = ScriptTypeCode.Real;
+
         private ScriptCodeRealContractExpression()
             : base(Keyword.Real)
         {
@@ -48,6 +53,11 @@ namespace DynamicScript.Compiler.Ast
         protected override ScriptCodeExpression Clone()
         {
             return Instance;
+        }
+
+        ScriptTypeCode IWellKnownContractInfo.GetTypeCode()
+        {
+            return TypeCode;
         }
     }
 }

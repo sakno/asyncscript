@@ -47,12 +47,12 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             get { return Enumerable.Empty<string>(); }
         }
 
-        public override ParameterExpression this[string variableName]
+        public override ScopeVariable this[string variableName]
         {
             get { return null; }
         }
 
-        protected override bool DeclareVariable<T>(string variableName, out ParameterExpression declaration)
+        protected override bool DeclareVariable<T>(string variableName, out ParameterExpression declaration, params object[] attributes)
         {
             declaration = null;
             return false;

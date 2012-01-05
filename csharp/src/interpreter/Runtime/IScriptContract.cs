@@ -34,6 +34,12 @@ namespace DynamicScript.Runtime
         /// <returns>Relationship between the current contract and <paramref name="contract"/>.</returns>
         ContractRelationshipType GetRelationship(IScriptContract contract);
 
+        /// <summary>
+        /// Obtains type identifier.
+        /// </summary>
+        /// <returns></returns>
+        ScriptTypeCode GetTypeCode();
+
 #if USE_REL_MATRIX
         /// <summary>
         /// Gets a value that uniquely identifies this contract.

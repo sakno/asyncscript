@@ -14,7 +14,7 @@ namespace DynamicScript.Compiler.Ast
     [Serializable]
     public sealed class ScriptCodeRealExpression: ScriptCodePrimitiveExpression, 
         IStaticContractBinding<ScriptCodeRealContractExpression>,
-        ILiteralExpression
+        ILiteralExpression<ScriptCodeRealContractExpression>
     {
         internal ScriptCodeRealExpression(RealLiteral token)
         {
@@ -66,7 +66,7 @@ namespace DynamicScript.Compiler.Ast
             get { return ScriptCodeRealContractExpression.Instance; }
         }
 
-        IConvertible ILiteralExpression.Value
+        IConvertible ILiteralExpression<ScriptCodeRealContractExpression>.Value
         {
             get { return Value; }
         }

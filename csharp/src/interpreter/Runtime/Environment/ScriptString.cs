@@ -465,5 +465,32 @@ namespace DynamicScript.Runtime.Environment
         {
             return StaticSlots.GetSlotMetadata(this, slotName, state);
         }
+
+        /// <summary>
+        /// Concatenates a collection of the specified objects.
+        /// </summary>
+        /// <param name="objects"></param>
+        /// <returns></returns>
+        public static ScriptString Concat(IEnumerable<IScriptObject> objects)
+        {
+            return string.Concat(objects);
+        }
+
+        /// <summary>
+        /// Concatenates two script objects as string.
+        /// </summary>
+        /// <param name="obj1"></param>
+        /// <param name="obj2"></param>
+        /// <returns></returns>
+        public static ScriptString Concat(IScriptObject obj1, IScriptObject obj2)
+        {
+            return string.Concat(obj1, obj2);
+        }
+
+        internal static MethodCallExpression Concat(Expression obj1, Expression obj2)
+        {
+            var call = LinqHelpers.BodyOf<IScriptObject, IScriptObject, ScriptString, MethodCallExpression>((o1, o2) => Concat(o1, o2));
+            return call.Update(null, new[] { obj1, obj2 });
+        }
     }
 }

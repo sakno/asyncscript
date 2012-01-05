@@ -15,7 +15,6 @@ namespace DynamicScript.Compiler.Ast
     [ComVisible(false)]
     public abstract class ScriptCodeExpression : CodeExpression, ISyntaxTreeNode, IEquatable<ScriptCodeExpression>
     {
-
         internal ScriptCodeExpression()
         {
         }
@@ -36,6 +35,26 @@ namespace DynamicScript.Compiler.Ast
         public virtual ScriptCodeExpression Reduce(InterpretationContext context)
         {
             return this;
+        }
+
+        /// <summary>
+        /// Gets type of this expression.
+        /// </summary>
+        public ScriptTypeCode GetTypeCode()
+        {
+             return GetTypeCode(this);
+        }
+
+        /// <summary>
+        /// Returns compile-time type of the specified expression.
+        /// </summary>
+        /// <param name="node"></param>
+        /// <returns></returns>
+        public static ScriptTypeCode GetTypeCode(ISyntaxTreeNode node)
+        {
+            if (node is IStaticContractBinding<ScriptCodeExpression>)
+                node = ((IStaticContractBinding<ScriptCodeExpression>)node).Contract;
+            return node is IWellKnownContractInfo ? ((IWellKnownContractInfo)node).GetTypeCode() : ScriptTypeCode.Unknown;
         }
 
         /// <summary>

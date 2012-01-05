@@ -16,14 +16,12 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
     using DynamicMetaObject = System.Dynamic.DynamicMetaObject;
     using MethodBuilder = System.Reflection.Emit.MethodBuilder;
     using DebugInfoGenerator = System.Runtime.CompilerServices.DebugInfoGenerator;
-    using Math = System.Math;
 
     /// <summary>
     /// Represents transformer that converts DynamicScript code document into the LINQ expression tree.
     /// This class cannot be inherited.
     /// </summary>
     [ComVisible(false)]
-    
     public sealed class LinqExpressionTranslator : Translator<Expression, LexicalScope>
     {
         private readonly SourceCodeInfo m_dinfo;
@@ -110,7 +108,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns></returns>
         protected override Expression Translate(ScriptCodeCurrentQuoteExpression currentQuote, TranslationContext context)
         {
-            var actionScope = context.Lookup<ActionScope>();
+            var actionScope = context.Lookup<FunctionScope>();
             return actionScope != null ? ScriptObject.MakeConverter(actionScope.Expression, context.Scope.StateHolder) : ScriptObject.MakeVoid();
         }
 
@@ -172,7 +170,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             Translate(complex, context, GotoExpressionKind.Goto, ref block);
             block.Add(Expression.Label(currentScope.EndOfScope, ScriptObject.MakeVoid()));
             context.Pop();
-            return Expression.Block(currentScope.Locals.Values, block);
+            return Expression.Block(LexicalScope.GetExpressions( currentScope.Locals.Values), block);
         }
 
         /// <summary>
@@ -224,15 +222,15 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns>LINQ expression that represents continuation.</returns>
         protected override Expression Translate(ScriptCodeContinueStatement continueStatement, TranslationContext context)
         {
-            var scope = context.Lookup<ActionScope, LoopScope, FinallyScope>();
-            if (scope is ActionScope)
+            var scope = context.Lookup<FunctionScope, LoopScope, FinallyScope>();
+            if (scope is FunctionScope)
             {
-                var action = (ActionScope)scope;
+                var action = (FunctionScope)scope;
                 var result = new List<Expression>(continueStatement.ArgList.Count + 1);
                 var i = 0;
                 foreach (var p in action.Parameters)
                     if (i < continueStatement.ArgList.Count)
-                        result.Add(RuntimeSlot.SetValue(p.Value, AsRightSide(Translate((ScriptCodeExpression)continueStatement.ArgList[i++], context), context), action.StateHolder));
+                        result.Add(RuntimeSlot.SetValue(p.Value.Expression, AsRightSide(Translate((ScriptCodeExpression)continueStatement.ArgList[i++], context), context), action.StateHolder));
                 result.Add(Expression.Continue(action.BeginOfScope));
                 return Expression.Block(result);
             }
@@ -301,7 +299,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         {
             var variableRef = default(ParameterExpression);
             //Declares a new variable in the current lexical scope.
-            switch (context.Scope.DeclareVariable(variableDeclaration.Name, out variableRef) && variableRef !=null)
+            switch (context.Scope.DeclareVariable(variableDeclaration.Name, out variableRef, variableDeclaration.GetTypeCode()) && variableRef != null)
             {
                 case true:
                     return variableDeclaration.IsConst ? BindToConstant(variableRef, variableDeclaration, context) : BindToVariable(variableRef, variableDeclaration, context);
@@ -455,7 +453,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         private Expression Translate(string variableName, TranslationContext context, out bool resolved)
         {
             //The first, try find out a variable through a scope.
-            Expression @var = context.Scope[variableName];
+            Expression @var = context.Scope.GetVariableExpression(variableName);
             return (resolved = @var != null) ? @var : ScriptObject.RuntimeSlotBase.Lookup(variableName, context.Scope.StateHolder);
         }
 
@@ -499,7 +497,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             implementation.Add(Expression.Assign(accumulator, ScriptIterator.LoopHelpers.CombineResult(currentScope.Result, accumulator, TranslateGrouping(grouping, context), currentScope.StateHolder)));
             //while(condition)
             Expression cond = RuntimeHelpers.BindIsTrue(Translate(condition, context), currentScope.StateHolder);
-            expressions.Add(Expression.Loop(Expression.IfThenElse(currentScope.EmitContinueFlag ? Expression.AndAlso(currentScope.ContinueFlag, cond) : cond, Expression.Block(currentScope.Locals.Values, implementation), Expression.Block(Expression.Assign(currentScope.Result, ScriptObject.Null), Expression.Goto(currentScope.EndOfScope))), currentScope.EndOfScope));
+            expressions.Add(Expression.Loop(Expression.IfThenElse(currentScope.EmitContinueFlag ? Expression.AndAlso(currentScope.ContinueFlag, cond) : cond, Expression.Block(LexicalScope.GetExpressions( currentScope.Locals.Values), implementation), Expression.Block(Expression.Assign(currentScope.Result, ScriptObject.Null), Expression.Goto(currentScope.EndOfScope))), currentScope.EndOfScope));
             //end of loop
             expressions.Add(accumulator);
             var loop = Expression.Block(currentScope.EmitContinueFlag ? new[] { accumulator, currentScope.Result, currentScope.ContinueFlag } : new[] { accumulator, currentScope.Result }, expressions);
@@ -528,7 +526,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             //while(condition)
             Expression cond = RuntimeHelpers.BindIsTrue(Translate(condition, context), currentScope.StateHolder);
             implementation.Add(Expression.IfThenElse(currentScope.EmitContinueFlag ? Expression.AndAlso(currentScope.ContinueFlag, cond) : cond, Expression.Empty(), Expression.Block(Expression.Assign(currentScope.Result, ScriptObject.Null), Expression.Goto(context.Scope.EndOfScope))));
-            expressions.Add(Expression.Loop(Expression.Block(currentScope.Locals.Values, implementation), currentScope.EndOfScope));
+            expressions.Add(Expression.Loop(Expression.Block(LexicalScope.GetExpressions( currentScope.Locals.Values), implementation), currentScope.EndOfScope));
             //end of loop
             expressions.Add(accumulator);
             var loop = Expression.Block(currentScope.EmitContinueFlag ? new[] { accumulator, currentScope.Result, currentScope.ContinueFlag } : new[] { accumulator, currentScope.Result }, expressions);
@@ -554,7 +552,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                 expressions.Add(Expression.Assign(currentScope.ContinueFlag, Expression.Constant(true)));   //continue = true;
             //while(condition)
             Expression cond = RuntimeHelpers.BindIsTrue(Translate(condition, context), currentScope.StateHolder);
-            expressions.Add(Expression.Loop(Expression.IfThenElse(currentScope.EmitContinueFlag ? Expression.AndAlso(currentScope.ContinueFlag, cond) : cond, Expression.Block(currentScope.Locals.Values, implementation), Expression.Goto(currentScope.EndOfScope)), currentScope.EndOfScope, currentScope.BeginOfScope));
+            expressions.Add(Expression.Loop(Expression.IfThenElse(currentScope.EmitContinueFlag ? Expression.AndAlso(currentScope.ContinueFlag, cond) : cond, Expression.Block(LexicalScope.GetExpressions( currentScope.Locals.Values), implementation), Expression.Goto(currentScope.EndOfScope)), currentScope.EndOfScope, currentScope.BeginOfScope));
             //end of loop
             expressions.Add(currentScope.Result);
             var loop = Expression.Block(currentScope.EmitContinueFlag ? new[] { currentScope.Result, currentScope.ContinueFlag } : new[] { currentScope.Result }, expressions);
@@ -578,7 +576,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             //while(condition)
             Expression cond = RuntimeHelpers.BindIsTrue(Translate(condition, context), currentScope.StateHolder);
             implementation.Add(Expression.IfThenElse(currentScope.EmitContinueFlag ? Expression.AndAlso(currentScope.ContinueFlag, cond) : cond, Expression.Empty(), Expression.Goto(context.Scope.EndOfScope)));
-            expressions.Add(Expression.Loop(Expression.Block(currentScope.Locals.Values, implementation), currentScope.EndOfScope));
+            expressions.Add(Expression.Loop(Expression.Block(LexicalScope.GetExpressions( currentScope.Locals.Values), implementation), currentScope.EndOfScope));
             //end of loop
             expressions.Add(currentScope.Result);
             var loop = Expression.Block(currentScope.EmitContinueFlag ? new[] { currentScope.Result, currentScope.ContinueFlag } : new[] { currentScope.Result }, expressions);
@@ -627,7 +625,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                 if (t.Filter != null) context.Scope.DeclareVariable(t.Filter.Name, out catchVar);
                 Translate(t.Handler.UnwrapStatements(), context, GotoExpressionKind.Goto, ref catchBlock);
                 var filter = catchVar != null ? (Expression)ScriptFault.BindCatch(errorReceiver, catchVar, context.Scope.StateHolder) : Expression.Constant(true);
-                result.Add(Expression.Block(currentScope.Locals.Values, catchVar != null ? BindToVariable(catchVar, t.Filter, context) : Expression.Empty(),
+                result.Add(Expression.Block(LexicalScope.GetExpressions( currentScope.Locals.Values), catchVar != null ? BindToVariable(catchVar, t.Filter, context) : Expression.Empty(),
                     Expression.IfThen(filter, Expression.Block(catchBlock))));
                 context.Pop();  //end of catch block
                 if (t.Filter == null) break;
@@ -662,7 +660,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             IList<Expression> body = new List<Expression>(10) { Expression.Label(context.Scope.BeginOfScope) };
             Translate(tryElseFinally.DangerousCode.UnwrapStatements(), context, GotoExpressionKind.Goto, ref body);
             body.Add(Expression.Label(context.Scope.EndOfScope, ScriptObject.MakeVoid()));
-            var @try = Expression.Block(currentScope.Locals.Values, body);
+            var @try = Expression.Block(LexicalScope.GetExpressions( currentScope.Locals.Values), body);
             context.Pop();
             //translates catch block
             var @catch = default(CatchBlock);
@@ -685,7 +683,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                     body = new List<Expression>(finallyBlock.Count + 1) { Expression.Label(context.Scope.BeginOfScope) };
                     Translate(finallyBlock, context, GotoExpressionKind.Goto, ref body);
                     body.Add(Expression.Label(context.Scope.EndOfScope, ScriptObject.MakeVoid()));
-                    var @finally = Expression.Block(currentScope.Locals.Values, body);
+                    var @finally = Expression.Block(LexicalScope.GetExpressions(currentScope.Locals.Values), body);
                     context.Pop();
                     return @catch != null ? Expression.TryCatchFinally(@try, @finally, @catch) : Expression.TryFinally(@try, @finally);
             }
@@ -885,7 +883,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                     currentScope.DeclareVariable(variable.Name, out loopVar);
                     break;
                 default:
-                    loopVar = currentScope[variable.Name];
+                    loopVar = currentScope.GetVariableExpression(variable.Name);
                     //loop variable cannot be resolved therefore abort translation
                     if (loopVar == null) { context.Pop(); return SlotNotFoundException.Bind(variable.Name, context.Scope.StateHolder); }
                     break;
@@ -908,7 +906,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             expressions.Add(Expression.Loop(Expression.IfThenElse(currentScope.EmitContinueFlag ? Expression.AndAlso(currentScope.ContinueFlag, cond) : cond, Expression.Block(implementation), Expression.Block(Expression.Assign(currentScope.Result, ScriptObject.Null), Expression.Goto(context.Scope.EndOfScope))), context.Scope.EndOfScope));
             //end of loop
             expressions.Add(accumulator);
-            var variables = new List<ParameterExpression>(currentScope.Locals.Values) { accumulator, currentScope.Result };
+            var variables = new List<ParameterExpression>(LexicalScope.GetExpressions(currentScope.Locals.Values)) { accumulator, currentScope.Result };
             if (currentScope.EmitContinueFlag) variables.Add(currentScope.ContinueFlag);
             var loop = Expression.Block(variables, expressions);
             context.Pop();
@@ -926,7 +924,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                     currentScope.DeclareVariable(variable.Name, out loopVar);
                     break;
                 default:
-                    loopVar = currentScope[variable.Name];
+                    loopVar = currentScope.GetVariableExpression(variable.Name);
                     //loop variable cannot be resolved therefore abort translation
                     if (loopVar == null) { context.Pop(); return SlotNotFoundException.Bind(variable.Name, context.Scope.StateHolder); }
                     break;
@@ -943,7 +941,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             Expression cond = RuntimeHelpers.BindIsTrue(Translate(condition, context), currentScope.StateHolder);
             expressions.Add(Expression.Loop(Expression.IfThenElse(currentScope.EmitContinueFlag ? Expression.AndAlso(currentScope.ContinueFlag, cond) : cond, Expression.Block( implementation), Expression.Goto(context.Scope.EndOfScope)), context.Scope.EndOfScope, context.Scope.BeginOfScope));
             expressions.Add(currentScope.Result);
-            var variables = new List<ParameterExpression>(currentScope.Locals.Values) { currentScope.Result };
+            var variables = new List<ParameterExpression>(LexicalScope.GetExpressions(currentScope.Locals.Values)) { currentScope.Result };
             if (currentScope.EmitContinueFlag) variables.Add(currentScope.ContinueFlag);
             var loop = Expression.Block(variables, expressions);
             context.Pop();
@@ -978,7 +976,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                     currentScope.DeclareVariable(variable.Name, out loopVar);
                     break;
                 default:
-                    loopVar = currentScope[variable.Name];
+                    loopVar = currentScope.GetVariableExpression(variable.Name);
                     //loop variable cannot be resolved therefore abort translation
                     if (loopVar == null) { context.Pop(); return SlotNotFoundException.Bind(variable.Name, context.Scope.StateHolder); }
                     break;
@@ -1004,7 +1002,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             expressions.Add(Expression.Loop(Expression.IfThenElse(currentScope.EmitContinueFlag ? Expression.AndAlso(currentScope.ContinueFlag, cond) : cond, Expression.Block(implementation), Expression.Block(Expression.Assign(currentScope.Result, ScriptObject.Null), Expression.Goto(context.Scope.EndOfScope))), context.Scope.EndOfScope));
             //end of loop
             expressions.Add(accumulator);
-            var variables = new List<ParameterExpression>(currentScope.Locals.Values) { accumulator, currentScope.Result, enumerator };
+            var variables = new List<ParameterExpression>(LexicalScope.GetExpressions( currentScope.Locals.Values)) { accumulator, currentScope.Result, enumerator };
             if (currentScope.EmitContinueFlag) variables.Add(currentScope.ContinueFlag);
             var loop = Expression.Block(variables, expressions);
             context.Pop();
@@ -1024,7 +1022,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                     currentScope.DeclareVariable(variable.Name, out loopVar);
                     break;
                 default:
-                    loopVar = currentScope[variable.Name];
+                    loopVar = currentScope.GetVariableExpression(variable.Name);
                     //loop variable cannot be resolved therefore abort translation
                     if (loopVar == null) { context.Pop(); return SlotNotFoundException.Bind(variable.Name, context.Scope.StateHolder); }
                     break;
@@ -1042,10 +1040,10 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                 expressions.Add(Expression.Assign(currentScope.ContinueFlag, Expression.Constant(true)));   //continue = true;
             //while(Has next)
             Expression cond = ScriptIterator.LoopHelpers.HasNext(enumerator, currentScope.StateHolder);
-            expressions.Add(Expression.Loop(Expression.IfThenElse(currentScope.EmitContinueFlag ? Expression.AndAlso(currentScope.ContinueFlag, cond) : cond, Expression.Block(implementation),  Expression.Goto(context.Scope.EndOfScope)), context.Scope.EndOfScope, context.Scope.BeginOfScope));
+            expressions.Add(Expression.Loop(Expression.IfThenElse(currentScope.EmitContinueFlag ? Expression.AndAlso(currentScope.ContinueFlag, cond) : cond, Expression.Block(implementation), Expression.Goto(context.Scope.EndOfScope)), context.Scope.EndOfScope, context.Scope.BeginOfScope));
             //end of loop
             expressions.Add(currentScope.Result);
-            var variables = new List<ParameterExpression>(currentScope.Locals.Values) { currentScope.Result, enumerator };
+            var variables = new List<ParameterExpression>(LexicalScope.GetExpressions(currentScope.Locals.Values)) { currentScope.Result, enumerator };
             if (currentScope.EmitContinueFlag) variables.Add(currentScope.ContinueFlag);
             var loop = Expression.Block(variables, expressions);
             context.Pop();
@@ -1073,7 +1071,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns>LINQ expression that references the current action.</returns>
         protected override Expression Translate(ScriptCodeCurrentActionExpression currentAction, TranslationContext context)
         {
-            var actionScope = context.Lookup<ActionScope>();
+            var actionScope = context.Lookup<FunctionScope>();
             return actionScope != null ? actionScope.CurrentAction : ScriptObject.MakeVoid();
         }
 
@@ -1095,7 +1093,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                     body.Label(currentScope.BeginOfScope, stateHolder);
                     Translate((ScriptCodeComplexExpression)interpretationContext.Body, context, GotoExpressionKind.Goto, ref body);
                     body.Label(currentScope.EndOfScope, ScriptObject.MakeVoid());
-                    result = Expression.Block(currentScope.Locals.Values, body);
+                    result = Expression.Block(LexicalScope.GetExpressions(currentScope.Locals.Values), body);
                     break;
                 default:
                     result = Expression.Block(stateHolder, Translate(interpretationContext.Body, context));
@@ -1159,7 +1157,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns></returns>
         protected override Expression Translate(ScriptCodeArgumentReferenceExpression argref, TranslationContext context)
         {
-            IComplexExpressionScope<ScriptCodeActionImplementationExpression> actionScope = context.Lookup<ActionScope>();
+            IComplexExpressionScope<ScriptCodeActionImplementationExpression> actionScope = context.Lookup<FunctionScope>();
             switch (actionScope != null)
             {
                 case true:
@@ -1257,7 +1255,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns>LINQ expression that represents action implementation.</returns>
         protected override Expression Translate(ScriptCodeActionImplementationExpression action, TranslationContext context)
         {
-            var currentScope = context.Push(parent => ActionScope.Create(parent, action)); //Create a new lexical scope for action
+            var currentScope = context.Push(parent => FunctionScope.Create(parent, action)); //Create a new lexical scope for action
             //Declare all parameters
             var parameters = PopulateActionParameters(action, currentScope);
             //The first parameter of the lambda is invocation context.
@@ -1276,7 +1274,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                 Translate(action.Body.UnwrapStatements(), context, GotoExpressionKind.Return, ref body);
                 body.Label(context.Scope.EndOfScope, ScriptObject.MakeVoid());   //marks end of the lexical scope.
                 //Local variables translated to the block variables
-                actionExpr = Expression.Lambda(Expression.Block(currentScope.Locals.Values, body), false, parameters);
+                actionExpr = Expression.Lambda(Expression.Block(LexicalScope.GetExpressions(currentScope.Locals.Values), body), false, parameters);
             }
             context.Pop();  //Leave action scope
             return action.IsAsynchronous ?
@@ -1292,14 +1290,14 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                 action.ToString());
         }
 
-        private static IList<ParameterExpression> PopulateActionParameters(ScriptCodeActionImplementationExpression action, ActionScope scope)
+        private static IList<ParameterExpression> PopulateActionParameters(ScriptCodeActionImplementationExpression action, FunctionScope scope)
         {
             foreach (var p in action.Signature.ParamList)
             {
                 var paramExpr = default(ParameterExpression);
                 scope.DeclareParameter(p.Name, out paramExpr);
             }
-            return new List<ParameterExpression>(scope.Parameters.Values);
+            return new List<ParameterExpression>(LexicalScope.GetExpressions( scope.Parameters.Values));
         }
 
         private SwitchCase Translate(ScriptCodeSelectionExpression.SelectionCase @case, TranslationContext context)
@@ -1358,6 +1356,19 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                 ScriptObject.MakeVoid();
         }
 
+        private static Expression BinaryOperation(Expression lvalue, ScriptTypeCode ltype, ScriptCodeBinaryOperatorType @operator, Expression rvalue, ScriptTypeCode rtype, ParameterExpression state)
+        {
+            lvalue = ScriptObject.AsRightSide(lvalue, state);
+            rvalue = ScriptObject.AsRightSide(rvalue, state);
+            switch (ltype)  //attempts to inline operation if it is possible
+            {
+                case ScriptTypeCode.Integer:  //the left operand is integer
+                    return ScriptInteger.Inline(lvalue, @operator, rvalue, rtype, state);
+                default:    //failure to inline
+                    return ScriptObject.BinaryOperation(lvalue, @operator, rvalue, state);
+            }
+        }
+
         /// <summary>
         /// Translates binary operator expression to LINQ expression.
         /// </summary>
@@ -1403,8 +1414,9 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                         else leftExpression = ScriptObject.BinaryOperation(Translate(expression.Left, context), ScriptCodeBinaryOperatorType.MetadataDiscovery, Translate(expression.Right, context), context.Scope.StateHolder);
                         return leftExpression;
                     default:
-                        leftExpression = Translate(expression.Left, context);
-                        return ScriptObject.BinaryOperation(leftExpression, expression.Operator, Translate(expression.Right, context), context.Scope.StateHolder);
+                        var ltype = ScriptTypeCode.Unknown;
+                        var rtype = ScriptTypeCode.Unknown;
+                        return BinaryOperation(Translate(expression.Left, context, out ltype), ltype, expression.Operator, Translate(expression.Right, context, out rtype), rtype, context.Scope.StateHolder);
                 }
         }
 
@@ -1488,12 +1500,12 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                     instructions.Label(scope.EndOfScope, ScriptObject.MakeVoid());
                     break;
                 default:
-                    instructions.Label(scope.EndOfScope, Expression.Block(ScriptCompositeObject.Bind(scope.Locals)));
+                    instructions.Label(scope.EndOfScope, Expression.Block(ScriptCompositeObject.Bind(scope.Locals.Select(l => new KeyValuePair<string, ParameterExpression>(l.Key, l.Value.Expression)))));
                     break;
             }
             //Combines all 
             return Expression.Lambda<ScriptInvoker>(
-                Expression.Block(scope.Locals.Values, instructions),
+                Expression.Block(LexicalScope.GetExpressions(scope.Locals.Values), instructions),
                 scope.StateHolder);
         }
 
@@ -1540,6 +1552,17 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         {
             var input = Expression.Parameter(typeof(ScriptObject));
             return Expression.Lambda<ScriptInvoker>(Expression.Block(e.Restore(), input), input);
+        }
+
+        /// <summary>
+        /// Obtains type of the variable.
+        /// </summary>
+        /// <param name="variableName"></param>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        protected override ScriptTypeCode GetType(string variableName, TranslationContext context)
+        {
+            return context.Scope.GetType(variableName);
         }
     }
 }

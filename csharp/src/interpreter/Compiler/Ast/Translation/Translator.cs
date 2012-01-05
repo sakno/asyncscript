@@ -13,10 +13,10 @@ namespace DynamicScript.Compiler.Ast.Translation
     /// such as semantic analyzer or compiler.
     /// </summary>
     /// <typeparam name="TScope">Type of the top-level lexical scope.</typeparam>
-    /// <typeparam name="TResult">Type of the analysis result.</typeparam>
+    /// <typeparam name="TCompileUnit">Type of the analysis result.</typeparam>
     [ComVisible(false)]
-    public abstract class Translator<TResult, TScope>: IEnumerator<TResult>
-        where TResult: class
+    public abstract class Translator<TCompileUnit, TScope>: IEnumerator<TCompileUnit>
+        where TCompileUnit: class
         where TScope: class, ILexicalScope
     {
         #region Nested Types
@@ -257,7 +257,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         #endregion
         private readonly IEnumerator<ScriptCodeStatement> m_statements;
         private bool m_disposed;
-        private TResult m_current;
+        private TCompileUnit m_current;
         private readonly ErrorMode m_mode;
         private readonly TranslationContext Context;
         private readonly string m_sourceFile;
@@ -343,7 +343,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// Gets transformed code expression.
         /// </summary>
         /// <exception cref="System.ObjectDisposedException">Analyzer is disposed.</exception>
-        public TResult Current
+        public TCompileUnit Current
         {
             get 
             {
@@ -362,12 +362,12 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// </summary>
         /// <param name="info">Translation-neutral debug information.</param>
         /// <returns>Translated debug information.</returns>
-        protected virtual TResult Translate(ScriptDebugInfo info)
+        protected virtual TCompileUnit Translate(ScriptDebugInfo info)
         {
             return null;
         }
 
-        private TResult EmitDebugInfo(ScriptDebugInfo info)
+        private TCompileUnit EmitDebugInfo(ScriptDebugInfo info)
         {
             switch (info != null)
             {
@@ -384,7 +384,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// </summary>
         /// <param name="debugInfo">Debug information emitted by translator.</param>
         /// <returns><see langword="true"/> if statement is translated successfully; otherwise, <see langword="false"/>.</returns>
-        public bool MoveNext(out TResult debugInfo)
+        public bool MoveNext(out TCompileUnit debugInfo)
         {
             debugInfo = null;
 #if !DEBUG
@@ -426,7 +426,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         public bool MoveNext()
         {
             VerifyOnDisposed();
-            var dinfo = default(TResult);
+            var dinfo = default(TCompileUnit);
             return MoveNext(out dinfo);
         }
 
@@ -439,7 +439,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="context">Translation context.</param>
         /// <param name="debugInfo">Debug information about statement.</param>
         /// <returns>Translated statement.</returns>
-        protected TResult Translate(ScriptCodeStatement stmt, TranslationContext context, out TResult debugInfo)
+        protected TCompileUnit Translate(ScriptCodeStatement stmt, TranslationContext context, out TCompileUnit debugInfo)
         {
             debugInfo = null;
             if (stmt is ScriptCodeVariableDeclaration)
@@ -463,7 +463,7 @@ namespace DynamicScript.Compiler.Ast.Translation
             else return null;
         }
 
-        private TResult Translate(ScriptCodeMacroCommand command, TranslationContext context, out bool debugInfo)
+        private TCompileUnit Translate(ScriptCodeMacroCommand command, TranslationContext context, out bool debugInfo)
         {
             debugInfo = false;
             Macro(command.Command, context);
@@ -486,7 +486,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="context">Translation context.</param>
         /// <param name="debugInfo">Debug information about statement.</param>
         /// <returns>Translated comment statement.</returns>
-        protected TResult Translate(ScriptCodeCommentStatement comment, TranslationContext context, out TResult debugInfo)
+        protected TCompileUnit Translate(ScriptCodeCommentStatement comment, TranslationContext context, out TCompileUnit debugInfo)
         {
             comment.Verify();
             debugInfo = EmitDebugInfo(comment.LinePragma);
@@ -503,7 +503,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// In the default implementation this method doesn't provide translation and returns <see langword="null"/>.
         /// Comment translation is useful in the debug mode and you can emit comment text into the translated instructions.
         /// </remarks>
-        protected virtual TResult Translate(ScriptCodeCommentStatement comment, TranslationContext context)
+        protected virtual TCompileUnit Translate(ScriptCodeCommentStatement comment, TranslationContext context)
         {
             return null;
         }
@@ -515,7 +515,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="context">Translation context.</param>
         /// <param name="debugInfo">Debug information about statement.</param>
         /// <returns>Translated statement.</returns>
-        protected TResult Translate(ScriptCodeEmptyStatement emptyStatement, TranslationContext context, out TResult debugInfo)
+        protected TCompileUnit Translate(ScriptCodeEmptyStatement emptyStatement, TranslationContext context, out TCompileUnit debugInfo)
         {
             emptyStatement.Verify();
             debugInfo = EmitDebugInfo(emptyStatement.LinePragma);
@@ -529,7 +529,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="context">Translation context.</param>
         /// <returns>Translated statement.</returns>
         /// <remarks>In the default implementation this method doesn't provide translation and returns <see langword="null"/>.</remarks>
-        protected virtual TResult Translate(ScriptCodeEmptyStatement emptyStatement, TranslationContext context)
+        protected virtual TCompileUnit Translate(ScriptCodeEmptyStatement emptyStatement, TranslationContext context)
         {
             return null;
         }
@@ -541,7 +541,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="context">Translation context.</param>
         /// <param name="debugInfo">Debug information about statement.</param>
         /// <returns>Translated return statement.</returns>
-        protected TResult Translate(ScriptCodeReturnStatement returnStatement, TranslationContext context, out TResult debugInfo)
+        protected TCompileUnit Translate(ScriptCodeReturnStatement returnStatement, TranslationContext context, out TCompileUnit debugInfo)
         {
             returnStatement.Verify();
             debugInfo = Translate(returnStatement.LinePragma);
@@ -554,7 +554,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="returnStatement">The return statement to be translated.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Translated return statement.</returns>
-        protected abstract TResult Translate(ScriptCodeReturnStatement returnStatement, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeReturnStatement returnStatement, TranslationContext context);
 
         /// <summary>
         /// Translates continue statement.
@@ -563,7 +563,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="context">Translation context.</param>
         /// <param name="debugInfo">Debug information about statement.</param>
         /// <returns>Translated continue statement.</returns>
-        protected TResult Translate(ScriptCodeContinueStatement continueStatement, TranslationContext context, out TResult debugInfo)
+        protected TCompileUnit Translate(ScriptCodeContinueStatement continueStatement, TranslationContext context, out TCompileUnit debugInfo)
         {
             continueStatement.Verify();
             debugInfo = EmitDebugInfo(continueStatement.LinePragma);
@@ -576,7 +576,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="continueStatement">The statement to be translated.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Translated continue statement.</returns>
-        protected abstract TResult Translate(ScriptCodeContinueStatement continueStatement, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeContinueStatement continueStatement, TranslationContext context);
 
         /// <summary>
         /// Translates break statement.
@@ -585,7 +585,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="context">Translation context.</param>
         /// <param name="debugInfo">Debug information about statement.</param>
         /// <returns>Translated break statement.</returns>
-        protected TResult Translate(ScriptCodeBreakLexicalScopeStatement breakStatement, TranslationContext context, out TResult debugInfo)
+        protected TCompileUnit Translate(ScriptCodeBreakLexicalScopeStatement breakStatement, TranslationContext context, out TCompileUnit debugInfo)
         {
             breakStatement.Verify();
             debugInfo = EmitDebugInfo(breakStatement.LinePragma);
@@ -598,7 +598,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="breakStatement">The statement to be translated.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Translated break statement.</returns>
-        protected abstract TResult Translate(ScriptCodeBreakLexicalScopeStatement breakStatement, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeBreakLexicalScopeStatement breakStatement, TranslationContext context);
 
         /// <summary>
         /// Translates fault statement.
@@ -607,7 +607,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="context">Translation context.</param>
         /// <param name="debugInfo">Debug information about statement.</param>
         /// <returns>Translated fault statement.</returns>
-        protected TResult Translate(ScriptCodeFaultStatement fault, TranslationContext context, out TResult debugInfo)
+        protected TCompileUnit Translate(ScriptCodeFaultStatement fault, TranslationContext context, out TCompileUnit debugInfo)
         {
             fault.Verify();
             debugInfo = EmitDebugInfo(fault.LinePragma);
@@ -620,7 +620,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="fault">The statement to be translated.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Translated fault statement.</returns>
-        protected abstract TResult Translate(ScriptCodeFaultStatement fault, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeFaultStatement fault, TranslationContext context);
 
         /// <summary>
         /// Translates expression statement.
@@ -629,7 +629,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="context">Translation context.</param>
         /// <param name="debugInfo">Debug information about statement.</param>
         /// <returns>Translated expression statement.</returns>
-        protected TResult Translate(ScriptCodeExpressionStatement expressionStmt, TranslationContext context, out TResult debugInfo)
+        protected TCompileUnit Translate(ScriptCodeExpressionStatement expressionStmt, TranslationContext context, out TCompileUnit debugInfo)
         {
             expressionStmt.Verify();
             debugInfo = EmitDebugInfo(expressionStmt.LinePragma);
@@ -642,7 +642,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="expressionStmt">The statement to be translated.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Translated expression statement.</returns>
-        protected virtual TResult Translate(ScriptCodeExpressionStatement expressionStmt, TranslationContext context)
+        protected virtual TCompileUnit Translate(ScriptCodeExpressionStatement expressionStmt, TranslationContext context)
         {
             if (expressionStmt.Expression is ScriptCodeLoopExpression)
                 ((ScriptCodeLoopExpression)expressionStmt.Expression).SuppressResult = true;
@@ -656,7 +656,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="context">Translation context.</param>
         /// <param name="debugInfo">Debug information about statement.</param>
         /// <returns>Transformed variable declaration statement.</returns>
-        protected TResult Translate(ScriptCodeVariableDeclaration variableDeclaration, TranslationContext context, out TResult debugInfo)
+        protected TCompileUnit Translate(ScriptCodeVariableDeclaration variableDeclaration, TranslationContext context, out TCompileUnit debugInfo)
         {
             variableDeclaration.Verify();
             debugInfo = EmitDebugInfo(variableDeclaration.LinePragma);
@@ -670,7 +670,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="variableDeclaration">The variable declaration to be transformed.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Transformed variable declaration statement.</returns>
-        protected abstract TResult Translate(ScriptCodeVariableDeclaration variableDeclaration, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeVariableDeclaration variableDeclaration, TranslationContext context);
 
         #endregion
 
@@ -684,12 +684,25 @@ namespace DynamicScript.Compiler.Ast.Translation
         #region Expression Translators
 
         /// <summary>
+        /// Translates an expression tree node into the form understanding by compiler.
+        /// </summary>
+        /// <param name="expression"></param>
+        /// <param name="context"></param>
+        /// <param name="typeCode"></param>
+        /// <returns></returns>
+        protected TCompileUnit Translate(ScriptCodeExpression expression, TranslationContext context, out ScriptTypeCode typeCode)
+        {
+            typeCode = GetType(expression, context);
+            return Translate(expression, context);
+        }
+
+        /// <summary>
         /// Translates expression.
         /// </summary>
         /// <param name="expression">The expression to be translated.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Translated code expression.</returns>
-        protected TResult Translate(ScriptCodeExpression expression, TranslationContext context)
+        protected TCompileUnit Translate(ScriptCodeExpression expression, TranslationContext context)
         {
             expression = expression.CanReduce ? expression.Reduce(GetInterpretationContext(context)) : expression;
             if (expression is ScriptCodeUnaryOperatorExpression)
@@ -791,7 +804,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="baseref"></param>
         /// <param name="context"></param>
         /// <returns></returns>
-        protected abstract TResult Translate(ScriptCodeBaseObjectExpression baseref, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeBaseObjectExpression baseref, TranslationContext context);
 
         /// <summary>
         /// Translates reference to the global object.
@@ -799,7 +812,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="globalref"></param>
         /// <param name="context"></param>
         /// <returns></returns>
-        protected abstract TResult Translate(ScriptCodeGlobalObjectExpression globalref, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeGlobalObjectExpression globalref, TranslationContext context);
 
         /// <summary>
         /// Translates argument reference.
@@ -807,7 +820,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="argref"></param>
         /// <param name="context"></param>
         /// <returns></returns>
-        protected abstract TResult Translate(ScriptCodeArgumentReferenceExpression argref, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeArgumentReferenceExpression argref, TranslationContext context);
 
         /// <summary>
         /// Translates expand expression.
@@ -815,7 +828,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="expandexpr"></param>
         /// <param name="context"></param>
         /// <returns></returns>
-        protected abstract TResult Translate(ScriptCodeExpandExpression expandexpr, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeExpandExpression expandexpr, TranslationContext context);
 
         /// <summary>
         /// Translates complex expression.
@@ -823,7 +836,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="complex"></param>
         /// <param name="context"></param>
         /// <returns></returns>
-        protected abstract TResult Translate(ScriptCodeComplexExpression complex, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeComplexExpression complex, TranslationContext context);
 
         /// <summary>
         /// Translates placeholder expression.
@@ -831,7 +844,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="placeholder"></param>
         /// <param name="context"></param>
         /// <returns></returns>
-        protected abstract TResult Translate(ScriptCodePlaceholderExpression placeholder, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodePlaceholderExpression placeholder, TranslationContext context);
 
         /// <summary>
         /// Translates reference to the current action as quoted expression tree.
@@ -839,7 +852,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="currentQuote"></param>
         /// <param name="context"></param>
         /// <returns></returns>
-        protected abstract TResult Translate(ScriptCodeCurrentQuoteExpression currentQuote, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeCurrentQuoteExpression currentQuote, TranslationContext context);
 
         /// <summary>
         /// Translates quoted expression.
@@ -847,7 +860,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="expression"></param>
         /// <param name="context"></param>
         /// <returns></returns>
-        protected abstract TResult Translate(ScriptCodeQuoteExpression expression, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeQuoteExpression expression, TranslationContext context);
 
         /// <summary>
         /// Translates runtime expression factory.
@@ -855,7 +868,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="expression">An expression to be translate.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Translated code expression.</returns>
-        protected abstract TResult Translate(ScriptCodeExpressionContractExpression expression, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeExpressionContractExpression expression, TranslationContext context);
 
         /// <summary>
         /// Translates runtime statement factory.
@@ -863,7 +876,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="expression">An expression to be translate.</param>
         /// <param name="context">Translation context.</param>
         /// <returns></returns>
-        protected abstract TResult Translate(ScriptCodeStatementContractExpression expression, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeStatementContractExpression expression, TranslationContext context);
 
         /// <summary>
         /// Translates asynchronous contract.
@@ -871,7 +884,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="expression"></param>
         /// <param name="context"></param>
         /// <returns></returns>
-        protected abstract TResult Translate(ScriptCodeAsyncExpression expression, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeAsyncExpression expression, TranslationContext context);
 
         /// <summary>
         /// Translates DIMENSIONAL contract.
@@ -879,7 +892,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="contract">The contract to translate.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Translated DIMENSIONAL contract.</returns>
-        protected abstract TResult Translate(ScriptCodeDimensionalContractExpression contract, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeDimensionalContractExpression contract, TranslationContext context);
 
         /// <summary>
         /// Translates FINSET contract.
@@ -887,7 +900,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="contract">The contract to translate.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Translated FINSET contract.</returns>
-        protected abstract TResult Translate(ScriptCodeFinSetContractExpression contract, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeFinSetContractExpression contract, TranslationContext context);
 
         /// <summary>
         /// Translates array expression.
@@ -895,7 +908,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="arrayExpression">The expression to be translated.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>The translated array expression.</returns>
-        protected abstract TResult Translate(ScriptCodeArrayExpression arrayExpression, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeArrayExpression arrayExpression, TranslationContext context);
 
         /// <summary>
         /// Translates 'this'.
@@ -903,7 +916,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="thisExpression">The expression to be translated.</param>
         /// <param name="context">Translation context.</param>
         /// <returns></returns>
-        protected abstract TResult Translate(ScriptCodeThisExpression thisExpression, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeThisExpression thisExpression, TranslationContext context);
 
         /// <summary>
         /// Translates asynchronous task producer.
@@ -911,7 +924,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="forkExpression">The expression to be translated.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Translated fork expression.</returns>
-        protected abstract TResult Translate(ScriptCodeForkExpression forkExpression, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeForkExpression forkExpression, TranslationContext context);
 
         /// <summary>
         /// Translates selection expression.
@@ -919,7 +932,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="selection">The expression to be translated.</param>
         /// <param name="context">The translation context.</param>
         /// <returns>Translated selection expression.</returns>
-        protected abstract TResult Translate(ScriptCodeSelectionExpression selection, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeSelectionExpression selection, TranslationContext context);
 
         /// <summary>
         /// Translates variable reference.
@@ -927,7 +940,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="variableRef">The variable reference.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Translated variable reference.</returns>
-        protected abstract TResult Translate(ScriptCodeVariableReference variableRef, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeVariableReference variableRef, TranslationContext context);
 
         /// <summary>
         /// Translates while loop.
@@ -935,7 +948,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="whileLoop">The loop expression to be translated.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Translated while loop.</returns>
-        protected abstract TResult Translate(ScriptCodeWhileLoopExpression whileLoop, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeWhileLoopExpression whileLoop, TranslationContext context);
 
         /// <summary>
         /// Translates void expression.
@@ -943,7 +956,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="voidExpression">The expression to be translated.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Translated expression.</returns>
-        protected abstract TResult Translate(ScriptCodeVoidExpression voidExpression, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeVoidExpression voidExpression, TranslationContext context);
 
         /// <summary>
         /// Translates structured exception handler.
@@ -951,7 +964,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="tryElseFinally">SEH block to be translated.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Translated SEH block.</returns>
-        protected abstract TResult Translate(ScriptCodeTryElseFinallyExpression tryElseFinally, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeTryElseFinallyExpression tryElseFinally, TranslationContext context);
 
         /// <summary>
         /// Translates string literal.
@@ -959,7 +972,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="stringLiteral">The literal to be translated.</param>
         /// <param name="context">Translation context.</param>
         /// <returns></returns>
-        protected abstract TResult Translate(ScriptCodeStringExpression stringLiteral, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeStringExpression stringLiteral, TranslationContext context);
 
         /// <summary>
         /// Translates string contract reference.
@@ -967,7 +980,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="stringContract">The string contract reference to be translated.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Translated string contract reference.</returns>
-        protected abstract TResult Translate(ScriptCodeStringContractExpression stringContract, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeStringContractExpression stringContract, TranslationContext context);
 
         /// <summary>
         /// Translates root contract reference.
@@ -975,7 +988,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="rootContract">The root contract reference to be translated.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Translated root contract reference.</returns>
-        protected abstract TResult Translate(ScriptCodeSuperContractExpression rootContract, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeSuperContractExpression rootContract, TranslationContext context);
 
         /// <summary>
         /// Translates real literal.
@@ -983,7 +996,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="realLiteral">The real literal to be translated.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Translated real literal.</returns>
-        protected abstract TResult Translate(ScriptCodeRealExpression realLiteral, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeRealExpression realLiteral, TranslationContext context);
 
         /// <summary>
         /// Translates real contract reference.
@@ -991,7 +1004,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="realContract">The real contract reference to be translated.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Translated real contract reference.</returns>
-        protected abstract TResult Translate(ScriptCodeRealContractExpression realContract, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeRealContractExpression realContract, TranslationContext context);
 
         /// <summary>
         /// Translates meta contract reference.
@@ -999,7 +1012,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="metaContract">The meta contract reference to be translated.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Translated meta contract reference.</returns>
-        protected abstract TResult Translate(ScriptCodeMetaContractExpression metaContract, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeMetaContractExpression metaContract, TranslationContext context);
 
         /// <summary>
         /// Translates invocation expression.
@@ -1007,7 +1020,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="invocation">The invocation expression ot be transformed.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Translated invocation expression.</returns>
-        protected abstract TResult Translate(ScriptCodeInvocationExpression invocation, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeInvocationExpression invocation, TranslationContext context);
 
         /// <summary>
         /// Translates integer literal.
@@ -1015,7 +1028,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="integerLiteral">The integer literal to be transformed.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Translated integer literal.</returns>
-        protected abstract TResult Translate(ScriptCodeIntegerExpression integerLiteral, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeIntegerExpression integerLiteral, TranslationContext context);
 
         /// <summary>
         /// Translates integer contract reference.
@@ -1023,7 +1036,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="integerContract">The integer contract reference to be translated.</param>
         /// <param name="context">Translation context.</param>
         /// <returns></returns>
-        protected abstract TResult Translate(ScriptCodeIntegerContractExpression integerContract, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeIntegerContractExpression integerContract, TranslationContext context);
 
         /// <summary>
         /// Translates indexer expression.
@@ -1031,7 +1044,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="indexer">The indexer expression to be translated.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Translated indexer expression.</returns>
-        protected abstract TResult Translate(ScriptCodeIndexerExpression indexer, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeIndexerExpression indexer, TranslationContext context);
 
         /// <summary>
         /// Translates for loop.
@@ -1039,7 +1052,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="forLoop">The loop expression to be translated.</param>
         /// <param name="context">Translation context.</param>
         /// <returns></returns>
-        protected abstract TResult Translate(ScriptCodeForLoopExpression forLoop, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeForLoopExpression forLoop, TranslationContext context);
 
         /// <summary>
         /// Translates for-each loop.
@@ -1047,7 +1060,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="forEachLoop">The loop expression to be translated.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Translated loop expression.</returns>
-        protected abstract TResult Translate(ScriptCodeForEachLoopExpression forEachLoop, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeForEachLoopExpression forEachLoop, TranslationContext context);
 
         /// <summary>
         /// Translates reference to the current action in the call stack.
@@ -1055,7 +1068,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="currentAction">The expression to be translated.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Translated expression.</returns>
-        protected abstract TResult Translate(ScriptCodeCurrentActionExpression currentAction, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeCurrentActionExpression currentAction, TranslationContext context);
 
         /// <summary>
         /// Translates context scope.
@@ -1063,7 +1076,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="interpretationContext">The context scope to be translated.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Translated context scope.</returns>
-        protected abstract TResult Translate(ScriptCodeContextExpression interpretationContext, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeContextExpression interpretationContext, TranslationContext context);
 
         /// <summary>
         /// Translates conditional expression.
@@ -1071,7 +1084,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="conditional">The conditional expression to be translated.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Translated conditional expression.</returns>
-        protected abstract TResult Translate(ScriptCodeConditionalExpression conditional, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeConditionalExpression conditional, TranslationContext context);
 
         /// <summary>
         /// Translates callable contract definition.
@@ -1079,7 +1092,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="callableContract">The callable contract definition to be translated.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Translated callable contract.</returns>
-        protected abstract TResult Translate(ScriptCodeCallableContractExpression callableContract, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeCallableContractExpression callableContract, TranslationContext context);
 
         /// <summary>
         /// Translates boolean literal.
@@ -1087,7 +1100,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="booleanLiteral">The literal to be translated.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Translated boolean literal.</returns>
-        protected abstract TResult Translate(ScriptCodeBooleanExpression booleanLiteral, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeBooleanExpression booleanLiteral, TranslationContext context);
 
         /// <summary>
         /// Translates boolean contract.
@@ -1095,7 +1108,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="booleanContract">The literal to be translated.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Translated boolean contract.</returns>
-        protected abstract TResult Translate(ScriptCodeBooleanContractExpression booleanContract, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeBooleanContractExpression booleanContract, TranslationContext context);
 
         /// <summary>
         /// Translates array contract definition.
@@ -1103,7 +1116,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="arrayContract">The array contract definition to be translated.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Translated array contract definition.</returns>
-        protected abstract TResult Translate(ScriptCodeArrayContractExpression arrayContract, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeArrayContractExpression arrayContract, TranslationContext context);
 
         /// <summary>
         /// Translates action contract definition.
@@ -1111,7 +1124,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="actionContract">The action contract definition to be translated.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Translated action contract definition.</returns>
-        protected abstract TResult Translate(ScriptCodeActionContractExpression actionContract, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeActionContractExpression actionContract, TranslationContext context);
 
         /// <summary>
         /// Translates action object.
@@ -1119,7 +1132,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="expression">The expression that describes action object to be translated.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Translated action implementation expression.</returns>
-        protected abstract TResult Translate(ScriptCodeActionImplementationExpression expression, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeActionImplementationExpression expression, TranslationContext context);
 
         /// <summary>
         /// Translates inline object expression.
@@ -1127,7 +1140,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="expression">The expression to be translated.</param>
         /// <param name="context">Translation context.</param>
         /// <returns></returns>
-        protected abstract TResult Translate(ScriptCodeObjectExpression expression, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeObjectExpression expression, TranslationContext context);
 
         /// <summary>
         /// Translates binary expression.
@@ -1135,7 +1148,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="expression">The binary expression to be translated.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Translated binary expression.</returns>
-        protected abstract TResult Translate(ScriptCodeBinaryOperatorExpression expression, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeBinaryOperatorExpression expression, TranslationContext context);
 
         /// <summary>
         /// Translates unary expression.
@@ -1143,7 +1156,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="expression">The unary expression to be translated.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Translated unary expression.</returns>
-        protected abstract TResult Translate(ScriptCodeUnaryOperatorExpression expression, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeUnaryOperatorExpression expression, TranslationContext context);
 
         #endregion
 
@@ -1153,7 +1166,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// </summary>
         /// <param name="error">Code analysis error to be translated.</param>
         /// <returns>Throwable instructions that represents the input error.</returns>
-        protected abstract TResult Translate(CodeAnalysisException error);
+        protected abstract TCompileUnit Translate(CodeAnalysisException error);
 
         /// <summary>
         /// Translates a set of instructions into the single composite instruction.
@@ -1161,7 +1174,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="instructions">A set of instructions to compose.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Composite instruction that encapsulates instruction set.</returns>
-        protected abstract TResult Translate(IList<TResult> instructions, TranslationContext context);
+        protected abstract TCompileUnit Translate(IList<TCompileUnit> instructions, TranslationContext context);
 
         /// <summary>
         /// Translates DynamicScript Code Document Model beginning with the current position
@@ -1169,11 +1182,11 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// </summary>
         /// <param name="emitDebug">Specifies that the debug information should be emitted.</param>
         /// <returns>Translated DynamicScript program CodeDOM.</returns>
-        public TResult Translate(bool emitDebug = false)
+        public TCompileUnit Translate(bool emitDebug = false)
         {
             const int DefaultCapacity = 100;
-            var instructions = new List<TResult>(DefaultCapacity);
-            var debugInfo = default(TResult);
+            var instructions = new List<TCompileUnit>(DefaultCapacity);
+            var debugInfo = default(TCompileUnit);
             while (MoveNext(out debugInfo) && Current != null)
             {
                 if (emitDebug && debugInfo != null) instructions.Add(debugInfo);
@@ -1200,6 +1213,27 @@ namespace DynamicScript.Compiler.Ast.Translation
         public void Reset()
         {
             Reset(true);
+        }
+
+        /// <summary>
+        /// Obtains type of the specified variable.
+        /// </summary>
+        /// <param name="variableName"></param>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        protected abstract ScriptTypeCode GetType(string variableName, TranslationContext context);
+
+        /// <summary>
+        /// Obtains type of the specified expression.
+        /// </summary>
+        /// <param name="expression">An expression tree node.</param>
+        /// <param name="context">Translation context.</param>
+        /// <returns>Static type of the specified expression.</returns>
+        protected ScriptTypeCode GetType(ScriptCodeExpression expression, TranslationContext context)
+        {
+            return expression is ScriptCodeVariableReference ?
+                GetType(((ScriptCodeVariableReference)expression).VariableName, context) :
+                ScriptCodeExpression.GetTypeCode(expression);
         }
 
         /// <summary>

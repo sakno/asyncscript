@@ -32,8 +32,8 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         /// <returns>Compiled constant expression.</returns>
         public override ScriptObject Compile(InterpreterState state)
         {
-            if (Expression is ILiteralExpression)
-                return Convert(((ILiteralExpression)Expression).Value, Void) as ScriptObject ?? Void;
+            if (Expression is ILiteralExpression<ScriptCodeExpression>)
+                return Convert(((ILiteralExpression<ScriptCodeExpression>)Expression).Value, Void) as ScriptObject ?? Void;
             else if (Expression is ScriptCodeIntegerContractExpression)
                 return ScriptIntegerContract.Instance;
             else if (Expression is ScriptCodeRealContractExpression)

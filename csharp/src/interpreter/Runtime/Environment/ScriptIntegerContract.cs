@@ -19,6 +19,7 @@ namespace DynamicScript.Runtime.Environment
     /// </summary>
     [ComVisible(false)]
     [Serializable]
+    [WellKnownContractInfo(ScriptTypeCode.Integer)]
     public sealed class ScriptIntegerContract: ScriptBuiltinContract
     {
         #region Nested Types

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq.Expressions;
 
 namespace DynamicScript.Runtime.Environment
 {
@@ -20,6 +21,12 @@ namespace DynamicScript.Runtime.Environment
         public UnsupportedOperationException(InterpreterState state)
             : base(ErrorMessages.UnsupportedOperation, InterpreterErrorCode.UnsupportedOperation, state)
         {
+        }
+
+        internal static Expression Throw(ParameterExpression state)
+        {
+            var ctor = LinqHelpers.BodyOf<InterpreterState, UnsupportedOperationException, NewExpression>(s => new UnsupportedOperationException(s));
+            return Expression.Block(Expression.Throw(ctor.Update(new[] { state })), ScriptObject.Null);
         }
     }
 }

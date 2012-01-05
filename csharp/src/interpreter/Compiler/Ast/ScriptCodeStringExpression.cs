@@ -13,7 +13,7 @@ namespace DynamicScript.Compiler.Ast
     [ComVisible(false)]
     public sealed class ScriptCodeStringExpression : ScriptCodePrimitiveExpression, 
         IStaticContractBinding<ScriptCodeStringContractExpression>, 
-        ILiteralExpression
+        ILiteralExpression<ScriptCodeStringContractExpression>
     {
         internal ScriptCodeStringExpression(StringLiteral token)
         {
@@ -60,7 +60,7 @@ namespace DynamicScript.Compiler.Ast
             get { return ScriptCodeStringContractExpression.Instance; }
         }
 
-        IConvertible ILiteralExpression.Value
+        IConvertible ILiteralExpression<ScriptCodeStringContractExpression>.Value
         {
             get { return Value; }
         }

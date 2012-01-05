@@ -36,11 +36,11 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             get { return Locals.Keys; }
         }
 
-        public sealed override ParameterExpression this[string variableName]
+        public sealed override ScopeVariable this[string variableName]
         {
             get
             {
-                var result = default(ParameterExpression);
+                var result = default(ScopeVariable);
                 if (Locals.TryGetValue(variableName, out result))
                     return result;
                 else if (Parent != null) return Parent[variableName];
@@ -48,7 +48,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             }
         }
 
-        protected sealed override bool DeclareVariable<T>(string variableName, out ParameterExpression declaration)
+        protected sealed override bool DeclareVariable<T>(string variableName, out ParameterExpression declaration, params object[] attributes)
         {
             switch (Locals.ContainsKey(variableName))
             {
@@ -56,7 +56,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                     declaration = null;
                     return false;
                 default:
-                    Locals.Add(variableName, declaration = Expression.Parameter(typeof(IStaticRuntimeSlot), variableName));
+                    Locals.Add(variableName, new ScopeVariable(declaration = Expression.Parameter(typeof(IStaticRuntimeSlot), variableName), attributes));
                     return true;
             }
         }

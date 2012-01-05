@@ -79,6 +79,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Compiler\ArgRef.cs" />
+    <Compile Include="Compiler\Ast\IWellKnownContractInfo.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeArgumentReferenceExpression.cs" />
     <Compile Include="Compiler\Ast\IScriptExpressionStatement.cs" />
     <Compile Include="Compiler\Ast\ISyntaxTreeNode.cs" />
@@ -161,7 +162,7 @@
     <Compile Include="Compiler\Ast\Translation\IComplexExpressionScope.cs" />
     <Compile Include="Compiler\Ast\Translation\ILexicalScope.cs" />
     <Compile Include="Compiler\Ast\Translation\IQuoteLexicalScope.cs" />
-    <Compile Include="Compiler\Ast\Translation\LinqExpressions\ActionScope.cs" />
+    <Compile Include="Compiler\Ast\Translation\LinqExpressions\FunctionScope.cs" />
     <Compile Include="Compiler\Ast\Translation\LinqExpressions\CatchScope.cs" />
     <Compile Include="Compiler\Ast\Translation\LinqExpressions\ContextScope.cs" />
     <Compile Include="Compiler\Ast\Translation\LinqExpressions\ExpressionBuilder.cs" />
@@ -261,6 +262,7 @@
     <Compile Include="Runtime\Environment\IUnaryOperatorInvoker.cs" />
     <Compile Include="Runtime\Environment\NamedRuntimeSlot.cs" />
     <Compile Include="Runtime\Environment\ObjectModel\RuntimeBehaviorSlots.cs" />
+    <Compile Include="Runtime\Environment\WellKnownContractInfoAttribute.cs" />
     <Compile Include="Runtime\Environment\ScriptFunctionInvoker.cs" />
     <Compile Include="Runtime\Environment\Threading\DefaultQueue.cs" />
     <Compile Include="Runtime\Environment\Threading\IScriptLazyFunction.cs" />
@@ -427,6 +429,7 @@
     <Compile Include="ParallelEqualityComparer.cs" />
     <Compile Include="Runtime\ContractRelationshipMatrix.cs" />
     <Compile Include="Runtime\RuntimeBehavior.cs" />
+    <Compile Include="ScriptTypeCode.cs" />
     <Compile Include="StringEqualityComparer.cs" />
     <Compile Include="Compiler\Literal.cs" />
     <Compile Include="Compiler\NameToken.cs" />

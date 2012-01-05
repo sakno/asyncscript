@@ -458,5 +458,16 @@ namespace DynamicScript.Runtime
         {
             return LinqHelpers.Call<IStaticRuntimeSlot, InterpreterState, IScriptObject>((s, t) => DeleteValue(s, t), null, slot, state);
         }
+
+        internal static Expression ContextEquals(ParameterExpression state, InterpretationContext context)
+        {
+            var prop = LinqHelpers.BodyOf<InterpreterState, InterpretationContext, MemberExpression>(s => s.Context);
+            return Expression.Equal(prop.Update(state), LinqHelpers.Constant(context));
+        }
+
+        internal static Expression IsUncheckedContext(ParameterExpression state)
+        {
+            return ContextEquals(state, InterpretationContext.Unchecked);
+        }
     }
 }

@@ -108,8 +108,24 @@ namespace DynamicScript.Compiler.Ast
         /// </summary>
         public ScriptCodeExpression ContractBinding
         {
-            get { return m_binding == null && m_init == null ? DefaultVariableType : m_binding; }
+            get 
+            {
+                if (IsConst && m_binding == null && m_init is IStaticContractBinding<ScriptCodeExpression>)
+                    return ((IStaticContractBinding<ScriptCodeExpression>)m_init).Contract;
+                else if (m_binding == null && m_init == null)
+                    return DefaultVariableType;
+                else return m_binding; 
+            }
             set { m_binding = value; }
+        }
+
+        /// <summary>
+        /// Returns type code of this variable.
+        /// </summary>
+        /// <returns></returns>
+        public ScriptTypeCode GetTypeCode()
+        {
+            return ContractBinding is IWellKnownContractInfo ? ((IWellKnownContractInfo)ContractBinding).GetTypeCode() : ScriptTypeCode.Unknown;
         }
 
         internal static ScriptCodeVariableDeclaration Parse(IEnumerator<KeyValuePair<Lexeme.Position, Lexeme>> lexer, params Punctuation[] terminator)

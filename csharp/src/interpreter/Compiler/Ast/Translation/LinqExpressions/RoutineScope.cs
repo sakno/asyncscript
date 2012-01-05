@@ -53,11 +53,11 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             get { return Enumerable.Select(Enumerable.Concat(Locals, Parameters), p => p.Key); }
         }
 
-        public sealed override ParameterExpression this[string variableName]
+        public sealed override ScopeVariable this[string variableName]
         {
             get 
             {
-                var result = default(ParameterExpression);
+                var result = default(ScopeVariable);
                 if (Locals.TryGetValue(variableName, out result))
                     return result;
                 else if (Parameters.TryGetValue(variableName, out result))
@@ -66,7 +66,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             }
         }
 
-        protected bool DeclareParameter<T>(string parameterName, out ParameterExpression declaration)
+        protected bool DeclareParameter<T>(string parameterName, out ParameterExpression declaration, params object[] attributes)
         {
             switch (Locals.ContainsKey(parameterName) || Parameters.ContainsKey(parameterName))
             {
@@ -74,13 +74,12 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                     declaration = null;
                     return false;
                 default:
-                    
-                    Parameters.Add(parameterName, declaration = Expression.Parameter(typeof(IStaticRuntimeSlot), parameterName));
+                    Parameters.Add(parameterName, new ScopeVariable(declaration = Expression.Parameter(typeof(IStaticRuntimeSlot), parameterName), attributes));
                     return true;
             }
         }
 
-        protected sealed override bool DeclareVariable<T>(string variableName, out ParameterExpression declaration)
+        protected sealed override bool DeclareVariable<T>(string variableName, out ParameterExpression declaration, params object[] attributes)
         {
             switch (Locals.ContainsKey(variableName) || Parameters.ContainsKey(variableName))
             {
@@ -88,7 +87,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                     declaration = null;
                     return false;
                 default:
-                    Locals.Add(variableName, declaration = Expression.Variable(typeof(IStaticRuntimeSlot), variableName));
+                    Locals.Add(variableName, new ScopeVariable(declaration = Expression.Variable(typeof(IStaticRuntimeSlot), variableName), attributes));
                     return true;
             }
         }

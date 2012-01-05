@@ -8,7 +8,7 @@ namespace DynamicScript.Runtime.Environment
 {
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
     using SystemConverter = System.Convert;
-    using InterpretationContext = Compiler.Ast.InterpretationContext;
+    using Compiler.Ast;
     using CultureInfo = System.Globalization.CultureInfo;
 
     /// <summary>
@@ -195,6 +195,34 @@ namespace DynamicScript.Runtime.Environment
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="right"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public IScriptObject Add(IConvertible right, InterpreterState state)
+        {
+            switch (right != null ? right.GetTypeCode() : TypeCode.Object)
+            {
+                case TypeCode.Boolean:
+                case TypeCode.Int16:
+                case TypeCode.Byte:
+                case TypeCode.Int32:
+                case TypeCode.Int64:
+                    return (ScriptInteger)(state.Context == InterpretationContext.Unchecked ? unchecked(Value + SystemConverter.ToInt64(right)) : checked(Value + SystemConverter.ToInt64(right)));
+                case TypeCode.Single:
+                case TypeCode.Double:
+                    return (ScriptReal)(Value + SystemConverter.ToDouble(right));
+                case TypeCode.String:
+                    return (ScriptString)string.Concat(right);
+                default:
+                    if (state.Context == InterpretationContext.Unchecked)
+                        return Void;
+                    else throw new UnsupportedOperationException(state);
+            }
+        }
+
+        /// <summary>
         /// Computes the sum, or union of the current object with the specified.
         /// </summary>
         /// <param name="right">The second operand of the addition operation.</param>
@@ -202,30 +230,34 @@ namespace DynamicScript.Runtime.Environment
         /// <returns>The result of the binary operation interpretation.</returns>
         protected override IScriptObject Add(IScriptObject right, InterpreterState state)
         {
-            if (right.OneOf<ScriptBoolean, ScriptInteger>())
-                return Add(Convert(right), state);
-            else if (right is ScriptReal)
-                return Add((ScriptReal)right, state);
-            else if (IsVoid(right))
-                return Add(Zero, state);
-            else if (state.Context == InterpretationContext.Unchecked)
-                return ScriptObject.Void;
-            else throw new UnsupportedOperationException(state);
+            return Add(right as IConvertible, state);
         }
 
-        internal static ScriptInteger Add(ScriptInteger left, ScriptInteger right, InterpreterState state)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="left"></param>
+        /// <param name="right"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public IScriptObject Subtract(IConvertible right, InterpreterState state)
         {
-            return left.Add(right, state);
-        }
-
-        private ScriptReal Add(double right, InterpreterState state)
-        {
-            return state.Context == InterpretationContext.Unchecked ? unchecked(Value + right) : checked(Value + right); 
-        }
-
-        private ScriptInteger Add(long right, InterpreterState state)
-        {
-            return state.Context == InterpretationContext.Unchecked ? unchecked(Value + right) : checked(Value + right);
+            switch (right != null ? right.GetTypeCode() : TypeCode.Object)
+            {
+                case TypeCode.Boolean:
+                case TypeCode.Int16:
+                case TypeCode.Byte:
+                case TypeCode.Int32:
+                case TypeCode.Int64:
+                    return (ScriptInteger)(state.Context == InterpretationContext.Unchecked ? unchecked(Value - SystemConverter.ToInt64(right)) : checked(Value - SystemConverter.ToInt64(right)));
+                case TypeCode.Single:
+                case TypeCode.Double:
+                    return (ScriptReal)(Value - SystemConverter.ToDouble(right));
+                default:
+                    if (state.Context == InterpretationContext.Unchecked)
+                        return Void;
+                    else throw new UnsupportedOperationException(state);
+            }
         }
 
         /// <summary>
@@ -236,25 +268,18 @@ namespace DynamicScript.Runtime.Environment
         /// <returns></returns>
         protected override IScriptObject Subtract(IScriptObject right, InterpreterState state)
         {
-            if (right.OneOf<ScriptBoolean, ScriptInteger>())
-                return Subtract(Convert(right), state);
-            else if (right is ScriptReal)
-                return Subtract((ScriptReal)right, state);
-            else if (IsVoid(right))
-                return Subtract(Zero, state);
-            else if (state.Context == InterpretationContext.Unchecked)
-                return ScriptObject.Void;
-            else throw new UnsupportedOperationException(state);
+            return Subtract(right as IConvertible, state);
         }
 
-        private ScriptReal Subtract(double right, InterpreterState state)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public static ScriptInteger Increment(ScriptInteger value, InterpreterState state)
         {
-            return state.Context == InterpretationContext.Unchecked ? unchecked(Value - right) : checked(Value - right);
-        }
-
-        private ScriptInteger Subtract(long right, InterpreterState state)
-        {
-            return state.Context == InterpretationContext.Unchecked ? unchecked(Value - right) : checked(Value - right);
+            return (state.Context == InterpretationContext.Unchecked ? unchecked(value + 1) : checked(value + 1));
         }
 
         /// <summary>
@@ -264,7 +289,7 @@ namespace DynamicScript.Runtime.Environment
         /// <returns>The incremented object.</returns>
         protected override IScriptObject PreIncrementAssign(InterpreterState state)
         {
-            return new ScriptInteger(state.Context == InterpretationContext.Unchecked ? unchecked(Value + 1) : checked(Value + 1));
+            return Increment(this, state);
         }
 
         /// <summary>
@@ -274,7 +299,7 @@ namespace DynamicScript.Runtime.Environment
         /// <returns>The incremented object.</returns>
         protected override IScriptObject PostIncrementAssign(InterpreterState state)
         {
-            return PreIncrementAssign(state);
+            return this;
         }
 
         /// <summary>
@@ -336,6 +361,31 @@ namespace DynamicScript.Runtime.Environment
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="right"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public IScriptObject Modulo(IConvertible right, InterpreterState state)
+        {
+            switch (right != null ? right.GetTypeCode() : TypeCode.Object)
+            {
+                case TypeCode.Byte:
+                case TypeCode.Int16:
+                case TypeCode.Int32:
+                case TypeCode.Int64:
+                    return (ScriptInteger)(Value % SystemConverter.ToInt64(right));
+                case TypeCode.Single:
+                case TypeCode.Double:
+                    return (ScriptReal)(Value % SystemConverter.ToDouble(right));
+                default:
+                    if (state.Context == InterpretationContext.Unchecked)
+                        return Void;
+                    else throw new UnsupportedOperationException(state);
+            }
+        }
+
+        /// <summary>
         /// Computes the remainder after dividing the current object by the second.
         /// </summary>
         /// <param name="right">The right operand.</param>
@@ -343,10 +393,8 @@ namespace DynamicScript.Runtime.Environment
         /// <returns>The remainder.</returns>
         protected override IScriptObject Modulo(IScriptObject right, InterpreterState state)
         {
-            if (right.OneOf<ScriptBoolean, ScriptInteger>())
-                return Modulo(Convert(right), state);
-            else if (right is ScriptReal)
-                return Modulo((ScriptReal)right, state);
+            if (right is IConvertible)
+                return Modulo((IConvertible)right, state);
             else if (IsVoid(right))
                 return Modulo(Zero, state);
             else if (state.Context == InterpretationContext.Unchecked)
@@ -354,14 +402,26 @@ namespace DynamicScript.Runtime.Environment
             else throw new UnsupportedOperationException(state);   
         }
 
-        private ScriptReal Modulo(double right, InterpreterState state)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="right"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public IScriptObject Multiply(IConvertible right, InterpreterState state)
         {
-            return Value % right;
-        }
-
-        private ScriptInteger Modulo(long right, InterpreterState state)
-        {
-            return Value % right;
+            switch (right != null ? right.GetTypeCode() : TypeCode.Object)
+            {
+                case TypeCode.Byte:
+                case TypeCode.Int16:
+                case TypeCode.Int32:
+                case TypeCode.Int64:
+                    return (ScriptInteger)(state.Context == InterpretationContext.Unchecked ? unchecked(Value * SystemConverter.ToInt64(right)) : checked(Value * SystemConverter.ToInt64(right)));
+                default:
+                    if (state.Context == InterpretationContext.Unchecked)
+                        return Void;
+                    else throw new UnsupportedOperationException(state);
+            }
         }
 
         /// <summary>
@@ -372,25 +432,13 @@ namespace DynamicScript.Runtime.Environment
         /// <returns>The multiplication of the two objects.</returns>
         protected override IScriptObject Multiply(IScriptObject right, InterpreterState state)
         {
-            if (right.OneOf<ScriptBoolean, ScriptInteger>())
-                return Multiply(Convert(right), state);
-            else if (right is ScriptReal)
-                return Multiply((ScriptReal)right, state);
+            if (right is IConvertible)
+                return Multiply((IConvertible)right, state);
             else if (IsVoid(right))
                 return Multiply(Zero, state);
             else if (state.Context == InterpretationContext.Unchecked)
                 return ScriptObject.Void;
             else throw new UnsupportedOperationException(state);   
-        }
-
-        private ScriptReal Multiply(double right, InterpreterState state)
-        {
-            return state.Context == InterpretationContext.Unchecked ? unchecked(Value * right) : checked(Value * right); 
-        }
-
-        private ScriptInteger Multiply(long right, InterpreterState state)
-        {
-            return state.Context == InterpretationContext.Unchecked ? unchecked(Value * right) : checked(Value * right);
         }
 
         /// <summary>
@@ -460,6 +508,32 @@ namespace DynamicScript.Runtime.Environment
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="right"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public IScriptObject Divide(IConvertible right, InterpreterState state)
+        {
+            switch (right != null ? right.GetTypeCode() : TypeCode.Object)
+            {
+                case TypeCode.Boolean:
+                case TypeCode.Int16:
+                case TypeCode.Int32:
+                case TypeCode.Int64:
+                case TypeCode.Byte:
+                    return (ScriptInteger)(Value / SystemConverter.ToInt64(right));
+                case TypeCode.Single:
+                case TypeCode.Double:
+                    return (ScriptReal)(Value / SystemConverter.ToDouble(right));
+                default:
+                    if (state.Context == InterpretationContext.Unchecked)
+                        return Void;
+                    else throw new UnsupportedOperationException(state);
+            }
+        }
+
+        /// <summary>
         /// Divides the current object using the specified.
         /// </summary>
         /// <param name="right">The right operand of the division operator.</param>
@@ -467,25 +541,13 @@ namespace DynamicScript.Runtime.Environment
         /// <returns>The division result.</returns>
         protected override IScriptObject Divide(IScriptObject right, InterpreterState state)
         {
-            if (right.OneOf<ScriptBoolean, ScriptInteger>())
-                return Divide(Convert(right), state);
-            else if (right is ScriptReal)
-                return Divide((ScriptReal)right, state);
+            if (right is IConvertible)
+                return Divide((IConvertible)right, state);
             else if (IsVoid(right))
                 return Divide(Zero, state);
             else if (state.Context == InterpretationContext.Unchecked)
                 return ScriptObject.Void;
             else throw new UnsupportedOperationException(state); 
-        }
-
-        private ScriptReal Divide(double right, InterpreterState state)
-        {
-            return Value / right;
-        }
-
-        private ScriptInteger Divide(long right, InterpreterState state)
-        {
-            return Value / right;
         }
 
         /// <summary>
@@ -715,6 +777,147 @@ namespace DynamicScript.Runtime.Environment
         {
             var result = default(long);
             return long.TryParse(value, System.Globalization.NumberStyles.Any, formatProvider, out result) ? new ScriptInteger(result) : null;
+        }
+
+        private static Expression Modulo(Expression left, Expression right, ParameterExpression state)
+        {
+            var call = LinqHelpers.BodyOf<ScriptInteger, IConvertible, InterpreterState, IScriptObject, MethodCallExpression>((i, r, s) => i.Modulo(r, s));
+            return call.Update(left, new Expression[] { Expression.TypeAs(right, typeof(IConvertible)), state });
+        }
+
+        private static Expression Divide(Expression left, Expression right, ParameterExpression state)
+        {
+            var call = LinqHelpers.BodyOf<ScriptInteger, IConvertible, InterpreterState, IScriptObject, MethodCallExpression>((i, r, s) => i.Divide(r, s));
+            return call.Update(left, new Expression[] { Expression.TypeAs(right, typeof(IConvertible)), state });
+        }
+
+        private static Expression Multiply(Expression left, Expression right, ParameterExpression state)
+        {
+            var call = LinqHelpers.BodyOf<ScriptInteger, IConvertible, InterpreterState, IScriptObject, MethodCallExpression>((i, r, s) => i.Multiply(r, s));
+            return call.Update(left, new Expression[] { Expression.TypeAs(right, typeof(IConvertible)), state });
+        }
+
+        private static Expression Subtract(Expression left, Expression right, ParameterExpression state)
+        {
+            var call = LinqHelpers.BodyOf<ScriptInteger, IConvertible, InterpreterState, IScriptObject, MethodCallExpression>((i, r, s) => i.Subtract(r, s));
+            return call.Update(left, new Expression[] { Expression.TypeAs(right, typeof(IConvertible)), state });
+        }
+
+        private static Expression Add(Expression left, Expression right, ParameterExpression state)
+        {
+            var call = LinqHelpers.BodyOf<ScriptInteger, IConvertible, InterpreterState, IScriptObject, MethodCallExpression>((i, r, s) => i.Add(r, s));
+            return call.Update(left, new Expression[] { Expression.TypeAs(right, typeof(IConvertible)), state });
+        }
+
+        /// <summary>
+        /// Produces a binary expression as inlined statement.
+        /// </summary>
+        /// <param name="lvalue"></param>
+        /// <param name="operator"></param>
+        /// <param name="rvalue"></param>
+        /// <param name="rtype"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        internal static Expression Inline(Expression lvalue, ScriptCodeBinaryOperatorType @operator, Expression rvalue, ScriptTypeCode rtype, ParameterExpression state)
+        {
+            lvalue = Expression.Convert(lvalue, typeof(ScriptInteger));
+            switch ((int)@operator << 8 | (byte)rtype)//emulates two-dimensional switch
+            {
+                //inlining of operator %
+                case (int)ScriptCodeBinaryOperatorType.Modulo << 8 | (byte)ScriptTypeCode.Integer:    //integer % integer
+                    lvalue = UnderlyingValue(lvalue);
+                    rvalue = UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptInteger)));
+                    return Expression.Convert(Expression.Modulo(lvalue, rvalue), typeof(ScriptInteger));
+                case (int)ScriptCodeBinaryOperatorType.Modulo << 8 | (byte)ScriptTypeCode.Real:    //integer % real
+                    lvalue = Expression.Convert(UnderlyingValue(lvalue), typeof(double));
+                    rvalue = ScriptReal.UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptReal)));
+                    return Expression.Convert(Expression.Modulo(lvalue, rvalue), typeof(ScriptReal));
+                case (int)ScriptCodeBinaryOperatorType.Modulo << 8 | (byte)ScriptTypeCode.Boolean: //integer % boolean
+                    lvalue = UnderlyingValue(lvalue);
+                    rvalue = ScriptBoolean.UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptBoolean)));
+                    rvalue = Expression.Convert(rvalue, UnderlyingType);
+                    return Expression.Convert(Expression.Modulo(lvalue, rvalue), typeof(ScriptInteger));
+                case (int)ScriptCodeBinaryOperatorType.Modulo << 8 | (byte)ScriptTypeCode.Void:    //integer % void
+                    return BinaryOperation(lvalue, ScriptCodeBinaryOperatorType.Modulo, rvalue, state);
+                case (int)ScriptCodeBinaryOperatorType.Modulo << 8 | (byte)ScriptTypeCode.Unknown: //integer % <other>
+                    return Modulo(lvalue, rvalue, state);
+                //inlining of operator /
+                case (int)ScriptCodeBinaryOperatorType.Divide << 8 | (byte)ScriptTypeCode.Integer:    //integer / integer
+                    lvalue = UnderlyingValue(lvalue);
+                    rvalue = UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptInteger)));
+                    return Expression.Convert(Expression.Divide(lvalue, rvalue), typeof(ScriptInteger));
+                case (int)ScriptCodeBinaryOperatorType.Divide << 8 | (byte)ScriptTypeCode.Real:    //integer / real
+                    lvalue = Expression.Convert(UnderlyingValue(lvalue), typeof(double));
+                    rvalue = ScriptReal.UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptReal)));
+                    return Expression.Convert(Expression.Divide(lvalue, rvalue), typeof(ScriptReal));
+                case (int)ScriptCodeBinaryOperatorType.Divide << 8 | (byte)ScriptTypeCode.Boolean: //integer / boolean
+                    lvalue = UnderlyingValue(lvalue);
+                    rvalue = ScriptBoolean.UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptBoolean)));
+                    rvalue = Expression.Convert(rvalue, UnderlyingType);
+                    return Expression.Convert(Expression.Divide(lvalue, rvalue), typeof(ScriptInteger));
+                case (int)ScriptCodeBinaryOperatorType.Divide << 8 | (byte)ScriptTypeCode.Void:    //integer / void
+                    return BinaryOperation(lvalue, ScriptCodeBinaryOperatorType.Divide, rvalue, state);
+                case (int)ScriptCodeBinaryOperatorType.Divide << 8 | (byte)ScriptTypeCode.Unknown: //integer / <other>
+                    return Divide(lvalue, rvalue, state);
+                //inlining of operator *
+                case (int)ScriptCodeBinaryOperatorType.Multiply << 8 | (byte)ScriptTypeCode.Integer:    //integer * integer
+                    lvalue = UnderlyingValue(lvalue);
+                    rvalue = UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptInteger)));
+                    return Expression.Convert(Expression.Condition(InterpreterState.IsUncheckedContext(state), Expression.Multiply(lvalue, rvalue), Expression.MultiplyChecked(lvalue, rvalue)), typeof(ScriptInteger));
+                case (int)ScriptCodeBinaryOperatorType.Multiply << 8 | (byte)ScriptTypeCode.Real:    //integer * real
+                    lvalue = Expression.Convert(UnderlyingValue(lvalue), typeof(double));
+                    rvalue = ScriptReal.UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptReal)));
+                    return Expression.Convert(Expression.Multiply(lvalue, rvalue), typeof(ScriptReal));
+                case (int)ScriptCodeBinaryOperatorType.Multiply << 8 | (byte)ScriptTypeCode.Boolean: //integer * boolean
+                    lvalue = UnderlyingValue(lvalue);
+                    rvalue = ScriptBoolean.UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptBoolean)));
+                    rvalue = Expression.Convert(rvalue, UnderlyingType);
+                    return Expression.Convert(Expression.Condition(InterpreterState.IsUncheckedContext(state), Expression.Subtract(lvalue, rvalue), Expression.SubtractChecked(lvalue, rvalue)), typeof(ScriptInteger));
+                case (int)ScriptCodeBinaryOperatorType.Multiply << 8 | (byte)ScriptTypeCode.Void:    //integer * void
+                    return New(0L);
+                case (int)ScriptCodeBinaryOperatorType.Multiply << 8 | (byte)ScriptTypeCode.Unknown: //integer * <other>
+                    return Multiply(lvalue, rvalue, state);
+                //inlining of operator -
+                case (int)ScriptCodeBinaryOperatorType.Subtract << 8 | (byte)ScriptTypeCode.Integer:    //integer - integer
+                    lvalue = UnderlyingValue(lvalue);
+                    rvalue = UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptInteger)));
+                    return Expression.Convert(Expression.Condition(InterpreterState.IsUncheckedContext(state), Expression.Subtract(lvalue, rvalue), Expression.SubtractChecked(lvalue, rvalue)), typeof(ScriptInteger));
+                case (int)ScriptCodeBinaryOperatorType.Subtract << 8 | (byte)ScriptTypeCode.Real:    //integer - real
+                    lvalue = Expression.Convert(UnderlyingValue(lvalue), typeof(double));
+                    rvalue = ScriptReal.UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptReal)));
+                    return Expression.Convert(Expression.Subtract(lvalue, rvalue), typeof(ScriptReal));
+                case (int)ScriptCodeBinaryOperatorType.Subtract << 8 | (byte)ScriptTypeCode.Boolean: //integer - boolean
+                    lvalue = UnderlyingValue(lvalue);
+                    rvalue = ScriptBoolean.UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptBoolean)));
+                    rvalue = Expression.Convert(rvalue, UnderlyingType);
+                    return Expression.Convert(Expression.Condition(InterpreterState.IsUncheckedContext(state), Expression.Subtract(lvalue, rvalue), Expression.SubtractChecked(lvalue, rvalue)), typeof(ScriptInteger));
+                case (int)ScriptCodeBinaryOperatorType.Subtract << 8 | (byte)ScriptTypeCode.Void:    //integer - void
+                    return lvalue;
+                case (int)ScriptCodeBinaryOperatorType.Subtract << 8 | (byte)ScriptTypeCode.Unknown: //integer - <other>
+                    return Subtract(lvalue, rvalue, state);
+                //inlining of operator +
+                case (int)ScriptCodeBinaryOperatorType.Add << 8 | (byte)ScriptTypeCode.Integer: //integer + integer
+                    lvalue = UnderlyingValue(lvalue);
+                    rvalue = UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptInteger)));
+                    return Expression.Convert(Expression.Condition(InterpreterState.IsUncheckedContext(state), Expression.Add(lvalue, rvalue), Expression.AddChecked(lvalue, rvalue)), typeof(ScriptInteger));
+                case (int)ScriptCodeBinaryOperatorType.Add << 8 | (byte)ScriptTypeCode.Real:    //integer + real
+                    lvalue = Expression.Convert(UnderlyingValue(lvalue), typeof(double));
+                    rvalue = ScriptReal.UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptReal)));
+                    return Expression.Convert(Expression.Add(lvalue, rvalue), typeof(ScriptReal));
+                case (int)ScriptCodeBinaryOperatorType.Add << 8 | (byte)ScriptTypeCode.Boolean: //integer + boolean
+                    lvalue = UnderlyingValue(lvalue);
+                    rvalue = ScriptBoolean.UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptBoolean)));
+                    rvalue = Expression.Convert(rvalue, UnderlyingType);
+                    return Expression.Convert(Expression.Condition(InterpreterState.IsUncheckedContext(state), Expression.Add(lvalue, rvalue), Expression.AddChecked(lvalue, rvalue)), typeof(ScriptInteger));
+                case (int)ScriptCodeBinaryOperatorType.Add << 8 | (byte)ScriptTypeCode.String: //integer + string
+                    return ScriptString.Concat(((UnaryExpression)lvalue).Operand, rvalue);
+                case (int)ScriptCodeBinaryOperatorType.Add << 8 | (byte)ScriptTypeCode.Void:    //integer + void
+                    return lvalue;
+                case (int)ScriptCodeBinaryOperatorType.Add << 8 | (byte)ScriptTypeCode.Unknown: //integer + <other>
+                    return Add(lvalue, rvalue, state);
+                default:    //operation is not supported.
+                    return Expression.Condition(InterpreterState.IsUncheckedContext(state), MakeVoid(), UnsupportedOperationException.Throw(state));
+            }
         }
     }
 }

@@ -14,15 +14,56 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
     /// Represents a lexical scope used for analyzing code document only.
     /// </summary>
     [ComVisible(false)]
-    public abstract class LexicalScope: ILexicalScope
+    public abstract class LexicalScope: ILexicalScope, IEnumerable<KeyValuePair<string, ParameterExpression>>
     {
         #region Nested Types
+
+        /// <summary>
+        /// Represents scope variable with semantic attributes.
+        /// </summary>
+        [ComVisible(false)]
+        public sealed class ScopeVariable
+        {
+            /// <summary>
+            /// Represents expresssion tree that is used to compile the variable.
+            /// </summary>
+            public readonly ParameterExpression Expression;
+
+            /// <summary>
+            /// Represents type of the variable.
+            /// </summary>
+            public readonly ScriptTypeCode TypeCode;
+
+            /// <summary>
+            /// Initializes a new local variable descriptor.
+            /// </summary>
+            /// <param name="expr"></param>
+            /// <param name="typeCode"></param>
+            public ScopeVariable(ParameterExpression expr, ScriptTypeCode typeCode)
+                : this(expr, new object[] { typeCode })
+            {
+            }
+
+            /// <summary>
+            /// Initializes a new local variable descriptor.
+            /// </summary>
+            /// <param name="expr"></param>
+            /// <param name="attributes"></param>
+            public ScopeVariable(ParameterExpression expr, params object[] attributes)
+            {
+                Expression = expr;
+                TypeCode = ScriptTypeCode.Unknown;
+                foreach (var a in attributes)
+                    if (a is ScriptTypeCode)
+                        TypeCode = (ScriptTypeCode)a;
+            }
+        }
 
         /// <summary>
         /// Represents runtime variable table.
         /// </summary>
         [ComVisible(false)]
-        public interface IScopeVariables : IDictionary<string, ParameterExpression>
+        public interface IScopeVariables : IDictionary<string, ScopeVariable>
         {
         }
 
@@ -31,7 +72,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// This class cannot be inherited.
         /// </summary>
         [ComVisible(false)]
-        private sealed class ScopeVariables: Dictionary<string, ParameterExpression>, IScopeVariables
+        private sealed class ScopeVariables : Dictionary<string, ScopeVariable>, IScopeVariables
         {
             public ScopeVariables(int capacity)
                 : base(capacity, new StringEqualityComparer())
@@ -47,12 +88,12 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         protected sealed class EmptyScopeVariables : IScopeVariables
         {
             private readonly ICollection<string> Keys;
-            private readonly ICollection<ParameterExpression> Values;
+            private readonly ICollection<ScopeVariable> Values;
 
             private EmptyScopeVariables()
             {
                 Keys = new string[0];
-                Values = new ParameterExpression[0];
+                Values = new ScopeVariable[0];
             }
 
             /// <summary>
@@ -60,75 +101,75 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             /// </summary>
             public static readonly EmptyScopeVariables Instance = new EmptyScopeVariables();
 
-            void IDictionary<string, ParameterExpression>.Add(string key, ParameterExpression value)
+            void IDictionary<string, ScopeVariable>.Add(string key, ScopeVariable value)
             {
             }
 
-            bool IDictionary<string, ParameterExpression>.ContainsKey(string key)
+            bool IDictionary<string, ScopeVariable>.ContainsKey(string key)
             {
                 return false;
             }
 
-            ICollection<string> IDictionary<string, ParameterExpression>.Keys
+            ICollection<string> IDictionary<string, ScopeVariable>.Keys
             {
                 get { return Keys; }
             }
 
-            bool IDictionary<string, ParameterExpression>.Remove(string key)
+            bool IDictionary<string, ScopeVariable>.Remove(string key)
             {
                 return false;
             }
 
-            bool IDictionary<string, ParameterExpression>.TryGetValue(string key, out ParameterExpression value)
+            bool IDictionary<string, ScopeVariable>.TryGetValue(string key, out ScopeVariable value)
             {
                 value = null;
                 return false;
             }
 
-            ICollection<ParameterExpression> IDictionary<string, ParameterExpression>.Values
+            ICollection<ScopeVariable> IDictionary<string, ScopeVariable>.Values
             {
                 get { return Values; }
             }
 
-            ParameterExpression IDictionary<string, ParameterExpression>.this[string key]
+            ScopeVariable IDictionary<string, ScopeVariable>.this[string key]
             {
                 get { return null; }
                 set { }
             }
 
-            void ICollection<KeyValuePair<string, ParameterExpression>>.Add(KeyValuePair<string, ParameterExpression> item)
+            void ICollection<KeyValuePair<string, ScopeVariable>>.Add(KeyValuePair<string, ScopeVariable> item)
             {
             }
 
-            void ICollection<KeyValuePair<string, ParameterExpression>>.Clear()
+            void ICollection<KeyValuePair<string, ScopeVariable>>.Clear()
             {
             }
 
-            bool ICollection<KeyValuePair<string, ParameterExpression>>.Contains(KeyValuePair<string, ParameterExpression> item)
+            bool ICollection<KeyValuePair<string, ScopeVariable>>.Contains(KeyValuePair<string, ScopeVariable> item)
             {
                 return false;
             }
 
-            void ICollection<KeyValuePair<string, ParameterExpression>>.CopyTo(KeyValuePair<string, ParameterExpression>[] array, int arrayIndex)
+            void ICollection<KeyValuePair<string, ScopeVariable>>.CopyTo(KeyValuePair<string, ScopeVariable>[] array, int arrayIndex)
             {
             }
 
-            int ICollection<KeyValuePair<string, ParameterExpression>>.Count
+            int ICollection<KeyValuePair<string, ScopeVariable>>.Count
             {
                 get { return 0; }
             }
 
-            bool ICollection<KeyValuePair<string, ParameterExpression>>.IsReadOnly
+            bool ICollection<KeyValuePair<string, ScopeVariable>>.IsReadOnly
             {
                 get { return true; }
             }
 
-            bool ICollection<KeyValuePair<string, ParameterExpression>>.Remove(KeyValuePair<string, ParameterExpression> item)
+            bool ICollection<KeyValuePair<string, ScopeVariable>>.Remove(KeyValuePair<string, ScopeVariable> item)
             {
                 return false;
             }
 
-            IEnumerator<KeyValuePair<string, ParameterExpression>> IEnumerable<KeyValuePair<string, ParameterExpression>>.GetEnumerator()
+            IEnumerator<KeyValuePair<string, ScopeVariable>> IEnumerable<KeyValuePair<string, ScopeVariable>>.GetEnumerator()
             {
                 yield break;
             }
@@ -235,6 +276,11 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             return name;
         }
 
+        internal static IEnumerable<ParameterExpression> GetExpressions(IEnumerable<ScopeVariable> variables)
+        {
+            return variables.Select(l => l.Expression);
+        }
+
         /// <summary>
         /// Gets a collection of declared variables.
         /// </summary>
@@ -253,20 +299,20 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// </summary>
         /// <param name="variableName">The name of the variable.</param>
         /// <returns>An expression that references the variable; or <see langword="null"/> if variable is not declared.</returns>
-        public abstract ParameterExpression this[string variableName]
+        public abstract ScopeVariable this[string variableName]
         {
             get;
         }
 
         /// <summary>
-        /// Declares a new variable in the current scope.
+        /// 
         /// </summary>
-        /// <param name="variableName">The name of the variable to be declared.</param>
-        /// <param name="declaration">The slot that is created by the scope and can be used in the LINQ expression trees.</param>
+        /// <param name="variableName"></param>
         /// <returns></returns>
-        public bool DeclareVariable(string variableName, out ParameterExpression declaration)
+        internal ParameterExpression GetVariableExpression(string variableName)
         {
-            return DeclareVariable<IStaticRuntimeSlot>(variableName, out declaration);
+            var v = this[variableName];
+            return v != null ? v.Expression : null;
         }
 
         /// <summary>
@@ -274,11 +320,24 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// </summary>
         /// <param name="variableName">The name of the variable to be declared.</param>
         /// <param name="declaration">The slot that is created by the scope and can be used in the LINQ expression trees.</param>
+        /// <param name="attributes">An array of semantics attributes.</param>
         /// <returns></returns>
-        public bool DeclareVariable(string variableName, out Expression declaration)
+        public bool DeclareVariable(string variableName, out ParameterExpression declaration, params object[] attributes)
+        {
+            return DeclareVariable<IStaticRuntimeSlot>(variableName, out declaration, attributes);
+        }
+
+        /// <summary>
+        /// Declares a new variable in the current scope.
+        /// </summary>
+        /// <param name="variableName">The name of the variable to be declared.</param>
+        /// <param name="declaration">The slot that is created by the scope and can be used in the LINQ expression trees.</param>
+        /// <param name="attributes">An array of semantic attributes.</param>
+        /// <returns></returns>
+        public bool DeclareVariable(string variableName, out Expression declaration, params object[] attributes)
         {
             var variableDef = default(ParameterExpression);
-            switch (DeclareVariable(variableName, out declaration))
+            switch (DeclareVariable(variableName, out declaration, attributes))
             {
                 case true:
                     declaration = variableDef;
@@ -306,13 +365,14 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <typeparam name="T">Type of the runtime variable.</typeparam>
         /// <param name="variableName">The name of the variable to declare.</param>
         /// <param name="declaration">The slot that is created by the scope and can be used in the LINQ expression trees.</param>
+        /// <param name="attributes">An array of semantics attributes.</param>
         /// <returns></returns>
-        protected abstract bool DeclareVariable<T>(string variableName, out ParameterExpression declaration);
+        protected abstract bool DeclareVariable<T>(string variableName, out ParameterExpression declaration, params object[] attributes);
 
-        bool ILexicalScope.DeclareVariable<T>(string variableName)
+        bool ILexicalScope.DeclareVariable<T>(string variableName, object[] attributes)
         {
             var declaration = default(ParameterExpression);
-            return DeclareVariable<T>(variableName, out declaration);
+            return DeclareVariable<T>(variableName, out declaration, attributes);
         }
 
         /// <summary>
@@ -390,6 +450,45 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         ILexicalScope ILexicalScope.Parent
         {
             get { return Parent; }
+        }
+
+        /// <summary>
+        /// Gets type of the variable.
+        /// </summary>
+        /// <param name="variableName"></param>
+        /// <returns></returns>
+        public ScriptTypeCode GetType(string variableName)
+        {
+            return (ScriptTypeCode)GetAttribute(typeof(ScriptTypeCode), variableName);
+        }
+
+        private object GetAttribute(Type attributeType, string variableName)
+        {
+            var info = this[variableName];
+            if (Equals(attributeType, typeof(ScriptTypeCode)))
+                return info != null ? info.TypeCode : ScriptTypeCode.Unknown;
+            else if (attributeType.IsValueType) return Activator.CreateInstance(attributeType);
+            else return null;
+        }
+
+        T ILexicalScope.GetAttribute<T>(string variableName)
+        {
+            return (T)GetAttribute(typeof(T), variableName);
+        }
+
+        /// <summary>
+        /// Returns an enumerator through local variables.
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerator<KeyValuePair<string, ParameterExpression>> GetEnumerator()
+        {
+            foreach (var name in Variables)
+                yield return new KeyValuePair<string, ParameterExpression>(name, this[name].Expression);
+        }
+
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
         }
     }
 }
