@@ -293,10 +293,11 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// Returns type code of this variable.
         /// </summary>
         /// <returns></returns>
-        private IWellKnownContractInfo GetType(ISlot s, TranslationContext context)
+        private IWellKnownContractInfo GetType(ISlot s, bool isconst, TranslationContext context)
         {
             var typeInfo = GetType(s.ContractBinding, context);
-            if (typeInfo == null) typeInfo = GetType(s.InitExpression, context);
+            //variable value can be changed asynchronously, therefore translator cannot guarantee the type of the value
+            if (typeInfo == null && isconst) typeInfo = GetType(s.InitExpression, context);
             return typeInfo;
         }
 
@@ -305,7 +306,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             var variableRef = default(ParameterExpression);
             context.UserData.FunctionInfo = null;   //resets previously collected function data.
             //Declares a new variable in the current lexical scope.
-            switch (context.Scope.DeclareVariable(variableDeclaration.Name, out variableRef, GetType(variableDeclaration, context)) && variableRef != null)
+            switch (context.Scope.DeclareVariable(variableDeclaration.Name, out variableRef, GetType(variableDeclaration, isconst, context)) && variableRef != null)
             {
                 case true:
                     if (context.UserData.FunctionInfo is LambdaExpression)
@@ -1361,7 +1362,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             foreach (var p in action.Signature.ParamList)
             {
                 var paramExpr = default(ParameterExpression);
-                scope.DeclareParameter(p.Name, out paramExpr, GetType(p, context));
+                scope.DeclareParameter(p.Name, out paramExpr, GetType(p, false, context));
             }
             return new List<ParameterExpression>(LexicalScope.GetExpressions( scope.Parameters.Values));
         }
@@ -1445,12 +1446,6 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns>LINQ binary expression.</returns>
         protected override Expression Translate(ScriptCodeBinaryOperatorExpression expression, TranslationContext context)
         {
-            if (expression.Operator == ScriptCodeBinaryOperatorType.Assign && expression.Left is ScriptCodeVariableReference)
-            {
-                //change type of the variable
-                var variableName = ((ScriptCodeVariableReference)expression.Left).VariableName;
-                context.Scope.SetAttribute(variableName, GetType(expression.Right, context));
-            }
             /*
              * If binary expression has the following format:
              * a to void;
