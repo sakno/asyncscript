@@ -22,11 +22,6 @@ namespace DynamicScript
         Object = 1,
 
         /// <summary>
-        /// Represents signature of the function
-        /// </summary>
-        Function = 2,
-
-        /// <summary>
         /// Represents 64-bit signed integer.
         /// </summary>
         Integer = 3,

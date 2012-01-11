@@ -7,7 +7,7 @@ namespace DynamicScript.Runtime.Environment
 {
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
     using SystemConverter = System.Convert;
-    using InterpretationContext = Compiler.Ast.InterpretationContext;
+    using Compiler.Ast;
 
     /// <summary>
     /// Represents real object.
@@ -128,6 +128,26 @@ namespace DynamicScript.Runtime.Environment
             else return LinqHelpers.Convert<ScriptReal, double>(value);
         }
 
+        public IScriptObject Add(IConvertible right, InterpreterState state)
+        {
+            switch (right != null ? right.GetTypeCode() : TypeCode.Object)
+            {
+                case TypeCode.Int16:
+                case TypeCode.Int32:
+                case TypeCode.Int64:
+                    return (ScriptReal)(Value + SystemConverter.ToInt64(right));
+                case TypeCode.Single:
+                case TypeCode.Double:
+                    return (ScriptReal)(Value + SystemConverter.ToDouble(right));
+                case TypeCode.String:
+                    return (ScriptString)string.Concat(Value, right);
+                default:
+                    if (state.Context == InterpretationContext.Unchecked)
+                        return Void;
+                    else throw new UnsupportedOperationException(state);
+            }
+        }
+
         /// <summary>
         /// Computes the sum, or union of the current object with the specified.
         /// </summary>
@@ -136,18 +156,13 @@ namespace DynamicScript.Runtime.Environment
         /// <returns>The result of the binary operation interpretation.</returns>
         protected override IScriptObject Add(IScriptObject right, InterpreterState state)
         {
-            if (right.OneOf<ScriptBoolean, ScriptInteger, ScriptReal>())
-                return Add(Convert(right));
+            if (right is IConvertible)
+                return Add((IConvertible)right, state);
             else if (IsVoid(right))
-                return Add(Zero);
+                return this;
             else if (state.Context == InterpretationContext.Unchecked)
-                return ScriptObject.Void;
+                return Void;
             else throw new UnsupportedOperationException(state);
-        }
-
-        private ScriptReal Add(double right)
-        {
-            return Value + right;
         }
 
         /// <summary>
@@ -162,6 +177,30 @@ namespace DynamicScript.Runtime.Environment
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="right"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public ScriptReal Divide(IConvertible right, InterpreterState state)
+        {
+            switch (right != null ? right.GetTypeCode() : TypeCode.Object)
+            {
+                case TypeCode.Int16:
+                case TypeCode.Int32:
+                case TypeCode.Int64:
+                    return Value / SystemConverter.ToInt64(right);
+                case TypeCode.Single:
+                case TypeCode.Double:
+                    return Value / SystemConverter.ToDouble(right);
+                default:
+                    if (state.Context == InterpretationContext.Unchecked)
+                        return Zero;
+                    else throw new UnsupportedOperationException(state);
+            }
+        }
+
+        /// <summary>
         /// Divides the current object using the specified.
         /// </summary>
         /// <param name="right">The right operand of the division operator.</param>
@@ -169,18 +208,35 @@ namespace DynamicScript.Runtime.Environment
         /// <returns>The division result.</returns>
         protected override IScriptObject Divide(IScriptObject right, InterpreterState state)
         {
-            if (right.OneOf<ScriptBoolean, ScriptInteger, ScriptReal>())
-                return Divide(Convert(right), state);
+            if (right is IConvertible)
+                return Divide((IConvertible)right, state);
             else if (IsVoid(right))
-                return Divide(Zero, state);
+                return (ScriptReal)(Value / 0.0);
             else if (state.Context == InterpretationContext.Unchecked)
                 return ScriptObject.Void;
             else throw new UnsupportedOperationException(state);
         }
 
-        private ScriptReal Divide(double right, InterpreterState state)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="right"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public ScriptBoolean Equals(IConvertible right, InterpreterState state)
         {
-            return Value / right;
+            switch (right != null ? right.GetTypeCode() : TypeCode.Object)
+            {
+                case TypeCode.Int16:
+                case TypeCode.Int32:
+                case TypeCode.Int64:
+                    return Value == SystemConverter.ToInt64(right);
+                case TypeCode.Single:
+                case TypeCode.Double:
+                    return Value == SystemConverter.ToDouble(right);
+                default:
+                    return false;
+            }
         }
 
         /// <summary>
@@ -191,18 +247,22 @@ namespace DynamicScript.Runtime.Environment
         /// <returns>The comparison result.</returns>
         protected override IScriptObject Equals(IScriptObject right, InterpreterState state)
         {
-            if (right.OneOf<ScriptBoolean, ScriptInteger, ScriptReal>())
-                return Equals(Convert(right), state);
+            if (right is IConvertible)
+                return Equals((IConvertible)right, state);
             else if (IsVoid(right))
-                return Equals(Zero, state);
-            else if (state.Context == InterpretationContext.Unchecked)
-                return ScriptObject.Void;
-            else throw new UnsupportedOperationException(state);
+                return (ScriptBoolean)(Value == 0.0);
+            else return ScriptBoolean.False;
         }
 
-        private ScriptBoolean Equals(double right, InterpreterState state)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="right"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public ScriptBoolean NotEquals(IConvertible right, InterpreterState state)
         {
-            return Value == right;
+            return !Equals(right, state);
         }
 
         /// <summary>
@@ -214,18 +274,33 @@ namespace DynamicScript.Runtime.Environment
         /// <remarks>This method is implemented by default.</remarks>
         protected override IScriptObject NotEquals(IScriptObject right, InterpreterState state)
         {
-            if (right.OneOf<ScriptBoolean, ScriptInteger, ScriptReal>())
+            if (right is IConvertible)
                 return NotEquals(Convert(right), state);
             else if (IsVoid(right))
-                return NotEquals(Zero, state);
-            else if (state.Context == InterpretationContext.Unchecked)
-                return ScriptObject.Void;
-            else throw new UnsupportedOperationException(state);
+                return (ScriptBoolean)(Value != 0.0);
+            else return ScriptBoolean.True;
         }
 
-        private ScriptBoolean NotEquals(double right, InterpreterState state)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="right"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public ScriptBoolean GreaterThan(IConvertible right, InterpreterState state)
         {
-            return !Equals(right, state);
+            switch (right != null ? right.GetTypeCode() : TypeCode.Object)
+            {
+                case TypeCode.Int16:
+                case TypeCode.Int32:
+                case TypeCode.Int64:
+                    return Value > SystemConverter.ToInt64(right);
+                case TypeCode.Single:
+                case TypeCode.Double:
+                    return Value > SystemConverter.ToDouble(right);
+                default:
+                    return false;
+            }
         }
 
         /// <summary>
@@ -239,15 +314,30 @@ namespace DynamicScript.Runtime.Environment
             if (right.OneOf<ScriptBoolean, ScriptInteger, ScriptReal>())
                 return GreaterThan(Convert(right), state);
             else if (IsVoid(right))
-                return GreaterThan(Zero, state);
-            else if (state.Context == InterpretationContext.Unchecked)
-                return ScriptObject.Void;
-            else throw new UnsupportedOperationException(state);
+                return (ScriptBoolean)(Value > 0.0);
+            else return ScriptBoolean.False;
         }
 
-        private ScriptBoolean GreaterThan(double right, InterpreterState state)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="right"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public ScriptBoolean GreaterThanOrEqual(IConvertible right, InterpreterState state)
         {
-            return Value > right;
+            switch (right != null ? right.GetTypeCode() : TypeCode.Object)
+            {
+                case TypeCode.Int16:
+                case TypeCode.Int32:
+                case TypeCode.Int64:
+                    return Value >= SystemConverter.ToInt64(right);
+                case TypeCode.Single:
+                case TypeCode.Double:
+                    return Value >= SystemConverter.ToDouble(right);
+                default:
+                    return false;
+            }
         }
 
         /// <summary>
@@ -258,18 +348,33 @@ namespace DynamicScript.Runtime.Environment
         /// <returns><see langword="true"/>the current object is greater than or equal to the specified object; otherwise, <see langword="false"/>.</returns>
         protected override IScriptObject GreaterThanOrEqual(IScriptObject right, InterpreterState state)
         {
-            if (right.OneOf<ScriptBoolean, ScriptInteger, ScriptReal>())
-                return GreaterThanOrEqual(Convert(right), state);
+            if (right is IConvertible)
+                return GreaterThanOrEqual((IConvertible)right, state);
             else if (IsVoid(right))
-                return GreaterThanOrEqual(Zero, state);
-            else if (state.Context == InterpretationContext.Unchecked)
-                return ScriptObject.Void;
-            else throw new UnsupportedOperationException(state);
+                return (ScriptBoolean)(Value >= 0.0);
+            else return ScriptBoolean.False;
         }
 
-        private ScriptBoolean GreaterThanOrEqual(double right, InterpreterState state)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="right"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public ScriptBoolean LessThan(IConvertible right, InterpreterState state)
         {
-            return Value >= right;
+            switch (right != null ? right.GetTypeCode() : TypeCode.Object)
+            {
+                case TypeCode.Int16:
+                case TypeCode.Int32:
+                case TypeCode.Int64:
+                    return Value < SystemConverter.ToInt64(right);
+                case TypeCode.Single:
+                case TypeCode.Double:
+                    return Value < SystemConverter.ToDouble(right);
+                default:
+                    return false;
+            }
         }
 
         /// <summary>
@@ -280,18 +385,33 @@ namespace DynamicScript.Runtime.Environment
         /// <returns><see langword="true"/>the current object is less than the specified object; otherwise, <see langword="false"/>.</returns>
         protected override IScriptObject LessThan(IScriptObject right, InterpreterState state)
         {
-            if (right.OneOf<ScriptBoolean, ScriptInteger, ScriptReal>())
-                return LessThan(Convert(right), state);
+            if (right is IConvertible)
+                return LessThan((IConvertible)right, state);
             else if (IsVoid(right))
-                return LessThan(Zero, state);
-            else if (state.Context == InterpretationContext.Unchecked)
-                return ScriptObject.Void;
-            else throw new UnsupportedOperationException(state);
+                return (ScriptBoolean)(Value < 0.0);
+            else return ScriptBoolean.False;
         }
 
-        private ScriptBoolean LessThan(double right, InterpreterState state)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="right"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public ScriptBoolean LessThanOrEqual(IConvertible right, InterpreterState state)
         {
-            return Value < right;
+            switch (right != null ? right.GetTypeCode() : TypeCode.Object)
+            {
+                case TypeCode.Int16:
+                case TypeCode.Int32:
+                case TypeCode.Int64:
+                    return Value <= SystemConverter.ToInt64(right);
+                case TypeCode.Single:
+                case TypeCode.Double:
+                    return Value <= SystemConverter.ToDouble(right);
+                default:
+                    return false;
+            }
         }
 
         /// <summary>
@@ -302,18 +422,35 @@ namespace DynamicScript.Runtime.Environment
         /// <returns><see langword="true"/>the current object is less than or equal to the specified object; otherwise, <see langword="false"/>.</returns>
         protected override IScriptObject LessThanOrEqual(IScriptObject right, InterpreterState state)
         {
-            if (right.OneOf<ScriptBoolean, ScriptInteger, ScriptReal>())
-                return LessThanOrEqual(Convert(right), state);
+            if (right is IConvertible)
+                return LessThanOrEqual((IConvertible)right, state);
             else if (IsVoid(right))
-                return LessThanOrEqual(Zero, state);
-            else if (state.Context == InterpretationContext.Unchecked)
-                return ScriptObject.Void;
-            else throw new UnsupportedOperationException(state);
+                return (ScriptBoolean)(Value <= 0.0);
+            else return ScriptBoolean.False;
         }
 
-        private ScriptBoolean LessThanOrEqual(double right, InterpreterState state)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="right"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public ScriptReal Multiply(IConvertible right, InterpreterState state)
         {
-            return Value <= right;
+            switch (right != null ? right.GetTypeCode() : TypeCode.Object)
+            {
+                case TypeCode.Int16:
+                case TypeCode.Int32:
+                case TypeCode.Int64:
+                    return Value * SystemConverter.ToInt64(right);
+                case TypeCode.Single:
+                case TypeCode.Double:
+                    return Value * SystemConverter.ToDouble(right);
+                default:
+                    if (state.Context == InterpretationContext.Unchecked)
+                        return Zero;
+                    else throw new UnsupportedOperationException(state);
+            }
         }
 
         /// <summary>
@@ -324,18 +461,37 @@ namespace DynamicScript.Runtime.Environment
         /// <returns>The multiplication of the two objects.</returns>
         protected override IScriptObject Multiply(IScriptObject right, InterpreterState state)
         {
-            if (right.OneOf<ScriptBoolean, ScriptInteger, ScriptReal>())
-                return Multiply(Convert(right));
+            if (right is IConvertible)
+                return Multiply((IConvertible)right, state);
             else if (IsVoid(right))
-                return Multiply(Zero);
+                return (ScriptReal)(Value * 0.0);
             else if (state.Context == InterpretationContext.Unchecked)
-                return ScriptObject.Void;
+                return Void;
             else throw new UnsupportedOperationException(state);
         }
 
-        private ScriptReal Multiply(double right)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="right"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public ScriptReal Subtract(IConvertible right, InterpreterState state)
         {
-            return Value * right;
+            switch (right != null ? right.GetTypeCode() : TypeCode.Object)
+            {
+                case TypeCode.Int16:
+                case TypeCode.Int32:
+                case TypeCode.Int64:
+                    return Value - SystemConverter.ToInt64(right);
+                case TypeCode.Single:
+                case TypeCode.Double:
+                    return Value - SystemConverter.ToDouble(right);
+                default:
+                    if (state.Context == InterpretationContext.Unchecked)
+                        return Zero;
+                    else throw new UnsupportedOperationException(state);
+            }
         }
 
         /// <summary>
@@ -346,18 +502,37 @@ namespace DynamicScript.Runtime.Environment
         /// <returns>The subtraction result.</returns>
         protected override IScriptObject Subtract(IScriptObject right, InterpreterState state)
         {
-            if (right.OneOf<ScriptBoolean, ScriptInteger, ScriptReal>())
-                return Subtract(Convert(right));
+            if (right is IConvertible)
+                return Subtract((IConvertible)right, state);
             else if (IsVoid(right))
-                return Subtract(Zero);
+                return this;
             else if (state.Context == InterpretationContext.Unchecked)
-                return ScriptObject.Void;
+                return Void;
             else throw new UnsupportedOperationException(state);
         }
 
-        private ScriptReal Subtract(double right)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="right"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public ScriptReal Modulo(IConvertible right, InterpreterState state)
         {
-            return Value - right;
+            switch (right != null ? right.GetTypeCode() : TypeCode.Object)
+            {
+                case TypeCode.Int16:
+                case TypeCode.Int32:
+                case TypeCode.Int64:
+                    return Value % SystemConverter.ToInt64(right);
+                case TypeCode.Single:
+                case TypeCode.Double:
+                    return Value % SystemConverter.ToDouble(right);
+                default:
+                    if (state.Context == InterpretationContext.Unchecked)
+                        return Zero;
+                    else throw new UnsupportedOperationException(state);
+            }
         }
 
         /// <summary>
@@ -368,18 +543,13 @@ namespace DynamicScript.Runtime.Environment
         /// <returns>The remainder.</returns>
         protected override IScriptObject Modulo(IScriptObject right, InterpreterState state)
         {
-            if (right.OneOf<ScriptBoolean, ScriptInteger, ScriptReal>())
-                return Modulo(Convert(right), state);
+            if (right is IConvertible)
+                return Modulo((IConvertible)right, state);
             else if (IsVoid(right))
-                return Modulo(Zero, state);
+                return (ScriptReal)(Value % 0.0);
             else if (state.Context == InterpretationContext.Unchecked)
-                return ScriptObject.Void;
+                return Void;
             else throw new UnsupportedOperationException(state);
-        }
-
-        private ScriptReal Modulo(double right, InterpreterState state)
-        {
-            return Value % right;
         }
 
         /// <summary>
@@ -460,6 +630,250 @@ namespace DynamicScript.Runtime.Environment
         protected override IScriptObject PreSquareAssign(InterpreterState state)
         {
             return PostSquareAssign(state);
+        }
+
+        private static Expression NotEquals(Expression left, Expression right, ParameterExpression state)
+        {
+            var call = LinqHelpers.BodyOf<ScriptReal, IConvertible, InterpreterState, IScriptObject, MethodCallExpression>((i, r, s) => i.NotEquals(r, s));
+            return call.Update(left, new Expression[] { Expression.TypeAs(right, typeof(IConvertible)), state });
+        }
+
+        private static Expression Equals(Expression left, Expression right, ParameterExpression state)
+        {
+            var call = LinqHelpers.BodyOf<ScriptReal, IConvertible, InterpreterState, IScriptObject, MethodCallExpression>((i, r, s) => i.Equals(r, s));
+            return call.Update(left, new Expression[] { Expression.TypeAs(right, typeof(IConvertible)), state });
+        }
+
+        private static Expression LessThan(Expression left, Expression right, ParameterExpression state)
+        {
+            var call = LinqHelpers.BodyOf<ScriptReal, IConvertible, InterpreterState, IScriptObject, MethodCallExpression>((i, r, s) => i.LessThan(r, s));
+            return call.Update(left, new Expression[] { Expression.TypeAs(right, typeof(IConvertible)), state });
+        }
+
+        private static Expression LessThanOrEqual(Expression left, Expression right, ParameterExpression state)
+        {
+            var call = LinqHelpers.BodyOf<ScriptReal, IConvertible, InterpreterState, IScriptObject, MethodCallExpression>((i, r, s) => i.LessThanOrEqual(r, s));
+            return call.Update(left, new Expression[] { Expression.TypeAs(right, typeof(IConvertible)), state });
+        }
+
+        private static Expression GreaterThanOrEqual(Expression left, Expression right, ParameterExpression state)
+        {
+            var call = LinqHelpers.BodyOf<ScriptReal, IConvertible, InterpreterState, IScriptObject, MethodCallExpression>((i, r, s) => i.GreaterThanOrEqual(r, s));
+            return call.Update(left, new Expression[] { Expression.TypeAs(right, typeof(IConvertible)), state });
+        }
+
+        private static Expression GreaterThan(Expression left, Expression right, ParameterExpression state)
+        {
+            var call = LinqHelpers.BodyOf<ScriptReal, IConvertible, InterpreterState, IScriptObject, MethodCallExpression>((i, r, s) => i.GreaterThan(r, s));
+            return call.Update(left, new Expression[] { Expression.TypeAs(right, typeof(IConvertible)), state });
+        }
+
+        private static Expression Modulo(Expression left, Expression right, ParameterExpression state)
+        {
+            var call = LinqHelpers.BodyOf<ScriptReal, IConvertible, InterpreterState, IScriptObject, MethodCallExpression>((i, r, s) => i.Modulo(r, s));
+            return call.Update(left, new Expression[] { Expression.TypeAs(right, typeof(IConvertible)), state });
+        }
+
+        private static Expression Divide(Expression left, Expression right, ParameterExpression state)
+        {
+            var call = LinqHelpers.BodyOf<ScriptReal, IConvertible, InterpreterState, IScriptObject, MethodCallExpression>((i, r, s) => i.Divide(r, s));
+            return call.Update(left, new Expression[] { Expression.TypeAs(right, typeof(IConvertible)), state });
+        }
+
+        private static Expression Multiply(Expression left, Expression right, ParameterExpression state)
+        {
+            var call = LinqHelpers.BodyOf<ScriptReal, IConvertible, InterpreterState, IScriptObject, MethodCallExpression>((i, r, s) => i.Multiply(r, s));
+            return call.Update(left, new Expression[] { Expression.TypeAs(right, typeof(IConvertible)), state });
+        }
+
+        private static Expression Subtract(Expression left, Expression right, ParameterExpression state)
+        {
+            var call = LinqHelpers.BodyOf<ScriptReal, IConvertible, InterpreterState, IScriptObject, MethodCallExpression>((i, r, s) => i.Subtract(r, s));
+            return call.Update(left, new Expression[] { Expression.TypeAs(right, typeof(IConvertible)), state });
+        }
+
+        private static Expression Add(Expression left, Expression right, ParameterExpression state)
+        {
+            var call = LinqHelpers.BodyOf<ScriptReal, IConvertible, InterpreterState, IScriptObject, MethodCallExpression>((i, r, s) => i.Add(r, s));
+            return call.Update(left, new Expression[] { Expression.TypeAs(right, typeof(IConvertible)), state });
+        }
+
+        internal static Expression Inline(Expression lvalue, ScriptCodeBinaryOperatorType @operator, Expression rvalue, ScriptTypeCode rtype, ParameterExpression state)
+        {
+            lvalue = Expression.Convert(lvalue, typeof(ScriptReal));
+            switch ((int)@operator << 8 | (byte)rtype)//emulates two-dimensional switch
+            {
+                //inlining of operator <>
+                case (int)ScriptCodeBinaryOperatorType.ValueInequality << 8 | (byte)ScriptTypeCode.Real:    //real <> real
+                    lvalue = UnderlyingValue(lvalue);
+                    rvalue = UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptReal)));
+                    return Expression.Convert(Expression.NotEqual(lvalue, rvalue), typeof(ScriptBoolean));
+                case (int)ScriptCodeBinaryOperatorType.ValueInequality << 8 | (byte)ScriptTypeCode.Integer:    //real <> integer
+                    lvalue = UnderlyingValue(lvalue);
+                    rvalue = Expression.Convert(ScriptInteger.UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptReal))), typeof(double));
+                    return Expression.Convert(Expression.NotEqual(lvalue, rvalue), typeof(ScriptBoolean));
+                case (int)ScriptCodeBinaryOperatorType.ValueInequality << 8 | (byte)ScriptTypeCode.Void:    //real <> void
+                    lvalue = UnderlyingValue(lvalue);
+                    return Expression.Convert(Expression.NotEqual(lvalue, LinqHelpers.Constant(0.0)), typeof(ScriptBoolean));
+                case (int)ScriptCodeBinaryOperatorType.ValueInequality << 8 | (byte)ScriptTypeCode.Unknown: //real <> <other>
+                    return NotEquals(lvalue, rvalue, state);
+                //inlining of operator ==
+                case (int)ScriptCodeBinaryOperatorType.ValueEquality << 8 | (byte)ScriptTypeCode.Real:    //real == real
+                    lvalue = UnderlyingValue(lvalue);
+                    rvalue = UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptReal)));
+                    return Expression.Convert(Expression.Equal(lvalue, rvalue), typeof(ScriptBoolean));
+                case (int)ScriptCodeBinaryOperatorType.ValueEquality << 8 | (byte)ScriptTypeCode.Integer:    //real == integer
+                    lvalue = UnderlyingValue(lvalue);
+                    rvalue = Expression.Convert(ScriptInteger.UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptInteger))), typeof(double));
+                    return Expression.Convert(Expression.Equal(lvalue, rvalue), typeof(ScriptBoolean));
+                case (int)ScriptCodeBinaryOperatorType.ValueEquality << 8 | (byte)ScriptTypeCode.Void:    //real == void
+                    lvalue = UnderlyingValue(lvalue);
+                    return Expression.Convert(Expression.Equal(lvalue, LinqHelpers.Constant(0.0)), typeof(ScriptBoolean));
+                case (int)ScriptCodeBinaryOperatorType.ValueEquality << 8 | (byte)ScriptTypeCode.Unknown: //real == <other>
+                    return Equals(lvalue, rvalue, state);
+                //inlining of operator <=
+                case (int)ScriptCodeBinaryOperatorType.LessThanOrEqual << 8 | (byte)ScriptTypeCode.Real:    //real <= real
+                    lvalue = UnderlyingValue(lvalue);
+                    rvalue = UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptReal)));
+                    return Expression.Convert(Expression.LessThanOrEqual(lvalue, rvalue), typeof(ScriptBoolean));
+                case (int)ScriptCodeBinaryOperatorType.LessThanOrEqual << 8 | (byte)ScriptTypeCode.Integer:    //real <= integer
+                    lvalue = UnderlyingValue(lvalue);
+                    rvalue = Expression.Convert(ScriptInteger.UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptInteger))), typeof(double));
+                    return Expression.Convert(Expression.LessThanOrEqual(lvalue, rvalue), typeof(ScriptBoolean));
+                case (int)ScriptCodeBinaryOperatorType.LessThanOrEqual << 8 | (byte)ScriptTypeCode.Void:    //real <= void
+                    lvalue = UnderlyingValue(lvalue);
+                    return Expression.Convert(Expression.LessThanOrEqual(lvalue, LinqHelpers.Constant(0.0)), typeof(ScriptBoolean));
+                case (int)ScriptCodeBinaryOperatorType.LessThanOrEqual << 8 | (byte)ScriptTypeCode.Unknown: //real <= <other>
+                    return LessThanOrEqual(lvalue, rvalue, state);
+                //inlining of operator >=
+                case (int)ScriptCodeBinaryOperatorType.GreaterThanOrEqual << 8 | (byte)ScriptTypeCode.Real:    //real >= real
+                    lvalue = UnderlyingValue(lvalue);
+                    rvalue = UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptReal)));
+                    return Expression.Convert(Expression.GreaterThanOrEqual(lvalue, rvalue), typeof(ScriptBoolean));
+                case (int)ScriptCodeBinaryOperatorType.GreaterThanOrEqual << 8 | (byte)ScriptTypeCode.Integer:    //real >= integer
+                    lvalue = UnderlyingValue(lvalue);
+                    rvalue = Expression.Convert(ScriptInteger.UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptInteger))), typeof(double));
+                    return Expression.Convert(Expression.GreaterThanOrEqual(lvalue, rvalue), typeof(ScriptBoolean));
+                case (int)ScriptCodeBinaryOperatorType.GreaterThanOrEqual << 8 | (byte)ScriptTypeCode.Void:    //real >= void
+                    lvalue = UnderlyingValue(lvalue);
+                    return Expression.Convert(Expression.GreaterThanOrEqual(lvalue, LinqHelpers.Constant(0.0)), typeof(ScriptBoolean));
+                case (int)ScriptCodeBinaryOperatorType.GreaterThanOrEqual << 8 | (byte)ScriptTypeCode.Unknown: //real >= <other>
+                    return GreaterThanOrEqual(lvalue, rvalue, state);
+                //inlining of operator <
+                case (int)ScriptCodeBinaryOperatorType.LessThan << 8 | (byte)ScriptTypeCode.Real:    //real < real
+                    lvalue = UnderlyingValue(lvalue);
+                    rvalue = UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptReal)));
+                    return Expression.Convert(Expression.LessThan(lvalue, rvalue), typeof(ScriptBoolean));
+                case (int)ScriptCodeBinaryOperatorType.LessThan << 8 | (byte)ScriptTypeCode.Integer:    //real < integer
+                    lvalue = UnderlyingValue(lvalue);
+                    rvalue = Expression.Convert(ScriptInteger.UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptInteger))), typeof(double));
+                    return Expression.Convert(Expression.LessThan(lvalue, rvalue), typeof(ScriptBoolean));
+                case (int)ScriptCodeBinaryOperatorType.LessThan << 8 | (byte)ScriptTypeCode.Void:    //real < void
+                    lvalue = UnderlyingValue(lvalue);
+                    return Expression.Convert(Expression.LessThan(lvalue, LinqHelpers.Constant(0.0)), typeof(ScriptBoolean));
+                case (int)ScriptCodeBinaryOperatorType.LessThan << 8 | (byte)ScriptTypeCode.Unknown: //real < <other>
+                    return LessThan(lvalue, rvalue, state);
+                //inlining of operator >
+                case (int)ScriptCodeBinaryOperatorType.GreaterThan << 8 | (byte)ScriptTypeCode.Real:    //real > real
+                    lvalue = UnderlyingValue(lvalue);
+                    rvalue = UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptReal)));
+                    return Expression.Convert(Expression.GreaterThan(lvalue, rvalue), typeof(ScriptBoolean));
+                case (int)ScriptCodeBinaryOperatorType.GreaterThan << 8 | (byte)ScriptTypeCode.Integer:    //real > integer
+                    lvalue = UnderlyingValue(lvalue);
+                    rvalue = Expression.Convert(ScriptInteger.UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptInteger))), typeof(double));
+                    return Expression.Convert(Expression.GreaterThan(lvalue, rvalue), typeof(ScriptBoolean));
+                case (int)ScriptCodeBinaryOperatorType.GreaterThan << 8 | (byte)ScriptTypeCode.Void:    //real > void
+                    lvalue = UnderlyingValue(lvalue);
+                    return Expression.Convert(Expression.GreaterThan(lvalue, LinqHelpers.Constant(0.0)), typeof(ScriptBoolean));
+                case (int)ScriptCodeBinaryOperatorType.GreaterThan << 8 | (byte)ScriptTypeCode.Unknown: //real > <other>
+                    return GreaterThan(lvalue, rvalue, state);
+                //inlining of operator %
+                case (int)ScriptCodeBinaryOperatorType.Modulo << 8 | (byte)ScriptTypeCode.Real:    //real % real
+                    lvalue = UnderlyingValue(lvalue);
+                    rvalue = UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptReal)));
+                    return Expression.Convert(Expression.Modulo(lvalue, rvalue), typeof(ScriptReal));
+                case (int)ScriptCodeBinaryOperatorType.Modulo << 8 | (byte)ScriptTypeCode.Integer:    //real % integer
+                    lvalue = UnderlyingValue(lvalue);
+                    rvalue = Expression.Convert(ScriptInteger.UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptInteger))), typeof(double));
+                    return Expression.Convert(Expression.Modulo(lvalue, rvalue), typeof(ScriptReal));
+                case (int)ScriptCodeBinaryOperatorType.Modulo << 8 | (byte)ScriptTypeCode.Void:    //real % void
+                    return BinaryOperation(lvalue, ScriptCodeBinaryOperatorType.Modulo, rvalue, state);
+                case (int)ScriptCodeBinaryOperatorType.Modulo << 8 | (byte)ScriptTypeCode.Unknown: //real % <other>
+                    return Modulo(lvalue, rvalue, state);
+                //inlining of operator /
+                case (int)ScriptCodeBinaryOperatorType.Divide << 8 | (byte)ScriptTypeCode.Real:    //real / real
+                    lvalue = UnderlyingValue(lvalue);
+                    rvalue = UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptReal)));
+                    return Expression.Convert(Expression.Divide(lvalue, rvalue), typeof(ScriptInteger));
+                case (int)ScriptCodeBinaryOperatorType.Divide << 8 | (byte)ScriptTypeCode.Integer:    //real / integer
+                    lvalue = UnderlyingValue(lvalue);
+                    rvalue = Expression.Convert(ScriptInteger.UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptInteger))), typeof(double));
+                    return Expression.Convert(Expression.Divide(lvalue, rvalue), typeof(ScriptReal));
+                case (int)ScriptCodeBinaryOperatorType.Divide << 8 | (byte)ScriptTypeCode.Void:    //real / void
+                    return BinaryOperation(lvalue, ScriptCodeBinaryOperatorType.Divide, rvalue, state);
+                case (int)ScriptCodeBinaryOperatorType.Divide << 8 | (byte)ScriptTypeCode.Unknown: //real / <other>
+                    return Divide(lvalue, rvalue, state);
+                //inlining of operator *
+                case (int)ScriptCodeBinaryOperatorType.Multiply << 8 | (byte)ScriptTypeCode.Real:    //real * real
+                    lvalue = UnderlyingValue(lvalue);
+                    rvalue = UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptReal)));
+                    return Expression.Convert(Expression.Multiply(lvalue, rvalue), typeof(ScriptReal));
+                case (int)ScriptCodeBinaryOperatorType.Multiply << 8 | (byte)ScriptTypeCode.Integer:    //real * integer
+                    lvalue = UnderlyingValue(lvalue);
+                    rvalue = Expression.Convert(ScriptInteger.UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptInteger))), typeof(double));
+                    return Expression.Convert(Expression.Multiply(lvalue, rvalue), typeof(ScriptReal));
+                case (int)ScriptCodeBinaryOperatorType.Multiply << 8 | (byte)ScriptTypeCode.Void:    //real * void
+                    lvalue = UnderlyingValue(lvalue);
+                    return Expression.Convert(Expression.Multiply(lvalue, LinqHelpers.Constant(0.0)), typeof(ScriptReal));
+                case (int)ScriptCodeBinaryOperatorType.Multiply << 8 | (byte)ScriptTypeCode.Unknown: //real * <other>
+                    return Multiply(lvalue, rvalue, state);
+                //inlining of operator -
+                case (int)ScriptCodeBinaryOperatorType.Subtract << 8 | (byte)ScriptTypeCode.Real:    //real - real
+                    lvalue = UnderlyingValue(lvalue);
+                    rvalue = UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptReal)));
+                    return Expression.Convert(Expression.Subtract(lvalue, rvalue), typeof(ScriptReal));
+                case (int)ScriptCodeBinaryOperatorType.Subtract << 8 | (byte)ScriptTypeCode.Integer:    //real - integer
+                    lvalue = UnderlyingValue(lvalue);
+                    rvalue = Expression.Convert(ScriptInteger.UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptInteger))), typeof(double));
+                    return Expression.Convert(Expression.Subtract(lvalue, rvalue), typeof(ScriptReal));
+                case (int)ScriptCodeBinaryOperatorType.Subtract << 8 | (byte)ScriptTypeCode.Void:    //real - void
+                    return lvalue;
+                case (int)ScriptCodeBinaryOperatorType.Subtract << 8 | (byte)ScriptTypeCode.Unknown: //real - <other>
+                    return Subtract(lvalue, rvalue, state);
+                //inlining of operator +
+                case (int)ScriptCodeBinaryOperatorType.Add << 8 | (byte)ScriptTypeCode.Real: //real + real
+                    lvalue = UnderlyingValue(lvalue);
+                    rvalue = UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptReal)));
+                    return Expression.Convert(Expression.Add(lvalue, rvalue), typeof(ScriptInteger));
+                case (int)ScriptCodeBinaryOperatorType.Add << 8 | (byte)ScriptTypeCode.Integer:    //real + integer
+                    lvalue = UnderlyingValue(lvalue);
+                    rvalue = Expression.Convert(ScriptInteger.UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptInteger))), typeof(double));
+                    return Expression.Convert(Expression.Add(lvalue, rvalue), typeof(ScriptReal));
+                case (int)ScriptCodeBinaryOperatorType.Add << 8 | (byte)ScriptTypeCode.String: //real + string
+                    return ScriptString.Concat(((UnaryExpression)lvalue).Operand, rvalue);
+                case (int)ScriptCodeBinaryOperatorType.Add << 8 | (byte)ScriptTypeCode.Void:    //real + void
+                    return lvalue;
+                case (int)ScriptCodeBinaryOperatorType.Add << 8 | (byte)ScriptTypeCode.Unknown: //real + <other>
+                    return Add(lvalue, rvalue, state);
+                default:
+                    switch (@operator)
+                    {
+                        case ScriptCodeBinaryOperatorType.Coalesce:
+                            return Expression.Condition(Expression.NotEqual(UnderlyingValue(lvalue), LinqHelpers.Constant(0.0)), lvalue, rvalue);
+                        case ScriptCodeBinaryOperatorType.GreaterThan:
+                        case ScriptCodeBinaryOperatorType.GreaterThanOrEqual:
+                        case ScriptCodeBinaryOperatorType.LessThan:
+                        case ScriptCodeBinaryOperatorType.LessThanOrEqual:
+                        case ScriptCodeBinaryOperatorType.ValueEquality:
+                        case ScriptCodeBinaryOperatorType.ReferenceEquality:
+                            return ScriptBoolean.New(false);
+                        case ScriptCodeBinaryOperatorType.ValueInequality:
+                        case ScriptCodeBinaryOperatorType.ReferenceInequality:
+                            return ScriptBoolean.New(true);
+                        default:
+                            return Expression.Condition(InterpreterState.IsUncheckedContext(state), MakeVoid(), UnsupportedOperationException.Throw(state));
+                    }
+            }
         }
     }
 }

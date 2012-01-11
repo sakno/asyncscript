@@ -126,6 +126,25 @@ namespace DynamicScript.Compiler.Ast.Translation
                 OnScopeLeave(new LexicalScopeChangedEventArgs(scope));
             }
 
+            internal ILexicalScope LookupRaw<G1, G2, G3>()
+                where G1 : ILexicalScope
+                where G2 : ILexicalScope
+                where G3 : ILexicalScope
+            {
+                ILexicalScope current = Scope;
+                var transparent = true;
+                while (current != null && transparent)
+                    switch (current is G1 || current is G2 || current is G3)
+                    {
+                        case true: return current;
+                        default:
+                            transparent = current.Transparent;
+                            current = current.Parent;
+                            continue;
+                    }
+                return null;
+            }
+
             /// <summary>
             /// Finds the one of the specified lexical scopes.
             /// </summary>
@@ -138,18 +157,7 @@ namespace DynamicScript.Compiler.Ast.Translation
                 where G2 : class, TScope
                 where G3 : class, TScope
             {
-                var current = Scope;
-                var transparent = true;
-                while (current != null && transparent)
-                    switch (current is G1 || current is G2 || current is G3)
-                    {
-                        case true: return current;
-                        default:
-                            transparent = current.Transparent;
-                            current = (TScope)current.Parent;
-                            continue;
-                    }
-                return null;
+                return LookupRaw<G1, G2, G3>() as TScope;
             }
 
             /// <summary>
@@ -174,6 +182,12 @@ namespace DynamicScript.Compiler.Ast.Translation
                 where G : class, TScope
             {
                 return (G)Lookup<G, G>();
+            }
+
+            internal G LookupRaw<G>()
+                where G : class, ILexicalScope
+            {
+                return LookupRaw<G, G, G>() as G;
             }
 
             /// <summary>
@@ -688,11 +702,11 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// </summary>
         /// <param name="expression"></param>
         /// <param name="context"></param>
-        /// <param name="typeCode"></param>
+        /// <param name="typeInfo"></param>
         /// <returns></returns>
-        protected TCompileUnit Translate(ScriptCodeExpression expression, TranslationContext context, out ScriptTypeCode typeCode)
+        protected TCompileUnit Translate(ScriptCodeExpression expression, TranslationContext context, out IWellKnownContractInfo typeInfo)
         {
-            typeCode = GetType(expression, context);
+            typeInfo = GetType(expression, context);
             return Translate(expression, context);
         }
 
@@ -1221,7 +1235,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="variableName"></param>
         /// <param name="context"></param>
         /// <returns></returns>
-        protected abstract ScriptTypeCode GetType(string variableName, TranslationContext context);
+        protected abstract IWellKnownContractInfo GetType(string variableName, TranslationContext context);
 
         /// <summary>
         /// Obtains type of the specified expression.
@@ -1229,11 +1243,26 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="expression">An expression tree node.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Static type of the specified expression.</returns>
-        protected ScriptTypeCode GetType(ScriptCodeExpression expression, TranslationContext context)
+        protected IWellKnownContractInfo GetType(ScriptCodeExpression expression, TranslationContext context)
         {
-            return expression is ScriptCodeVariableReference ?
-                GetType(((ScriptCodeVariableReference)expression).VariableName, context) :
-                ScriptCodeExpression.GetTypeCode(expression);
+            if (expression is ScriptCodeVariableReference)
+                return GetType(((ScriptCodeVariableReference)expression).VariableName, context);
+            else if (expression is ScriptCodeInvocationExpression && ((ScriptCodeInvocationExpression)expression).Target is ScriptCodeVariableReference)
+            {
+                var function = (ScriptCodeVariableReference)((ScriptCodeInvocationExpression)expression).Target;
+                var typeInfo = context.Scope.GetAttribute<IWellKnownContractInfo>(function.VariableName) as IFunctionContractInfo;
+                return typeInfo != null ? typeInfo.GetReturnType() : null;
+            }
+            else if (expression is ScriptCodeInvocationExpression && ((ScriptCodeInvocationExpression)expression).Target is ScriptCodeCurrentActionExpression)
+            {
+                var scope = context.LookupRaw<IComplexExpressionScope<ScriptCodeActionImplementationExpression>>();
+                return scope != null ? GetType(scope.Expression.Signature.ReturnType, context) : null;
+            }
+            else if (expression is IWellKnownContractInfo)
+                return (IWellKnownContractInfo)expression;
+            else if (expression is IStaticContractBinding<ScriptCodeExpression>)
+                return GetType(((IStaticContractBinding<ScriptCodeExpression>)expression).Contract, context);
+            else return null;
         }
 
         /// <summary>

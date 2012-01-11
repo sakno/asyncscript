@@ -23,7 +23,8 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="variableName">The name of the variable.</param>
         /// <returns>An instance of the semantics attribute; or <see langword="null"/> if attribute of the specified
         /// type is not defined.</returns>
-        T GetAttribute<T>(string variableName);
+        T GetAttribute<T>(string variableName)
+            where T : class;
 
         /// <summary>
         /// Assigns dynamic semantics attribute to the specifed attribute.

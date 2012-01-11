@@ -16,7 +16,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
     /// action implementation. This class cannot be inherited.
     /// </summary>
     [ComVisible(false)]
-    sealed class FunctionScope : RoutineScope, IActionLexicalScope
+    sealed class FunctionScope : RoutineScope, IFunctionLexicalScope
     {
         public readonly ScriptCodeActionImplementationExpression Expression;
         private readonly IScopeVariables m_parameters;
@@ -66,7 +66,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns></returns>
         public bool DeclareParameter(string parameterName, out ParameterExpression declaration, params object[] attributes)
         {
-            return DeclareParameter<IStaticRuntimeSlot>(parameterName, out declaration);
+            return DeclareParameter<IStaticRuntimeSlot>(parameterName, out declaration, attributes);
         }
 
         /// <summary>

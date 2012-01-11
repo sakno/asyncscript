@@ -290,6 +290,38 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         }
 
         /// <summary>
+        /// Returns type code of this variable.
+        /// </summary>
+        /// <returns></returns>
+        private IWellKnownContractInfo GetType(ISlot s, TranslationContext context)
+        {
+            var typeInfo = GetType(s.ContractBinding, context);
+            if (typeInfo == null) typeInfo = GetType(s.InitExpression, context);
+            return typeInfo;
+        }
+
+        private bool Declare(ISlot variableDeclaration, bool isconst, TranslationContext context, out Expression result)
+        {
+            var variableRef = default(ParameterExpression);
+            context.UserData.FunctionInfo = null;   //resets previously collected function data.
+            //Declares a new variable in the current lexical scope.
+            switch (context.Scope.DeclareVariable(variableDeclaration.Name, out variableRef, GetType(variableDeclaration, context)) && variableRef != null)
+            {
+                case true:
+                    if (context.UserData.FunctionInfo is LambdaExpression)
+                        context.Scope.SetAttribute(variableDeclaration.Name, (LambdaExpression)context.UserData.FunctionInfo);
+                    result = isconst ?
+                        BindToConstant(variableRef, variableDeclaration, context) :
+                        BindToVariable(variableRef, variableDeclaration, context);
+                    return true;
+                default:
+                    //Duplicate variable declaration
+                    result = null;
+                    return false;
+            }
+        }
+
+        /// <summary>
         /// Translates variable declaration.
         /// </summary>
         /// <param name="variableDeclaration">The variable declaration to be transformed.</param>
@@ -297,24 +329,10 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns>Transformed variable declaration statement.</returns>
         protected override Expression Translate(ScriptCodeVariableDeclaration variableDeclaration, TranslationContext context)
         {
-            var variableRef = default(ParameterExpression);
-            //Declares a new variable in the current lexical scope.
-            switch (context.Scope.DeclareVariable(variableDeclaration.Name, out variableRef, variableDeclaration.GetTypeCode()) && variableRef != null)
-            {
-                case true:
-                    context.UserData.FunctionInfo = null;   //resets previously collected function data.
-                    if (variableDeclaration.IsConst)
-                    {
-                        var expr = BindToConstant(variableRef, variableDeclaration, context);
-                        //save function call info if it is available
-                        context.Scope.SetAttribute(variableDeclaration.Name, context.UserData.FunctionInfo);
-                        return expr;
-                    }
-                    else return BindToVariable(variableRef, variableDeclaration, context);
-                default:
-                    //Duplicate variable declaration
-                    throw CodeAnalysisException.DuplicateIdentifier(variableDeclaration.Name, variableDeclaration.LinePragma);
-            }
+            var result = default(Expression);
+            if (Declare(variableDeclaration, variableDeclaration.IsConst, context, out result))
+                return result;
+            else throw CodeAnalysisException.DuplicateIdentifier(variableDeclaration.Name, variableDeclaration.LinePragma);
         }
 
         #region Constant Binding
@@ -789,8 +807,13 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         protected override Expression Translate(ScriptCodeInvocationExpression invocation, TranslationContext context)
         {
             //If invocation operation is performed on constant with stored function then inline calling
-            var inlining = default(FunctionCallInfo);
-            if (invocation.Target is ScriptCodeVariableReference && (inlining = context.Scope.GetFunctionCallInfo(((ScriptCodeVariableReference)invocation.Target).VariableName)) != null)
+            var targetVariable = invocation.Target is ScriptCodeVariableReference ? ((ScriptCodeVariableReference)invocation.Target).VariableName : null;
+            var inlining = new
+            {
+                Precompiled = context.Scope.GetAttribute<LambdaExpression>(targetVariable),
+                Signature = context.Scope.GetAttribute<IWellKnownContractInfo>(targetVariable) as ScriptCodeActionContractExpression
+            };
+            if (inlining.Precompiled != null && inlining.Signature != null)
             {
                 var arguments = new List<Expression>(inlining.Signature.ParamList.Count + 1) { context.Scope.StateHolder };
                 for (var i = 0; i < inlining.Signature.ParamList.Count; i++)
@@ -813,7 +836,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                     returnContract = Translate(inlining.Signature.ReturnType, context);
                     //iterate through each argument and bind it to the parameter type
                 }
-                return ScriptFunctionBase.BindResult(returnContract, Expression.Invoke(inlining.FunctionImpl, arguments), context.Scope.StateHolder);
+                return ScriptFunctionBase.BindResult(returnContract, Expression.Invoke(inlining.Precompiled, arguments), context.Scope.StateHolder);
             }
             else
             {
@@ -1110,7 +1133,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns>LINQ expression that references the current action.</returns>
         protected override Expression Translate(ScriptCodeCurrentActionExpression currentAction, TranslationContext context)
         {
-            context.UserData.Recursive = true;
+            context.UserData.Recursive = true;  //reference to the callee function can cause a recursion. Recursion prevents inlining.
             var actionScope = context.Lookup<FunctionScope>();
             return actionScope != null ? actionScope.CurrentAction : ScriptObject.MakeVoid();
         }
@@ -1298,7 +1321,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             var currentScope = context.Push(parent => FunctionScope.Create(parent, action)); //Create a new lexical scope for action
             context.UserData.Recursive = false; //this indicator determines whether the function uses @ or @@ objects in its body
             //Declare all parameters
-            var parameters = PopulateActionParameters(action, currentScope);
+            var parameters = PopulateFunctionParameters(action, currentScope, context);
             //The first parameter of the lambda is invocation context.
             parameters.Insert(0, currentScope.StateHolder);
             //Construct body
@@ -1319,7 +1342,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             }
             context.Pop();  //Leave action scope
             //If function is recursive then inlining is not possible
-            context.UserData.FunctionInfo = context.UserData.Recursive ? null : new FunctionCallInfo(actionExpr, action.Signature); //save function call info
+            context.UserData.FunctionInfo = context.UserData.Recursive ? null : actionExpr; //save function call info
             return action.IsAsynchronous ?
                 ScriptLazyFunction.New(
                 Translate(action.Signature, context),   //action contract
@@ -1333,12 +1356,12 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                 action.ToString());
         }
 
-        private static IList<ParameterExpression> PopulateActionParameters(ScriptCodeActionImplementationExpression action, FunctionScope scope)
+        private IList<ParameterExpression> PopulateFunctionParameters(ScriptCodeActionImplementationExpression action, FunctionScope scope, TranslationContext context)
         {
             foreach (var p in action.Signature.ParamList)
             {
                 var paramExpr = default(ParameterExpression);
-                scope.DeclareParameter(p.Name, out paramExpr);
+                scope.DeclareParameter(p.Name, out paramExpr, GetType(p, context));
             }
             return new List<ParameterExpression>(LexicalScope.GetExpressions( scope.Parameters.Values));
         }
@@ -1399,14 +1422,16 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                 ScriptObject.MakeVoid();
         }
 
-        private static Expression BinaryOperation(Expression lvalue, ScriptTypeCode ltype, ScriptCodeBinaryOperatorType @operator, Expression rvalue, ScriptTypeCode rtype, ParameterExpression state)
+        private static Expression BinaryOperation(Expression lvalue, IWellKnownContractInfo ltype, ScriptCodeBinaryOperatorType @operator, Expression rvalue, IWellKnownContractInfo rtype, ParameterExpression state)
         {
             lvalue = ScriptObject.AsRightSide(lvalue, state);
             rvalue = ScriptObject.AsRightSide(rvalue, state);
-            switch (ltype)  //attempts to inline operation if it is possible
+            switch (ltype != null ? ltype.GetTypeCode() : ScriptTypeCode.Unknown)  //attempts to inline operation if it is possible
             {
                 case ScriptTypeCode.Integer:  //the left operand is integer
-                    return ScriptInteger.Inline(lvalue, @operator, rvalue, rtype, state);
+                    return ScriptInteger.Inline(lvalue, @operator, rvalue, rtype != null ? rtype.GetTypeCode() : ScriptTypeCode.Unknown, state);
+                case ScriptTypeCode.Real:
+                    return ScriptReal.Inline(lvalue, @operator, rvalue, rtype != null ? rtype.GetTypeCode() : ScriptTypeCode.Unknown, state);
                 default:    //failure to inline
                     return ScriptObject.BinaryOperation(lvalue, @operator, rvalue, state);
             }
@@ -1420,6 +1445,12 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns>LINQ binary expression.</returns>
         protected override Expression Translate(ScriptCodeBinaryOperatorExpression expression, TranslationContext context)
         {
+            if (expression.Operator == ScriptCodeBinaryOperatorType.Assign && expression.Left is ScriptCodeVariableReference)
+            {
+                //change type of the variable
+                var variableName = ((ScriptCodeVariableReference)expression.Left).VariableName;
+                context.Scope.SetAttribute(variableName, GetType(expression.Right, context));
+            }
             /*
              * If binary expression has the following format:
              * a to void;
@@ -1465,8 +1496,8 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                         leftExpression = AsRightSide(leftExpression, context);
                         return Expression.ReferenceNotEqual(leftExpression, AsRightSide(Translate(expression.Right, context), context));
                     default:
-                        var ltype = ScriptTypeCode.Unknown;
-                        var rtype = ScriptTypeCode.Unknown;
+                        var ltype = default(IWellKnownContractInfo);
+                        var rtype = default(IWellKnownContractInfo);
                         return BinaryOperation(Translate(expression.Left, context, out ltype), ltype, expression.Operator, Translate(expression.Right, context, out rtype), rtype, context.Scope.StateHolder);
                 }
         }
@@ -1611,9 +1642,9 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <param name="variableName"></param>
         /// <param name="context"></param>
         /// <returns></returns>
-        protected override ScriptTypeCode GetType(string variableName, TranslationContext context)
+        protected override IWellKnownContractInfo GetType(string variableName, TranslationContext context)
         {
-            return context.Scope.GetTypeCode(variableName);
+            return context.Scope.GetAttribute<IWellKnownContractInfo>(variableName);
         }
     }
 }

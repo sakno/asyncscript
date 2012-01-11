@@ -119,15 +119,6 @@ namespace DynamicScript.Compiler.Ast
             set { m_binding = value; }
         }
 
-        /// <summary>
-        /// Returns type code of this variable.
-        /// </summary>
-        /// <returns></returns>
-        public ScriptTypeCode GetTypeCode()
-        {
-            return ContractBinding is IWellKnownContractInfo ? ((IWellKnownContractInfo)ContractBinding).GetTypeCode() : ScriptTypeCode.Unknown;
-        }
-
         internal static ScriptCodeVariableDeclaration Parse(IEnumerator<KeyValuePair<Lexeme.Position, Lexeme>> lexer, params Punctuation[] terminator)
         {
             if (terminator == null) terminator = new Punctuation[0];

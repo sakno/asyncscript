@@ -79,6 +79,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Compiler\ArgRef.cs" />
+    <Compile Include="Compiler\Ast\IFunctionContractInfo.cs" />
     <Compile Include="Compiler\Ast\IWellKnownContractInfo.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeArgumentReferenceExpression.cs" />
     <Compile Include="Compiler\Ast\IScriptExpressionStatement.cs" />
@@ -136,7 +137,6 @@
     <Compile Include="Compiler\Ast\ISlot.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeWhileLoopExpression.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeGlobalObjectExpression.cs" />
-    <Compile Include="Compiler\Ast\Translation\LinqExpressions\FunctionCallInfo.cs" />
     <Compile Include="Compiler\Ast\Translation\LinqExpressions\GenericScope.cs" />
     <Compile Include="Compiler\Ast\Translation\LinqExpressions\SynchronizerScope.cs" />
     <Compile Include="Compiler\Macro.cs" />
@@ -159,7 +159,7 @@
     <Compile Include="Runtime\Environment\ExpressionTrees\ScriptForExpression.cs" />
     <Compile Include="Runtime\Environment\ExpressionTrees\ScriptForEachExpressionFactory.cs" />
     <Compile Include="Compiler\Ast\SlotDeclarationStyle.cs" />
-    <Compile Include="Compiler\Ast\Translation\IActionLexicalScope.cs" />
+    <Compile Include="Compiler\Ast\Translation\IFunctionLexicalScope.cs" />
     <Compile Include="Compiler\Ast\Translation\IComplexExpressionScope.cs" />
     <Compile Include="Compiler\Ast\Translation\ILexicalScope.cs" />
     <Compile Include="Compiler\Ast\Translation\IQuoteLexicalScope.cs" />

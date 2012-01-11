@@ -200,7 +200,7 @@ namespace DynamicScript.Runtime.Environment
             if (right is IConvertible)
                 return Equals((IConvertible)right, state);
             else if (IsVoid(right))
-                return Equals(Zero, state);
+                return (ScriptBoolean)(Value == 0L);
             else return ScriptBoolean.False;
         }
 
@@ -240,7 +240,13 @@ namespace DynamicScript.Runtime.Environment
         /// <returns>The result of the binary operation interpretation.</returns>
         protected override IScriptObject Add(IScriptObject right, InterpreterState state)
         {
-            return Add(right as IConvertible, state);
+            if (right is IConvertible)
+                return Add((IConvertible)right, state);
+            else if (IsVoid(right))
+                return this;
+            else if (state.Context == InterpretationContext.Unchecked)
+                return Void;
+            else throw new UnsupportedOperationException(state);
         }
 
         /// <summary>
@@ -277,7 +283,13 @@ namespace DynamicScript.Runtime.Environment
         /// <returns></returns>
         protected override IScriptObject Subtract(IScriptObject right, InterpreterState state)
         {
-            return Subtract(right as IConvertible, state);
+            if (right is IConvertible)
+                return Subtract((IConvertible)right, state);
+            else if (IsVoid(right))
+                return this;
+            else if (state.Context == InterpretationContext.Unchecked)
+                return Void;
+            else throw new UnsupportedOperationException(state);
         }
 
         /// <summary>
@@ -346,7 +358,7 @@ namespace DynamicScript.Runtime.Environment
             if (right is IConvertible)
                 return LessThan((IConvertible)right, state);
             else if (IsVoid(right))
-                return LessThan(Zero, state);
+                return (ScriptBoolean)(Value < 0L);
             else return ScriptBoolean.False;
         }
 
@@ -385,7 +397,7 @@ namespace DynamicScript.Runtime.Environment
             if (right is IConvertible)
                 return GreaterThan((IConvertible)right, state);
             else if (IsVoid(right))
-                return GreaterThan(Zero, state);
+                return (ScriptBoolean)(Value > 0L);
             else return ScriptBoolean.False;
         }
 
@@ -426,7 +438,7 @@ namespace DynamicScript.Runtime.Environment
             if (right is IConvertible)
                 return Modulo((IConvertible)right, state);
             else if (IsVoid(right))
-                return Modulo(Zero, state);
+                throw new DivideByZeroException();
             else if (state.Context == InterpretationContext.Unchecked)
                 return ScriptObject.Void;
             else throw new UnsupportedOperationException(state);   
@@ -466,9 +478,9 @@ namespace DynamicScript.Runtime.Environment
             if (right is IConvertible)
                 return Multiply((IConvertible)right, state);
             else if (IsVoid(right))
-                return Multiply(Zero, state);
+                return Zero;
             else if (state.Context == InterpretationContext.Unchecked)
-                return ScriptObject.Void;
+                return Void;
             else throw new UnsupportedOperationException(state);   
         }
 
@@ -506,7 +518,7 @@ namespace DynamicScript.Runtime.Environment
             if (right is IConvertible)
                 return And((IConvertible)right, state);
             else if (IsVoid(right))
-                return And(Zero, state);
+                return Zero;
             else if (state.Context == InterpretationContext.Unchecked)
                 return Void;
             else throw new UnsupportedOperationException(state);   
@@ -546,7 +558,7 @@ namespace DynamicScript.Runtime.Environment
             if (right is IConvertible)
                 return Or((IConvertible)right, state);
             else if (IsVoid(right))
-                return Or(Zero, state);
+                return this;
             else if (state.Context == InterpretationContext.Unchecked)
                 return Void;
             else throw new UnsupportedOperationException(state); 
@@ -586,9 +598,9 @@ namespace DynamicScript.Runtime.Environment
             if (right is IConvertible)
                 return ExclusiveOr((IConvertible)right, state);
             else if (IsVoid(right))
-                return ExclusiveOr(Zero, state);
+                return (ScriptInteger)(Value ^ 0L);
             else if (state.Context == InterpretationContext.Unchecked)
-                return ScriptObject.Void;
+                return Void;
             else throw new UnsupportedOperationException(state); 
         }
 
@@ -629,7 +641,7 @@ namespace DynamicScript.Runtime.Environment
             if (right is IConvertible)
                 return Divide((IConvertible)right, state);
             else if (IsVoid(right))
-                return Divide(Zero, state);
+                throw new DivideByZeroException();
             else if (state.Context == InterpretationContext.Unchecked)
                 return ScriptObject.Void;
             else throw new UnsupportedOperationException(state); 
@@ -678,7 +690,7 @@ namespace DynamicScript.Runtime.Environment
             if (right is IConvertible)
                 return NotEquals((IConvertible)right, state);
             else if (IsVoid(right))
-                return NotEquals(Zero, state);
+                return (ScriptBoolean)(Value != 0L);
             else return ScriptBoolean.True;
         }
 
@@ -753,12 +765,10 @@ namespace DynamicScript.Runtime.Environment
         /// <returns><see langword="true"/>the current object is greater than or equal to the specified object; otherwise, <see langword="false"/>.</returns>
         protected override IScriptObject GreaterThanOrEqual(IScriptObject right, InterpreterState state)
         {
-            if (right.OneOf<ScriptBoolean, ScriptInteger>())
-                return GreaterThanOrEqual(Convert(right), state);
-            else if (right is ScriptReal)
-                return GreaterThanOrEqual((ScriptReal)right, state);
+            if (right is IConvertible)
+                return GreaterThanOrEqual((IConvertible)right, state);
             else if (IsVoid(right))
-                return GreaterThanOrEqual(Zero, state);
+                return (ScriptBoolean)(Value >= 0L);
             else return ScriptBoolean.False;
         }
 
@@ -796,7 +806,7 @@ namespace DynamicScript.Runtime.Environment
             if (right is IConvertible)
                 return LessThanOrEqual((IConvertible)right, state);
             else if (IsVoid(right))
-                return LessThanOrEqual(Zero, state);
+                return (ScriptBoolean)(Value <= 0L);
             else return ScriptBoolean.False;
         }
 

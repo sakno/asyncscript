@@ -32,23 +32,13 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             /// <summary>
             /// Represents type of the variable.
             /// </summary>
-            public readonly ScriptTypeCode TypeCode;
+            public IWellKnownContractInfo TypeInfo;
 
             /// <summary>
             /// Represents function inlining information.
             /// </summary>
             /// <remarks>This field is used in conjuction with constant declaration.</remarks>
-            public FunctionCallInfo CallInfo;
-
-            /// <summary>
-            /// Initializes a new local variable descriptor.
-            /// </summary>
-            /// <param name="expr"></param>
-            /// <param name="typeCode"></param>
-            public ScopeVariable(ParameterExpression expr, ScriptTypeCode typeCode)
-                : this(expr, new object[] { typeCode })
-            {
-            }
+            public LambdaExpression CallInfo;
 
             /// <summary>
             /// Initializes a new local variable descriptor.
@@ -58,12 +48,11 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             public ScopeVariable(ParameterExpression expr, params object[] attributes)
             {
                 Expression = expr;
-                TypeCode = ScriptTypeCode.Unknown;
                 foreach (var a in attributes)
-                    if (a is ScriptTypeCode)
-                        TypeCode = (ScriptTypeCode)a;
-                    else if (a is FunctionCallInfo)
-                        CallInfo = (FunctionCallInfo)a;
+                    if (a is IWellKnownContractInfo)
+                        TypeInfo = (IWellKnownContractInfo)a;
+                    else if (a is LambdaExpression)
+                        CallInfo = (LambdaExpression)a;
             }
         }
 
@@ -460,40 +449,26 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             get { return Parent; }
         }
 
-        /// <summary>
-        /// Gets type of the variable.
-        /// </summary>
-        /// <param name="variableName"></param>
-        /// <returns></returns>
-        public ScriptTypeCode GetTypeCode(string variableName)
-        {
-            return (ScriptTypeCode)GetAttribute(typeof(ScriptTypeCode), variableName);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="variableName"></param>
-        /// <returns></returns>
-        public FunctionCallInfo GetFunctionCallInfo(string variableName)
-        {
-            return (FunctionCallInfo)GetAttribute(typeof(FunctionCallInfo), variableName);
-        }
-
         private object GetAttribute(Type attributeType, string variableName)
         {
-            var info = this[variableName];
-            if (Equals(attributeType, typeof(ScriptTypeCode)))
-                return info != null ? info.TypeCode : ScriptTypeCode.Unknown;
-            else if (Equals(attributeType, typeof(FunctionCallInfo)))
+            var info = variableName != null ? this[variableName] : null;
+            if (Equals(attributeType, typeof(IWellKnownContractInfo)))
+                return info != null ? info.TypeInfo : null;
+            else if (Equals(attributeType, typeof(LambdaExpression)))
                 return info != null ? info.CallInfo : null;
-            else if (attributeType.IsValueType) return Activator.CreateInstance(attributeType);
             else return null;
         }
 
-        T ILexicalScope.GetAttribute<T>(string variableName)
+        /// <summary>
+        /// Obtains semantics attribute associated with the vairable.
+        /// </summary>
+        /// <typeparam name="T">Type of the attribute.</typeparam>
+        /// <param name="variableName"></param>
+        /// <returns></returns>
+        public T GetAttribute<T>(string variableName)
+            where T : class
         {
-            return (T)GetAttribute(typeof(T), variableName);
+            return GetAttribute(typeof(T), variableName) as T;
         }
 
         /// <summary>
@@ -502,10 +477,10 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <param name="variableName"></param>
         /// <param name="fi"></param>
         /// <returns></returns>
-        public bool SetAttribute(string variableName, FunctionCallInfo fi)
+        public bool SetAttribute(string variableName, LambdaExpression fi)
         {
             var info = this[variableName];
-            if (info != null)
+            if (info != null && info.TypeInfo is IFunctionContractInfo)
             {
                 info.CallInfo = fi;
                 return true;
@@ -513,10 +488,29 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             else return false;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="variableName"></param>
+        /// <param name="typeInfo"></param>
+        /// <returns></returns>
+        public bool SetAttribute(string variableName, IWellKnownContractInfo typeInfo)
+        {
+            var info = this[variableName];
+            if (info != null)
+            {
+                info.TypeInfo = typeInfo;
+                return true;
+            }
+            else return false;
+        }
+
         bool ILexicalScope.SetAttribute(string variableName, object attribute)
         {
-            if (attribute is FunctionCallInfo)
-                return SetAttribute(variableName, (FunctionCallInfo)attribute);
+            if (attribute is LambdaExpression)
+                return SetAttribute(variableName, (LambdaExpression)attribute);
+            else if (attribute is IWellKnownContractInfo)
+                return SetAttribute(variableName, (IWellKnownContractInfo)attribute);
             else return false;
         }
 

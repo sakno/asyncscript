@@ -22,8 +22,9 @@ namespace DynamicScript.Runtime.Hosting
         private static int Main(string[] args)
         {
             var r = DynamicScriptInterpreter.Run(@"
-            const a = @i -> integer:  i + 1;
-            return a(2);
+            const a = @i: real -> real:  i + 1;
+            const b = a(2);
+            return b + 5;
 ");
             return Execute(new CommandLineParser(Console.Out, Console.In), args);
         }

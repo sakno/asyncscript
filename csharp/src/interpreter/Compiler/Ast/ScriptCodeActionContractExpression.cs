@@ -15,7 +15,10 @@ namespace DynamicScript.Compiler.Ast
     /// </summary>
     [Serializable]
     [ComVisible(false)]
-    public sealed class ScriptCodeActionContractExpression: ScriptCodeExpression, IStaticContractBinding<ScriptCodeCallableContractExpression>, IEquatable<ScriptCodeActionContractExpression>
+    public sealed class ScriptCodeActionContractExpression: ScriptCodeExpression, 
+        IStaticContractBinding<ScriptCodeCallableContractExpression>, 
+        IEquatable<ScriptCodeActionContractExpression>,
+        IFunctionContractInfo
     {
         #region Nested Types
 
@@ -469,6 +472,11 @@ namespace DynamicScript.Compiler.Ast
         protected override ScriptCodeExpression Clone()
         {
             return new ScriptCodeActionContractExpression(Extensions.Clone(ParamList), Extensions.Clone(m_return));
+        }
+
+        IWellKnownContractInfo IFunctionContractInfo.GetReturnType()
+        {
+            return ReturnType as IWellKnownContractInfo;
         }
     }
 }
