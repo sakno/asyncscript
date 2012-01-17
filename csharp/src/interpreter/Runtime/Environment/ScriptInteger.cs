@@ -998,7 +998,7 @@ namespace DynamicScript.Runtime.Environment
                     lvalue = UnderlyingValue(lvalue);
                     rvalue = ScriptBoolean.UnderlyingValue(Expression.Convert(rvalue, typeof(ScriptBoolean)));
                     rvalue = Expression.Convert(rvalue, UnderlyingType);
-                    return Expression.Convert(Expression.Or(lvalue, rvalue), typeof(ScriptInteger));
+                    return Expression.Convert(Expression.ExclusiveOr(lvalue, rvalue), typeof(ScriptInteger));
                 case (int)ScriptCodeBinaryOperatorType.Exclusion << 8 | (byte)ScriptTypeCode.Void:    //integer ^ void
                     lvalue = UnderlyingValue(lvalue);
                     return Expression.Convert(Expression.ExclusiveOr(lvalue, LinqHelpers.Constant(0L)), typeof(ScriptInteger));
@@ -1253,6 +1253,8 @@ namespace DynamicScript.Runtime.Environment
                         case ScriptCodeBinaryOperatorType.ValueInequality:
                         case ScriptCodeBinaryOperatorType.ReferenceInequality:
                             return ScriptBoolean.New(true);
+                        case ScriptCodeBinaryOperatorType.TypeCast:
+                            return BinaryOperation(lvalue, ScriptCodeBinaryOperatorType.TypeCast, rvalue, state);
                         default:
                             return Expression.Condition(InterpreterState.IsUncheckedContext(state), MakeVoid(), UnsupportedOperationException.Throw(state));
                     }

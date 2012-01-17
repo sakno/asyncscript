@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.CodeDom;
+using System.Linq;
 
 namespace DynamicScript.Compiler.Ast.Translation
 {
@@ -266,6 +267,29 @@ namespace DynamicScript.Compiler.Ast.Translation
                 m_scope = root;
                 ScopeEnter = null;
                 ScopeLeave = null;
+            }
+
+            /// <summary>
+            /// Determines whether the specified variable is used in closure.
+            /// </summary>
+            /// <param name="variableName"></param>
+            /// <returns></returns>
+            public bool IsClosure(string variableName)
+            {
+                ILexicalScope current = Scope;
+                var transparent = true;
+                var closure = false;
+                while (current != null && transparent)
+                    switch (current.Variables.Contains(variableName, StringEqualityComparer.Instance))
+                    {
+                        case true: return closure;
+                        default:
+                            transparent = current.Transparent;
+                            closure = current is IFunctionLexicalScope; //all variables located outside of the function should be included in closure
+                            current = current.Parent;
+                            continue;
+                    }
+                return closure;
             }
         }
         #endregion

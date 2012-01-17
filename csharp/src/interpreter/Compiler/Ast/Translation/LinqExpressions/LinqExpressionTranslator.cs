@@ -1433,6 +1433,10 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                     return ScriptInteger.Inline(lvalue, @operator, rvalue, rtype != null ? rtype.GetTypeCode() : ScriptTypeCode.Unknown, state);
                 case ScriptTypeCode.Real:
                     return ScriptReal.Inline(lvalue, @operator, rvalue, rtype != null ? rtype.GetTypeCode() : ScriptTypeCode.Unknown, state);
+                case ScriptTypeCode.Boolean:
+                    return ScriptBoolean.Inline(lvalue, @operator, rvalue, rtype != null ? rtype.GetTypeCode() : ScriptTypeCode.Unknown, state);
+                case ScriptTypeCode.String:
+                    return ScriptString.Inline(lvalue, @operator, rvalue, rtype != null ? rtype.GetTypeCode() : ScriptTypeCode.Unknown, state);
                 default:    //failure to inline
                     return ScriptObject.BinaryOperation(lvalue, @operator, rvalue, state);
             }
@@ -1486,6 +1490,15 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                         leftExpression = Translate(expression.Left, context);
                         leftExpression = AsRightSide(leftExpression, context);
                         return Expression.ReferenceEqual(leftExpression, AsRightSide(Translate(expression.Right, context), context));
+                case ScriptCodeBinaryOperatorType.Assign:
+                case ScriptCodeBinaryOperatorType.DivideAssign:
+                case ScriptCodeBinaryOperatorType.ExclusionAssign:
+                case ScriptCodeBinaryOperatorType.Expansion:
+                case ScriptCodeBinaryOperatorType.MultiplicativeAssign:
+                case ScriptCodeBinaryOperatorType.SubtractiveAssign:
+                case ScriptCodeBinaryOperatorType.Reduction:
+                case ScriptCodeBinaryOperatorType.ModuloAssign:
+                        return ScriptObject.BinaryOperation(Translate(expression.Left, context), expression.Operator, Translate(expression.Right, context), context.Scope.StateHolder);
                 case ScriptCodeBinaryOperatorType.ReferenceInequality:
                      leftExpression = Translate(expression.Left, context);
                         leftExpression = AsRightSide(leftExpression, context);

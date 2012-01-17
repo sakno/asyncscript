@@ -200,9 +200,9 @@ namespace DynamicScript.Runtime.Environment
         {
             if (obj is ScriptReal)
                 return true;
-            else if (obj.OneOf<ScriptInteger, ScriptBoolean>())
+            else if (obj is ScriptInteger)
             {
-                obj = new ScriptReal(SystemConverter.ToDouble(obj));
+                obj = (ScriptReal)(SystemConverter.ToDouble(obj));
                 return true;
             }
             else if (IsVoid(obj))
@@ -234,7 +234,7 @@ namespace DynamicScript.Runtime.Environment
                 return ContractRelationshipType.TheSame;
             else if (contract is ScriptSuperContract)
                 return ContractRelationshipType.Subset;
-            else if (contract.OneOf<ScriptVoid, ScriptIntegerContract, ScriptBooleanContract>())
+            else if (contract.OneOf<ScriptVoid, ScriptIntegerContract>())
                 return ContractRelationshipType.Superset;
             else if (contract.OneOf<IScriptComplementation, IScriptUnionContract, IScriptCartesianProduct>())
                 return Inverse(contract.GetRelationship(this));

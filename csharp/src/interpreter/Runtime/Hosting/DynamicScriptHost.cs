@@ -21,11 +21,6 @@ namespace DynamicScript.Runtime.Hosting
         [LoaderOptimization(LoaderOptimization.SingleDomain)]
         private static int Main(string[] args)
         {
-            var r = DynamicScriptInterpreter.Run(@"
-            const a = @i: real -> real:  i + 1;
-            const b = a(2);
-            return b + 5;
-");
             return Execute(new CommandLineParser(Console.Out, Console.In), args);
         }
     }

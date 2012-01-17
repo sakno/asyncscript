@@ -128,6 +128,12 @@ namespace DynamicScript.Runtime.Environment
             else return LinqHelpers.Convert<ScriptReal, double>(value);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="right"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
         public IScriptObject Add(IConvertible right, InterpreterState state)
         {
             switch (right != null ? right.GetTypeCode() : TypeCode.Object)
@@ -870,6 +876,8 @@ namespace DynamicScript.Runtime.Environment
                         case ScriptCodeBinaryOperatorType.ValueInequality:
                         case ScriptCodeBinaryOperatorType.ReferenceInequality:
                             return ScriptBoolean.New(true);
+                        case ScriptCodeBinaryOperatorType.TypeCast:
+                            return BinaryOperation(lvalue, ScriptCodeBinaryOperatorType.TypeCast, rvalue, state);
                         default:
                             return Expression.Condition(InterpreterState.IsUncheckedContext(state), MakeVoid(), UnsupportedOperationException.Throw(state));
                     }
