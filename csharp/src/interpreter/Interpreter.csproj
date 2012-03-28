@@ -137,8 +137,11 @@
     <Compile Include="Compiler\Ast\ISlot.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeWhileLoopExpression.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeGlobalObjectExpression.cs" />
+    <Compile Include="Compiler\Ast\Translation\LinqExpressions\CodeOptimizer.cs" />
     <Compile Include="Compiler\Ast\Translation\LinqExpressions\GenericScope.cs" />
+    <Compile Include="Compiler\Ast\Translation\LinqExpressions\InliningSourceAttribute.cs" />
     <Compile Include="Compiler\Ast\Translation\LinqExpressions\SynchronizerScope.cs" />
+    <Compile Include="Compiler\Ast\Translation\LinqExpressions\ICodeOptimizer.cs" />
     <Compile Include="Compiler\Macro.cs" />
     <Compile Include="Compiler\PlaceholderID.cs" />
     <Compile Include="MonoRuntime.cs" />
@@ -262,7 +265,7 @@
     <Compile Include="Runtime\Environment\IScriptIterable.cs" />
     <Compile Include="Runtime\Environment\IUnaryOperatorInvoker.cs" />
     <Compile Include="Runtime\Environment\NamedRuntimeSlot.cs" />
-    <Compile Include="Runtime\Environment\ObjectModel\RuntimeBehaviorSlots.cs" />
+    <Compile Include="Runtime\Environment\ObjectModel\StandardLibrary.cs" />
     <Compile Include="Runtime\Environment\WellKnownContractInfoAttribute.cs" />
     <Compile Include="Runtime\Environment\ScriptFunctionInvoker.cs" />
     <Compile Include="Runtime\Environment\Threading\DefaultQueue.cs" />
@@ -333,7 +336,7 @@
     <Compile Include="Runtime\Environment\ObjectModel\CallStackManager.cs" />
     <Compile Include="Runtime\Environment\ObjectModel\Regex.cs" />
     <Compile Include="Runtime\Environment\ObjectModel\DebuggerModule.cs" />
-    <Compile Include="Runtime\Environment\ObjectModel\GC.cs" />
+    <Compile Include="Runtime\Environment\ObjectModel\VM.cs" />
     <Compile Include="Runtime\Environment\IntegerPool.cs" />
     <Compile Include="Runtime\Environment\InternPool.cs" />
     <Compile Include="Runtime\Environment\ObjectModel\ScriptCompositeObjectMetadata.cs" />

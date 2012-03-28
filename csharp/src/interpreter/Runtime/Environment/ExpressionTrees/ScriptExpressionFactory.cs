@@ -829,7 +829,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         /// </summary>
         public override void Clear()
         {
-            m_clone=m_compile=m_deduce=m_equ=m_init=m_parse=m_reduce=m_requ=m_visit=null;
+            m_clone = m_compile = m_deduce = m_equ = m_init = m_parse = m_reduce = m_requ = m_visit = null;
             ScriptExpandExpressionFactory.Instance.Clear();
             ScriptComplexExpressionFactory.Instance.Clear();
             ScriptPlaceholderExpressionFactory.Instance.Clear();

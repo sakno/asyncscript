@@ -8,16 +8,17 @@ namespace DynamicScript.Runtime.Environment.Threading
     using ClrEnvironment = System.Environment;
     using Enumerable = System.Linq.Enumerable;
     using InterpretationContext = Compiler.Ast.InterpretationContext;
+    using InliningSourceAttribute = Compiler.Ast.Translation.LinqExpressions.InliningSourceAttribute;
 
     [ComVisible(false)]
     sealed class ThreadingLibrary: ScriptCompositeObject
     {
-        public const string Name = "threading";
+        internal const string Name = "threading";
         #region Nested Types
         [ComVisible(false)]
         private sealed class IsLazyFunction : ScriptFunc<IScriptObject>
         {
-            public const string Name = "is_lazy";
+            public const string Name = "islazy";
             private const string FirstParamName = "obj";
 
             public IsLazyFunction()
@@ -27,7 +28,7 @@ namespace DynamicScript.Runtime.Environment.Threading
 
             protected override IScriptObject Invoke(IScriptObject obj, InterpreterState state)
             {
-                return (ScriptBoolean)(obj is IScriptProxyObject);
+                return IsLazy(obj, state);
             }
         }
 
@@ -50,14 +51,14 @@ namespace DynamicScript.Runtime.Environment.Threading
 
             protected override void Invoke(ScriptReal duration, InterpreterState state)
             {
-                Thread.Sleep(TimeSpan.FromMilliseconds(duration));
+                Sleep(duration, state);
             }
         }
 
         [ComVisible(false)]
         private sealed class CreateLazyQueueFunction : ScriptFunc
         {
-            public const string Name = "create_lazy_queue";
+            public const string Name = "createLazyQueue";
 
             public CreateLazyQueueFunction()
                 : base(ScriptNativeQueue.ContractBinding)
@@ -66,32 +67,32 @@ namespace DynamicScript.Runtime.Environment.Threading
 
             protected override IScriptObject Invoke(InterpreterState state)
             {
-                return new ScriptNativeQueue(new LazyQueue());
+                return CreateLazyQueue(state);
             }
         }
 
         [ComVisible(false)]
-        private sealed class CreateDefaultQueue : ScriptFunc
+        private sealed class CreateDefaultQueueFunction : ScriptFunc
         {
-            public const string Name = "create_default_queue";
+            public const string Name = "createDefaultQueue";
 
-            public CreateDefaultQueue()
+            public CreateDefaultQueueFunction()
                 : base(ScriptNativeQueue.ContractBinding)
             {
             }
 
             protected override IScriptObject Invoke(InterpreterState state)
             {
-                return new ScriptNativeQueue(new DefaultQueue());
+                return CreateDefaultQueue(state);
             }
         }
 
         [ComVisible(false)]
-        private sealed class CreateParallelQueue : ScriptFunc
+        private sealed class CreateParallelQueueFunction : ScriptFunc
         {
-            public const string Name = "create_parallel_queue";
+            public const string Name = "createParallelQueue";
 
-            public CreateParallelQueue()
+            public CreateParallelQueueFunction()
                 : base(ScriptNativeQueue.ContractBinding)
             {
             }
@@ -115,7 +116,7 @@ namespace DynamicScript.Runtime.Environment.Threading
 
             protected override IScriptObject Invoke(IScriptObject asyncobj, InterpreterState state)
             {
-                return asyncobj is IScriptProxyObject ? ((IScriptProxyObject)asyncobj).Unwrap(state) : asyncobj;
+                return ThreadingLibrary.Unwrap(asyncobj, state);
             }
         }
 
@@ -216,8 +217,8 @@ namespace DynamicScript.Runtime.Environment.Threading
                 Add(QueueSlot.Name, new QueueSlot());
                 AddConstant<CreateLazyQueueFunction>(CreateLazyQueueFunction.Name);
                 AddConstant<UnwrapFunction>(UnwrapFunction.Name);
-                AddConstant<CreateDefaultQueue>(CreateDefaultQueue.Name);
-                AddConstant<CreateParallelQueue>(CreateParallelQueue.Name);
+                AddConstant<CreateDefaultQueueFunction>(CreateDefaultQueueFunction.Name);
+                AddConstant<CreateParallelQueueFunction>(CreateParallelQueueFunction.Name);
                 Add(ThreadName.Name, new ThreadName());
             }
         }
@@ -234,9 +235,84 @@ namespace DynamicScript.Runtime.Environment.Threading
             }
         }
 
-        public ThreadingLibrary()
+        private ThreadingLibrary()
             : base(new Slots())
         {
+        }
+
+        /// <summary>
+        /// Represents singleton instance of the threading library.
+        /// </summary>
+        public static readonly ThreadingLibrary Instance = new ThreadingLibrary();
+
+        /// <summary>
+        /// Suspends this thread for a specified time.
+        /// </summary>
+        /// <param name="duration"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        [InliningSource]
+        public static IScriptObject Sleep(ScriptReal duration, InterpreterState state)
+        {
+            Thread.Sleep(TimeSpan.FromMilliseconds(duration));
+            return Void;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        [InliningSource]
+        public static ScriptBoolean IsLazy(IScriptObject obj, InterpreterState state)
+        {
+            return obj is IScriptProxyObject;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        [InliningSource]
+        public static IScriptCompositeObject CreateLazyQueue(InterpreterState state)
+        {
+            return new ScriptNativeQueue(new LazyQueue());
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        [InliningSource]
+        public static IScriptCompositeObject CreateDefaultQueue(InterpreterState state)
+        {
+            return new ScriptNativeQueue(new DefaultQueue());
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        [InliningSource]
+        public static IScriptCompositeObject CreateParallelQueue(InterpreterState state)
+        {
+            return new ScriptNativeQueue(ParallelQueue.Instance);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="asyncobj"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        [InliningSource]
+        public static IScriptObject Unwrap(IScriptObject asyncobj, InterpreterState state)
+        {
+            return asyncobj is IScriptProxyObject ? ((IScriptProxyObject)asyncobj).Unwrap(state) : asyncobj;
         }
     }
 }

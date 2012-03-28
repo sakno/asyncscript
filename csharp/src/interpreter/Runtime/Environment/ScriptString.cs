@@ -78,6 +78,47 @@ namespace DynamicScript.Runtime.Environment
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="index"></param>
+        /// <param name="str"></param>
+        /// <returns></returns>
+        public string Insert(int index, string str)
+        {
+            return Value.Insert(index, str);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="str"></param>
+        /// <param name="startIndex"></param>
+        /// <returns></returns>
+        public int IndexOf(string str, int startIndex)
+        {
+            return Value.IndexOf(str, startIndex);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="startIndex"></param>
+        /// <param name="length"></param>
+        /// <returns></returns>
+        public string Substring(int startIndex, int length)
+        {
+            return Value.Substring(startIndex, length);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool IsEmptyOrWhitespace
+        {
+            get { return string.IsNullOrWhiteSpace(Value); }
+        }
+
+        /// <summary>
         /// Represents an empty string.
         /// </summary>
         public static readonly ScriptString Empty = new ScriptString(String.Empty);
@@ -280,7 +321,7 @@ namespace DynamicScript.Runtime.Environment
         /// <returns></returns>
         protected override IScriptObject Multiply(IScriptObject right, InterpreterState state)
         {
-            if (ScriptIntegerContract.Convert(ref right))
+            if (ScriptIntegerContract.TryConvert(ref right))
                 return Multiply((ScriptInteger)right, state);
             else if (IsVoid(right))
                 return Multiply(ScriptInteger.Zero, state);
@@ -324,7 +365,7 @@ namespace DynamicScript.Runtime.Environment
         /// <returns></returns>
         protected override IScriptObject Divide(IScriptObject right, InterpreterState state)
         {
-            if (ScriptIntegerContract.Convert(ref right))
+            if (ScriptIntegerContract.TryConvert(ref right))
                 return Divide((ScriptInteger)right, state);
             else if (IsVoid(right))
                 return Divide(ScriptInteger.Zero, state);

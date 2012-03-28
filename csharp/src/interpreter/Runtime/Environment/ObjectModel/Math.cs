@@ -5,6 +5,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
 {
     using SystemMath = System.Math;
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
+    using InliningSourceAttribute = Compiler.Ast.Translation.LinqExpressions.InliningSourceAttribute;
 
     /// <summary>
     /// Represents mathematic DynamicScript library.
@@ -32,7 +33,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
 
             protected override IScriptObject Invoke(ScriptInteger value, ScriptInteger shift, InterpreterState state)
             {
-                return Shl(value, shift);
+                return Shl(value, shift, state);
             }
         }
 
@@ -50,7 +51,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
 
             protected override IScriptObject Invoke(ScriptInteger value, ScriptInteger shift, InterpreterState state)
             {
-                return Shr(value, shift);
+                return Shr(value, shift, state);
             }
         }
 
@@ -67,7 +68,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
 
             protected override IScriptObject Invoke(ScriptReal a, InterpreterState state)
             {
-                return Sin(a);
+                return Sin(a, state);
             }
         }
 
@@ -84,7 +85,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
 
             protected override IScriptObject Invoke(ScriptReal a, InterpreterState state)
             {
-                return Sinh(a);
+                return Sinh(a, state);
             }
         }
 
@@ -101,7 +102,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
 
             protected override IScriptObject Invoke(ScriptReal a, InterpreterState state)
             {
-                return Deg(a);
+                return Deg(a, state);
             }
         }
 
@@ -118,7 +119,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
 
             protected override IScriptObject Invoke(ScriptReal a, InterpreterState state)
             {
-                return Rad(a);
+                return Rad(a, state);
             }
         }
 
@@ -135,7 +136,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
 
             protected override IScriptObject Invoke(ScriptReal a, InterpreterState state)
             {
-                return Cos(a);
+                return Cos(a, state);
             }
         }
 
@@ -152,7 +153,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
 
             protected override IScriptObject Invoke(ScriptReal a, InterpreterState state)
             {
-                return Cosh(a);
+                return Cosh(a, state);
             }
         }
 
@@ -169,7 +170,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
 
             protected override IScriptObject Invoke(ScriptReal a, InterpreterState state)
             {
-                return Floor(a);
+                return Floor(a, state);
             }
         }
 
@@ -186,7 +187,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
 
             protected override IScriptObject Invoke(ScriptReal a, InterpreterState state)
             {
-                return Ceiling(a);
+                return Ceiling(a, state);
             }
         }
 
@@ -203,7 +204,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
 
             protected override IScriptObject Invoke(ScriptReal a, InterpreterState state)
             {
-                return Tan(a);
+                return Tan(a, state);
             }
         }
 
@@ -220,7 +221,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
 
             protected override IScriptObject Invoke(ScriptReal a, InterpreterState state)
             {
-                return Tanh(a);
+                return Tanh(a, state);
             }
         }
 
@@ -237,7 +238,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
 
             protected override IScriptObject Invoke(ScriptReal d, InterpreterState state)
             {
-                return Atan(d);
+                return Atan(d, state);
             }
         }
 
@@ -254,7 +255,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
 
             protected override IScriptObject Invoke(ScriptReal d, InterpreterState state)
             {
-                return Acos(d);
+                return Acos(d, state);
             }
         }
 
@@ -271,7 +272,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
 
             protected override IScriptObject Invoke(ScriptReal d, InterpreterState state)
             {
-                return Asin(d);
+                return Asin(d, state);
             }
         }
 
@@ -288,7 +289,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
 
             protected override IScriptObject Invoke(ScriptReal value, InterpreterState state)
             {
-                return Trunc(value);
+                return Trunc(value, state);
             }
         }
         #endregion
@@ -321,18 +322,25 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// <summary>
         /// Initializes a new DynamicScript Math library.
         /// </summary>
-        public Math()
+        private Math()
             : base(Slots)
         {
         }
+
+        /// <summary>
+        /// Represents singleton instance of this object.
+        /// </summary>
+        public static readonly Math Instance = new Math();
 
         /// <summary>
         /// Shifts the first value right by the number of bits specified by its value.
         /// </summary>
         /// <param name="value"></param>
         /// <param name="shift"></param>
+        /// <param name="state">Internal interpreter state.</param>
         /// <returns></returns>
-        public static ScriptInteger Shr(ScriptInteger value, ScriptInteger shift)
+        [InliningSource]
+        public static ScriptInteger Shr(ScriptInteger value, ScriptInteger shift, InterpreterState state)
         {
             return value >> (int)shift;
         }
@@ -342,8 +350,10 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// </summary>
         /// <param name="value"></param>
         /// <param name="shift"></param>
+        /// <param name="state">Internal interpreter state.</param>
         /// <returns></returns>
-        public static ScriptInteger Shl(ScriptInteger value, ScriptInteger shift)
+        [InliningSource]
+        public static ScriptInteger Shl(ScriptInteger value, ScriptInteger shift, InterpreterState state)
         {
             return value << (int)shift;
         }
@@ -352,8 +362,10 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// Returns the angle whose tangent is the specified number.
         /// </summary>
         /// <param name="d">A number representing a tangent.</param>
+        /// <param name="state">Internal interpreter state.</param>
         /// <returns></returns>
-        public static ScriptReal Atan(ScriptReal d)
+        [InliningSource]
+        public static ScriptReal Atan(ScriptReal d, InterpreterState state)
         {
             return SystemMath.Atan(d);
         }
@@ -362,8 +374,10 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// Returns the angle whose sine is the specified number.
         /// </summary>
         /// <param name="d">A number representing a sine, where -1 ≤d≤ 1.</param>
+        /// <param name="state">Internal interpreter state.</param>
         /// <returns></returns>
-        public static ScriptReal Asin(ScriptReal d)
+        [InliningSource]
+        public static ScriptReal Asin(ScriptReal d, InterpreterState state)
         {
             return SystemMath.Asin(d);
         }
@@ -372,8 +386,10 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// Returns the angle whose cosine is the specified number.
         /// </summary>
         /// <param name="d">A number representing a cosine, where -1 ≤d≤ 1.</param>
+        /// <param name="state">Internal interpreter state.</param>
         /// <returns></returns>
-        public static ScriptReal Acos(ScriptReal d)
+        [InliningSource]
+        public static ScriptReal Acos(ScriptReal d, InterpreterState state)
         {
             return SystemMath.Acos(d);
         }
@@ -383,8 +399,10 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// specified double-precision floating-point number.
         /// </summary>
         /// <param name="a"></param>
+        /// <param name="state">Internal interpreter state.</param>
         /// <returns></returns>
-        public static ScriptInteger Ceiling(ScriptReal a)
+        [InliningSource]
+        public static ScriptInteger Ceiling(ScriptReal a, InterpreterState state)
         {
             return (long)SystemMath.Ceiling(a);
         }
@@ -393,8 +411,10 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// Returns the largest integer less than or equal to the specified decimal number.
         /// </summary>
         /// <param name="a"></param>
+        /// <param name="state">Internal interpreter state.</param>
         /// <returns></returns>
-        public static ScriptInteger Floor(ScriptReal a)
+        [InliningSource]
+        public static ScriptInteger Floor(ScriptReal a, InterpreterState state)
         {
             return (long)SystemMath.Floor(a);
         }
@@ -403,8 +423,10 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// Returns the sine of the specified angle.
         /// </summary>
         /// <param name="a">An angle, measured in radians.</param>
+        /// <param name="state">Internal interpreter state.</param>
         /// <returns>The sine of the specified angle.</returns>
-        public static ScriptReal Sin(ScriptReal a)
+        [InliningSource]
+        public static ScriptReal Sin(ScriptReal a, InterpreterState state)
         {
             return SystemMath.Sin(a);
         }
@@ -413,8 +435,10 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// Returns the hyperbolic sine of the specified angle.
         /// </summary>
         /// <param name="a">An angle, measured in radians.</param>
+        /// <param name="state">Internal interpreter state.</param>
         /// <returns>The hyperbolic sine of the specified angle.</returns>
-        public static ScriptReal Sinh(ScriptReal a)
+        [InliningSource]
+        public static ScriptReal Sinh(ScriptReal a, InterpreterState state)
         {
             return SystemMath.Sinh(a);
         }
@@ -423,8 +447,10 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// Returns the cosine of the specified angle.
         /// </summary>
         /// <param name="a">An angle, measured in radians.</param>
+        /// <param name="state">Internal interpreter state.</param>
         /// <returns>The cosine of the specified angle.</returns>
-        public static ScriptReal Cos(ScriptReal a)
+        [InliningSource]
+        public static ScriptReal Cos(ScriptReal a, InterpreterState state)
         {
             return SystemMath.Cos(a);
         }
@@ -433,8 +459,10 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// Returns the hyperbolic cosine of the specified angle.
         /// </summary>
         /// <param name="a">An angle, measured in radians.</param>
+        /// <param name="state">Internal interpreter state.</param>
         /// <returns>The hyperbolic cosine of the specified angle.</returns>
-        public static ScriptReal Cosh(ScriptReal a)
+        [InliningSource]
+        public static ScriptReal Cosh(ScriptReal a, InterpreterState state)
         {
             return SystemMath.Cosh(a);
         }
@@ -443,8 +471,10 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// Returns the tangent of the specified angle.
         /// </summary>
         /// <param name="a">An angle, measured in radians.</param>
+        /// <param name="state">Internal interpreter state.</param>
         /// <returns>The tangent of the specified angle.</returns>
-        public static ScriptReal Tan(ScriptReal a)
+        [InliningSource]
+        public static ScriptReal Tan(ScriptReal a, InterpreterState state)
         {
             return SystemMath.Tan(a);
         }
@@ -453,8 +483,10 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// Returns the hyperbolic tangent of the specified angle.
         /// </summary>
         /// <param name="a">An angle, measured in radians.</param>
+        /// <param name="state">Internal interpreter state.</param>
         /// <returns>The hyperbolic tangent of the specified angle.</returns>
-        public static ScriptReal Tanh(ScriptReal a)
+        [InliningSource]
+        public static ScriptReal Tanh(ScriptReal a, InterpreterState state)
         {
             return SystemMath.Tanh(a);
         }
@@ -463,9 +495,11 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// Calculates integral part of a specified floating-point number.
         /// </summary>
         /// <param name="d">A number to truncate.</param>
+        /// <param name="state">Internal interpreter state.</param>
         /// <returns> The integral part of <paramref name="d"/>; that is, the number that remains after any fractional
         ///     digits have been discarded.</returns>
-        public static ScriptInteger Trunc(ScriptReal d)
+        [InliningSource]
+        public static ScriptInteger Trunc(ScriptReal d, InterpreterState state)
         {
             return (long)SystemMath.Truncate(d);
         }
@@ -474,8 +508,10 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// Converts radians to degrees.
         /// </summary>
         /// <param name="a">An angle, measured in radians.</param>
+        /// <param name="state">Internal interpreter state.</param>
         /// <returns>An angle, measured in degrees.</returns>
-        public static ScriptReal Deg(ScriptReal a)
+        [InliningSource]
+        public static ScriptReal Deg(ScriptReal a, InterpreterState state)
         {
             return a * 180 / SystemMath.PI;
         }
@@ -484,8 +520,10 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         /// Converts degrees to radians.
         /// </summary>
         /// <param name="a">An angle, measured in degrees.</param>
+        /// <param name="state">Internal interpreter state.</param>
         /// <returns>An angle, measured in radians.</returns>
-        public static ScriptReal Rad(ScriptReal a)
+        [InliningSource]
+        public static ScriptReal Rad(ScriptReal a, InterpreterState state)
         {
             return a * SystemMath.PI / 180;
         }

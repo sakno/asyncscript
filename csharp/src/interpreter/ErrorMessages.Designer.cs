@@ -90,9 +90,18 @@ namespace DynamicScript {
         /// <summary>
         ///   Looks up a localized string similar to Object &apos;{0}&apos; is not satisfied to the &apos;{1}&apos; contract..
         /// </summary>
-        internal static string ContractBinding {
+        internal static string ContractBinding1 {
             get {
-                return ResourceManager.GetString("ContractBinding", resourceCulture);
+                return ResourceManager.GetString("ContractBinding1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Contract &apos;{0}&apos; expected..
+        /// </summary>
+        internal static string ContractBinding2 {
+            get {
+                return ResourceManager.GetString("ContractBinding2", resourceCulture);
             }
         }
         

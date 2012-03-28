@@ -17,10 +17,15 @@ namespace DynamicScript.Runtime.Environment
         private readonly IScriptContract m_contract;
 
         internal ContractBindingException(IScriptObject obj, IScriptContract contract, InterpreterState state)
-            : base(String.Format(ErrorMessages.ContractBinding, ToString(obj), ToString(contract)), InterpreterErrorCode.FailedContractBinding, state)
+            : base(String.Format(ErrorMessages.ContractBinding1, ToString(obj), ToString(contract)), InterpreterErrorCode.FailedContractBinding, state)
         {
             m_obj = obj;
             m_contract = contract;
+        }
+
+        internal ContractBindingException(IScriptContract contract, InterpreterState state)
+            : base(string.Format(ErrorMessages.ContractBinding2, ToString(contract)), InterpreterErrorCode.FailedContractBinding, state)
+        {
         }
         
         /// <summary>

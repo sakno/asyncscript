@@ -291,6 +291,20 @@ namespace DynamicScript.Compiler.Ast.Translation
                     }
                 return closure;
             }
+
+            /// <summary>
+            /// Determines whether the specified variable is already declared.
+            /// </summary>
+            /// <param name="variableName"></param>
+            /// <returns></returns>
+            public bool IsDeclared(string variableName)
+            {
+                ILexicalScope current = Scope;
+                while (current != null)
+                    if (current.Variables.Contains(variableName, StringEqualityComparer.Instance)) return true;
+                    else current = current.Parent;
+                return false;
+            }
         }
         #endregion
         private readonly IEnumerator<ScriptCodeStatement> m_statements;

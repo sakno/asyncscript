@@ -91,6 +91,24 @@ namespace DynamicScript.Runtime.Environment
         /// 
         /// </summary>
         /// <param name="value"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public static ScriptBoolean TryConvert(IScriptObject value, InterpreterState state)
+        {
+            if (TryConvert(ref value))
+                return (ScriptBoolean)value;
+            else throw new ContractBindingException(value, Instance, state);
+        }
+
+        internal static Expression TryConvert(Expression value, ParameterExpression state)
+        {
+            return LinqHelpers.BodyOf<IScriptObject, InterpreterState, ScriptBoolean, MethodCallExpression>((v, s) => TryConvert(v, s)).Update(null, new[] { value, state });
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
         /// <returns></returns>
         protected override bool Mapping(ref IScriptObject value)
         {

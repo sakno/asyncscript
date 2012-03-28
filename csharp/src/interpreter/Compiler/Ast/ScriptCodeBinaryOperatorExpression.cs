@@ -262,5 +262,10 @@ namespace DynamicScript.Compiler.Ast
         {
             return new ScriptCodeBinaryOperatorExpression(Extensions.Clone(Left), Operator, Extensions.Clone(Right));
         }
+
+        internal bool IsSimpleMemberAccess
+        {
+            get { return Operator == ScriptCodeBinaryOperatorType.MemberAccess && (Left is ScriptCodeVariableReference || Left is ScriptCodeBuiltInContractExpression) && Right is ScriptCodeVariableReference; }
+        }
     }
 }

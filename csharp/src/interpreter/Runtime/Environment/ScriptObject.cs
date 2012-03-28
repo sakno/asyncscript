@@ -1753,7 +1753,7 @@ namespace DynamicScript.Runtime.Environment
             return expr;
         }
 
-        private static IEnumerable<Expression> AsRightSide(IEnumerable<Expression> expressions, ParameterExpression stateHolder)
+        internal static IEnumerable<Expression> AsRightSide(IEnumerable<Expression> expressions, ParameterExpression stateHolder)
         {
             return from e in expressions select AsRightSide(e, stateHolder);
         }

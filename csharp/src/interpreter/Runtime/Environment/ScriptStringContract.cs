@@ -15,6 +15,7 @@ namespace DynamicScript.Runtime.Environment
     using CultureInfo = System.Globalization.CultureInfo;
     using Thread = System.Threading.Thread;
     using StringBuilder = System.Text.StringBuilder;
+    using InliningSourceAttribute = Compiler.Ast.Translation.LinqExpressions.InliningSourceAttribute;
 
     /// <summary>
     /// Represents string contract.
@@ -27,91 +28,76 @@ namespace DynamicScript.Runtime.Environment
         #region Nested Types
 
         [ComVisible(false)]
-        private sealed class InsertAction : ScriptFunc<ScriptString, ScriptInteger, ScriptString>
+        private sealed class InsertFunction : ScriptFunc<ScriptString, ScriptInteger, ScriptString>
         {
             public const string Name = "insert";
             private const string FirstParamName = "str";
             private const string SecondParamName = "index";
             private const string ThirdParamName = "value";
 
-            public InsertAction()
+            public InsertFunction()
                 : base(FirstParamName, Instance, SecondParamName, ScriptIntegerContract.Instance, ThirdParamName, Instance, Instance)
             {
             }
 
-            private static ScriptString Invoke(string str, long index, string value)
-            {
-                return str.Insert((int)index, value);
-            }
-
             public override IScriptObject Invoke(ScriptString str, ScriptInteger index, ScriptString value, InterpreterState state)
             {
-                return Invoke(str, index, value);
+                return Insert(str, index, value, state);
             }
         }
 
         [ComVisible(false)]
-        private sealed class IndexOfAction : ScriptFunc<ScriptString, ScriptString, ScriptInteger>
+        private sealed class IndexOfFunction : ScriptFunc<ScriptString, ScriptString, ScriptInteger>
         {
             public const string Name = "indexof";
             private const string FirstParamName = "str";
             private const string SecondParamName = "value";
             private const string ThirdParamName = "startIndex";
 
-            public IndexOfAction()
+            public IndexOfFunction()
                 : base(FirstParamName, Instance, SecondParamName, Instance, ThirdParamName, ScriptIntegerContract.Instance, ScriptIntegerContract.Instance)
             {
             }
 
-            private static ScriptInteger Invoke(string str, string value, long startIndex)
-            {
-                return str.IndexOf(value, (int)startIndex);
-            }
-
             public override IScriptObject Invoke(ScriptString str, ScriptString value, ScriptInteger startIndex, InterpreterState state)
             {
-                return Invoke(str, value, startIndex);
+                return IndexOf(str, value, startIndex, state);
             }
         }
 
         [ComVisible(false)]
-        private sealed class SubstringAction : ScriptFunc<ScriptString, ScriptInteger, ScriptInteger>
+        private sealed class SubstringFunction : ScriptFunc<ScriptString, ScriptInteger, ScriptInteger>
         {
             public const string Name = "substr";
             private const string FirstParamName = "str";
             private const string SecondParamName = "startIndex";
             private const string ThirdParamName = "length";
 
-            public SubstringAction()
+            public SubstringFunction()
                 : base(FirstParamName, Instance, SecondParamName, ScriptIntegerContract.Instance, ThirdParamName, ScriptIntegerContract.Instance, Instance)
             {
             }
 
-            private static ScriptString Invoke(string str, long startIndex, long length)
-            {
-                return str.Substring((int)startIndex, (int)length);
-            }
-
             public override IScriptObject Invoke(ScriptString str, ScriptInteger startIndex, ScriptInteger length, InterpreterState state)
             {
-                return Invoke(str, startIndex, length);
+                return Substring(str, startIndex, length, state);
             }
         }
 
         [ComVisible(false)]
-        private sealed class IsInternedAction : ScriptFunc<ScriptString>
+        private sealed class IsInternedFunction : ScriptFunc<ScriptString>
         {
             public const string Name = "isinterned";
             private const string FirstParamName = "str";
 
-            public IsInternedAction()
+            public IsInternedFunction()
                 : base(FirstParamName, Instance, ScriptBooleanContract.Instance)
             {
             }
 
             protected override IScriptObject Invoke(ScriptString value, InterpreterState state)
             {
-                return (ScriptBoolean)IsInterned(value, state);
+                return IsInterned(value, state);
             }
         }
 
@@ -128,15 +114,7 @@ namespace DynamicScript.Runtime.Environment
 
             protected override IScriptObject Invoke(IScriptArray strings, InterpreterState state)
             {
-                if (strings == null) return Void;
-                var result = new StringBuilder();
-                var indicies = new long[1];
-                for (var i = 0L; i < strings.GetLength(0); i++)
-                {
-                    indicies[0] = i;
-                    result.Append(strings[indicies, state]);
-                }
-                return new ScriptString(result);
+                return Concat(strings, state);
             }
         }
 
@@ -162,40 +140,40 @@ namespace DynamicScript.Runtime.Environment
         }
 
         [ComVisible(false)]
-        private sealed class EqualityAction : ScriptFunc<ScriptString, ScriptString, ScriptString>
+        private sealed class EqualityFunction : ScriptFunc<ScriptString, ScriptString, ScriptString>
         {
             public const string Name = "equ";
             private const string FirstParamName = "a";
             private const string SecondParamName = "b";
             private const string ThirdParamName = "lang";
 
-            public EqualityAction()
+            public EqualityFunction()
                 : base(FirstParamName, Instance, SecondParamName, Instance, ThirdParamName, Instance, ScriptBooleanContract.Instance)
             {
             }
 
             public override IScriptObject Invoke(ScriptString a, ScriptString b, ScriptString language, InterpreterState state)
             {
-                return (ScriptBoolean)ScriptStringContract.Equals(a, b, language);
+                return Equ(a, b, language, state);
             }
         }
 
         [ComVisible(false)]
-        private sealed class ComparisonAction : ScriptFunc<ScriptString, ScriptString, ScriptString>
+        private sealed class ComparisonFunction : ScriptFunc<ScriptString, ScriptString, ScriptString>
         {
             public const string Name = "cmp";
             private const string FirstParamName = "a";
             private const string SecondParamName = "b";
             private const string ThirdParamName = "lang";
 
-            public ComparisonAction()
+            public ComparisonFunction()
                 : base(FirstParamName, Instance, SecondParamName, Instance, ThirdParamName, Instance, ScriptIntegerContract.Instance)
             {
             }
 
             public override IScriptObject Invoke(ScriptString a, ScriptString b, ScriptString language, InterpreterState state)
             {
-                return (ScriptInteger)Compare(a, b, language);
+                return Cmp(a, b, language, state);
             }
         }
         #endregion
@@ -203,14 +181,14 @@ namespace DynamicScript.Runtime.Environment
         private static AggregatedSlotCollection<ScriptStringContract> StaticSlots = new AggregatedSlotCollection<ScriptStringContract>
         {
             {"empty", (owner, state) => ScriptString.Empty},
-            {InsertAction.Name, (owner, state) => LazyField<InsertAction, IScriptFunction>(ref owner.m_insert)},
-            {IndexOfAction.Name, (owner, state) => LazyField<IndexOfAction, IScriptFunction>(ref owner.m_indexof)},
-            {SubstringAction.Name, (owner, state) => LazyField<SubstringAction, IScriptFunction>(ref owner.m_substr)},
-            {IsInternedAction.Name, (owner, state) => LazyField<IsInternedAction, IScriptFunction>(ref owner.m_interned)},
+            {InsertFunction.Name, (owner, state) => LazyField<InsertFunction, IScriptFunction>(ref owner.m_insert)},
+            {IndexOfFunction.Name, (owner, state) => LazyField<IndexOfFunction, IScriptFunction>(ref owner.m_indexof)},
+            {SubstringFunction.Name, (owner, state) => LazyField<SubstringFunction, IScriptFunction>(ref owner.m_substr)},
+            {IsInternedFunction.Name, (owner, state) => LazyField<IsInternedFunction, IScriptFunction>(ref owner.m_interned)},
             {ConcatAction.Name, (owner, state) => LazyField<ConcatAction, IScriptFunction>(ref owner.m_concat)},
             {LanguageSlot.Name, new LanguageSlot()},
-            {EqualityAction.Name, (owner, state) => LazyField<EqualityAction, IScriptFunction>(ref owner.m_equ)},
-            {ComparisonAction.Name, (owner, state) => LazyField<ComparisonAction, IScriptFunction>(ref owner.m_cmp)}
+            {EqualityFunction.Name, (owner, state) => LazyField<EqualityFunction, IScriptFunction>(ref owner.m_equ)},
+            {ComparisonFunction.Name, (owner, state) => LazyField<ComparisonFunction, IScriptFunction>(ref owner.m_cmp)}
         };
 
         private IScriptFunction m_insert;
@@ -292,6 +270,24 @@ namespace DynamicScript.Runtime.Environment
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public static ScriptString TryConvert(IScriptObject value, InterpreterState state)
+        {
+            if (TryConvert(ref value))
+                return (ScriptString)value;
+            else throw new ContractBindingException(value, Instance, state);
+        }
+
+        internal static Expression TryConvert(Expression value, ParameterExpression state)
+        {
+            return LinqHelpers.BodyOf<IScriptObject, InterpreterState, ScriptString, MethodCallExpression>((v, s) => TryConvert(v, s)).Update(null, new[] { value, state });
+        }
+
+        /// <summary>
         /// Provides implicit conversion.
         /// </summary>
         /// <param name="value"></param>
@@ -354,14 +350,84 @@ namespace DynamicScript.Runtime.Environment
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="str"></param>
+        /// <param name="index"></param>
+        /// <param name="value"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        [InliningSource]
+        public static ScriptString Insert(ScriptString str, ScriptInteger index, ScriptString value, InterpreterState state)
+        {
+            if (str == null || value == null) throw new ContractBindingException(Instance, state);
+            if (index == null) throw new ContractBindingException(ScriptIntegerContract.Instance, state);
+            return str.Insert((int)index, value);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="str"></param>
+        /// <param name="value"></param>
+        /// <param name="startIndex"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        [InliningSource]
+        public static ScriptInteger IndexOf(ScriptString str, ScriptString value, ScriptInteger startIndex, InterpreterState state)
+        {
+            if (str == null || value == null) throw new ContractBindingException(Instance, state);
+            if (startIndex == null) throw new ContractBindingException(ScriptIntegerContract.Instance, state);
+            return str.IndexOf(value, (int)startIndex);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="str"></param>
+        /// <param name="startIndex"></param>
+        /// <param name="length"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        [InliningSource]
+        public static ScriptString Substring(ScriptString str, ScriptInteger startIndex, ScriptInteger length, InterpreterState state)
+        {
+            if (str == null) throw new ContractBindingException(Instance, state);
+            if (startIndex == null || length == null) throw new ContractBindingException(ScriptIntegerContract.Instance, state);
+            return str.Substring((int)startIndex, (int)length);
+        }
+
+        /// <summary>
         /// Determines whether the specified string is interned.
         /// </summary>
         /// <param name="value"></param>
         /// <param name="state"></param>
         /// <returns></returns>
-        public static bool IsInterned(ScriptString value, InterpreterState state)
+        [InliningSource]
+        public static ScriptBoolean IsInterned(ScriptString value, InterpreterState state)
         {
+            if (value == null) throw new ContractBindingException(ScriptStringContract.Instance, state);
             return state.IsInterned(value);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="strings"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        [InliningSource]
+        public static ScriptString Concat(IScriptArray strings, InterpreterState state)
+        {
+            if (strings == null) throw new ContractBindingException(new ScriptArrayContract(), state);
+            var result = new StringBuilder();
+            var indicies = new long[1];
+            for (var i = 0L; i < strings.GetLength(0); i++)
+            {
+                indicies[0] = i;
+                result.Append(strings[indicies, state]);
+            }
+            return result.ToString();
         }
 
         /// <summary>
@@ -370,9 +436,12 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="a"></param>
         /// <param name="b"></param>
         /// <param name="language"></param>
+        /// <param name="state"></param>
         /// <returns></returns>
-        public static int Compare(string a, string b, string language)
+        [InliningSource]
+        public static ScriptInteger Cmp(ScriptString a, ScriptString b, ScriptString language, InterpreterState state)
         {
+            if (a == null || b == null) throw new ContractBindingException(Instance, state);
             switch (string.IsNullOrWhiteSpace(language))
             {
                 case true: return string.CompareOrdinal(a, b);
@@ -388,10 +457,13 @@ namespace DynamicScript.Runtime.Environment
         /// <param name="a"></param>
         /// <param name="b"></param>
         /// <param name="language"></param>
+        /// <param name="state"></param>
         /// <returns></returns>
-        public static bool Equals(string a, string b, string language)
+        [InliningSource]
+        public static ScriptBoolean Equ(ScriptString a, ScriptString b, ScriptString language, InterpreterState state)
         {
-            return Compare(a, b, language) == 0;
+            if (a == null || b == null) throw new ContractBindingException(Instance, state);
+            return Cmp(a, b, language, state) == 0L;
         }
 
         /// <summary>

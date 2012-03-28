@@ -147,7 +147,7 @@ namespace DynamicScript.Runtime.Environment
             for (var i = 0; i < args.Count; i++)
             {
                 var temp = args[i];
-                switch (ScriptIntegerContract.Convert(ref temp))
+                switch (ScriptIntegerContract.TryConvert(ref temp))
                 {
                     case true:
                         lengths[i] = SystemConverter.ToInt64(temp);

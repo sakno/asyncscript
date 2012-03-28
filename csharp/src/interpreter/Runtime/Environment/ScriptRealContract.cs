@@ -13,6 +13,7 @@ namespace DynamicScript.Runtime.Environment
     using InterpretationContext = Compiler.Ast.InterpretationContext;
     using SystemMath = System.Math;
     using CultureInfo = System.Globalization.CultureInfo;
+    using InliningSourceAttribute = Compiler.Ast.Translation.LinqExpressions.InliningSourceAttribute;
 
     /// <summary>
     /// Represents real number contract.
@@ -36,7 +37,7 @@ namespace DynamicScript.Runtime.Environment
 
             protected override IScriptObject Invoke(ScriptReal value, InterpreterState state)
             {
-                return (ScriptBoolean)IsInterned(value, state);
+                return IsInterned(value, state);
             }
         }
 
@@ -53,7 +54,7 @@ namespace DynamicScript.Runtime.Environment
 
             protected override IScriptObject Invoke(ScriptReal value, InterpreterState state)
             {
-                return Abs(value);
+                return Abs(value, state);
             }
         }
 
@@ -70,15 +71,7 @@ namespace DynamicScript.Runtime.Environment
 
             protected override IScriptObject Invoke(IScriptArray floats, InterpreterState state)
             {
-                if (floats == null) return Void;
-                var result = 0.0;
-                var indicies = new long[1];
-                for (var i = 0L; i < floats.GetLength(0); i++)
-                {
-                    indicies[0] = i;
-                    result += SystemConverter.ToDouble(floats[indicies, state]);
-                }
-                return new ScriptReal(result);
+                return Sum(floats, state);
             }
         }
 
@@ -95,20 +88,7 @@ namespace DynamicScript.Runtime.Environment
 
             protected override IScriptObject Invoke(IScriptArray floats, InterpreterState state)
             {
-                if (floats == null) return Void;
-                var indicies = new long[1];
-                switch (floats.GetLength(0))
-                {
-                    case 0: return ScriptRealContract.Void;
-                    default:
-                        var result = SystemConverter.ToDouble(floats[indicies, state]);
-                        for (var i = 1L; i < floats.GetLength(0); i++)
-                        {
-                            indicies[0] = i;
-                            result -= SystemConverter.ToDouble(floats[indicies, state]);
-                        }
-                        return new ScriptReal(result);
-                }
+                return Rem(floats, state);
             }
         }
         #endregion
@@ -258,9 +238,12 @@ namespace DynamicScript.Runtime.Environment
         /// Returns an absoule value.
         /// </summary>
         /// <param name="value"></param>
+        /// <param name="state">Internal interpreter state.</param>
         /// <returns></returns>
-        public static ScriptReal Abs(ScriptReal value)
+        [InliningSource]
+        public static ScriptReal Abs(ScriptReal value, InterpreterState state)
         {
+            if (value == null) throw new ContractBindingException(Instance, state);
             return SystemMath.Abs(value);
         }
 
@@ -268,11 +251,58 @@ namespace DynamicScript.Runtime.Environment
         /// Determines whether the specified value is interned.
         /// </summary>
         /// <param name="value"></param>
+        /// <param name="state">Internal interpreter state.</param>
+        /// <returns></returns>
+        [InliningSource]
+        public static ScriptBoolean IsInterned(ScriptReal value, InterpreterState state)
+        {
+            if (value == null) throw new ContractBindingException(Instance, state);
+            return state.IsInterned(value);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="floats"></param>
         /// <param name="state"></param>
         /// <returns></returns>
-        public static bool IsInterned(ScriptReal value, InterpreterState state)
+        [InliningSource]
+        public static ScriptReal Sum(IScriptArray floats, InterpreterState state)
         {
-            return state.IsInterned(value);
+            if (floats == null) throw new ContractBindingException(new ScriptArrayContract(Instance), state);
+            var result = 0.0;
+            var indicies = new long[1];
+            for (var i = 0L; i < floats.GetLength(0); i++)
+            {
+                indicies[0] = i;
+                result += SystemConverter.ToDouble(floats[indicies, state]);
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="floats"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        [InliningSource]
+        public static ScriptReal Rem(IScriptArray floats, InterpreterState state)
+        {
+            if (floats == null) throw new ContractBindingException(new ScriptArrayContract(Instance), state);
+            var indicies = new long[1];
+            switch (floats.GetLength(0))
+            {
+                case 0: return Void;
+                default:
+                    var result = SystemConverter.ToDouble(floats[indicies, state]);
+                    for (var i = 1L; i < floats.GetLength(0); i++)
+                    {
+                        indicies[0] = i;
+                        result -= SystemConverter.ToDouble(floats[indicies, state]);
+                    }
+                    return result;
+            }
         }
 
         /// <summary>

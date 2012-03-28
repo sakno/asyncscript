@@ -5,6 +5,8 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
 {
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
     using NativeGarbageCollector = System.GC;
+    using InliningSourceAttribute = Compiler.Ast.Translation.LinqExpressions.InliningSourceAttribute;
+    using InterpretationContext = Compiler.Ast.InterpretationContext;
 
     /// <summary> 
     /// Represents DynamicScript garbage collector.
@@ -12,29 +14,68 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
     /// </summary>
     [ComVisible(false)]
     [CLSCompliant(false)]
-    public sealed class GC: ScriptCompositeObject
+    public sealed class VM: ScriptCompositeObject
     {
-        internal const string Name = "gc";
+        internal const string Name = "vm";
         #region Nested Types
         [ComVisible(false)]
-        private sealed class CollectFunction : ScriptAction
+        private sealed class OmitVoidInLoops : RuntimeSlotBase, IStaticRuntimeSlot
         {
-            public const string Name = "collect";
+            public const string Name = "omitVoidInLoops";
 
-            protected override void Invoke(InterpreterState state)
+            public override IScriptObject GetValue(InterpreterState state)
             {
-                Collect();
+                return (ScriptBoolean)state.Behavior.OmitVoidYieldInLoops;
+            }
+
+            public override IScriptObject SetValue(IScriptObject value, InterpreterState state)
+            {
+                if (ScriptBooleanContract.TryConvert(ref value))
+                {
+                    state.Behavior.OmitVoidYieldInLoops = (ScriptBoolean)value;
+                    return value;
+                }
+                else if (state.Context == InterpretationContext.Unchecked)
+                    return value;
+                else throw new ContractBindingException(value, ScriptBooleanContract.Instance, state);
+            }
+
+            public IScriptContract ContractBinding
+            {
+                get { return ScriptBooleanContract.Instance; }
+            }
+
+            public override RuntimeSlotAttributes Attributes
+            {
+                get { return RuntimeSlotAttributes.None; }
+            }
+
+            public override bool DeleteValue()
+            {
+                return false;
+            }
+
+            public override bool HasValue
+            {
+                get { return true; }
+                protected set { }
             }
         }
 
         [ComVisible(false)]
-        private sealed class WaitFunction : ScriptAction
+        private sealed class GcFunction : ScriptAction<ScriptBoolean>
         {
-            public const string Name = "wait";
+            public const string Name = "gc";
+            private const string FirstParamName = "wait";
 
-            protected override void Invoke(InterpreterState state)
+            public GcFunction()
+                : base(FirstParamName, ScriptBooleanContract.Instance)
             {
-                Wait();
+            }
+
+            protected override void Invoke(ScriptBoolean wait, InterpreterState state)
+            {
+                GC(wait, state);
             }
         }
 
@@ -45,7 +86,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
 
             public override IScriptObject GetValue(InterpreterState state)
             {
-                return (ScriptInteger)GC.TotalMem;
+                return (ScriptInteger)VM.TotalMem;
             }
 
             public override IScriptObject SetValue(IScriptObject value, InterpreterState state)
@@ -97,34 +138,34 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         {
             get
             {
-                yield return Constant(CollectFunction.Name, new CollectFunction());
-                yield return Constant(WaitFunction.Name, new WaitFunction());
+                yield return Constant(GcFunction.Name, new GcFunction());
                 yield return new KeyValuePair<string, IStaticRuntimeSlot>(TotalMemSlot.Name, new TotalMemSlot());
+                yield return new KeyValuePair<string, IStaticRuntimeSlot>(OmitVoidInLoops.Name, new OmitVoidInLoops());
             }
         }
 
         /// <summary>
         /// Initializes a new garbage collector object.
         /// </summary>
-        public GC()
+        private VM()
             : base(Slots)
         {
         }
 
         /// <summary>
-        /// Forces an immediate garbage collection.
+        /// 
         /// </summary>
-        public static void Collect()
-        {
-            NativeGarbageCollector.Collect();
-        }
+        public static readonly VM Instance = new VM();
 
         /// <summary>
-        /// Suspends the current thread until the thread that is processing the queue of finalizers has emptied the queue.
+        /// Forces an immediate garbage collection.
         /// </summary>
-        public static void Wait()
+        [InliningSource]
+        public static IScriptObject GC(ScriptBoolean wait, InterpreterState state)
         {
-            NativeGarbageCollector.WaitForPendingFinalizers();
+            NativeGarbageCollector.Collect();
+            if (wait) NativeGarbageCollector.WaitForPendingFinalizers();
+            return Void;
         }
 
         /// <summary>

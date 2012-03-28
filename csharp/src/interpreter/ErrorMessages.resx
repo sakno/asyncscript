@@ -120,7 +120,7 @@
   <data name="DuplicateIdentifier" xml:space="preserve">
     <value>Duplicate variable '{0}' declaration, object slot or action parameter.</value>
   </data>
-  <data name="ContractBinding" xml:space="preserve">
+  <data name="ContractBinding1" xml:space="preserve">
     <value>Object '{0}' is not satisfied to the '{1}' contract.</value>
   </data>
   <data name="EndOfCommentExpected" xml:space="preserve">
@@ -206,5 +206,8 @@
   </data>
   <data name="CannotChangeControlFlow" xml:space="preserve">
     <value>Control flow changing is not allowed here.</value>
+  </data>
+  <data name="ContractBinding2" xml:space="preserve">
+    <value>Contract '{0}' expected.</value>
   </data>
 </root>

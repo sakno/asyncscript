@@ -471,5 +471,15 @@ namespace DynamicScript.Compiler
         {
             return FromHashCode(StringEqualityComparer.GetHashCode(lexeme));
         }
+
+        /// <summary>
+        /// Determines whether the specified string is a language keyword.
+        /// </summary>
+        /// <param name="lexeme"></param>
+        /// <returns></returns>
+        public static bool IsKeyword(string lexeme)
+        {
+            return FromString(lexeme) != null;
+        }
     }
 }

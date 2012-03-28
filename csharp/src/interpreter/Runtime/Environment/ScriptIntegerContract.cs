@@ -12,6 +12,7 @@ namespace DynamicScript.Runtime.Environment
     using Keyword = Compiler.Keyword;
     using InterpretationContext = Compiler.Ast.InterpretationContext;
     using SystemMath = System.Math;
+    using InliningSourceAttribute = Compiler.Ast.Translation.LinqExpressions.InliningSourceAttribute;
 
     /// <summary>
     /// Represents integer contract.
@@ -36,7 +37,7 @@ namespace DynamicScript.Runtime.Environment
 
             protected override IScriptObject Invoke(ScriptInteger value, InterpreterState state)
             {
-                return (ScriptBoolean)IsInterned(value, state);
+                return IsInterned(value, state);
             }
         }
 
@@ -53,7 +54,7 @@ namespace DynamicScript.Runtime.Environment
 
             protected override IScriptObject Invoke(ScriptInteger arg0, InterpreterState state)
             {
-                return Even(arg0);
+                return Even(arg0, state);
             }
         }
 
@@ -70,7 +71,7 @@ namespace DynamicScript.Runtime.Environment
 
             protected override IScriptObject Invoke(ScriptInteger arg0, InterpreterState state)
             {
-                return Odd(arg0);
+                return Odd(arg0, state);
             }
         }
 
@@ -87,7 +88,7 @@ namespace DynamicScript.Runtime.Environment
 
             protected override IScriptObject Invoke(ScriptInteger arg0, InterpreterState state)
             {
-                return Abs(arg0);
+                return Abs(arg0, state);
             }
         }
 
@@ -104,17 +105,7 @@ namespace DynamicScript.Runtime.Environment
 
             protected override IScriptObject Invoke(IScriptArray ints, InterpreterState state)
             {
-                if (ints == null) return Void;
-                var result = 0L;
-                var context = state.Context;
-                var indicies = new long[1];
-                for (var i = 0L; i < ints.GetLength(0); i++)
-                {
-                    indicies[0] = i;
-                    var right = SystemConverter.ToInt64(ints[indicies, state]);
-                    result = context == InterpretationContext.Unchecked ? unchecked(result + right) : checked(result + right);
-                }
-                return new ScriptInteger(result);
+                return Sum(ints, state);
             }
         }
 
@@ -131,22 +122,7 @@ namespace DynamicScript.Runtime.Environment
 
             protected override IScriptObject Invoke(IScriptArray ints, InterpreterState state)
             {
-                var indicies = new long[1];
-                switch (ints != null && ints.GetLength(0) > 0L)
-                {
-                    case true:
-                        var result = SystemConverter.ToInt64(ints[indicies, state]);
-                        var context = state.Context;
-                        for (var i = 1L; i < ints.GetLength(0); i++)
-                        {
-                            indicies[0] = i;
-                            var right = SystemConverter.ToInt64(ints[indicies, state]);
-                            result = context == InterpretationContext.Unchecked ? unchecked(result - right) : checked(result - right);
-                        }
-                        return new ScriptInteger(result);
-                    default:
-                        return Void;
-                }
+                return Rem(ints, state);
             }
         }
         #endregion
@@ -223,7 +199,7 @@ namespace DynamicScript.Runtime.Environment
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public static bool Convert(ref IScriptObject value)
+        public static bool TryConvert(ref IScriptObject value)
         {
             if (value is ScriptInteger)
                 return true;
@@ -244,10 +220,28 @@ namespace DynamicScript.Runtime.Environment
         /// 
         /// </summary>
         /// <param name="value"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public static ScriptInteger TryConvert(IScriptObject value, InterpreterState state)
+        {
+            if (TryConvert(ref value))
+                return (ScriptInteger)value;
+            else throw new ContractBindingException(value, Instance, state);
+        }
+
+        internal static Expression TryConvert(Expression value, ParameterExpression state)
+        {
+            return LinqHelpers.BodyOf<IScriptObject, InterpreterState, ScriptInteger, MethodCallExpression>((v, s) => TryConvert(v, s)).Update(null, new[] { value, state });
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
         /// <returns></returns>
         protected override bool Mapping(ref IScriptObject value)
         {
-            return Convert(ref value);
+            return TryConvert(ref value);
         }
 
         internal static LinqExpression Expression
@@ -320,12 +314,28 @@ namespace DynamicScript.Runtime.Environment
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        [InliningSource]
+        public static ScriptBoolean IsInterned(ScriptInteger value, InterpreterState state)
+        {
+            if (value == null) throw new ContractBindingException(Instance, state);
+            return state.IsInterned(value);
+        }
+
+        /// <summary>
         /// Determines whether the specified integer is even.
         /// </summary>
         /// <param name="int"></param>
+        /// <param name="state">Internal interpreter state.</param>
         /// <returns></returns>
-        public static ScriptBoolean Even(ScriptInteger @int)
+        [InliningSource]
+        public static ScriptBoolean Even(ScriptInteger @int, InterpreterState state)
         {
+            if (@int == null) throw new ContractBindingException(Instance, state);
             return @int % 2 == 0;
         }
 
@@ -333,9 +343,12 @@ namespace DynamicScript.Runtime.Environment
         /// Determines whether the specified integer is odd.
         /// </summary>
         /// <param name="int"></param>
+        /// <param name="state">Internal interpreter state.</param>
         /// <returns></returns>
-        public static ScriptBoolean Odd(ScriptInteger @int)
+        [InliningSource]
+        public static ScriptBoolean Odd(ScriptInteger @int, InterpreterState state)
         {
+            if (@int == null) throw new ContractBindingException(Instance, state);
             return @int % 2 != 0;
         }
 
@@ -343,10 +356,63 @@ namespace DynamicScript.Runtime.Environment
         /// Returns absolute value.
         /// </summary>
         /// <param name="int"></param>
+        /// <param name="state">Internal interpreter state.</param>
         /// <returns></returns>
-        public static ScriptInteger Abs(ScriptInteger @int)
+        [InliningSource]
+        public static ScriptInteger Abs(ScriptInteger @int, InterpreterState state)
         {
+            if (@int == null) throw new ContractBindingException(Instance, state);
             return SystemMath.Abs(@int);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="ints"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        [InliningSource]
+        public static ScriptInteger Sum(IScriptArray ints, InterpreterState state)
+        {
+            if (ints == null) throw new ContractBindingException(new ScriptArrayContract(Instance), state);
+            var result = 0L;
+            var context = state.Context;
+            var indicies = new long[1];
+            for (var i = 0L; i < ints.GetLength(0); i++)
+            {
+                indicies[0] = i;
+                var right = SystemConverter.ToInt64(ints[indicies, state]);
+                result = context == InterpretationContext.Unchecked ? unchecked(result + right) : checked(result + right);
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="ints"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        [InliningSource]
+        public static ScriptInteger Rem(IScriptArray ints, InterpreterState state)
+        {
+            if (ints == null) throw new ContractBindingException(new ScriptArrayContract(Instance), state);
+            var indicies = new long[1];
+            switch (ints.GetLength(0) > 0L)
+            {
+                case true:
+                    var result = SystemConverter.ToInt64(ints[indicies, state]);
+                    var context = state.Context;
+                    for (var i = 1L; i < ints.GetLength(0); i++)
+                    {
+                        indicies[0] = i;
+                        var right = SystemConverter.ToInt64(ints[indicies, state]);
+                        result = context == InterpretationContext.Unchecked ? unchecked(result - right) : checked(result - right);
+                    }
+                    return result;
+                default:
+                    return Void;
+            }
         }
 
         /// <summary>
@@ -355,17 +421,6 @@ namespace DynamicScript.Runtime.Environment
         public static ScriptInteger Size
         {
             get { return sizeof(long); }
-        }
-
-        /// <summary>
-        /// Determines whether the specified integer is interned.
-        /// </summary>
-        /// <param name="value"></param>
-        /// <param name="state"></param>
-        /// <returns></returns>
-        public static bool IsInterned(ScriptInteger value, InterpreterState state)
-        {
-            return state.IsInterned(value);
         }
 
         /// <summary>

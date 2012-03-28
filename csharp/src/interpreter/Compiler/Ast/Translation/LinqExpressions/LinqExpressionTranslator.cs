@@ -26,6 +26,8 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
     {
         private readonly SourceCodeInfo m_dinfo;
         private readonly IDictionary<long, MethodCallExpression> m_intern;
+        private readonly IDictionary<string, ICodeOptimizer> m_optimizers;
+        private readonly IDictionary<string, Type> m_commonObjects;
 
         /// <summary>
         /// Initializes a new CodeDOM-to-LINQET transformer.
@@ -38,6 +40,57 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         {
             m_intern = new Dictionary<long, MethodCallExpression>(300);
             m_dinfo = source;
+            //Create standard set of optimizers
+            m_optimizers = new Dictionary<string, ICodeOptimizer>(10, StringEqualityComparer.Instance);
+            m_commonObjects = new Dictionary<string, Type>(10, StringEqualityComparer.Instance);
+            //mathematical library
+            AddCommonObject<Runtime.Environment.ObjectModel.Math>(Runtime.Environment.ObjectModel.Math.Name, m_optimizers, m_commonObjects);
+            //threading library
+            AddCommonObject<Runtime.Environment.Threading.ThreadingLibrary>(Runtime.Environment.Threading.ThreadingLibrary.Name, m_optimizers, m_commonObjects);
+            //vm low-level routines
+            AddCommonObject<Runtime.Environment.ObjectModel.VM>(Runtime.Environment.ObjectModel.VM.Name, m_optimizers, m_commonObjects);
+            //standard routines
+            CodeOptimizer.Add<Runtime.Environment.ObjectModel.StandardLibrary>(m_optimizers, "");
+            //integer subroutines
+            CodeOptimizer.Add<ScriptIntegerContract>(m_optimizers, Keyword.Integer);
+            //real subroutines
+            CodeOptimizer.Add<ScriptRealContract>(m_optimizers, Keyword.Real);
+            //string subroutines
+            CodeOptimizer.Add<ScriptStringContract>(m_optimizers, Keyword.String);
+            //dimensional subs
+            CodeOptimizer.Add<ScriptDimensionalContract>(m_optimizers, Keyword.Dimensional);
+        }
+
+        private static void AddCommonObject<T>(string name, IDictionary<string, ICodeOptimizer> optimizers, IDictionary<string, Type> commonObjects)
+            where T: class, IScriptObject
+        {
+            CodeOptimizer.Add<T>(optimizers, name);
+            commonObjects.Add(name, typeof(T));
+        }
+
+        private MemberExpression CommonObjectAccessor(string name)
+        {
+            var t = default(Type);
+            if (m_commonObjects.TryGetValue(name, out t))
+            {
+                const BindingFlags FieldFlags = BindingFlags.DeclaredOnly | BindingFlags.Static | BindingFlags.Public;
+                var singletonProvider = t.GetField("Instance", FieldFlags);
+                if (singletonProvider != null) return Expression.Field(null, singletonProvider);
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Overrides code optimizer.
+        /// </summary>
+        /// <param name="objectPath"></param>
+        /// <param name="optimizer"></param>
+        /// <returns></returns>
+        public bool SetCodeOptimizer(string objectPath, ICodeOptimizer optimizer)
+        {
+            if (optimizer == null) return m_optimizers.Remove(objectPath);
+            m_optimizers[objectPath] = optimizer;
+            return true;
         }
 
         /// <summary>
@@ -481,7 +534,13 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         {
             //The first, try find out a variable through a scope.
             Expression @var = context.Scope.GetVariableExpression(variableName);
-            return (resolved = @var != null) ? @var : ScriptObject.RuntimeSlotBase.Lookup(variableName, context.Scope.StateHolder);
+            if (resolved = @var != null)
+                return @var;
+            else if (resolved = m_commonObjects.ContainsKey(variableName))  //The second, it can be a predefined object.
+                return CommonObjectAccessor(variableName);
+            else if (resolved = Runtime.Environment.ObjectModel.StandardLibrary.IsStandardLibraryEntity(variableName))
+                return ScriptObject.GetValue(Runtime.Environment.ObjectModel.StandardLibrary.InstanceAccess, variableName, context.Scope.StateHolder);
+            else return ScriptObject.RuntimeSlotBase.Lookup(variableName, context.Scope.StateHolder);
         }
 
         private Expression TranslateGrouping(ScriptCodeLoopExpression.OperatorGrouping grouping, TranslationContext context)
@@ -807,47 +866,71 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns>Translated invocation expression.</returns>
         protected override Expression Translate(ScriptCodeInvocationExpression invocation, TranslationContext context)
         {
-            //If invocation operation is performed on constant with stored function then inline calling
-            var targetVariable = invocation.Target is ScriptCodeVariableReference ? ((ScriptCodeVariableReference)invocation.Target).VariableName : null;
-            var inlining = new
+            if (invocation.Target is ScriptCodeBinaryOperatorExpression && ((ScriptCodeBinaryOperatorExpression)invocation.Target).IsSimpleMemberAccess)
             {
-                Precompiled = context.Scope.GetAttribute<LambdaExpression>(targetVariable),
-                Signature = context.Scope.GetAttribute<IWellKnownContractInfo>(targetVariable) as ScriptCodeActionContractExpression
-            };
-            if (inlining.Precompiled != null && inlining.Signature != null)
-            {
-                var arguments = new List<Expression>(inlining.Signature.ParamList.Count + 1) { context.Scope.StateHolder };
-                for (var i = 0; i < inlining.Signature.ParamList.Count; i++)
-                    arguments.Add(ScriptVariable.BindToVariable(LinqHelpers.Null<IStaticRuntimeSlot>(), null, Translate(invocation.ArgList[i], context), Translate(inlining.Signature.ParamList[i].ContractBinding, context), context.Scope.StateHolder));
-                var returnContract = default(Expression);
-                if (inlining.Signature.IsAsynchronous)  //synchronous call
+                var callsite = ((ScriptCodeBinaryOperatorExpression)invocation.Target).Left;
+                var objectPath = string.Empty;
+                if (callsite is ScriptCodeVariableReference)
+                    objectPath = ((ScriptCodeVariableReference)callsite).VariableName;
+                else if (callsite is ScriptCodeBuiltInContractExpression)
+                    objectPath = ((ScriptCodeBuiltInContractExpression)callsite).Value;
+                var functionName = ((ScriptCodeVariableReference)((ScriptCodeBinaryOperatorExpression)invocation.Target).Right).VariableName;
+                if (m_optimizers.ContainsKey(objectPath) && (Keyword.IsKeyword(objectPath) || !context.IsDeclared(objectPath)))
                 {
-                    if (inlining.Signature.ParamList.Count != invocation.ArgList.Count + 1) return FunctionArgumentsMistmatchException.Throw(context.Scope.StateHolder);
-                    returnContract = LinqHelpers.BodyOf<Func<ScriptAwaitContract>, MemberExpression>(() => ScriptAwaitContract.Instance);
-                    //Add callback
-                    arguments.Add(ScriptVariable.BindToVariable(null,
-                        null,
-                        Translate(invocation.ArgList[inlining.Signature.ParamList.Count], context),
-                        ScriptAcceptorContract.New(Translate(inlining.Signature.ReturnType, context), context.Scope.StateHolder),
-                        context.Scope.StateHolder));
+                    var result = m_optimizers[objectPath].InlineFunctionCall(functionName, new List<Expression>(from a in invocation.ArgList
+                                                                                                                where a is ScriptCodeExpression
+                                                                                                                select AsRightSide(Translate(a, context), context)), context.Scope.StateHolder);
+                    if (result != null) return result;
                 }
-                else
-                {
-                    if (inlining.Signature.ParamList.Count != invocation.ArgList.Count) return FunctionArgumentsMistmatchException.Throw(context.Scope.StateHolder);
-                    returnContract = Translate(inlining.Signature.ReturnType, context);
-                    //iterate through each argument and bind it to the parameter type
-                }
-                return ScriptFunctionBase.BindResult(returnContract, Expression.Invoke(inlining.Precompiled, arguments), context.Scope.StateHolder);
             }
-            else
+            else if (invocation.Target is ScriptCodeVariableReference)
             {
-                //Late-bound execution of the function.
-                var target = AsRightSide(Translate(invocation.Target, context), context);
-                var args = new List<Expression>(from a in invocation.ArgList
-                                                where a is ScriptCodeExpression
-                                                select AsRightSide(Translate(a, context), context));
-                return ScriptObject.BindInvoke(target, args, context.Scope.StateHolder);
+                //If invocation operation is performed on constant with stored function then inline calling
+                var targetVariable = ((ScriptCodeVariableReference)invocation.Target).VariableName;
+                if (Runtime.Environment.ObjectModel.StandardLibrary.IsStandardLibraryEntity(targetVariable))
+                {
+                    var result = m_optimizers[""].InlineFunctionCall(targetVariable, new List<Expression>(from a in invocation.ArgList
+                                                                                                          where a is ScriptCodeExpression
+                                                                                                          select AsRightSide(Translate(a, context), context)), context.Scope.StateHolder);
+                    if (result != null) return result;
+                }
+                var inlining = new
+                {
+                    Precompiled = context.Scope.GetAttribute<LambdaExpression>(targetVariable),
+                    Signature = context.Scope.GetAttribute<IWellKnownContractInfo>(targetVariable) as ScriptCodeActionContractExpression
+                };
+                if (inlining.Precompiled != null && inlining.Signature != null)
+                {
+                    var arguments = new List<Expression>(inlining.Signature.ParamList.Count + 1) { context.Scope.StateHolder };
+                    for (var i = 0; i < inlining.Signature.ParamList.Count; i++)
+                        arguments.Add(ScriptVariable.BindToVariable(LinqHelpers.Null<IStaticRuntimeSlot>(), null, Translate(invocation.ArgList[i], context), Translate(inlining.Signature.ParamList[i].ContractBinding, context), context.Scope.StateHolder));
+                    var returnContract = default(Expression);
+                    if (inlining.Signature.IsAsynchronous)  //synchronous call
+                    {
+                        if (inlining.Signature.ParamList.Count != invocation.ArgList.Count + 1) return FunctionArgumentsMistmatchException.Throw(context.Scope.StateHolder);
+                        returnContract = LinqHelpers.BodyOf<Func<ScriptAwaitContract>, MemberExpression>(() => ScriptAwaitContract.Instance);
+                        //Add callback
+                        arguments.Add(ScriptVariable.BindToVariable(null,
+                            null,
+                            Translate(invocation.ArgList[inlining.Signature.ParamList.Count], context),
+                            ScriptAcceptorContract.New(Translate(inlining.Signature.ReturnType, context), context.Scope.StateHolder),
+                            context.Scope.StateHolder));
+                    }
+                    else
+                    {
+                        if (inlining.Signature.ParamList.Count != invocation.ArgList.Count) return FunctionArgumentsMistmatchException.Throw(context.Scope.StateHolder);
+                        returnContract = Translate(inlining.Signature.ReturnType, context);
+                        //iterate through each argument and bind it to the parameter type
+                    }
+                    return ScriptFunctionBase.BindResult(returnContract, Expression.Invoke(inlining.Precompiled, arguments), context.Scope.StateHolder);
+                }
             }
+            //Late-bound execution of the function.
+            var target = AsRightSide(Translate(invocation.Target, context), context);
+            var args = new List<Expression>(from a in invocation.ArgList
+                                            where a is ScriptCodeExpression
+                                            select AsRightSide(Translate(a, context), context));
+            return ScriptObject.BindInvoke(target, args, context.Scope.StateHolder);
         }
 
         #region .NET-to-DynamicScript Compile-time Conversion Routines

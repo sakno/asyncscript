@@ -10,6 +10,7 @@ namespace DynamicScript.Runtime.Environment
     using LinqExpression = System.Linq.Expressions.Expression;
     using MemberExpression = System.Linq.Expressions.MemberExpression;
     using SystemConverter = System.Convert;
+    using InliningSourceAttribute = Compiler.Ast.Translation.LinqExpressions.InliningSourceAttribute;
 
     /// <summary>
     /// Represents DIMENSIONAL contract.
@@ -22,19 +23,19 @@ namespace DynamicScript.Runtime.Environment
         #region Nested Types
 
         [ComVisible(false)]
-        private sealed class ToSingleAction : ScriptFunc<IScriptArray>
+        private sealed class ToSingleFunction : ScriptFunc<IScriptArray>
         {
             public const string Name = "toSingle";
             private const string FirstParamName = "a";
 
-            public ToSingleAction()
+            public ToSingleFunction()
                 : base(FirstParamName, Instance, Instance)
             {
             }
 
             protected override IScriptObject Invoke(IScriptArray array, InterpreterState state)
             {
-                return array.ToSingleDimensional();
+                return ToSingle(array, state);
             }
         }
         
@@ -42,7 +43,7 @@ namespace DynamicScript.Runtime.Environment
 
         private static AggregatedSlotCollection<ScriptDimensionalContract> StaticSlots = new AggregatedSlotCollection<ScriptDimensionalContract>
         {
-            {ToSingleAction.Name, (owner, state) => LazyField<ToSingleAction, IScriptFunction>(ref owner.m_single)}
+            {ToSingleFunction.Name, (owner, state) => LazyField<ToSingleFunction, IScriptFunction>(ref owner.m_single)}
         };
 
         private IScriptFunction m_single;
@@ -71,6 +72,18 @@ namespace DynamicScript.Runtime.Environment
             if (state.Context == InterpretationContext.Unchecked)
                 return Void;
             else throw new UnsupportedOperationException(state);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="array"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        [InliningSource]
+        public static IScriptObject ToSingle(IScriptArray array, InterpreterState state)
+        {
+            return Extensions.IfThenElse<IScriptObject>(array != null, array.ToSingleDimensional(), Void);
         }
 
         internal override Keyword Token
@@ -116,7 +129,7 @@ namespace DynamicScript.Runtime.Environment
                     if (elementContract == null) throw new ContractBindingException(args[0], ScriptMetaContract.Instance, state);
                     //The second argument should contain number of dimensions
                     var dimensions = args[1];
-                    if (!ScriptIntegerContract.Convert(ref dimensions)) throw new ContractBindingException(dimensions, ScriptIntegerContract.Instance, state);
+                    if (!ScriptIntegerContract.TryConvert(ref dimensions)) throw new ContractBindingException(dimensions, ScriptIntegerContract.Instance, state);
                     return new ScriptArrayContract(elementContract, SystemConverter.ToInt32(dimensions));
                 default: throw new FunctionArgumentsMistmatchException(state);
             }
