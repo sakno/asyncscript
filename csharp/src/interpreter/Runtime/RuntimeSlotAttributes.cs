@@ -26,6 +26,11 @@ namespace DynamicScript.Runtime
         /// <summary>
         /// Represents runtime slot that holds proxy or lazy object.
         /// </summary>
-        Lazy = 0x02
+        Lazy = 0x02,
+
+        /// <summary>
+        /// 
+        /// </summary>
+        LazyImmutable = Immutable | Lazy
     }
 }

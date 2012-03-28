@@ -1994,6 +1994,6 @@ namespace DynamicScript.Runtime.Environment
         /// <summary>
         /// Represents an empty array of script objects.
         /// </summary>
-        protected static readonly IScriptObject[] EmptyArray = new IScriptObject[0];
+        internal protected static readonly IScriptObject[] EmptyArray = new IScriptObject[0];
     }
 }

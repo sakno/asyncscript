@@ -20,7 +20,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
     /// This class cannot be inherited.
     /// </summary>
     [ComVisible(false)]
-    public sealed class StandardLibrary: ScriptCompositeObject
+    public sealed class StandardLibrary : ScriptCompositeObject
     {
         #region Nested Types
 
@@ -513,6 +513,27 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         }
 
         [ComVisible(false)]
+        private sealed class DeclarePropertyFunction : ScriptFunc<ScriptCompositeObject, ScriptString, IScriptContract, IScriptFunction, IScriptFunction>
+        {
+            public const string Name = "declareProperty";
+            private const string FirstParamName = "obj";
+            private const string SecondParamName = "propertyName";
+            private const string ThirdParamName = "contract";
+            private const string FourthParamName = "getter";
+            private const string FifthParamName = "setter";
+
+            public DeclarePropertyFunction()
+                : base(FirstParamName, ScriptCompositeContract.Empty, SecondParamName, ScriptStringContract.Instance, ThirdParamName, ScriptMetaContract.Instance, FourthParamName, ScriptSuperContract.Instance, FifthParamName, ScriptSuperContract.Instance, ScriptBooleanContract.Instance)
+            {
+            }
+
+            public override IScriptObject Invoke(ScriptCompositeObject obj, ScriptString propertyName, IScriptContract contract, IScriptFunction getter, IScriptFunction setter, InterpreterState state)
+            {
+                return DeclareProperty(obj, propertyName, contract, getter, setter, state);
+            }
+        }
+
+        [ComVisible(false)]
         private sealed new class Slots : ObjectSlotCollection
         {
             public Slots()
@@ -541,6 +562,7 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                 AddConstant<ImportFunction>(ImportFunction.Name);
                 AddConstant<InvokeFunction>(InvokeFunction.Name);
                 AddConstant<IsOverloadedFunction>(IsOverloadedFunction.Name);
+                AddConstant<DeclarePropertyFunction>(DeclarePropertyFunction.Name);
             }
         }
         #endregion
@@ -884,6 +906,25 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
             if (destination == null) throw new ContractBindingException(ScriptCompositeContract.Empty, state);
             destination.Import(source, state);
             return Void;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <param name="propertyName"></param>
+        /// <param name="contract"></param>
+        /// <param name="getter"></param>
+        /// <param name="setter"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        [InliningSource]
+        public static ScriptBoolean DeclareProperty(ScriptCompositeObject obj, ScriptString propertyName, IScriptContract contract, IScriptFunction getter, IScriptFunction setter, InterpreterState state)
+        {
+            if (obj == null) throw new ContractBindingException(ScriptCompositeContract.Empty, state);
+            if (getter == null && setter == null) throw new ScriptFault("Getter or setter should be specified", state);
+            if (IsVoid(contract)) contract = ScriptSuperContract.Instance;
+            return obj.AddSlot(propertyName, new ScriptProperty(contract, getter, setter));
         }
     }
 }

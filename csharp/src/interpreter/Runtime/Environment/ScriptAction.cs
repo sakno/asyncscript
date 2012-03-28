@@ -180,4 +180,59 @@ namespace DynamicScript.Runtime.Environment
             return Void;
         }
     }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <typeparam name="T1"></typeparam>
+    /// <typeparam name="T2"></typeparam>
+    /// <typeparam name="T3"></typeparam>
+    /// <typeparam name="T4"></typeparam>
+    [ComVisible(false)]
+    public abstract class ScriptAction<T1, T2, T3, T4> : ScriptFunctionBase
+        where T1 : class, IScriptObject
+        where T2 : class, IScriptObject
+        where T3 : class, IScriptObject
+        where T4 : class, IScriptObject
+    {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="param0"></param>
+        /// <param name="param1"></param>
+        /// <param name="param2"></param>
+        /// <param name="param3"></param>
+        /// <param name="this"></param>
+        protected ScriptAction(ScriptFunctionContract.Parameter param0, ScriptFunctionContract.Parameter param1, ScriptFunctionContract.Parameter param2, ScriptFunctionContract.Parameter param3, IScriptObject @this = null)
+            : base(new ScriptFunctionContract(new[] { param0, param1, param2, param3 }), @this)
+        {
+        }
+
+        internal ScriptAction(string firstParamName, IScriptContract firstParamContract, string secondParamName, IScriptContract secondParamContract, string thirdParamName, IScriptContract thirdParamContract, string fourthParamName, IScriptContract fourthParamContract, IScriptObject @this = null)
+            : this(new ScriptFunctionContract.Parameter(firstParamName, firstParamContract), new ScriptFunctionContract.Parameter(secondParamName, secondParamContract), new ScriptFunctionContract.Parameter(thirdParamName, thirdParamContract), new ScriptFunctionContract.Parameter(fourthParamName, fourthParamContract), @this)
+        {
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="arg0"></param>
+        /// <param name="arg1"></param>
+        /// <param name="arg2"></param>
+        /// <param name="arg3"></param>
+        /// <param name="state"></param>
+        protected abstract void Invoke(T1 arg0, T2 arg1, T3 arg2, T4 arg3, InterpreterState state);
+
+        /// <summary>
+        /// Invokes an action.
+        /// </summary>
+        /// <param name="args"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        protected sealed override IScriptObject InvokeCore(IList<IScriptObject> args, InterpreterState state)
+        {
+            Invoke(Unwrap<T1>(args, 0, state), Unwrap<T2>(args, 1, state), Unwrap<T3>(args, 2, state), Unwrap<T4>(args, 3, state), state);
+            return Void;
+        }
+    }
 }

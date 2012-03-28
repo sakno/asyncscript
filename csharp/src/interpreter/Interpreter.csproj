@@ -263,8 +263,10 @@
     <Compile Include="Runtime\Environment\ExpressionTrees\ScriptWhileExpressionFactory.cs" />
     <Compile Include="Runtime\Environment\IBinaryOperatorInvoker.cs" />
     <Compile Include="Runtime\Environment\IScriptIterable.cs" />
+    <Compile Include="Runtime\Environment\IScriptProperty.cs" />
     <Compile Include="Runtime\Environment\IUnaryOperatorInvoker.cs" />
     <Compile Include="Runtime\Environment\NamedRuntimeSlot.cs" />
+    <Compile Include="Runtime\Environment\ScriptProperty.cs" />
     <Compile Include="Runtime\Environment\ObjectModel\StandardLibrary.cs" />
     <Compile Include="Runtime\Environment\WellKnownContractInfoAttribute.cs" />
     <Compile Include="Runtime\Environment\ScriptFunctionInvoker.cs" />

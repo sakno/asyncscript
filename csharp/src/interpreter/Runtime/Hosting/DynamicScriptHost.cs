@@ -21,10 +21,6 @@ namespace DynamicScript.Runtime.Hosting
         [LoaderOptimization(LoaderOptimization.SingleDomain)]
         private static int Main(string[] args)
         {
-            var r = DynamicScriptInterpreter.Run(@"
-            var c = use('D:\DynamicScript\csharp\src\modules\Cmd\bin\Debug\dscmd.dll');
-            c('notepad', '', -1); 
-");
             return Execute(new CommandLineParser(Console.Out, Console.In), args);
         }
     }

@@ -567,6 +567,11 @@ namespace DynamicScript.Runtime.Environment
             get { return m_slots[slotName]; }
         }
 
+        internal bool AddSlot(string slotName, IStaticRuntimeSlot slot)
+        {
+            return m_slots.Add(slotName, slot);
+        }
+
         /// <summary>
         /// Gets runtime slot by its name.
         /// </summary>
