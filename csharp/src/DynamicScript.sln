@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClrTypes", "modules\ClrType
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InterpreterTests", "tests\InterpreterTests.csproj", "{D053DD8B-133D-4305-BDEE-3C98C1B1E9F2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cmd", "modules\Cmd\Cmd.csproj", "{07D7B1C1-A5B4-4C66-AFC3-8E4C52D6C381}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -43,6 +45,12 @@ Global
 		{D053DD8B-133D-4305-BDEE-3C98C1B1E9F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D053DD8B-133D-4305-BDEE-3C98C1B1E9F2}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D053DD8B-133D-4305-BDEE-3C98C1B1E9F2}.Release|x86.ActiveCfg = Release|Any CPU
+		{07D7B1C1-A5B4-4C66-AFC3-8E4C52D6C381}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{07D7B1C1-A5B4-4C66-AFC3-8E4C52D6C381}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{07D7B1C1-A5B4-4C66-AFC3-8E4C52D6C381}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{07D7B1C1-A5B4-4C66-AFC3-8E4C52D6C381}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{07D7B1C1-A5B4-4C66-AFC3-8E4C52D6C381}.Release|Any CPU.Build.0 = Release|Any CPU
+		{07D7B1C1-A5B4-4C66-AFC3-8E4C52D6C381}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

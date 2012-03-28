@@ -10,7 +10,6 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
     using SystemEnvironment = System.Environment;
     using SystemConverter = System.Convert;
     using InterpretationContext = Compiler.Ast.InterpretationContext;
-    using Process = System.Diagnostics.Process;
     using File = System.IO.File;
     using ScriptDebugger = Debugging.ScriptDebugger;
     using BindingFlags = System.Reflection.BindingFlags;
@@ -437,25 +436,6 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         }
 
         [ComVisible(false)]
-        private sealed class CmdFunction : ScriptFunc<ScriptString, ScriptString, ScriptInteger>
-        {
-            public const string Name = "cmd";
-            private const string FirstParamName = "command";
-            private const string SecondParamName = "arguments";
-            private const string ThirdParamName = "timeout";
-
-            public CmdFunction()
-                : base(FirstParamName, ScriptStringContract.Instance, SecondParamName, ScriptStringContract.Instance, ThirdParamName, ScriptIntegerContract.Instance, ScriptIntegerContract.Instance)
-            {
-            }
-
-            public override IScriptObject Invoke(ScriptString command, ScriptString arguments, ScriptInteger timeout, InterpreterState state)
-            {
-                return Cmd(command, arguments, timeout, state);
-            }
-        }
-
-        [ComVisible(false)]
         private sealed class WorkingDirectorySlot : RuntimeSlotBase, IStaticRuntimeSlot
         {
             public const string Name = "wdir";
@@ -543,7 +523,6 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                 AddConstant<LoadModuleFunction>(LoadModuleFunction.Name);
                 AddConstant<PrepareModuleFunction>(PrepareModuleFunction.Name);
                 Add<ArgsSlot>(ArgsSlot.Name);
-                AddConstant<CmdFunction>(CmdFunction.Name);
                 AddConstant<DebuggerModule>(DebuggerModule.Name);
                 Add<WorkingDirectorySlot>(WorkingDirectorySlot.Name);
                 AddConstant("ver", new ScriptInteger(DynamicScriptInterpreter.Version.Major));
@@ -630,22 +609,6 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         public static IScriptCompositeObject Regex(InterpreterState state)
         {
             return new Regex();
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="command"></param>
-        /// <param name="arguments"></param>
-        /// <param name="timeout"></param>
-        /// <param name="state"></param>
-        /// <returns></returns>
-        [InliningSource]
-        public static ScriptInteger Cmd(ScriptString command, ScriptString arguments, ScriptInteger timeout, InterpreterState state)
-        {
-            if (command == null || arguments == null || timeout == null) throw new ArgumentException();
-            using (var p = Process.Start(command, arguments))
-                return p.WaitForExit((int)timeout) ? p.ExitCode : long.MinValue;
         }
 
         private static bool Prepare(Uri scriptFile, bool cacheResult, InterpreterState state)
