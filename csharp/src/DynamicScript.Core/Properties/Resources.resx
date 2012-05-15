@@ -117,53 +117,40 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="AssemblyInfoExpected" xml:space="preserve">
-    <value>Assembly information expected.</value>
+  <data name="CallStackFrameFormat" xml:space="preserve">
+    <value>{0} ({1} locals)</value>
   </data>
-  <data name="AssemblyNameExpected" xml:space="preserve">
-    <value>Assembly file name (without path) expected.</value>
+  <data name="CustomClassCannotImplementScriptInterface" xml:space="preserve">
+    <value>The user-defined class cannot implement IScriptObject interface.</value>
   </data>
-  <data name="AssemblyVersionExpected" xml:space="preserve">
-    <value>Assembly version expected.</value>
+  <data name="EntryPointFrameID" xml:space="preserve">
+    <value>&lt;Entry Point&gt;</value>
   </data>
-  <data name="InvalidCommandLineArg" xml:space="preserve">
-    <value>Argument '{0}' is not recognized.</value>
+  <data name="InvalidScriptAssembly" xml:space="preserve">
+    <value>Assembly '{0}' doesn't contain script implementation.</value>
   </data>
-  <data name="InvalidCommandParameters" xml:space="preserve">
-    <value>Invalid command line parameters.</value>
+  <data name="MonitoringNotEnabled" xml:space="preserve">
+    <value>Monitoring is not enabled.</value>
   </data>
-  <data name="ScriptFileNameExpected" xml:space="preserve">
-    <value>The path to the script file expected.</value>
+  <data name="SlotIsOutOfScope" xml:space="preserve">
+    <value>Runtime slot is not available at the current call stack frame. Possible, it is out of lexical scope.</value>
   </data>
-  <data name="Usage" xml:space="preserve">
-    <value>dsi [-c &lt;script-file&gt; [-ver &lt;assembly-version&gt;] [-name &lt;assembly-name&gt;] [-debug] [-exec] [-x86|-x64|-il] [-i386|-ia64|-amd64] [-info &lt;assembly-info&gt;]|[-e &lt;script-file&gt; [-debug] &lt;arguments&gt; ]|[-b &lt;script-file&gt; &lt;output-file&gt;] [-i]
-
--c &lt;script-file&gt; Compiles DynamicScript source to assembly;
--ver &lt;assembly-version&gt; Version of the compiled assembly(major.minor.build.revision);
--name &lt;assembly-name&gt; Name of the output file;
--debug Emits debug information into the compiled assembly and generates symbol document;
--exec Compiles script to executable file instead of dynamic library;
--x86, -x64, -il Target platform, it is recommended to use -il flag;
--i386, -ia64, -amd64 Target machine architecture;
--info &lt;assembly-info&gt; Emits additional information about compiled script. Format of the information field: product=&lt;product-name&gt;,version=&lt;product-version&gt;,company=&lt;manufacturer&gt;,copyright=&lt;script-copyright&gt;,trademark=&lt;trademarks&gt;;
--e &lt;script-file&gt; &lt;arguments&gt; Interprets the specified script program;
--b &lt;script-file&gt; &lt;output-file&gt; Browses script module and extracts its contract to the output stream or output file(if it is presented);
--i Open interactive interpreter
-
-Interactive interpreter commands:
-#exec - execute script code;
-#exit - exit from interactive interpreter;
-#clear - clear screen and reset source code buffer;
-#insert &lt;file-name&gt; - load source from the specified file;
-#save &lt;file-name&gt; - save source code to the specified file;
-#args [arg0, arg1, ...argN] - setup script arguments;
-
-Examples:
-dsi -c script.ds -ver 2.0 -exec
-dsi -c script.ds -ver 3.0 -x64 -amd64
-dsi -c script.ds -ver 2.0 -exec -info "product=MyScript,version=2.0,company=Acme,copyright=Acme 2008(c)"
-dsi -e script.ds
-dsi -e script.ds -debug
-dsi -b modules/eval.ds</value>
+  <data name="StillRunning" xml:space="preserve">
+    <value>An asynchronous object is in running state.</value>
+  </data>
+  <data name="StorageContract" xml:space="preserve">
+    <value>Contract binding: {0}</value>
+  </data>
+  <data name="StorageName" xml:space="preserve">
+    <value>Name: {0}</value>
+  </data>
+  <data name="StorageSemantics" xml:space="preserve">
+    <value>Semantics: {0}</value>
+  </data>
+  <data name="StorageValue" xml:space="preserve">
+    <value>Value: {0}</value>
+  </data>
+  <data name="UnprintableValue" xml:space="preserve">
+    <value>&lt;VALUE CANNOT BE DISPLAYED&gt;</value>
   </data>
 </root>

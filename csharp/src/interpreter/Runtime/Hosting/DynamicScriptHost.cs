@@ -4,6 +4,8 @@ using Microsoft.Scripting.Hosting;
 
 namespace DynamicScript.Runtime.Hosting
 {
+    using ScriptDebugger = Debugging.ScriptDebugger;
+    using InteractiveDebugger = Debugging.Interaction.InteractiveDebugger;
     using ComVisibleAttribute = System.Runtime.InteropServices.ComVisibleAttribute;
 
     /// <summary>
@@ -21,6 +23,7 @@ namespace DynamicScript.Runtime.Hosting
         [LoaderOptimization(LoaderOptimization.SingleDomain)]
         private static int Main(string[] args)
         {
+            ScriptDebugger.Debugging += InteractiveDebugger.Hook;
             return Execute(new CommandLineParser(Console.Out, Console.In), args);
         }
     }

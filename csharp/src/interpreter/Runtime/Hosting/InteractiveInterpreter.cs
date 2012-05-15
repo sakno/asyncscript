@@ -67,7 +67,7 @@ namespace DynamicScript.Runtime.Hosting
 
             private void SetArguments(string args)
             {
-                Arguments = args.Split(new[] { Lexeme.Comma }, StringSplitOptions.RemoveEmptyEntries);
+                Arguments = args.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
             }
 
             private void ExecuteMacro(string command)

@@ -21,7 +21,6 @@ namespace DynamicScript.Runtime
     using Encoding = System.Text.Encoding;
     using CompiledScriptAttribute = Hosting.CompiledScriptAttribute;
     using ScriptDebugger = Debugging.ScriptDebugger;
-    using InteractiveDebugger = Debugging.Interaction.InteractiveDebugger;
     using DScriptModule = Environment.ObjectModel.ScriptModule;
     using ScriptObject = Environment.ScriptObject;
     using CodeStatement = System.CodeDom.CodeStatement;
@@ -461,8 +460,6 @@ namespace DynamicScript.Runtime
                 //register debugger for the current app domain
                 if (emitDebugInfo)
                 {
-                    //attach default interactive debugger if it is necessary
-                    if (!ScriptDebugger.HookOverriden) ScriptDebugger.Debugging += InteractiveDebugger.Hook;
                     ScriptDebugger.Attach(new ScriptDebugger(), module);
                 }
                 //Execute script

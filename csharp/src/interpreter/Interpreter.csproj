@@ -70,446 +70,52 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="Microsoft.Scripting, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>DlrIntegration\Microsoft.Scripting.dll</HintPath>
+    <Reference Include="Microsoft.Scripting">
+      <HintPath>..\DynamicScript.Core\DlrIntegration\Microsoft.Scripting.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Scripting.Debugging">
+      <HintPath>..\DynamicScript.Core\DlrIntegration\Microsoft.Scripting.Debugging.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Compiler\ArgRef.cs" />
-    <Compile Include="Compiler\Ast\IFunctionContractInfo.cs" />
-    <Compile Include="Compiler\Ast\IWellKnownContractInfo.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeArgumentReferenceExpression.cs" />
-    <Compile Include="Compiler\Ast\IScriptExpressionStatement.cs" />
-    <Compile Include="Compiler\Ast\ISyntaxTreeNode.cs" />
-    <Compile Include="Compiler\Ast\ILiteralExpression.cs" />
-    <Compile Include="Compiler\Ast\InterpretationContext.cs" />
-    <Compile Include="Compiler\Ast\IStaticContractBinding.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeActionContractExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeActionImplementationExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeArrayExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeAsyncExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeBaseObjectExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeCallableContractExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeArrayContractExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeBooleanContractExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeBooleanExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeBreakLexicalScopeStatement.cs" />
-    <Compile Include="Compiler\Ast\ICodeFlowControlInstruction.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeComplexExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeConditionalExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeContextExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeContinueStatement.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeCurrentActionExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeCurrentQuoteExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeDimensionalContractExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeEmptyStatement.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeExpandExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeExpressionCollection.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeExpressionContractExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeFaultStatement.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeFinSetContractExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeFlowControlStatement.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeForEachLoopExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeForkExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeForLoopExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeIndexerExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeLoopExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeLoopWithVariableExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeMacroCommand.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeMetaContractExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeObjectExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodePlaceholderExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeQuoteExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeRealContractExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeReturnStatement.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeSelectionExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeStatement.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeStatementCollection.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeStatementContractExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeStringContractExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeThisExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeTryElseFinallyExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeVoidExpression.cs" />
-    <Compile Include="Compiler\Ast\ISlot.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeWhileLoopExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeGlobalObjectExpression.cs" />
-    <Compile Include="Compiler\Ast\Translation\LinqExpressions\CodeOptimizer.cs" />
-    <Compile Include="Compiler\Ast\Translation\LinqExpressions\GenericScope.cs" />
-    <Compile Include="Compiler\Ast\Translation\LinqExpressions\InliningSourceAttribute.cs" />
-    <Compile Include="Compiler\Ast\Translation\LinqExpressions\SynchronizerScope.cs" />
-    <Compile Include="Compiler\Ast\Translation\LinqExpressions\ICodeOptimizer.cs" />
-    <Compile Include="Compiler\Macro.cs" />
-    <Compile Include="Compiler\PlaceholderID.cs" />
-    <Compile Include="MonoRuntime.cs" />
-    <Compile Include="ParallelAggregator.cs" />
-    <Compile Include="ParallelSearch.cs" />
-    <Compile Include="ParallelSwitch.cs" />
-    <Compile Include="ParallelSwitchCase.cs" />
-    <Compile Include="Runtime\ContractHandle.cs" />
-    <Compile Include="Runtime\ContractRelationshipHandle.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptFunctionSignatureExpression.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptFunctionSignatureExpressionFactory.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptFunctionExpression.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptFunctionExpressionFactory.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptComplexExpression.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptComplexExpressionFactory.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptExpandExpression.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptExpandExpressionFactory.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptForExpression.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptForEachExpressionFactory.cs" />
-    <Compile Include="Compiler\Ast\SlotDeclarationStyle.cs" />
-    <Compile Include="Compiler\Ast\Translation\IFunctionLexicalScope.cs" />
-    <Compile Include="Compiler\Ast\Translation\IComplexExpressionScope.cs" />
-    <Compile Include="Compiler\Ast\Translation\ILexicalScope.cs" />
-    <Compile Include="Compiler\Ast\Translation\IQuoteLexicalScope.cs" />
-    <Compile Include="Compiler\Ast\Translation\LinqExpressions\FunctionScope.cs" />
-    <Compile Include="Compiler\Ast\Translation\LinqExpressions\CatchScope.cs" />
-    <Compile Include="Compiler\Ast\Translation\LinqExpressions\ContextScope.cs" />
-    <Compile Include="Compiler\Ast\Translation\LinqExpressions\ExpressionBuilder.cs" />
-    <Compile Include="Compiler\Ast\Translation\LinqExpressions\FinallyScope.cs" />
-    <Compile Include="Compiler\Ast\Translation\LinqExpressions\ForkScope.cs" />
-    <Compile Include="Compiler\Ast\Translation\LinqExpressions\ForLoopScope.cs" />
-    <Compile Include="Compiler\Ast\Translation\LinqExpressions\LoopScope.cs" />
-    <Compile Include="Compiler\Ast\Translation\LinqExpressions\ObjectScope.cs" />
-    <Compile Include="Compiler\Ast\Translation\LinqExpressions\SourceCodeInfo.cs" />
-    <Compile Include="Compiler\Ast\Translation\LinqExpressions\RoutineScope.cs" />
-    <Compile Include="Compiler\Ast\Translation\ErrorMode.cs" />
-    <Compile Include="Compiler\Ast\Translation\LinqExpressions\GlobalScope.cs" />
-    <Compile Include="Compiler\Ast\Translation\LinqExpressions\LexicalScope.cs" />
-    <Compile Include="Compiler\Ast\Translation\LinqExpressions\LinqExpressionTranslator.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeBuiltInContractExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeRealExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeIntegerExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeIntegerContractExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeInvocationExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeStringExpression.cs" />
-    <Compile Include="Compiler\Ast\Translation\LinqExpressions\TryScope.cs" />
-    <Compile Include="Compiler\Ast\Translation\LinqExpressions\WhileLoopScope.cs" />
-    <Compile Include="Compiler\Ast\Translation\SourceCodeInfo.cs" />
-    <Compile Include="Compiler\Ast\Translation\Translator.cs" />
-    <Compile Include="CharEnumerator.cs" />
-    <Compile Include="Compiler\CodeAnalysisException.cs" />
-    <Compile Include="Compiler\Comment.cs" />
-    <Compile Include="Compiler\ScriptDebugInfo.cs" />
-    <Compile Include="InterpreterHostAttribute.cs" />
-    <Compile Include="IRestorable.cs" />
-    <Compile Include="LinqHelpers.cs" />
-    <Compile Include="Runtime\AssemblyVersionResource.cs" />
-    <Compile Include="Runtime\ContractRelationshipType.cs" />
-    <Compile Include="Runtime\Conversion.cs" />
-    <Compile Include="Runtime\Debugging\BreakPointReachedEventArgs.cs" />
-    <Compile Include="Runtime\Debugging\CallStackFrame.cs" />
-    <Compile Include="Runtime\Debugging\DebuggingStartedEventArgs.cs" />
-    <Compile Include="Runtime\Debugging\IDebuggerBrowsable.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="Runtime\Debugging\Interaction\DbgCommandStub.cs" />
     <Compile Include="Runtime\Debugging\Interaction\DbgContinueCommand.cs" />
     <Compile Include="Runtime\Debugging\Interaction\DbgExecCommand.cs" />
     <Compile Include="Runtime\Debugging\Interaction\DbgHelpCommand.cs" />
     <Compile Include="Runtime\Debugging\Interaction\DbgLeaveCommand.cs" />
     <Compile Include="Runtime\Debugging\Interaction\DebuggerStrings.Designer.cs">
+      <DependentUpon>DebuggerStrings.resx</DependentUpon>
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
-      <DependentUpon>DebuggerStrings.resx</DependentUpon>
     </Compile>
     <Compile Include="Runtime\Debugging\Interaction\IDebuggerCommand.cs" />
     <Compile Include="Runtime\Debugging\Interaction\InteractiveDebugger.cs" />
-    <Compile Include="Runtime\Debugging\IScriptDebuggerSession.cs" />
-    <Compile Include="Runtime\Debugging\RuntimeSlotWatcher.cs" />
-    <Compile Include="Runtime\Debugging\ScriptDebugger.cs" />
-    <Compile Include="Runtime\Debugging\ScriptModuleLoadedEventArgs.cs" />
-    <Compile Include="Runtime\Debugging\ScriptObjectConverter.cs" />
-    <Compile Include="Runtime\Debugging\TransparentActionAttribute.cs" />
-    <Compile Include="Runtime\Environment\FunctionArgumentsMistmatchException.cs" />
-    <Compile Include="Runtime\Debugging\CallStack.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\FlowControlStatementArgumentsFunction.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ISystemCodeElementFactory.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptArrayExpression.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptArrayExpressionFactory.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptConditionalExpression.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptConditionalExpressionFactory.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptEmptyStatementFactory.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptEmptyStatement.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptForEachExpression.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptForExpressionFactory.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptForkExpression.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptExpressionStatement.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptExpressionStatementFactory.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptForkExpressionFactory.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptIndexerExpression.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptIndexerExpressionFactory.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptInvocationExpression.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptInvocationExpressionFactory.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptLoopExpressionFactory.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptLoopVariableStatement.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptLoopVariableStatementFactory.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptObjectExpression.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptObjectExpressionFactory.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptPlaceholderExpression.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptPlaceholderExpressionFactory.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptSehExpression.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptSehExpressionFactory.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptSelectionExpression.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptSelectionExpressionFactory.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptSyntaxTreeVisitor.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptThisExpression.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptThisExpressionFactory.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptVariableDeclaration.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptVariableDeclarationFactory.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptWhileExpression.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptWhileExpressionFactory.cs" />
-    <Compile Include="Runtime\Environment\IBinaryOperatorInvoker.cs" />
-    <Compile Include="Runtime\Environment\IScriptIterable.cs" />
-    <Compile Include="Runtime\Environment\IScriptProperty.cs" />
-    <Compile Include="Runtime\Environment\IUnaryOperatorInvoker.cs" />
-    <Compile Include="Runtime\Environment\NamedRuntimeSlot.cs" />
-    <Compile Include="Runtime\Environment\ScriptProperty.cs" />
-    <Compile Include="Runtime\Environment\ObjectModel\StandardLibrary.cs" />
-    <Compile Include="Runtime\Environment\WellKnownContractInfoAttribute.cs" />
-    <Compile Include="Runtime\Environment\ScriptFunctionInvoker.cs" />
-    <Compile Include="Runtime\Environment\Threading\DefaultQueue.cs" />
-    <Compile Include="Runtime\Environment\Threading\IScriptLazyFunction.cs" />
-    <Compile Include="Runtime\Environment\Threading\IScriptWorkItemQueue.cs" />
-    <Compile Include="Runtime\Environment\Threading\LazyQueue.cs" />
-    <Compile Include="Runtime\Environment\Threading\ParallelQueue.cs" />
-    <Compile Include="Runtime\Environment\Threading\ScriptAwaitContract.cs" />
-    <Compile Include="Runtime\Environment\Threading\ScriptNativeQueue.cs" />
-    <Compile Include="Runtime\Environment\Threading\ScriptWorkItem.cs" />
-    <Compile Include="Runtime\Environment\Threading\ScriptWorkItemQueue.cs" />
-    <Compile Include="Runtime\Environment\Threading\ThreadManager.cs" />
-    <Compile Include="Runtime\Environment\Threading\WorkItemStartParameters.cs" />
-    <Compile Include="Runtime\IStaticRuntimeSlot.cs" />
-    <Compile Include="Runtime\IWorkItemQueue.cs" />
-    <Compile Include="Runtime\Environment\Threading\ScriptFuture.cs" />
-    <Compile Include="Runtime\IWorkItemState.cs" />
-    <Compile Include="Runtime\Hosting\InteractiveInterpreter.cs" />
-    <Compile Include="Runtime\Hosting\InteractiveModeStrings.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>InteractiveModeStrings.resx</DependentUpon>
-    </Compile>
-    <Compile Include="Runtime\IScriptConvertible.cs" />
-    <Compile Include="Runtime\Environment\ScriptAction.cs" />
-    <Compile Include="Runtime\Environment\ScriptFunctionBase.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptArrayContractExpression.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptArrayContractExpressionFactory.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptAsyncExpression.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptAsyncExpressionFactory.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptBinaryExpression.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptBinaryExpressionFactory.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptBreakStatement.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptBreakStatementFactory.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptCodeElementFactory.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptConstantExpression.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptConstantExpressionFactory.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptContinueStatement.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptContinueStatementFactory.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptCurrentActionExpression.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptCurrentActionExpressionFactory.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptExpression.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptFaultStatement.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptFaultStatementFactory.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptNameTokenExpressionFactory.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptNameTokenExpression.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptReturnStatement.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptReturnStatementFactory.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptStatement.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptStatementDefinition.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptUnaryExpression.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptUnaryExpressionFactory.cs" />
-    <Compile Include="Runtime\Environment\IAggregator.cs" />
-    <Compile Include="Runtime\Environment\IScriptMetaContract.cs" />
-    <Compile Include="Runtime\Environment\ObjectBehavior.cs" />
-    <Compile Include="Runtime\Environment\RuntimeConverters.cs" />
-    <Compile Include="Runtime\Environment\ScriptFunc.cs" />
-    <Compile Include="Runtime\IScriptCodeElement.cs" />
-    <Compile Include="Runtime\Environment\Threading\ThreadingLibrary.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptExpressionDefinition.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptExpressionFactory.cs" />
-    <Compile Include="Runtime\Environment\ExpressionTrees\ScriptStatementFactory.cs" />
-    <Compile Include="Runtime\Environment\Threading\ScriptLazyFunction.cs" />
-    <Compile Include="Runtime\Environment\CompositeObjectConverter.cs" />
-    <Compile Include="Runtime\Environment\ContractConverter.cs" />
-    <Compile Include="Runtime\Environment\ContractExpectedException.cs" />
-    <Compile Include="Runtime\Debugging\RTDebuggerObject.cs" />
-    <Compile Include="Runtime\Environment\ObjectModel\CallStackManager.cs" />
-    <Compile Include="Runtime\Environment\ObjectModel\Regex.cs" />
-    <Compile Include="Runtime\Environment\ObjectModel\DebuggerModule.cs" />
-    <Compile Include="Runtime\Environment\ObjectModel\VM.cs" />
-    <Compile Include="Runtime\Environment\IntegerPool.cs" />
-    <Compile Include="Runtime\Environment\InternPool.cs" />
-    <Compile Include="Runtime\Environment\ObjectModel\ScriptCompositeObjectMetadata.cs" />
-    <Compile Include="Runtime\Environment\ObjectModel\ScriptWeakReference.cs" />
-    <Compile Include="Runtime\Environment\RealPool.cs" />
-    <Compile Include="Runtime\Environment\StringPool.cs" />
-    <Compile Include="Runtime\Environment\Threading\ScriptAcceptorContract.cs" />
-    <Compile Include="Runtime\Environment\Threading\AwaitFunctionContract.cs" />
-    <Compile Include="Runtime\Environment\UnaryOperatorInvoker.cs" />
-    <Compile Include="Runtime\IScriptArray.cs" />
-    <Compile Include="Runtime\IScriptArrayContract.cs" />
-    <Compile Include="Runtime\Environment\IdentifierExpectedException.cs" />
-    <Compile Include="Runtime\Environment\IIndexerAccessor.cs" />
-    <Compile Include="Runtime\Environment\InvocationContext.cs" />
-    <Compile Include="Runtime\Environment\IRuntimeConverter.cs" />
-    <Compile Include="Runtime\IScriptCodeElementFactory.cs" />
-    <Compile Include="Runtime\IScriptCompositeObject.cs" />
-    <Compile Include="Runtime\Environment\IScriptComplementation.cs" />
-    <Compile Include="Runtime\Environment\IScriptObjectCollection.cs" />
-    <Compile Include="Runtime\Environment\IScriptUnionContract.cs" />
-    <Compile Include="Runtime\Environment\ObjectModel\Math.cs" />
-    <Compile Include="Runtime\Environment\ScriptDimensionalContract.cs" />
-    <Compile Include="Runtime\Environment\ScriptFinSetContract.cs" />
-    <Compile Include="Runtime\Environment\ScriptIterable.cs" />
-    <Compile Include="Runtime\Environment\ScriptSetContract.cs" />
-    <Compile Include="Runtime\Environment\ScriptTuple.cs" />
-    <Compile Include="Runtime\Environment\ScriptPrimitiveObjectConverter.cs" />
     <Compile Include="Runtime\Hosting\BrowseScriptMetadataCommand.cs" />
-    <Compile Include="Runtime\IScriptCartesianProduct.cs" />
-    <Compile Include="Runtime\IScriptContainer.cs" />
-    <Compile Include="Runtime\IScriptExpression.cs" />
-    <Compile Include="Runtime\IScriptExpressionContract.cs" />
-    <Compile Include="Runtime\IScriptSet.cs" />
-    <Compile Include="Runtime\Environment\IScriptSetFactory.cs" />
-    <Compile Include="Runtime\IScriptStatement.cs" />
-    <Compile Include="Runtime\IScriptStatementContract.cs" />
-    <Compile Include="Runtime\Monitoring.cs" />
-    <Compile Include="Runtime\InternPool.cs" />
-    <Compile Include="Runtime\Environment\ScriptList.cs" />
-    <Compile Include="Runtime\Environment\ScriptFault.cs" />
-    <Compile Include="Runtime\Environment\ScriptWrappedException.cs" />
+    <Compile Include="Runtime\Hosting\CommandLineParser.cs" />
     <Compile Include="Runtime\Hosting\CompileToAssemblyCommand.cs" />
+    <Compile Include="Runtime\Hosting\DynamicScriptHost.cs" />
     <Compile Include="Runtime\Hosting\ExecuteScriptCommand.cs" />
     <Compile Include="Runtime\Hosting\ICommand.cs" />
-    <Compile Include="Runtime\Hosting\CommandLineParser.cs" />
-    <Compile Include="Runtime\Hosting\CompiledScriptAttribute.cs" />
-    <Compile Include="Runtime\Hosting\InvalidCommand.cs" />
-    <Compile Include="Runtime\Hosting\ScriptConsoleInput.cs" />
-    <Compile Include="Runtime\Hosting\ScriptConsoleOutput.cs" />
-    <Compile Include="Runtime\Hosting\ScriptErrorOutput.cs" />
-    <Compile Include="Runtime\Hosting\DynamicScriptInput.cs" />
-    <Compile Include="Runtime\Hosting\DynamicScriptIO.cs" />
-    <Compile Include="Runtime\Hosting\DynamicScriptOutput.cs" />
-    <Compile Include="Runtime\Hosting\ShowHelpCommand.cs" />
-    <Compile Include="Runtime\IScriptCookie.cs" />
-    <Compile Include="Runtime\IRuntimeSlot.cs" />
-    <Compile Include="Runtime\IScriptAction.cs" />
-    <Compile Include="Runtime\IScriptCache.cs" />
-    <Compile Include="Runtime\IScriptContract.cs" />
-    <Compile Include="Runtime\IScriptObject.cs" />
-    <Compile Include="Runtime\Environment\IScriptProxyObject.cs" />
-    <Compile Include="Runtime\Environment\ScriptRuntimeFunction.cs" />
-    <Compile Include="Runtime\Environment\ScriptFunctionContract.cs" />
-    <Compile Include="Runtime\Environment\ScriptArrayContract.cs" />
-    <Compile Include="Runtime\Environment\BinaryOperatorInvoker.cs" />
-    <Compile Include="Runtime\Environment\ScriptBoolean.cs" />
-    <Compile Include="Runtime\Environment\ScriptBooleanContract.cs" />
-    <Compile Include="Runtime\Environment\ScriptCallableContract.cs" />
-    <Compile Include="Runtime\Environment\ScriptArray.cs" />
-    <Compile Include="Runtime\Environment\ScriptObjectComparer.cs" />
-    <Compile Include="Runtime\Environment\ScriptGetItemFunction.cs" />
-    <Compile Include="Runtime\Environment\ScriptIndexerContract.cs" />
-    <Compile Include="Runtime\Environment\ScriptIterator.cs" />
-    <Compile Include="Runtime\Environment\ScriptIteratorFunction.cs" />
-    <Compile Include="Runtime\Environment\ScriptReal.cs" />
-    <Compile Include="Runtime\Environment\ScriptRealContract.cs" />
-    <Compile Include="Runtime\Environment\ScriptCompositeContract.cs" />
-    <Compile Include="Runtime\Environment\ScriptCompositeObject.cs" />
-    <Compile Include="Compiler\RealLiteral.cs" />
-    <Compile Include="Runtime\Hosting\DynamicScriptHost.cs" />
-    <Compile Include="DynamicScriptException.cs" />
-    <Compile Include="Compiler\StringLiteral.cs" />
-    <Compile Include="InterpreterErrorCode.cs" />
-    <Compile Include="ErrorMessages.Designer.cs">
+    <Compile Include="Runtime\Hosting\InteractiveInterpreter.cs" />
+    <Compile Include="Runtime\Hosting\InteractiveModeStrings.Designer.cs">
+      <DependentUpon>InteractiveModeStrings.resx</DependentUpon>
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
-      <DependentUpon>ErrorMessages.resx</DependentUpon>
     </Compile>
-    <Compile Include="Compiler\InterpreterServices.cs" />
-    <Compile Include="Compiler\Keyword.cs" />
-    <Compile Include="Compiler\Lexeme.cs" />
-    <Compile Include="Compiler\LexemeAnalyzer.cs" />
-    <Compile Include="Extensions.cs" />
-    <Compile Include="ParallelEqualityComparer.cs" />
-    <Compile Include="Runtime\ContractRelationshipMatrix.cs" />
-    <Compile Include="Runtime\RuntimeBehavior.cs" />
-    <Compile Include="ScriptTypeCode.cs" />
-    <Compile Include="StringEqualityComparer.cs" />
-    <Compile Include="Compiler\Literal.cs" />
-    <Compile Include="Compiler\NameToken.cs" />
-    <Compile Include="Compiler\IntegerLiteral.cs" />
-    <Compile Include="Compiler\Operator.cs" />
-    <Compile Include="Compiler\Punctuation.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeBinaryOperatorExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeBinaryOperatorType.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeCommentStatement.cs" />
-    <Compile Include="Compiler\Ast\Parser.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeExpressionStatement.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeSuperContractExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodePrimitiveExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeUnaryOperatorExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeUnaryOperatorType.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeVariableReference.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeVariableDeclaration.cs" />
-    <Compile Include="Compiler\Ast\SyntaxAnalyzer.cs" />
-    <Compile Include="Compiler\Token.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Runtime\Environment\ConstantCannotBeChangedException.cs" />
-    <Compile Include="Runtime\Environment\ContractBindingException.cs" />
-    <Compile Include="Runtime\Environment\ConversionNotSupportedException.cs" />
-    <Compile Include="Runtime\InterpreterState.cs" />
-    <Compile Include="Runtime\IScriptRuntimeBinder.cs" />
-    <Compile Include="Runtime\Environment\ScriptConstant.cs" />
-    <Compile Include="Runtime\Environment\ScriptInteger.cs" />
-    <Compile Include="Runtime\Environment\ScriptIntegerContract.cs" />
-    <Compile Include="Runtime\Environment\ScriptConvertibleObject.cs" />
-    <Compile Include="Runtime\Environment\ScriptPrimitiveObject.cs" />
-    <Compile Include="Runtime\Environment\ScriptSuperContract.cs" />
-    <Compile Include="Runtime\Environment\ScriptBuiltinContract.cs" />
-    <Compile Include="Runtime\Environment\ScriptContract.cs" />
-    <Compile Include="Runtime\Environment\ScriptMetaContract.cs" />
-    <Compile Include="Runtime\Environment\ObjectModel\ScriptModule.cs" />
-    <Compile Include="Runtime\Environment\ScriptObject.cs" />
-    <Compile Include="Runtime\Environment\ScriptObjectWithStaticBinding.cs" />
-    <Compile Include="Runtime\Environment\ScriptSetItemFunction.cs" />
-    <Compile Include="Runtime\Environment\ScriptString.cs" />
-    <Compile Include="Runtime\Environment\ScriptStringContract.cs" />
-    <Compile Include="Runtime\Environment\ScriptVariable.cs" />
-    <Compile Include="Runtime\Environment\ScriptVoid.cs" />
-    <Compile Include="Runtime\Environment\RuntimeConverter.cs" />
-    <Compile Include="Runtime\Environment\RuntimeException.cs" />
-    <Compile Include="Runtime\Environment\RuntimeHelpers.cs" />
-    <Compile Include="Runtime\Environment\RuntimeSlot.cs" />
-    <Compile Include="Runtime\DynamicScriptProxy.cs" />
-    <Compile Include="Runtime\RuntimeSlotAttributes.cs" />
-    <Compile Include="Runtime\Environment\ScriptSlotMetadata.cs" />
-    <Compile Include="Runtime\ScriptInvoker.cs" />
-    <Compile Include="Runtime\Environment\SlotNotFoundException.cs" />
-    <Compile Include="Runtime\Environment\UnassignedSlotReadingException.cs" />
-    <Compile Include="Runtime\Environment\UnsupportedOperationException.cs" />
-    <Compile Include="Runtime\Environment\VoidException.cs" />
-    <Compile Include="Runtime\ScriptCompilerOptions.cs" />
-    <Compile Include="Runtime\DynamicScriptInterpreter.cs" />
-    <Compile Include="Runtime\Serialization\DynamicScriptSerializer.cs" />
-    <Compile Include="WeakAction.cs" />
-    <Compile Include="WeakDelegate.cs" />
-    <Compile Include="WeakFunc.cs" />
-    <EmbeddedResource Include="ErrorMessages.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>ErrorMessages.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
+    <Compile Include="Runtime\Hosting\InvalidCommand.cs" />
+    <Compile Include="Runtime\Hosting\ShowHelpCommand.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-      <SubType>Designer</SubType>
     </EmbeddedResource>
-    <Compile Include="Properties\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Resources.resx</DependentUpon>
-      <DesignTime>True</DesignTime>
-    </Compile>
     <EmbeddedResource Include="Runtime\Debugging\Interaction\DebuggerStrings.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>DebuggerStrings.Designer.cs</LastGenOutput>
@@ -520,11 +126,14 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="DlrIntegration\Microsoft.Scripting.Debugging.dll" />
-    <Content Include="DlrIntegration\Microsoft.Scripting.dll" />
     <Content Include="main.ico" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\DynamicScript.Core\DynamicScript.Core.csproj">
+      <Project>{EA5633B7-F364-456F-BEC0-FEBCC04F78B5}</Project>
+      <Name>DynamicScript.Core</Name>
+    </ProjectReference>
+  </ItemGroup>
   <ItemGroup>
     <None Include="app.manifest">
       <SubType>Designer</SubType>

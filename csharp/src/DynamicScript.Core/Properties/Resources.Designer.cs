@@ -61,71 +61,110 @@ namespace DynamicScript.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Assembly information expected..
+        ///   Looks up a localized string similar to {0} ({1} locals).
         /// </summary>
-        internal static string AssemblyInfoExpected {
+        internal static string CallStackFrameFormat {
             get {
-                return ResourceManager.GetString("AssemblyInfoExpected", resourceCulture);
+                return ResourceManager.GetString("CallStackFrameFormat", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Assembly file name (without path) expected..
+        ///   Looks up a localized string similar to The user-defined class cannot implement IScriptObject interface..
         /// </summary>
-        internal static string AssemblyNameExpected {
+        internal static string CustomClassCannotImplementScriptInterface {
             get {
-                return ResourceManager.GetString("AssemblyNameExpected", resourceCulture);
+                return ResourceManager.GetString("CustomClassCannotImplementScriptInterface", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Assembly version expected..
+        ///   Looks up a localized string similar to &lt;Entry Point&gt;.
         /// </summary>
-        internal static string AssemblyVersionExpected {
+        internal static string EntryPointFrameID {
             get {
-                return ResourceManager.GetString("AssemblyVersionExpected", resourceCulture);
+                return ResourceManager.GetString("EntryPointFrameID", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Argument &apos;{0}&apos; is not recognized..
+        ///   Looks up a localized string similar to Assembly &apos;{0}&apos; doesn&apos;t contain script implementation..
         /// </summary>
-        internal static string InvalidCommandLineArg {
+        internal static string InvalidScriptAssembly {
             get {
-                return ResourceManager.GetString("InvalidCommandLineArg", resourceCulture);
+                return ResourceManager.GetString("InvalidScriptAssembly", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Invalid command line parameters..
+        ///   Looks up a localized string similar to Monitoring is not enabled..
         /// </summary>
-        internal static string InvalidCommandParameters {
+        internal static string MonitoringNotEnabled {
             get {
-                return ResourceManager.GetString("InvalidCommandParameters", resourceCulture);
+                return ResourceManager.GetString("MonitoringNotEnabled", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The path to the script file expected..
+        ///   Looks up a localized string similar to Runtime slot is not available at the current call stack frame. Possible, it is out of lexical scope..
         /// </summary>
-        internal static string ScriptFileNameExpected {
+        internal static string SlotIsOutOfScope {
             get {
-                return ResourceManager.GetString("ScriptFileNameExpected", resourceCulture);
+                return ResourceManager.GetString("SlotIsOutOfScope", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to dsi [-c &lt;script-file&gt; [-ver &lt;assembly-version&gt;] [-name &lt;assembly-name&gt;] [-debug] [-exec] [-x86|-x64|-il] [-i386|-ia64|-amd64] [-info &lt;assembly-info&gt;]|[-e &lt;script-file&gt; [-debug] &lt;arguments&gt; ]|[-b &lt;script-file&gt; &lt;output-file&gt;] [-i]
-        ///
-        ///-c &lt;script-file&gt; Compiles DynamicScript source to assembly;
-        ///-ver &lt;assembly-version&gt; Version of the compiled assembly(major.minor.build.revision);
-        ///-name &lt;assembly-name&gt; Name of the output file;
-        ///-debug Emits debug information into the compiled assembly and generates symbol document;
-        /// [rest of string was truncated]&quot;;.
+        ///   Looks up a localized string similar to An asynchronous object is in running state..
         /// </summary>
-        internal static string Usage {
+        internal static string StillRunning {
             get {
-                return ResourceManager.GetString("Usage", resourceCulture);
+                return ResourceManager.GetString("StillRunning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Contract binding: {0}.
+        /// </summary>
+        internal static string StorageContract {
+            get {
+                return ResourceManager.GetString("StorageContract", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Name: {0}.
+        /// </summary>
+        internal static string StorageName {
+            get {
+                return ResourceManager.GetString("StorageName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Semantics: {0}.
+        /// </summary>
+        internal static string StorageSemantics {
+            get {
+                return ResourceManager.GetString("StorageSemantics", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Value: {0}.
+        /// </summary>
+        internal static string StorageValue {
+            get {
+                return ResourceManager.GetString("StorageValue", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;VALUE CANNOT BE DISPLAYED&gt;.
+        /// </summary>
+        internal static string UnprintableValue {
+            get {
+                return ResourceManager.GetString("UnprintableValue", resourceCulture);
             }
         }
     }

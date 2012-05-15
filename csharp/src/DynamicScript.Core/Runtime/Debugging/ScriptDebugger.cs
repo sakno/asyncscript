@@ -16,7 +16,7 @@ namespace DynamicScript.Runtime.Debugging
     [ComVisible(false)]
     public sealed class ScriptDebugger: IScriptDebuggerSession, IDisposable
     {
-        private const string DebuggerSlotData = "QSCRIPT_DBG";
+        private const string DebuggerSlotData = "DSCRIPT_DBG";
         private static EventHandler<DebuggingStartedEventArgs> m_debugHook;
 
         /// <summary>
