@@ -222,6 +222,11 @@ namespace DynamicScript.Compiler
         /// </summary>
         public const char Backquote = '`';
 
+        /// <summary>
+        /// Represents tilda.
+        /// </summary>
+        public const char Tilda = '~';
+
         private int? m_hash;
 
         /// <summary>

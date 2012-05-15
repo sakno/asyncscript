@@ -510,16 +510,7 @@ namespace DynamicScript.Compiler.Ast.Translation
                 return Translate((ScriptCodeEmptyStatement)stmt, context, out debugInfo);
             else if (stmt is ScriptCodeCommentStatement)
                 return Translate((ScriptCodeCommentStatement)stmt, context, out debugInfo);
-            else if (stmt is ScriptCodeMacroCommand)
-                return Translate((ScriptCodeMacroCommand)stmt, context, out debugInfo);
             else return null;
-        }
-
-        private TCompileUnit Translate(ScriptCodeMacroCommand command, TranslationContext context, out bool debugInfo)
-        {
-            debugInfo = false;
-            Macro(command.Command, context);
-            return null;
         }
 
         /// <summary>

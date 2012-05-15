@@ -112,8 +112,6 @@ namespace DynamicScript.Compiler
             switch (characters.Current)
             {
                 #region Punctuation
-                case Lexeme.Diez:
-                    return ParseMacro(characters, ref column, out hasNext);
                 case Lexeme.Dog:
                     return ParseDog(characters, ref column, out hasNext);
                 case Lexeme.Comma:
@@ -189,6 +187,11 @@ namespace DynamicScript.Compiler
                     return null;
                 case Lexeme.CarriageReturn: return null;
                 #endregion
+                #region Tokens
+                case Lexeme.Line:
+                case Lexeme.Diez:
+                case Lexeme.Tilda: return ParseToken(characters, ref column, out hasNext);
+                #endregion
                 default:
                     if (char.IsDigit(characters.Current))
                         return ParseNumber(characters, ref column, line, out hasNext);
@@ -197,7 +200,7 @@ namespace DynamicScript.Compiler
                         column++;
                         return null;
                     }
-                    else if (char.IsLetter(characters.Current) || characters.Current == Lexeme.Line || characters.Current == Lexeme.Backquote)
+                    else if (char.IsLetter(characters.Current))
                         return ParseToken(characters, ref column, out hasNext);
                     break;
             }
@@ -718,24 +721,6 @@ namespace DynamicScript.Compiler
                     comment.Append(characters.Current);
                 }
             return Comment.CreateSingleLineComment(comment.ToString());
-        }
-
-        private static Macro ParseMacro(IEnumerator<char> characters, ref int column, out bool hasNext)
-        {
-            var command = new StringBuilder();
-            while (hasNext = characters.MoveNext())
-                if (characters.Current == Lexeme.NewLine)
-                {
-                    column++;
-                    hasNext = false;
-                    break;
-                }
-                else
-                {
-                    column++;
-                    command.Append(characters.Current);
-                }
-            return new Macro(command);
         }
 
         private static Token ParseNumber(IEnumerator<char> characters, ref int column, int line, out bool hasNext)

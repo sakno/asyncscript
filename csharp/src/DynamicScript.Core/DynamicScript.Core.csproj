@@ -104,7 +104,6 @@
     <Compile Include="Compiler\Ast\ScriptCodeInvocationExpression.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeLoopExpression.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeLoopWithVariableExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeMacroCommand.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeMetaContractExpression.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeObjectExpression.cs" />
     <Compile Include="Compiler\Ast\ScriptCodePlaceholderExpression.cs" />
@@ -166,7 +165,6 @@
     <Compile Include="Compiler\Lexeme.cs" />
     <Compile Include="Compiler\LexemeAnalyzer.cs" />
     <Compile Include="Compiler\Literal.cs" />
-    <Compile Include="Compiler\Macro.cs" />
     <Compile Include="Compiler\NameToken.cs" />
     <Compile Include="Compiler\Operator.cs" />
     <Compile Include="Compiler\PlaceholderID.cs" />

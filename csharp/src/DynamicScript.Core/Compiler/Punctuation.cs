@@ -178,11 +178,6 @@ namespace DynamicScript.Compiler
         public static readonly Punctuation DoubleDog = new Punctuation(Lexeme.Dog, Lexeme.Dog);
 
         /// <summary>
-        /// Represents diez characted that is reserved for macro commands.
-        /// </summary>
-        public static readonly new Punctuation Diez = new Punctuation(Lexeme.Diez);
-
-        /// <summary>
         /// Gets punctuation character.
         /// </summary>
         public new char Value
@@ -229,7 +224,6 @@ namespace DynamicScript.Compiler
                 case HashCodes.lxmArrow: return Arrow;
                 case HashCodes.lxmDog: return Dog;
                 case HashCodes.lxmDoubleDog: return DoubleDog;
-                case HashCodes.lxmDiez: return Diez;
                 default: return null;
             }
         }

@@ -600,8 +600,6 @@ namespace DynamicScript.Compiler.Ast
                         result = new ScriptCodeExpressionStatement(ParseExpression(lexer, Punctuation.Semicolon));
                     else if (lexer.Current.Value is Comment)
                         result = new ScriptCodeCommentStatement((Comment)lexer.Current.Value);
-                    else if (lexer.Current.Value is Macro)
-                        result = new ScriptCodeMacroCommand((Macro)lexer.Current.Value);
                     else throw CodeAnalysisException.InvalidExpressionTerm(lexer.Current);
                     break;
             }
