@@ -43,9 +43,6 @@
     <AssemblyOriginatorKeyFile>public.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.Scripting">
-      <HintPath>..\interpreter\DlrIntegration\Microsoft.Scripting.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>

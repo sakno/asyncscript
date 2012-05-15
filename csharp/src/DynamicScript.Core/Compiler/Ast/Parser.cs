@@ -206,7 +206,7 @@ namespace DynamicScript.Compiler.Ast
                     case Keyword.HashCodes.lxmCallable:
                         if (expression == null) expression = ScriptCodeCallableContractExpression.Instance;
                         break;
-                    case Punctuation.HashCodes.lxmDoubleLeftBrace:
+                    case Punctuation.HashCodes.lxmBackquote:
                         if (expression == null) expression = ScriptCodeObjectExpression.Parse(lexer, terminator);
                         break;
                     case Keyword.HashCodes.lxmGlobal:

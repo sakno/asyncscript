@@ -49,9 +49,9 @@
     <None Include="public.snk" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\interpreter\Interpreter.csproj">
-      <Project>{CB2658EE-09CE-461D-AA07-B5D9102C6977}</Project>
-      <Name>Interpreter</Name>
+    <ProjectReference Include="..\..\DynamicScript.Core\DynamicScript.Core.csproj">
+      <Project>{EA5633B7-F364-456F-BEC0-FEBCC04F78B5}</Project>
+      <Name>DynamicScript.Core</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

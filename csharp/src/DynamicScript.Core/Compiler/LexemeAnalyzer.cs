@@ -117,12 +117,17 @@ namespace DynamicScript.Compiler
                 case Lexeme.Comma:
                     column++;
                     return Punctuation.Comma;
+                case Lexeme.Backquote:
+                    column++;
+                    return Punctuation.Backquote;
                 case Lexeme.Colon:
                     return ParseColon(characters, ref column, out hasNext);
                 case Lexeme.LeftBrace:
-                    return ParseLeftBrace(characters, ref column, out hasNext);
+                    column++;
+                    return Punctuation.LeftBrace;
                 case Lexeme.RightBrace:
-                    return ParseRightBrace(characters, ref column, out hasNext);
+                    column++;
+                    return Punctuation.RightBrace;
                 case Lexeme.SQuote: //parse Unicode string
                     return ParseStringLiteral(characters, ref column, ref line, out hasNext);
                 case Lexeme.CQuote:
@@ -272,33 +277,6 @@ namespace DynamicScript.Compiler
                 }
             }
             return new StringLiteral(literal.ToString());
-        }
-
-        private static Punctuation ParseLeftBrace(IEnumerator<char> characters, ref int column, out bool hasNext)
-        {
-            column++;
-            switch ((hasNext = characters.MoveNext()) && characters.Current == Lexeme.LeftBrace)
-            {
-                case true:
-                    hasNext = false;
-                    column++;
-                    return Punctuation.DoubleLeftBrace;
-                default: return Punctuation.LeftBrace;
-            }
-        }
-
-        private static Punctuation ParseRightBrace(IEnumerator<char> characters, ref int column, out bool hasNext)
-        {
-            column++;
-            hasNext = false;
-            switch ((hasNext = characters.MoveNext()) && characters.Current == Lexeme.RightBrace)
-            {
-                case true:
-                    hasNext = false;
-                    column++;
-                    return Punctuation.DoubleRightBrace;
-                default: return Punctuation.RightBrace;
-            }
         }
 
         private static PlaceholderID ParsePlaceholder(IEnumerator<char> characters, ref int column, out bool hasNext)

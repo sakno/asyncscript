@@ -23,6 +23,7 @@ namespace DynamicScript.Runtime.Hosting
         [LoaderOptimization(LoaderOptimization.SingleDomain)]
         private static int Main(string[] args)
         {
+            Compiler.Punctuation.HashCodes.PrintPunctuationValues(Console.Out);
             ScriptDebugger.Debugging += InteractiveDebugger.Hook;
             return Execute(new CommandLineParser(Console.Out, Console.In), args);
         }

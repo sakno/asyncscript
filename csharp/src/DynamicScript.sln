@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual C# Express 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Interpreter", "interpreter\Interpreter.csproj", "{CB2658EE-09CE-461D-AA07-B5D9102C6977}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "host", "host\host.csproj", "{7F5CE48D-112F-4D65-94A4-8743FF418FB3}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cmd", "modules\Cmd\Cmd.csproj", "{07D7B1C1-A5B4-4C66-AFC3-8E4C52D6C381}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DynamicScript.Core", "DynamicScript.Core\DynamicScript.Core.csproj", "{EA5633B7-F364-456F-BEC0-FEBCC04F78B5}"
@@ -25,12 +23,6 @@ Global
 		{CB2658EE-09CE-461D-AA07-B5D9102C6977}.Release|Any CPU.Build.0 = Release|Any CPU
 		{CB2658EE-09CE-461D-AA07-B5D9102C6977}.Release|x86.ActiveCfg = Release|x86
 		{CB2658EE-09CE-461D-AA07-B5D9102C6977}.Release|x86.Build.0 = Release|x86
-		{7F5CE48D-112F-4D65-94A4-8743FF418FB3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7F5CE48D-112F-4D65-94A4-8743FF418FB3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7F5CE48D-112F-4D65-94A4-8743FF418FB3}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{7F5CE48D-112F-4D65-94A4-8743FF418FB3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7F5CE48D-112F-4D65-94A4-8743FF418FB3}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7F5CE48D-112F-4D65-94A4-8743FF418FB3}.Release|x86.ActiveCfg = Release|Any CPU
 		{07D7B1C1-A5B4-4C66-AFC3-8E4C52D6C381}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{07D7B1C1-A5B4-4C66-AFC3-8E4C52D6C381}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{07D7B1C1-A5B4-4C66-AFC3-8E4C52D6C381}.Debug|x86.ActiveCfg = Debug|Any CPU

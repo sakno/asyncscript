@@ -303,7 +303,7 @@ namespace DynamicScript.Compiler.Ast
                 var slotName = default(string);
                 var initExpr = default(ScriptCodeExpression);
                 var contractBinding = default(ScriptCodeExpression);
-                if (!Parser.ParseSlot(lexer, out slotName, out initExpr, out contractBinding, Punctuation.DoubleRightBrace, Punctuation.Comma))
+                if (!Parser.ParseSlot(lexer, out slotName, out initExpr, out contractBinding, Punctuation.Backquote, Punctuation.Comma))
                     return expr;
                 if (expr.Contains(slotName))
                     throw CodeAnalysisException.DuplicateIdentifier(slotName, lexer.Current.Key);
@@ -394,7 +394,7 @@ namespace DynamicScript.Compiler.Ast
         /// <returns></returns>
         public override string ToString()
         {
-            return string.Concat(Punctuation.DoubleLeftBrace, string.Join(Punctuation.Comma, m_slots.Values), Punctuation.DoubleRightBrace);
+            return string.Concat(Punctuation.Backquote, string.Join(Punctuation.Comma, m_slots.Values), Punctuation.Backquote);
         }
     }
 }

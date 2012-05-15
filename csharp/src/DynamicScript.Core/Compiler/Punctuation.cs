@@ -53,21 +53,17 @@ namespace DynamicScript.Compiler
             /// </summary>
             public const int lxmComma = 44;
             /// <summary>
+            /// Hash code of ` token
+            /// </summary>
+            public const int lxmBackquote = 96;
+            /// <summary>
             /// Hash code of { token
             /// </summary>
             public const int lxmLeftBrace = 123;
             /// <summary>
-            /// Hash code of {{ token
-            /// </summary>
-            public const int lxmDoubleLeftBrace = 122016;
-            /// <summary>
             /// Hash code of } token
             /// </summary>
             public const int lxmRightBrace = 125;
-            /// <summary>
-            /// Hash code of }} token
-            /// </summary>
-            public const int lxmDoubleRightBrace = 124000;
             /// <summary>
             /// Hash code of ( token
             /// </summary>
@@ -96,10 +92,6 @@ namespace DynamicScript.Compiler
             /// Hash code of @@ token
             /// </summary>
             public const int lxmDoubleDog = 63488;
-            /// <summary>
-            /// Hash code of # token
-            /// </summary>
-            public const int lxmDiez = 35;
         }
         #endregion
         private Punctuation(params char[] pun)
@@ -128,19 +120,9 @@ namespace DynamicScript.Compiler
         public static readonly new Punctuation LeftBrace = new Punctuation(Lexeme.LeftBrace);
 
         /// <summary>
-        /// Represents double left brace.
-        /// </summary>
-        public static readonly Punctuation DoubleLeftBrace = new Punctuation(Lexeme.LeftBrace, Lexeme.LeftBrace);
-
-        /// <summary>
         /// Represents right brace.
         /// </summary>
         public static readonly new Punctuation RightBrace = new Punctuation(Lexeme.RightBrace);
-
-        /// <summary>
-        /// Represents double right brace.
-        /// </summary>
-        public static readonly Punctuation DoubleRightBrace = new Punctuation(Lexeme.RightBrace, Lexeme.RightBrace);
 
         /// <summary>
         /// Represents left bracket.
@@ -176,6 +158,11 @@ namespace DynamicScript.Compiler
         /// Represents @@ punctuation that is used to defined quoted action.
         /// </summary>
         public static readonly Punctuation DoubleDog = new Punctuation(Lexeme.Dog, Lexeme.Dog);
+
+        /// <summary>
+        /// Represents ` punctuation that is used to define complex object.
+        /// </summary>
+        public static readonly Punctuation Backquote = new Punctuation(Lexeme.Backquote);
 
         /// <summary>
         /// Gets punctuation character.
@@ -214,9 +201,7 @@ namespace DynamicScript.Compiler
                 case HashCodes.lxmSemicolon: return Semicolon;
                 case HashCodes.lxmComma: return Comma;
                 case HashCodes.lxmLeftBrace: return LeftBrace;
-                case HashCodes.lxmDoubleLeftBrace: return DoubleLeftBrace;
                 case HashCodes.lxmRightBrace: return RightBrace;
-                case HashCodes.lxmDoubleRightBrace: return DoubleRightBrace;
                 case HashCodes.lxmLeftBracket: return LeftBracket;
                 case HashCodes.lxmRightBracket: return RightBracket;
                 case HashCodes.lxmLeftSquareBracket: return LeftSquareBracket;
@@ -224,6 +209,7 @@ namespace DynamicScript.Compiler
                 case HashCodes.lxmArrow: return Arrow;
                 case HashCodes.lxmDog: return Dog;
                 case HashCodes.lxmDoubleDog: return DoubleDog;
+                case HashCodes.lxmBackquote: return Backquote;
                 default: return null;
             }
         }
