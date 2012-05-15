@@ -752,7 +752,7 @@ namespace DynamicScript.Compiler
             {
                 column++;
                 builder.Append(characters.Current);
-            } while ((hasNext = characters.MoveNext()) && (char.IsLetterOrDigit(characters.Current) || characters.Current == Lexeme.Line || characters.Current == Lexeme.Backquote));
+            } while ((hasNext = characters.MoveNext()) && (char.IsLetterOrDigit(characters.Current) || characters.Current == Lexeme.Line || characters.Current == Lexeme.Tilda || characters.Current == Lexeme.Diez));
             var lexeme = builder.ToString();
             return Extensions.Coalesce<Token>(Keyword.FromString(lexeme), new NameToken(lexeme));
         }
