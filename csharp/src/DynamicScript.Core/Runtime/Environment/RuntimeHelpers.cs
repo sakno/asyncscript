@@ -466,7 +466,7 @@ namespace DynamicScript.Runtime.Environment
         public static IScriptObject Coalesce(this IScriptObject left, IScriptObject right, InterpreterState state)
         {
             if (left == null) throw new ArgumentNullException("left");
-            return left.BinaryOperation(ScriptCodeBinaryOperatorType.Coalesce, right, state);
+            return ScriptObject.IsVoid(left) ? right : left;
         }
 
         /// <summary>
@@ -598,30 +598,6 @@ namespace DynamicScript.Runtime.Environment
         public static IScriptObject PartOf(this IScriptObject left, IScriptObject right)
         {
             return PartOf(left, right, InterpreterState.Current);
-        }
-
-        /// <summary>
-        /// Determines whether the current object is void.
-        /// </summary>
-        /// <param name="operand">The operand of the unary operation. Cannot be <see langword="null"/>.</param>
-        /// <param name="state">Internal interpreter state.</param>
-        /// <returns>The result of the void check operation.</returns>
-        /// <exception cref="System.ArgumentNullException"><paramref name="operand"/> is <see langword="null"/>.</exception>
-        public static IScriptObject IsVoid(this IScriptObject operand, InterpreterState state)
-        {
-            if (operand == null) throw new ArgumentNullException("operand");
-            return operand.UnaryOperation(QCodeUnaryOperatorType.VoidCheck, state);
-        }
-
-        /// <summary>
-        /// Determines whether the current object is void.
-        /// </summary>
-        /// <param name="operand">The operand of the unary operation.</param>
-        /// <returns>The result of the void check operation.</returns>
-        /// <exception cref="System.ArgumentNullException"><paramref name="operand"/> is <see langword="null"/>.</exception>
-        public static IScriptObject IsVoid(this IScriptObject operand)
-        {
-            return IsVoid(operand, InterpreterState.Current);
         }
 
         /// <summary>
@@ -904,7 +880,7 @@ namespace DynamicScript.Runtime.Environment
                 case ExpressionType.Or:
                     return left.BinaryOperation(ScriptCodeBinaryOperatorType.Union, right, state);
                 case ExpressionType.Coalesce:
-                    return left.BinaryOperation(ScriptCodeBinaryOperatorType.Coalesce, right, state);
+                    return ScriptObject.IsVoid(left) ? right : left;
                 case ExpressionType.Divide:
                     return left.BinaryOperation(ScriptCodeBinaryOperatorType.Divide, right, state);
                 case ExpressionType.Equal:

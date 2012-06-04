@@ -9,14 +9,14 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
     [ComVisible(false)]
     [Serializable]
-    sealed class ScriptFunctionExpression : ScriptExpression<ScriptCodeActionImplementationExpression, IScriptFunction>
+    sealed class ScriptFunctionExpression : ScriptExpression<ScriptCodeFunctionExpression, IScriptFunction>
     {
         private ScriptFunctionExpression(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
         }
 
-        public ScriptFunctionExpression(ScriptCodeActionImplementationExpression expression)
+        public ScriptFunctionExpression(ScriptCodeFunctionExpression expression)
             : base(expression, ScriptFunctionExpressionFactory.Instance)
         {
         }
@@ -26,12 +26,12 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             return DynamicScriptInterpreter.Run(Expression, state) as IScriptFunction;
         }
 
-        public static ScriptCodeActionImplementationExpression CreateExpression(IScriptCodeElement<ScriptCodeActionContractExpression> signature, IScriptCodeElement<ScriptCodeExpression> body)
+        public static ScriptCodeFunctionExpression CreateExpression(IScriptCodeElement<ScriptCodeActionContractExpression> signature, IScriptCodeElement<ScriptCodeExpression> body)
         {
-            return signature != null && body != null ? new ScriptCodeActionImplementationExpression(signature.CodeObject, new ScriptCodeExpressionStatement(body.CodeObject)) : null;
+            return signature != null && body != null ? new ScriptCodeFunctionExpression(signature.CodeObject, new ScriptCodeExpressionStatement(body.CodeObject)) : null;
         }
 
-        protected override ScriptCodeActionImplementationExpression CreateExpression(IList<IScriptObject> args, InterpreterState state)
+        protected override ScriptCodeFunctionExpression CreateExpression(IList<IScriptObject> args, InterpreterState state)
         {
             return args.Count == 2 ? CreateExpression(args[0] as IScriptCodeElement<ScriptCodeActionContractExpression>, args[1] as IScriptCodeElement<ScriptCodeExpression>) : null;
         }

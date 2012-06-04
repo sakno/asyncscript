@@ -226,23 +226,6 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         }
 
         [ComVisible(false)]
-        private sealed class EnumFunction : ScriptFunc<IScriptArray>
-        {
-            public const string Name = "enum";
-            private const string FirstParamName = "elements";
-
-            public EnumFunction()
-                : base(FirstParamName, ScriptDimensionalContract.Instance, ScriptFinSetContract.Instance)
-            {
-            }
-
-            protected override IScriptObject Invoke(IScriptArray array, InterpreterState state)
-            {
-                return Enum(array, state);
-            }
-        }
-
-        [ComVisible(false)]
         private sealed class NewObjFunction : ScriptFunc<ScriptString, IScriptContract>
         {
             public const string Name = "newobj";
@@ -548,7 +531,6 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
                 Add<WorkingDirectorySlot>(WorkingDirectorySlot.Name);
                 AddConstant("ver", new ScriptInteger(DynamicScriptInterpreter.Version.Major));
                 AddConstant<ReadOnlyFunction>(ReadOnlyFunction.Name);
-                AddConstant<EnumFunction>(EnumFunction.Name);
                 AddConstant<SplitFunction>(SplitFunction.Name);
                 AddConstant<EvalFunction>(EvalFunction.Name);
                 AddConstant<SetDataFunction>(SetDataFunction.Name);
@@ -717,19 +699,6 @@ namespace DynamicScript.Runtime.Environment.ObjectModel
         {
             if (name == null || IsVoid(contract)) throw new ArgumentException();
             return new ScriptCompositeObject(new[] { Variable(name, contract) });
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="array"></param>
-        /// <param name="state"></param>
-        /// <returns></returns>
-        [InliningSource]
-        public static IScriptObject Enum(IScriptArray array, InterpreterState state)
-        {
-            if (array == null) throw new ContractBindingException(new ScriptArrayContract(), state);
-            return array.GetContractBinding().Rank == 1 || array.GetLength(0) > 1L ? new ScriptSetContract(array) : null;
         }
 
         private static IScriptObject Parse(ScriptString value, IScriptContract type, CultureInfo formatProvider)

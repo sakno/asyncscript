@@ -18,7 +18,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
     [ComVisible(false)]
     sealed class FunctionScope : RoutineScope, IFunctionLexicalScope
     {
-        public readonly ScriptCodeActionImplementationExpression Expression;
+        public readonly ScriptCodeFunctionExpression Expression;
         private readonly IScopeVariables m_parameters;
 
         /// <summary>
@@ -27,7 +27,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <param name="parent">The parent lexical scope. Cannot be <see langword="null"/>.</param>
         /// <param name="expression">An expression associated with this scope. Cannot be <see langword="null"/>.</param>
         /// <exception cref="System.ArgumentNullException"><paramref name="parent"/> or <paramref name="expression"/> is <see langword="null"/>.</exception>
-        private FunctionScope(LexicalScope parent, ScriptCodeActionImplementationExpression expression)
+        private FunctionScope(LexicalScope parent, ScriptCodeFunctionExpression expression)
             : base(parent)
         {
             if (parent == null) throw new ArgumentNullException("parent");
@@ -36,7 +36,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             m_parameters = CreateVariableTable();
         }
 
-        public static FunctionScope Create(LexicalScope parent, ScriptCodeActionImplementationExpression expression)
+        public static FunctionScope Create(LexicalScope parent, ScriptCodeFunctionExpression expression)
         {
             return new FunctionScope(parent, expression);
         }
@@ -77,7 +77,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             get { return InvocationContext.ThisRef; }
         }
 
-        ScriptCodeActionImplementationExpression IComplexExpressionScope<ScriptCodeActionImplementationExpression>.Expression
+        ScriptCodeFunctionExpression IComplexExpressionScope<ScriptCodeFunctionExpression>.Expression
         {
             get { return Expression; }
         }

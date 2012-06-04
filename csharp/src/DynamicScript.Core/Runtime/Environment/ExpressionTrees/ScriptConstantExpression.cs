@@ -48,8 +48,6 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
                 return ScriptStatementFactory.Instance;
             else if (Expression is ScriptCodeDimensionalContractExpression)
                 return ScriptDimensionalContract.Instance;
-            else if (Expression is ScriptCodeFinSetContractExpression)
-                return ScriptFinSetContract.Instance;
             else if (Expression is ScriptCodeMetaContractExpression)
                 return ScriptMetaContract.Instance;
             else if (Expression is ScriptCodeSuperContractExpression)

@@ -38,7 +38,7 @@ namespace DynamicScript.Compiler.Ast
         }
 
 
-        internal ScriptCodeQuoteExpression(ScriptCodeActionImplementationExpression actionImplementation)
+        internal ScriptCodeQuoteExpression(ScriptCodeFunctionExpression actionImplementation)
             : this(actionImplementation.Signature, actionImplementation.Body)
         {
         }
@@ -91,7 +91,7 @@ namespace DynamicScript.Compiler.Ast
         /// <returns></returns>
         protected override Expression Restore()
         {
-            return ScriptCodeActionImplementationExpression.Restore(Signature, Body);
+            return ScriptCodeFunctionExpression.Restore(Signature, Body);
         }
 
         internal override void Verify()

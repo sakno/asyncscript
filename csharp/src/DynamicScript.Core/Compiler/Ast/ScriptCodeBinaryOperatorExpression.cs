@@ -117,8 +117,6 @@ namespace DynamicScript.Compiler.Ast
                     return OperatorToken.Exclusion;
                 case ScriptCodeBinaryOperatorType.MetadataDiscovery:
                     return OperatorToken.MetadataDiscovery;
-                case ScriptCodeBinaryOperatorType.Coalesce:
-                    return OperatorToken.Coalesce;
                 case ScriptCodeBinaryOperatorType.InstanceOf:
                     return Keyword.Is;
                 case ScriptCodeBinaryOperatorType.PartOf:

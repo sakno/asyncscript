@@ -163,11 +163,11 @@ namespace DynamicScript.Compiler
             /// <summary>
             /// Hash code of ? operator
             /// </summary>
-            public const int lxmVoidCheck = 63;
+            public const int lxmConditional = 63;
             /// <summary>
             /// Hash code of ?? operator
             /// </summary>
-            public const int lxmCoalesce = 62496;
+            public const int lxmSelector = 62496;
             /// <summary>
             /// Hash code of $ operator
             /// </summary>
@@ -184,6 +184,16 @@ namespace DynamicScript.Compiler
             /// Hash code of ?= operator
             /// </summary>
             public const int lxmInitializer = 62494;
+
+            /// <summary>
+            /// Hash code of => operator
+            /// </summary>
+            public const int lxmAcceptor = 60513;
+
+            /// <summary>
+            /// Hash code of !! operator
+            /// </summary>
+            public const int lxmSEH = 32736;
         }
         #endregion
         private Operator(string @operator)
@@ -255,6 +265,11 @@ namespace DynamicScript.Compiler
         /// Represents ! operator.
         /// </summary>
         public static readonly Operator Negotiation = new Operator(Lexeme.Exclamation);
+
+        /// <summary>
+        /// Represents !! operator.
+        /// </summary>
+        public static readonly Operator SEH = new Operator(Lexeme.Exclamation, Lexeme.Exclamation);
 
         /// <summary>
         /// Represents &amp; operator.
@@ -354,12 +369,12 @@ namespace DynamicScript.Compiler
         /// <summary>
         /// Represents ? operator.
         /// </summary>
-        public static readonly Operator VoidCheck = new Operator(Lexeme.Question);
+        public static readonly Operator Conditional = new Operator(Lexeme.Question);
 
         /// <summary>
         /// Represents ?? operator.
         /// </summary>
-        public static readonly Operator Coalesce = new Operator(Lexeme.Question, Lexeme.Question);
+        public static readonly Operator Selector = new Operator(Lexeme.Question, Lexeme.Question);
 
         /// <summary>
         /// Represents $ operator.
@@ -380,6 +395,11 @@ namespace DynamicScript.Compiler
         /// Represents ?= operator.
         /// </summary>
         public static readonly Operator Initializer = new Operator(Lexeme.Question, Lexeme.Assignment);
+
+        /// <summary>
+        /// Represents >= operator.
+        /// </summary>
+        public static readonly Operator Acceptor = new Operator(Lexeme.Assignment, Lexeme.GreaterThan);
 
         internal static Operator FromHashCode(int hashCode)
         {
@@ -417,12 +437,14 @@ namespace DynamicScript.Compiler
                 case HashCodes.lxmOrElse: return OrElse;
                 case HashCodes.lxmAndAlso: return AndAlso;
                 case HashCodes.lxmMetadataDiscovery: return MetadataDiscovery;
-                case HashCodes.lxmVoidCheck: return VoidCheck;
-                case HashCodes.lxmCoalesce: return Coalesce;
+                case HashCodes.lxmConditional: return Conditional;
+                case HashCodes.lxmSelector: return Selector;
                 case HashCodes.lxmTypeOf: return TypeOf;
                 case HashCodes.lxmModulo: return Modulo;
                 case HashCodes.lxmModuloAssign: return ModuloAssign;
                 case HashCodes.lxmInitializer: return Initializer;
+                case HashCodes.lxmAcceptor: return Acceptor;
+                case HashCodes.lxmSEH: return SEH;
                 default: return null;
             }
         }

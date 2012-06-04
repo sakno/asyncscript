@@ -192,16 +192,6 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         }
 
         /// <summary>
-        /// Constructs a new runtime representation of the void check expression.
-        /// </summary>
-        /// <param name="state">Internal interpreter state.</param>
-        /// <returns>A new runtime representation of the void check  expression.</returns>
-        protected sealed override IScriptObject IsVoid(InterpreterState state)
-        {
-            return UnaryOperation(ScriptCodeUnaryOperatorType.VoidCheck);
-        }
-
-        /// <summary>
         /// Constructs a new runtime representation of the postfixed square expression.
         /// </summary>
         /// <param name="state">Internal interpreter state.</param>
@@ -282,8 +272,6 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
                 return ScriptCodeSuperContractExpression.Instance;
             else if (value is ScriptMetaContract)
                 return ScriptCodeMetaContractExpression.Instance;
-            else if (value is ScriptFinSetContract)
-                return ScriptCodeFinSetContractExpression.Instance;
             else if (value is ScriptExpressionFactory)
                 return ScriptCodeExpressionContractExpression.Instance;
             else if (value is ScriptStatementFactory)
@@ -313,17 +301,6 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         protected sealed override IScriptObject And(IScriptObject right, InterpreterState state)
         {
             return BinaryOperation(ScriptCodeBinaryOperatorType.Intersection, right, state);
-        }
-
-        /// <summary>
-        /// Constructs a new runtime representation of the binary coalescing operator.
-        /// </summary>
-        /// <param name="right">Right operand.</param>
-        /// <param name="state">Internal interpreter state.</param>
-        /// <returns>A new runtime representation of the binary coalescing operator.</returns>
-        protected sealed override IScriptObject Coalesce(IScriptObject right, InterpreterState state)
-        {
-            return BinaryOperation(ScriptCodeBinaryOperatorType.Coalesce, right, state);
         }
 
         /// <summary>

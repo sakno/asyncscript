@@ -11,7 +11,7 @@ namespace DynamicScript.Compiler.Ast
     /// </summary>
     [Serializable]
     [ComVisible(false)]
-    public sealed class ScriptCodeSuperContractExpression: ScriptCodeBuiltInContractExpression, IStaticContractBinding<ScriptCodeMetaContractExpression>
+    public sealed class ScriptCodeSuperContractExpression: ScriptCodeBuiltInContractExpression, IWellKnownContractInfo, IStaticContractBinding<ScriptCodeMetaContractExpression>
     {
         private ScriptCodeSuperContractExpression()
             : base(Keyword.Object)

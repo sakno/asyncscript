@@ -818,8 +818,6 @@ namespace DynamicScript.Runtime.Environment
                     return Or(right, state);
                 case ScriptCodeBinaryOperatorType.OrElse:
                     return Convert(RuntimeHelpers.IsTrue(this, state) || RuntimeHelpers.IsTrue(right, state));
-                case ScriptCodeBinaryOperatorType.Coalesce:
-                    return Coalesce(right, state);
                 case ScriptCodeBinaryOperatorType.Divide:
                     return Divide(right, state);
                 case ScriptCodeBinaryOperatorType.InstanceOf:
@@ -1188,17 +1186,6 @@ namespace DynamicScript.Runtime.Environment
         }
 
         /// <summary>
-        /// Returns coalesce result.
-        /// </summary>
-        /// <param name="right">The right operand of coalescing operation.</param>
-        /// <param name="state">Internal interpreter state.</param>
-        /// <returns>The operation result.</returns>
-        protected virtual IScriptObject Coalesce(IScriptObject right, InterpreterState state)
-        {
-            return this;
-        }
-
-        /// <summary>
         /// Computes logical or, bitwise or, or union.
         /// </summary>
         /// <param name="right">The right operand.</param>
@@ -1512,8 +1499,6 @@ namespace DynamicScript.Runtime.Environment
                     return PostSquareAssign(state);
                 case ScriptCodeUnaryOperatorType.TypeOf:
                     return GetContractBinding();
-                case ScriptCodeUnaryOperatorType.VoidCheck:
-                    return IsVoid(state);
                 case ScriptCodeUnaryOperatorType.Intern:
                     return Intern(state);
                 default:
@@ -1524,16 +1509,6 @@ namespace DynamicScript.Runtime.Environment
         internal virtual ScriptObject Intern(InterpreterState state)
         {
             return this;
-        }
-
-        /// <summary>
-        /// Determines whether the current object is void.
-        /// </summary>
-        /// <param name="state">Internal interpreter state.</param>
-        /// <returns></returns>
-        protected virtual IScriptObject IsVoid(InterpreterState state)
-        {
-            return Convert<bool>(IsVoid(this));
         }
 
         /// <summary>

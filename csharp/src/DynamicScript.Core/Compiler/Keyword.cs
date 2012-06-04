@@ -95,10 +95,6 @@ namespace DynamicScript.Compiler
             /// </summary>
             public const int lxmVoid = -1012413868;
             /// <summary>
-            /// Hash code of 'if' keyword
-            /// </summary>
-            public const int lxmIf = 104157;
-            /// <summary>
             /// Hash code of 'true' keyword
             /// </summary>
             public const int lxmTrue = 1339027022;
@@ -135,10 +131,6 @@ namespace DynamicScript.Compiler
             /// </summary>
             public const int lxmGroupBy = -951552554;
             /// <summary>
-            /// Hash code of 'then' keyword
-            /// </summary>
-            public const int lxmThen = 1329190365;
-            /// <summary>
             /// Hash code of 'else' keyword
             /// </summary>
             public const int lxmElse = -380599623;
@@ -170,10 +162,6 @@ namespace DynamicScript.Compiler
             /// Hash code of 'fork' keyword
             /// </summary>
             public const int lxmFork = 595587906;
-            /// <summary>
-            /// Hash code of 'finset' keyword
-            /// </summary>
-            public const int lxmFinSet = -17501257;
             /// <summary>
             /// Hash code of 'dimensional' keyword
             /// </summary>
@@ -283,11 +271,6 @@ namespace DynamicScript.Compiler
         public static readonly Keyword Void = new Keyword("void");
         
         /// <summary>
-        /// Represents conditional expression.
-        /// </summary>
-        public static readonly Keyword If = new Keyword("if");
-
-        /// <summary>
         /// Represents 'true' constant expression.
         /// </summary>
         public static readonly Keyword True = new Keyword("true");
@@ -333,11 +316,6 @@ namespace DynamicScript.Compiler
         public static readonly Keyword GroupBy = new Keyword("groupby");
 
         /// <summary>
-        /// Represents if-then branch.
-        /// </summary>
-        public static readonly Keyword Then = new Keyword("then");
-
-        /// <summary>
         /// Represents if-else branch.
         /// </summary>
         public static readonly Keyword Else = new Keyword("else");
@@ -376,11 +354,6 @@ namespace DynamicScript.Compiler
         /// Represents asynchronous task producer.
         /// </summary>
         public static readonly Keyword Fork = new Keyword("fork");
-
-        /// <summary>
-        /// Represents finset contract.
-        /// </summary>
-        public static readonly Keyword FinSet = new Keyword("finset");
 
         /// <summary>
         /// Represents dimensional contract.
@@ -436,7 +409,6 @@ namespace DynamicScript.Compiler
                 case HashCodes.lxmContinue: return Continue;
                 case HashCodes.lxmReturn: return Return;
                 case HashCodes.lxmVoid: return Void;
-                case HashCodes.lxmIf: return If;
                 case HashCodes.lxmTrue: return True;
                 case HashCodes.lxmFalse: return False;
                 case HashCodes.lxmBoolean: return Boolean;
@@ -446,7 +418,6 @@ namespace DynamicScript.Compiler
                 case HashCodes.lxmDo: return Do;
                 case HashCodes.lxmWhile: return While;
                 case HashCodes.lxmGroupBy: return GroupBy;
-                case HashCodes.lxmThen: return Then;
                 case HashCodes.lxmElse: return Else;
                 case HashCodes.lxmFault: return Fault;
                 case HashCodes.lxmTry: return Try;
@@ -455,7 +426,6 @@ namespace DynamicScript.Compiler
                 case HashCodes.lxmUnchecked: return Unchecked;
                 case HashCodes.lxmCaseof: return Caseof;
                 case HashCodes.lxmFork: return Fork;
-                case HashCodes.lxmFinSet: return FinSet;
                 case HashCodes.lxmDimensional: return Dimensional;
                 case HashCodes.lxmAsync: return Async;
                 case HashCodes.lxmExpr: return Expr;

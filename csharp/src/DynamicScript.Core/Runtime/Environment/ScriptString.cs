@@ -718,7 +718,6 @@ namespace DynamicScript.Runtime.Environment
                 default:
                     switch (@operator)
                     {
-                        case ScriptCodeBinaryOperatorType.Coalesce: return lvalue;
                         case ScriptCodeBinaryOperatorType.GreaterThan:
                         case ScriptCodeBinaryOperatorType.GreaterThanOrEqual:
                         case ScriptCodeBinaryOperatorType.LessThan:

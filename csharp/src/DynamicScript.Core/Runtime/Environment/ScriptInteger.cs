@@ -648,17 +648,6 @@ namespace DynamicScript.Runtime.Environment
         }
 
         /// <summary>
-        /// Returns coalesce result.
-        /// </summary>
-        /// <param name="right">The right operand of coalescing operation.</param>
-        /// <param name="state">Internal interpreter state.</param>
-        /// <returns>The operation result.</returns>
-        protected override IScriptObject Coalesce(IScriptObject right, InterpreterState state)
-        {
-            return Value != 0 ? this : right;
-        }
-
-        /// <summary>
         /// Applies bitwise complement or logicat negation.
         /// </summary>
         /// <param name="state">Internal interpreter state.</param>
@@ -1241,8 +1230,6 @@ namespace DynamicScript.Runtime.Environment
                 default:
                     switch (@operator)
                     {
-                        case ScriptCodeBinaryOperatorType.Coalesce:
-                            return Expression.Condition(Expression.NotEqual(UnderlyingValue(lvalue), LinqHelpers.Constant(0L)), lvalue, rvalue);
                         case ScriptCodeBinaryOperatorType.GreaterThan:
                         case ScriptCodeBinaryOperatorType.GreaterThanOrEqual:
                         case ScriptCodeBinaryOperatorType.LessThan:

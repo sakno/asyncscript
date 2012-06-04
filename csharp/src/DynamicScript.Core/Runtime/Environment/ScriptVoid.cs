@@ -44,27 +44,6 @@ namespace DynamicScript.Runtime.Environment
         }
 
         /// <summary>
-        /// Returns coalesce result.
-        /// </summary>
-        /// <param name="right">The right operand of coalescing operation.</param>
-        /// <param name="state">Internal interpreter state.</param>
-        /// <returns>The operation result.</returns>
-        protected override IScriptObject Coalesce(IScriptObject right, InterpreterState state)
-        {
-            return right;
-        }
-
-        /// <summary>
-        /// Determines whether the current object is void.
-        /// </summary>
-        /// <param name="state"></param>
-        /// <returns></returns>
-        protected override IScriptObject IsVoid(InterpreterState state)
-        {
-            return ScriptBoolean.True;
-        }
-
-        /// <summary>
         /// Returns string representation of the void object.
         /// </summary>
         /// <returns></returns>

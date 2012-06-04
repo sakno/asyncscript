@@ -136,7 +136,7 @@ namespace DynamicScript.Runtime.Environment
         /// <returns></returns>
         public override IScriptContract GetContractBinding()
         {
-            return ScriptFinSetContract.Instance;
+            return ScriptMetaContract.Instance;
         }
 
         /// <summary>

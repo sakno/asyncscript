@@ -758,8 +758,8 @@ namespace DynamicScript.Compiler.Ast.Translation
                 return Translate((ScriptCodeBinaryOperatorExpression)expression, context);
             else if (expression is ScriptCodeObjectExpression)
                 return Translate((ScriptCodeObjectExpression)expression, context);
-            else if (expression is ScriptCodeActionImplementationExpression)
-                return Translate((ScriptCodeActionImplementationExpression)expression, context);
+            else if (expression is ScriptCodeFunctionExpression)
+                return Translate((ScriptCodeFunctionExpression)expression, context);
             else if (expression is ScriptCodeActionContractExpression)
                 return Translate((ScriptCodeActionContractExpression)expression, context);
             else if (expression is ScriptCodeArrayContractExpression)
@@ -818,8 +818,6 @@ namespace DynamicScript.Compiler.Ast.Translation
                 return Translate((ScriptCodeThisExpression)expression, context);
             else if (expression is ScriptCodeArrayExpression)
                 return Translate((ScriptCodeArrayExpression)expression, context);
-            else if (expression is ScriptCodeFinSetContractExpression)
-                return Translate((ScriptCodeFinSetContractExpression)expression, context);
             else if (expression is ScriptCodeDimensionalContractExpression)
                 return Translate((ScriptCodeDimensionalContractExpression)expression, context);
             else if (expression is ScriptCodeAsyncExpression)
@@ -936,14 +934,6 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="context">Translation context.</param>
         /// <returns>Translated DIMENSIONAL contract.</returns>
         protected abstract TCompileUnit Translate(ScriptCodeDimensionalContractExpression contract, TranslationContext context);
-
-        /// <summary>
-        /// Translates FINSET contract.
-        /// </summary>
-        /// <param name="contract">The contract to translate.</param>
-        /// <param name="context">Translation context.</param>
-        /// <returns>Translated FINSET contract.</returns>
-        protected abstract TCompileUnit Translate(ScriptCodeFinSetContractExpression contract, TranslationContext context);
 
         /// <summary>
         /// Translates array expression.
@@ -1175,7 +1165,7 @@ namespace DynamicScript.Compiler.Ast.Translation
         /// <param name="expression">The expression that describes action object to be translated.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>Translated action implementation expression.</returns>
-        protected abstract TCompileUnit Translate(ScriptCodeActionImplementationExpression expression, TranslationContext context);
+        protected abstract TCompileUnit Translate(ScriptCodeFunctionExpression expression, TranslationContext context);
 
         /// <summary>
         /// Translates inline object expression.
@@ -1284,7 +1274,7 @@ namespace DynamicScript.Compiler.Ast.Translation
             }
             else if (expression is ScriptCodeInvocationExpression && ((ScriptCodeInvocationExpression)expression).Target is ScriptCodeCurrentActionExpression)
             {
-                var scope = context.LookupRaw<IComplexExpressionScope<ScriptCodeActionImplementationExpression>>();
+                var scope = context.LookupRaw<IComplexExpressionScope<ScriptCodeFunctionExpression>>();
                 return scope != null ? GetType(scope.Expression.Signature.ReturnType, context) : null;
             }
             else if (expression is IWellKnownContractInfo)

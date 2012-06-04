@@ -67,11 +67,6 @@ namespace DynamicScript.Compiler.Ast
         Negate,
 
         /// <summary>
-        /// Test for void.
-        /// </summary>
-        VoidCheck,
-
-        /// <summary>
         /// Literal intern operator.
         /// </summary>
         Intern,

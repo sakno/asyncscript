@@ -9,7 +9,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
 
     [ComVisible(false)]
     [Serializable]
-    sealed class ScriptFunctionExpressionFactory : ScriptExpressionFactory<ScriptCodeActionImplementationExpression, ScriptFunctionExpression>
+    sealed class ScriptFunctionExpressionFactory : ScriptExpressionFactory<ScriptCodeFunctionExpression, ScriptFunctionExpression>
     {
         #region Nested Types
 
@@ -36,7 +36,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             {
             }
 
-            protected override IScriptCodeElement<ScriptCodeExpression> Invoke(ScriptCodeActionImplementationExpression element, InterpreterState state)
+            protected override IScriptCodeElement<ScriptCodeExpression> Invoke(ScriptCodeFunctionExpression element, InterpreterState state)
             {
                 return Convert(element.Body) as IScriptCodeElement<ScriptCodeExpression>;
             }
@@ -52,7 +52,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
             {
             }
 
-            protected override IScriptCodeElement<ScriptCodeActionContractExpression> Invoke(ScriptCodeActionImplementationExpression element, InterpreterState state)
+            protected override IScriptCodeElement<ScriptCodeActionContractExpression> Invoke(ScriptCodeFunctionExpression element, InterpreterState state)
             {
                 return new ScriptFunctionSignatureExpression(element.Signature);
             }

@@ -8,7 +8,7 @@ namespace DynamicScript.Compiler.Ast.Translation
     /// Represents lexical scope produced by the action implementation.
     /// </summary>
     [ComVisible(false)]
-    public interface IFunctionLexicalScope : IComplexExpressionScope<ScriptCodeActionImplementationExpression>
+    public interface IFunctionLexicalScope : IComplexExpressionScope<ScriptCodeFunctionExpression>
     {
     }
 }

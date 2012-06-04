@@ -23,7 +23,7 @@ namespace DynamicScript.Runtime.Hosting
         [LoaderOptimization(LoaderOptimization.SingleDomain)]
         private static int Main(string[] args)
         {
-            Compiler.Punctuation.HashCodes.PrintPunctuationValues(Console.Out);
+            Console.WriteLine(DynamicScriptInterpreter.Run("return 10 ?? ==: @a, b -> boolean: a === b, 10: 20: 30, else: 20;"));
             ScriptDebugger.Debugging += InteractiveDebugger.Hook;
             return Execute(new CommandLineParser(Console.Out, Console.In), args);
         }

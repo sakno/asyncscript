@@ -1304,7 +1304,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <returns></returns>
         protected override Expression Translate(ScriptCodeArgumentReferenceExpression argref, TranslationContext context)
         {
-            IComplexExpressionScope<ScriptCodeActionImplementationExpression> actionScope = context.Lookup<FunctionScope>();
+            IComplexExpressionScope<ScriptCodeFunctionExpression> actionScope = context.Lookup<FunctionScope>();
             switch (actionScope != null)
             {
                 case true:
@@ -1400,7 +1400,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
         /// <param name="action">The action implementation to be translated.</param>
         /// <param name="context">Translation context.</param>
         /// <returns>LINQ expression that represents action implementation.</returns>
-        protected override Expression Translate(ScriptCodeActionImplementationExpression action, TranslationContext context)
+        protected override Expression Translate(ScriptCodeFunctionExpression action, TranslationContext context)
         {
             var currentScope = context.Push(parent => FunctionScope.Create(parent, action)); //Create a new lexical scope for action
             context.UserData.Recursive = false; //this indicator determines whether the function uses @ or @@ objects in its body
@@ -1440,7 +1440,7 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
                 action.ToString());
         }
 
-        private IList<ParameterExpression> PopulateFunctionParameters(ScriptCodeActionImplementationExpression action, FunctionScope scope, TranslationContext context)
+        private IList<ParameterExpression> PopulateFunctionParameters(ScriptCodeFunctionExpression action, FunctionScope scope, TranslationContext context)
         {
             foreach (var p in action.Signature.ParamList)
             {
@@ -1611,17 +1611,6 @@ namespace DynamicScript.Compiler.Ast.Translation.LinqExpressions
             if (expression.Operator == ScriptCodeUnaryOperatorType.TypeOf && expression.Operand is ScriptCodeObjectExpression)
                 return CreateCompositeContract((ScriptCodeObjectExpression)expression.Operand, context);
             else return ScriptObject.UnaryOperation(Translate(expression.Operand, context), expression.Operator, context.Scope.StateHolder);
-        }
-
-        /// <summary>
-        /// Translates FINSET contract.
-        /// </summary>
-        /// <param name="contract">The contract to translate.</param>
-        /// <param name="context">Translation context.</param>
-        /// <returns>Translated FINSET contract.</returns>
-        protected override Expression Translate(ScriptCodeFinSetContractExpression contract, TranslationContext context)
-        {
-            return ScriptFinSetContract.Expression;
         }
 
         /// <summary>

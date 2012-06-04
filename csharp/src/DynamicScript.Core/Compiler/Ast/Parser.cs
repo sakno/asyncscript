@@ -32,7 +32,14 @@ namespace DynamicScript.Compiler.Ast
                 return InterpreterServices.GetPriority((ScriptCodeUnaryOperatorType)@operator);
             else if (@operator is ScriptCodeBinaryOperatorType)
                 return InterpreterServices.GetPriority((ScriptCodeBinaryOperatorType)@operator);
+            else if (@operator is ScriptCodeSpecialOperator)
+                return InterpreterServices.GetPriority((ScriptCodeSpecialOperator)@operator);
             return -1;
+        }
+
+        private static Associativity GetAssociativity(ScriptCodeSpecialOperator @operator)
+        {
+            return Associativity.Right;
         }
 
         private static Associativity GetAssociativity(ScriptCodeBinaryOperatorType @operator)
@@ -56,7 +63,11 @@ namespace DynamicScript.Compiler.Ast
 
         private static Associativity GetAssociativity(Enum @operator)
         {
-            return @operator is ScriptCodeBinaryOperatorType ? GetAssociativity((ScriptCodeBinaryOperatorType)@operator) : Associativity.Left;
+            if (@operator is ScriptCodeBinaryOperatorType)
+                return GetAssociativity((ScriptCodeBinaryOperatorType)@operator);
+            else if (@operator is ScriptCodeSpecialOperator)
+                return GetAssociativity((ScriptCodeSpecialOperator)@operator);
+            else return Associativity.Left;
         }
 
         public static Enum ParseOperator(string literal, bool lastIsExpression)
@@ -81,6 +92,9 @@ namespace DynamicScript.Compiler.Ast
         {
             switch (@operator.GetHashCode())
             {
+                case Operator.HashCodes.lxmSelector: return ScriptCodeSpecialOperator.Selector;
+                case Operator.HashCodes.lxmConditional: return ScriptCodeSpecialOperator.Conditional;
+                case Operator.HashCodes.lxmSEH: return ScriptCodeSpecialOperator.ExceptionHandler;
                 case Operator.HashCodes.lxmPlus: return lastIsExpression ? (Enum)ScriptCodeBinaryOperatorType.Add : ScriptCodeUnaryOperatorType.Plus;
                 case Operator.HashCodes.lxmDoublePlus: return lastIsExpression ? ScriptCodeUnaryOperatorType.IncrementPostfix : ScriptCodeUnaryOperatorType.IncrementPrefix;
                 case Operator.HashCodes.lxmDoubleAsterisk: return lastIsExpression ? ScriptCodeUnaryOperatorType.SquarePostfix : ScriptCodeUnaryOperatorType.SquarePrefix;
@@ -117,8 +131,6 @@ namespace DynamicScript.Compiler.Ast
                 case Operator.HashCodes.lxmOrElse: return ScriptCodeBinaryOperatorType.OrElse;
                 case Operator.HashCodes.lxmTypeOf: return lastIsExpression ? null : (Enum)ScriptCodeUnaryOperatorType.TypeOf;
                 case Operator.HashCodes.lxmMetadataDiscovery: return ScriptCodeBinaryOperatorType.MetadataDiscovery;
-                case Operator.HashCodes.lxmVoidCheck: return lastIsExpression ? (Enum)ScriptCodeUnaryOperatorType.VoidCheck : null;
-                case Operator.HashCodes.lxmCoalesce: return ScriptCodeBinaryOperatorType.Coalesce;
                 case Operator.HashCodes.lxmInitializer: return ScriptCodeBinaryOperatorType.Initializer;
                 default: return null;
             }
@@ -182,9 +194,6 @@ namespace DynamicScript.Compiler.Ast
                     case Keyword.HashCodes.lxmVoid:
                         if (expression == null) expression = ScriptCodeVoidExpression.Instance;
                         break;
-                    case Keyword.HashCodes.lxmFinSet:
-                        if (expression == null) expression = ScriptCodeFinSetContractExpression.Instance;
-                        break;
                     case Keyword.HashCodes.lxmExpr:
                         if (expression == null) expression = ScriptCodeExpressionContractExpression.Instance;
                         break;
@@ -231,10 +240,6 @@ namespace DynamicScript.Compiler.Ast
                     case Keyword.HashCodes.lxmWhile: //parse while-loop expresion
                         if (expression == null)
                         { expression = ScriptCodeWhileLoopExpression.ParseWhileLoop(lexer, terminator); continue; }
-                        break;
-                    case Keyword.HashCodes.lxmIf://parse conditional expression
-                        if (expression == null)
-                        { expression = ScriptCodeConditionalExpression.Parse(lexer, terminator); continue; }
                         break;
                     case Keyword.HashCodes.lxmFor://parse 'for' loop
                         if (expression == null)
@@ -335,7 +340,66 @@ namespace DynamicScript.Compiler.Ast
                         expression = new ScriptCodeBinaryOperatorExpression(leftOperand, (ScriptCodeBinaryOperatorType)@operator, Parse(lexer, GetPriority(@operator), terminator));
                         return 1;
                     }
+                    else if(@operator is ScriptCodeSpecialOperator)
+                        switch ((ScriptCodeSpecialOperator)@operator)
+                        {
+                            case ScriptCodeSpecialOperator.Conditional: expression = ParseConditional(lexer, expression, terminator); return 1;
+                            case ScriptCodeSpecialOperator.Selector: expression = ParseSelection(lexer, expression, terminator); return 1;
+                        }
             return 2;
+        }
+
+        private static ScriptCodeSelectionExpression ParseSelection(IEnumerator<KeyValuePair<Lexeme.Position, Lexeme>> lexer, ScriptCodeExpression value, Lexeme[] terminator)
+        {
+            var priority = GetPriority(ScriptCodeSpecialOperator.Selector);
+            var result = new ScriptCodeSelectionExpression { Source = value };
+            lexer.MoveNext(true);
+            do if (lexer.Current.Value == Operator.HashCodes.lxmValueEquality) //Parse comparer
+                {
+                    lexer.MoveNext(Punctuation.Colon, true);
+                    lexer.MoveNext(true);
+                    result.Comparer = ParseExpression(lexer, terminator + Punctuation.Comma);
+                }
+                else if (lexer.Current.Value == Keyword.HashCodes.lxmElse)  //Parse default handler
+                {
+                    lexer.MoveNext(Punctuation.Colon, true); lexer.MoveNext(true);
+                    result.DefaultHandler.SetExpression(ParseExpression, lexer, terminator + Punctuation.Comma);
+                }
+                else //Cases
+                {
+                    var @case = new ScriptCodeSelectionExpression.SelectionCase();
+                next_case:
+                    var start = lexer.Current.Key;
+                    var expression = ParseExpression(lexer, Punctuation.Colon + Punctuation.Comma);
+                    var end = lexer.Current.Key;
+                    switch (lexer.Current.Value.GetHashCode())
+                    {
+                        case Punctuation.HashCodes.lxmColon:
+                            @case.Values.Add(expression);
+                            lexer.MoveNext(true);
+                            goto next_case;
+                        case Punctuation.HashCodes.lxmComma:
+                            @case.Handler.SetExpression(start, expression, end);
+                            result.Cases.Add(@case);
+                            continue;
+                    }
+                }
+            while (lexer.Current.Value == Punctuation.HashCodes.lxmComma && lexer.MoveNext(true) != null);
+            return result;
+        }
+
+        private static ScriptCodeConditionalExpression ParseConditional(IEnumerator<KeyValuePair<Lexeme.Position, Lexeme>> lexer, ScriptCodeExpression condition, Lexeme[] terminator)
+        {
+            var priority = GetPriority(ScriptCodeSpecialOperator.Conditional);
+            var result = new ScriptCodeConditionalExpression(condition);
+            lexer.MoveNext(true);   //pass through operator token
+            result.ThenBranch = Parse(lexer, priority, terminator + Keyword.Else);
+            if (lexer.Current.Value == Keyword.HashCodes.lxmElse)
+            {
+                lexer.MoveNext(true);
+                result.ElseBranch = Parse(lexer, priority, terminator);
+            }
+            return result;
         }
 
         public static ScriptCodeLoopWithVariableExpression ParseForLoop(IEnumerator<KeyValuePair<Lexeme.Position, Lexeme>> lexer, params Lexeme[] terminator)
@@ -504,7 +568,7 @@ namespace DynamicScript.Compiler.Ast
             {
                 case true:
                     lexer.MoveNext(true);   //pass through colon
-                    return new ScriptCodeActionImplementationExpression(actionContract, new ScriptCodeExpressionStatement(ParseExpression, lexer, terminator));
+                    return new ScriptCodeFunctionExpression(actionContract, new ScriptCodeExpressionStatement(ParseExpression, lexer, terminator));
                 default: return actionContract;
             }
         }
@@ -553,7 +617,6 @@ namespace DynamicScript.Compiler.Ast
                     break;
                 case Punctuation.HashCodes.lxmDog:
                 case Keyword.HashCodes.lxmThis:
-                case Keyword.HashCodes.lxmIf:
                 case Keyword.HashCodes.lxmFor:
                 case Keyword.HashCodes.lxmWhile:
                 case Keyword.HashCodes.lxmDo:
@@ -566,7 +629,6 @@ namespace DynamicScript.Compiler.Ast
                 case Keyword.HashCodes.lxmBoolean:
                 case Keyword.HashCodes.lxmDimensional:
                 case Keyword.HashCodes.lxmReal:
-                case Keyword.HashCodes.lxmFinSet:
                 case Keyword.HashCodes.lxmObject:
                 case Keyword.HashCodes.lxmType:
                 case Keyword.HashCodes.lxmExpr:

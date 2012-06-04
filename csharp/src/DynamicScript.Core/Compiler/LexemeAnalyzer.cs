@@ -403,7 +403,7 @@ namespace DynamicScript.Compiler
                 switch (characters.Current)
                 {
                     case Lexeme.Question:
-                        return Operator.Coalesce;
+                        return Operator.Selector;
                     case Lexeme.Assignment:
                         return Operator.Initializer;
                     default:
@@ -411,7 +411,7 @@ namespace DynamicScript.Compiler
                         break;
                 }
             }
-            return Operator.VoidCheck;
+            return Operator.Conditional;
         }
 
         private static Operator ParseVertical(IEnumerator<char> characters, ref int column, out bool hasNext)

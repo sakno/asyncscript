@@ -204,10 +204,5 @@ namespace DynamicScript.Compiler.Ast
         Initializer = 0xFF11,
 
         #endregion
-
-        /// <summary>
-        /// Represents coalesce operator.
-        /// </summary>
-        Coalesce = 0xFF0F,
     }
 }

@@ -33,11 +33,15 @@ namespace DynamicScript.Compiler.Ast
             SetExpression(parser, lexer, terminator);   
         }
 
+        internal void SetExpression(Lexeme.Position start, ScriptCodeExpression expr, Lexeme.Position end)
+        {
+            LinePragma = new ScriptDebugInfo { Start = start, End = end };
+            Expression = expr;
+        }
+
         internal void SetExpression(Func<IEnumerator<KeyValuePair<Lexeme.Position, Lexeme>>, Lexeme[], ScriptCodeExpression> parser, IEnumerator<KeyValuePair<Lexeme.Position, Lexeme>> lexer, params Lexeme[] terminator)
         {
-            LinePragma = new ScriptDebugInfo { Start = lexer.Current.Key };
-            Expression = parser.Invoke(lexer, terminator);
-            LinePragma.End = lexer.Current.Key;
+            SetExpression(lexer.Current.Key, parser.Invoke(lexer, terminator), lexer.Current.Key);
         }
 
         ScriptCodeExpression IScriptExpressionStatement.Expression

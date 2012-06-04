@@ -231,8 +231,8 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
                     result = new ScriptObjectExpression((ScriptCodeObjectExpression)input);
                 else if (input is ScriptCodeActionContractExpression)
                     result = new ScriptFunctionSignatureExpression((ScriptCodeActionContractExpression)input);
-                else if (input is ScriptCodeActionImplementationExpression)
-                    result = new ScriptFunctionExpression((ScriptCodeActionImplementationExpression)input);
+                else if (input is ScriptCodeFunctionExpression)
+                    result = new ScriptFunctionExpression((ScriptCodeFunctionExpression)input);
                 else if (input is ScriptCodeTryElseFinallyExpression)
                     result = new ScriptSehExpression((ScriptCodeTryElseFinallyExpression)input);
                 else if (input is ScriptCodePlaceholderExpression)
@@ -763,7 +763,7 @@ namespace DynamicScript.Runtime.Environment.ExpressionTrees
         /// <summary>
         /// Gets an expression factory that produces an action.
         /// </summary>
-        public static IScriptExpressionContract<ScriptCodeActionImplementationExpression> FunctionExpr
+        public static IScriptExpressionContract<ScriptCodeFunctionExpression> FunctionExpr
         {
             get { return ScriptFunctionExpressionFactory.Instance; }
         }

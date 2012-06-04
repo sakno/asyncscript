@@ -79,38 +79,11 @@ namespace DynamicScript.Compiler.Ast
         /// <returns>The string representation of conditional expression.</returns>
         public override string ToString()
         {
-            switch (Completed)
-            {
-                case true:
-                    var result = new StringBuilder();
-                    result.Append(string.Concat(Keyword.If, Lexeme.WhiteSpace, Condition, Lexeme.WhiteSpace));
-                    //if-then branch output
-                    result.Append(string.Concat(Keyword.Then, Lexeme.WhiteSpace, ThenBranch));
-                    //if-else branch
-                    if (!(ElseBranch is ScriptCodeVoidExpression))
-                        result.Append(string.Concat(Punctuation.WhiteSpace, Keyword.Else, Lexeme.WhiteSpace, ElseBranch));
-                    return result.ToString();
-                default:
-                    return ErrorMessages.IncompletedExpression;
-            }
-        }
-
-        internal static ScriptCodeConditionalExpression Parse(IEnumerator<KeyValuePair<Lexeme.Position, Lexeme>> lexer, params Lexeme[] terminator)
-        {
-            if (lexer == null) throw new ArgumentNullException("lexer");
-            lexer.MoveNext(true);    //pass through if keyword
-            var conditional = new ScriptCodeConditionalExpression
-            {
-                Condition = Parser.ParseExpression(lexer, Keyword.Then)  //parse condition expression
-            };
-            lexer.MoveNext(true);    //pass through then keyword
-            conditional.ThenBranch = Parser.ParseExpression(lexer, terminator + Keyword.Else);
-            if (lexer.Current.Value == Keyword.HashCodes.lxmElse)
-            {
-                lexer.MoveNext(true);    //pass through else keyword
-                conditional.ElseBranch = Parser.ParseExpression(lexer, terminator);
-            }
-            return conditional;
+            return string.Concat(Condition,
+                Lexeme.WhiteSpace, Operator.Conditional, Lexeme.WhiteSpace,
+                ThenBranch,
+                Lexeme.WhiteSpace, Keyword.Else, Lexeme.WhiteSpace,
+                ElseBranch);
         }
 
         /// <summary>

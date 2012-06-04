@@ -92,12 +92,6 @@ namespace DynamicScript.Compiler.Ast
                     if (Operand is IStaticContractBinding<ScriptCodeExpression>)
                         return ((IStaticContractBinding<ScriptCodeExpression>)Operand).Contract;
                     break;
-                case ScriptCodeUnaryOperatorType.VoidCheck:
-                    if (Operand is ScriptCodeVoidExpression)
-                        return new ScriptCodeBooleanExpression(true);
-                    else if (Operand is ScriptCodePrimitiveExpression)
-                        return new ScriptCodeBooleanExpression(false);
-                    break;
                 case ScriptCodeUnaryOperatorType.IncrementPostfix:
                 case ScriptCodeUnaryOperatorType.SquarePostfix:
                 case ScriptCodeUnaryOperatorType.DecrementPostfix:
@@ -136,7 +130,6 @@ namespace DynamicScript.Compiler.Ast
                     case ScriptCodeUnaryOperatorType.SquarePrefix:
                     case ScriptCodeUnaryOperatorType.SquarePostfix: return Operand is ScriptCodeIntegerExpression || Operand is ScriptCodeRealExpression;
                     case ScriptCodeUnaryOperatorType.TypeOf: return Operand is IStaticContractBinding<ScriptCodeExpression>;
-                    case ScriptCodeUnaryOperatorType.VoidCheck: return Operand is ScriptCodePrimitiveExpression;
                     case ScriptCodeUnaryOperatorType.DecrementPostfix:
                     case ScriptCodeUnaryOperatorType.DecrementPrefix:
                     case ScriptCodeUnaryOperatorType.IncrementPostfix:
@@ -169,8 +162,6 @@ namespace DynamicScript.Compiler.Ast
                     return OperatorToken.DoubleAsterisk;
                 case ScriptCodeUnaryOperatorType.TypeOf:
                     return OperatorToken.TypeOf;
-                case ScriptCodeUnaryOperatorType.VoidCheck:
-                    return  OperatorToken.VoidCheck;
                 case ScriptCodeUnaryOperatorType.Intern:
                     return  OperatorToken.TypeOf;
                 default:
@@ -196,7 +187,6 @@ namespace DynamicScript.Compiler.Ast
                 case ScriptCodeUnaryOperatorType.IncrementPostfix:
                 case ScriptCodeUnaryOperatorType.SquarePostfix:
                 case ScriptCodeUnaryOperatorType.TypeOf:
-                case ScriptCodeUnaryOperatorType.VoidCheck:
                 case ScriptCodeUnaryOperatorType.Intern:
                     return string.Concat(Operand, ToString(Operator));
                 default:

@@ -106,7 +106,6 @@ namespace DynamicScript.Compiler
                 case ScriptCodeBinaryOperatorType.MultiplicativeAssign:
                 case ScriptCodeBinaryOperatorType.DivideAssign:
                 case ScriptCodeBinaryOperatorType.ExclusionAssign:
-                case ScriptCodeBinaryOperatorType.Coalesce:
                 case ScriptCodeBinaryOperatorType.ModuloAssign:
                 case ScriptCodeBinaryOperatorType.Initializer:
                 case ScriptCodeBinaryOperatorType.Assign: return 0;
@@ -123,7 +122,6 @@ namespace DynamicScript.Compiler
                 case ScriptCodeUnaryOperatorType.IncrementPostfix:
                 case ScriptCodeUnaryOperatorType.SquarePostfix:
                 case ScriptCodeUnaryOperatorType.TypeOf:
-                case ScriptCodeUnaryOperatorType.VoidCheck:
                     return HighestPriority;
                 case ScriptCodeUnaryOperatorType.DecrementPrefix:
                 case ScriptCodeUnaryOperatorType.IncrementPrefix:
@@ -135,6 +133,17 @@ namespace DynamicScript.Compiler
                 default:
                 case ScriptCodeUnaryOperatorType.Unknown:
                     return -1;
+            }
+        }
+
+        public static int GetPriority(this ScriptCodeSpecialOperator @operator)
+        {
+            switch (@operator)
+            {
+                case ScriptCodeSpecialOperator.Conditional:
+                case ScriptCodeSpecialOperator.ExceptionHandler:
+                case ScriptCodeSpecialOperator.Selector: return 1;
+                default: return -1;
             }
         }
     }

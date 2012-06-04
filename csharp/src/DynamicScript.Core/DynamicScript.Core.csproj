@@ -64,7 +64,7 @@
     <Compile Include="Compiler\Ast\IWellKnownContractInfo.cs" />
     <Compile Include="Compiler\Ast\Parser.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeActionContractExpression.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeActionImplementationExpression.cs" />
+    <Compile Include="Compiler\Ast\ScriptCodeFunctionExpression.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeArgumentReferenceExpression.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeArrayContractExpression.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeArrayExpression.cs" />
@@ -92,7 +92,6 @@
     <Compile Include="Compiler\Ast\ScriptCodeExpressionContractExpression.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeExpressionStatement.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeFaultStatement.cs" />
-    <Compile Include="Compiler\Ast\ScriptCodeFinSetContractExpression.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeFlowControlStatement.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeForEachLoopExpression.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeForkExpression.cs" />
@@ -113,6 +112,7 @@
     <Compile Include="Compiler\Ast\ScriptCodeRealExpression.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeReturnStatement.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeSelectionExpression.cs" />
+    <Compile Include="Compiler\Ast\ScriptCodeSpecialOperator.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeStatement.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeStatementCollection.cs" />
     <Compile Include="Compiler\Ast\ScriptCodeStatementContractExpression.cs" />
@@ -313,7 +313,6 @@
     <Compile Include="Runtime\Environment\IScriptObjectCollection.cs" />
     <Compile Include="Runtime\Environment\IScriptProperty.cs" />
     <Compile Include="Runtime\Environment\IScriptProxyObject.cs" />
-    <Compile Include="Runtime\Environment\IScriptSetFactory.cs" />
     <Compile Include="Runtime\Environment\IScriptUnionContract.cs" />
     <Compile Include="Runtime\Environment\IUnaryOperatorInvoker.cs" />
     <Compile Include="Runtime\Environment\NamedRuntimeSlot.cs" />
@@ -347,7 +346,6 @@
     <Compile Include="Runtime\Environment\ScriptConvertibleObject.cs" />
     <Compile Include="Runtime\Environment\ScriptDimensionalContract.cs" />
     <Compile Include="Runtime\Environment\ScriptFault.cs" />
-    <Compile Include="Runtime\Environment\ScriptFinSetContract.cs" />
     <Compile Include="Runtime\Environment\ScriptFunc.cs" />
     <Compile Include="Runtime\Environment\ScriptFunctionBase.cs" />
     <Compile Include="Runtime\Environment\ScriptFunctionContract.cs" />
@@ -370,7 +368,6 @@
     <Compile Include="Runtime\Environment\ScriptReal.cs" />
     <Compile Include="Runtime\Environment\ScriptRealContract.cs" />
     <Compile Include="Runtime\Environment\ScriptRuntimeFunction.cs" />
-    <Compile Include="Runtime\Environment\ScriptSetContract.cs" />
     <Compile Include="Runtime\Environment\ScriptSetItemFunction.cs" />
     <Compile Include="Runtime\Environment\ScriptSlotMetadata.cs" />
     <Compile Include="Runtime\Environment\ScriptString.cs" />

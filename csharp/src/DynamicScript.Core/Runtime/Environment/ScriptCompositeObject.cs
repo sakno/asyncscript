@@ -20,7 +20,7 @@ namespace DynamicScript.Runtime.Environment
     [ComVisible(false)]
     [Serializable]
     [CompositeObjectConverter]
-    public class ScriptCompositeObject: ScriptObject, ISerializable, IScriptCompositeObject, IScriptSetFactory
+    public class ScriptCompositeObject: ScriptObject, ISerializable, IScriptCompositeObject
     {
         #region Nested Types
 
@@ -720,17 +720,6 @@ namespace DynamicScript.Runtime.Environment
         public IEnumerable<ScriptCompositeObject> Split()
         {
             return m_slots.Select(pair => new ScriptCompositeObject(new[] { pair }));
-        }
-
-        /// <summary>
-        /// Produces a new set of elements from each value in slots holded by
-        /// this composite object.
-        /// </summary>
-        /// <param name="state">Internal interpreter state.</param>
-        /// <returns>A new set of elements.</returns>
-        public IScriptSet CreateSet(InterpreterState state)
-        {
-            return new ScriptSetContract(m_slots.Select(s => s.Value.GetValue(state)));
         }
     }
 }

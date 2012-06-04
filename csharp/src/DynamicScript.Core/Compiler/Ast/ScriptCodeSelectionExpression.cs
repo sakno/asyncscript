@@ -130,11 +130,7 @@ namespace DynamicScript.Compiler.Ast
             /// <returns></returns>
             public override string ToString()
             {
-                return string.Concat(Keyword.If, Lexeme.WhiteSpace,
-                    Values,
-                    Lexeme.WhiteSpace,
-                    Keyword.Then,
-                    Handler.Expression);
+                return "";
             }
         }
         #endregion
@@ -216,34 +212,29 @@ namespace DynamicScript.Compiler.Ast
 
         internal static ScriptCodeSelectionExpression Parse(IEnumerator<KeyValuePair<Lexeme.Position, Lexeme>> lexer, params Lexeme[] terminator)
         {
-            if (terminator == null || terminator.Length == 0) terminator = new[] { Punctuation.Semicolon };
-            lexer.MoveNext(true);   //pass through caseof keyword
-            var result = new ScriptCodeSelectionExpression();
-            result.Source = Parser.ParseExpression(lexer, terminator + Punctuation.Arrow + Keyword.If + Keyword.Else);
-            //Parse comparer
-            if (lexer.Current.Value == Punctuation.HashCodes.lxmArrow)
+            return null;
+        }
+
+        /// <summary>
+        /// Reduces the current expression;
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        public override ScriptCodeExpression Reduce(InterpretationContext context)
+        {
+            if (Cases.Count == 0) return DefaultHandler.Expression;
+            else return this;
+        }
+
+        /// <summary>
+        /// Gets a value indicating that this expression can be reduced.
+        /// </summary>
+        public override bool CanReduce
+        {
+            get
             {
-                lexer.MoveNext(true);   //pass through -> token
-                result.Comparer = Parser.ParseExpression(lexer, terminator + Keyword.If + Keyword.Else);
+                return Cases.Count == 0;
             }
-            //Parse handlers
-            while (lexer.Current.Value == Keyword.HashCodes.lxmIf)
-            {
-                //Parse case
-                var @case = new SelectionCase();
-                Parser.ParseExpressions(lexer, @case.Values, Keyword.Then);
-                lexer.MoveNext(true); //pass through then keyword
-                //Parse case handler.
-                @case.Handler.SetExpression(Parser.ParseExpression, lexer, terminator + Keyword.Else + Keyword.If);
-                result.Cases.Add(@case);
-            }
-            if (lexer.Current.Value == Keyword.HashCodes.lxmElse)
-            {
-                lexer.MoveNext(true);   //pass through else keyword
-                //Parse default handler.
-                result.DefaultHandler.SetExpression(Parser.ParseExpression, lexer, terminator);
-            }
-            return result;
         }
 
         /// <summary>
