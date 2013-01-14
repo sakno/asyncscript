@@ -3,6 +3,10 @@
 	"description": "AsyncScript Programming Language",
 	"version": "0.0.1",
 	"author": "Sakno Roman <roman.sakno@gmail.com>",
+	"repository":{ 
+		"type" : "git", 
+		"url" : "git://github.com/sakno/asyncscript.git"
+	 },
 	"dependencies": {
 		"commander": "1.0.0"
 	},
@@ -15,6 +19,7 @@
 	"bin":{
 		"asc": "./bin/asc"	
 	},
+	"preferGlobal": true,
 	"main": "./lib/main.js",
 	"engines": {"node": ">= 0.6.12 < 0.8.8"}
 }
