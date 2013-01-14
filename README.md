@@ -6,6 +6,7 @@ A new programming language especially designed for NodeJS platform that supports
   * Native supporting of Promise programming pattern;
   * Integration with native JavaScript objects (and existed NodeJS libraries);
   * Easy to use and learn;
+  * Written on pure JavaScript;
 
 # How to install
 
