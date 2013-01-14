@@ -10,6 +10,24 @@ A new programming language especially designed for NodeJS platform that supports
 # How to install
 
     npm install --global asyncscript
+    
+# How to run
+
+```js
+//save into program.as
+let helloWorld = "Hello, world!";
+console.info(helloWorld);
+```
+```bash
+asc run ./program.as
+```
+You will see `Hello, world!` on the screen
+
+# How to compile
+```bash
+asc compile ./program.as ./program.js -b 
+```
+Open `program.js` with text editor and you will see the equivalent JavaScript code.
 
 # License (MIT)
 Copyright (C) 2013 Sakno Roman
