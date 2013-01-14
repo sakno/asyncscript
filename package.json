@@ -1,0 +1,21 @@
+{
+	"name": "asyncscript",
+	"description": "AsyncScript Programming Language",
+	"version": "0.0.1",
+	"author": "Sakno Roman <roman.sakno@gmail.com>",
+	"dependencies": {
+		"commander": "1.0.0"
+	},
+	"optionalDependencies":{
+		"uglify-js": "1.3.3"
+	},
+	"devDependencies":{
+		"nodeunit": "0.7.4"	
+	},
+	"bin":{
+		"asc": "./bin/asc"	
+	},
+	"main": "./lib/main.js",
+	"engines": {"node": ">= 0.7.2 < 0.8.8"}
+}
+

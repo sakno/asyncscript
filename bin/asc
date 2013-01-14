@@ -1,0 +1,46 @@
+#!/usr/bin/env node
+var cli = require('commander'), 
+	fs = require('fs'), 
+	compiler = require('../lib/compiler.js'), 
+	ParserError = require('../lib/ParserError.js');
+var jsbeautify, jsparser;
+try{
+	jsbeautify = require('uglify-js').uglify;
+	jsparser = require('uglify-js').parser;
+}
+catch(e){	//uglify-js not installed
+	jsbeautify = null;
+	jsparser = null;
+	console.error('UglifyJS is not installed');
+}
+
+function compile(input, output){
+	console.info('Compiling source %s...', input);
+	compiler.compile(fs.readFileSync(input, 'utf8'), cli.debug, function(err, source){
+		if(err) return err.fileName = input, console.error(err);
+		var options = {};
+		if(this.beautify) options.beautify = true;
+		if(jsbeautify && Object.keys(options).length > 0)
+			source = jsbeautify.gen_code(jsparser.parse(source), options);
+		if(cli.executable) source = "#!/usr/bin/env node \n" + source;
+		console.info('Writing output to %s', output);
+		return fs.writeFileSync(output, source, 'utf8');
+	}.bind(cli));
+}
+
+function run(input){
+	require('../lib/rtl.js');
+	$asyncscript.run(null, fs.readFileSync(input, 'utf8'), cli.debug, function(err, result){
+		return err ? (err.fileName = input, console.error(err)) : console.log("Execution result %s", result);
+	});
+}
+
+//Processing command line
+cli.version('0.0.1');
+cli.usage('asc [options]');
+cli.command('compile').description('Compiles AsyncScript.').action(compile);
+cli.command('run').description('Executes AsyncScript program.').action(run);
+cli.option('-b, --beautify', 'Beautifies output JavaScript.');
+cli.option('-d, --debug', 'Enables program debugging and emits debug information to the output JavaScript.');
+cli.option('e, --executable', 'Inserts shibana(#!) into the output file. Linux only.');
+cli.parse(process.argv);

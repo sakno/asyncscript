@@ -1,0 +1,2 @@
+"extension inlinejs";
+__javascript "console.log('Hello, world!');";

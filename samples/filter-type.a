@@ -1,0 +1,2 @@
+"extension filtertype";
+let even = define_filter integer -> value % 2 === 0;
