@@ -1,5 +1,0 @@
-Library: DLR
-License: Apache
-Website: http://dlr.codeplex.com/
-Files:
-	csharp\src\interpreter\DlrIntegration\Microsoft.Scripting.dll

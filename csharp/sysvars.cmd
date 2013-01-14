@@ -1,2 +1,0 @@
-IF %PROCESSOR_ARCHITECTURE% EQU x86 (SET FRAMEWORK=%windir%\Microsoft.NET\Framework\v4.0.30319) ELSE (SET FRAMEWORK=%windir%\Microsoft.NET\Framework64\v4.0.30319)
-SET MSBUILD=%FRAMEWORK%\msbuild.exe
