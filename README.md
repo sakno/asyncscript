@@ -9,7 +9,7 @@ A new programming language especially designed for NodeJS platform that supports
 
 # How to install
 
-  npm install --global asyncscript
+    npm install --global asyncscript
 
 # License (MIT)
 Copyright (C) 2013 Sakno Roman
