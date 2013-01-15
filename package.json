@@ -1,7 +1,7 @@
 {
 	"name": "asyncscript",
 	"description": "AsyncScript Programming Language",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"author": "Sakno Roman <roman.sakno@gmail.com>",
 	"repository":{ 
 		"type" : "git", 
