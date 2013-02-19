@@ -164,14 +164,15 @@ exports['Invoke lambda with result redirection'] = function(test){
 };
 
 exports['Reactive write'] = function(test){
-	$asyncscript.run("let a = async object; let r{get 2, set return value => a}; r = 30; return a;", null, function(err, result){
+	$asyncscript.run("let a = async object; let r{get 2, set return value => a}; r.set(30); return a;", null, function(err, result){
+		assert.strictEqual(err, undefined);
 		assert.strictEqual(result, 30);
 		return test.done();
 	});
 };
 
 exports['Reactive read'] = function(test){
-	$asyncscript.run("let r{get 2}; return r + 8;", null, function(err, result){
+	$asyncscript.run("let r{get 2}; return r.get() + 8;", null, function(err, result){
 		assert.strictEqual(result, 10);
 		return test.done();
 	});
