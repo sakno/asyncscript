@@ -16,13 +16,6 @@ exports['Inline JavaScript code'] = function(test){
 	});
 };
 
-exports['Filter type'] = function(test){
-	$asyncscript.run("'extension filtertype'; return #defineFilter integer -> value % 2 == 0;", null, function(err, result){
-		assert(result instanceof $asyncscript.FilterContract);
-		return test.done();	
-	});
-};
-
 exports['Quouted identifier'] = function(test){
 	$asyncscript.run("let `#` = 2; return `#`;", null, function(err, result){
 		assert.strictEqual(result, 2);

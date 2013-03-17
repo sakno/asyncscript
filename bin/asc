@@ -16,7 +16,9 @@ catch(e){	//uglify-js not installed
 
 function compile(input, output, callback){
 	console.info('Compiling source %s...', input);
-	compiler.compile(fs.readFileSync(input, 'utf8'), cli.debug, function(err, source){
+	var source = fs.readFileSync(input, 'utf8');
+	if(!cli.nostd) source = '"extension std";' + source;	//attaches standard extensions
+	compiler.compile(source, cli.debug, function(err, source){
 		if(err) return err.fileName = input, console.error(err);
 		var options = {};
 		if(this.beautify) options.beautify = true;
@@ -40,7 +42,9 @@ function run(input){
 		return console.log($asyncscript.toString(result));
 	}
 	//execute script
-	compiler.run(null, fs.readFileSync(input, 'utf8'), cli.debug, function(err, result){
+	var source = fs.readFileSync(input, 'utf8');
+	if(!cli.nostd) source = '"extension std";' + source;	//attaches standard extensions
+	compiler.run(null, source, cli.debug, function(err, result){
 		if(err !== undefined) return completeExecution(err);
 		else if(result instanceof $asyncscript.Promise)
 			if(result.isError) return completeExecution(result.result);
@@ -57,5 +61,6 @@ cli.command('compile').description('Compiles AsyncScript.').action(compile);
 cli.command('run').description('Executes AsyncScript program.').action(run);
 cli.option('-b, --beautify', 'Beautifies output JavaScript.');
 cli.option('-d, --debug', 'Enables program debugging and emits debug information to the output JavaScript.');
-cli.option('e, --executable', 'Inserts shibana(#!) into the output file. Linux only.');
+cli.option('-e, --executable', 'Inserts shibana(#!) into the output file. Linux only.');
+cli.option('-n, --nostd', 'Do not use standard extensions such as require, future, await, fork.');
 cli.parse(process.argv);
