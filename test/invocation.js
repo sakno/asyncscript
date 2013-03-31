@@ -103,7 +103,7 @@ exports['Signature invocation'] = function(test){
 };
 
 exports['Function contract invocation'] = function(test){
-	$asyncscript.run("return function('_0 + _1', integer, integer);", null, function(err, result){
+	$asyncscript.run("return function('_0 + _1', true, integer, integer);", null, function(err, result){
 		assert(result.isStandaloneLambda);
 			assert(result instanceof Function);
 			assert(result.__$contract$__ instanceof $asyncscript.Signature);

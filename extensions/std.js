@@ -204,11 +204,11 @@ ASYNCSCRIPT_SYNTAX_EXTENSIONS.await = function(column, line, terminators, callba
 				//synchronization exception handler
 				switch(this.lookup){
 					case Lexeme.punctuation[':']:
-						body = this.shouldNextLexeme();	//pass through else keyword
+						body = this.shouldNextLexeme();	//pass through : token
 						if(body instanceof ParserError) return callback(body);
 						return this.next(terminators, function(err, _else){
 							if(err) return callback(err);
-							this['else'] = _else;
+							result['else'] = _else;
 							return callback(undefined, result);
 						}.bind(this));
 					default: return callback(undefined, result); 
@@ -251,10 +251,10 @@ CodeForkExpression.prototype.toString = function(){
 CodeForkExpression.prototype.implementation = function(_this, f, args, destination){
 	if(destination === undefined) args.push($asyncscript.createCallback(destination = new $asyncscript.Promise()));
 	else if(destination instanceof $asyncscript.Promise) args.push($asyncscript.createCallback(destination));
-	return arguments.callee(_this, f, args, destination), destination;
+	return f.apply(_this, args), destination;
 };
 
-CodeForkExpression.prototype.$prerequisite = "$asyncscript.asyncInvoke = " + CodeForkExpression.prototype.implementation;
+CodeForkExpression.prototype.$prerequisite = "$asyncscript.invokeAsync = " + CodeForkExpression.prototype.implementation;
 
 CodeForkExpression.prototype.translate = function(context, emitDebug){
 	function invokeAsync(_this, method, args, destination){
@@ -280,7 +280,7 @@ CodeForkExpression.prototype.translate = function(context, emitDebug){
 		var arguments = ScriptTranslator.expressions(expression.arguments, context, emitDebug);
 		if(arguments instanceof ParserError) return arguments;
 		//compiling invocation
-		return invookeAsync(self, method, new js.JSNewArray(arguments), destination);	
+		return invokeAsync(self, method, new js.JSNewArray(arguments), destination);	
 	}
 	else{	//compiles into the block (ignores destinaiton)
 		expression = this.operand;
@@ -532,10 +532,11 @@ CodeFutureExpression.prototype.implementation = function(contract){
 	else return null;
 };
 
-CodeFutureExpression.prototype.$prerequisite = "$asyncscript.newPromise = " + CodeReactiveReadExpression.prototype.implementation;
+CodeFutureExpression.prototype.$prerequisite = "$asyncscript.newPromise = " + CodeFutureExpression.prototype.implementation;
 
 CodeFutureExpression.prototype.translate = function(context, emitDebug){
-		return new js.JSCall("$asyncscript", "newPromise", ScriptTranslator.translate(this.contract, context, emitDebug));
+		var contract = ScriptTranslator.translate(this.contract, context, emitDebug);
+		return contract instanceof ParserError ? contract : new js.JSCall("$asyncscript", "newPromise", contract);
 };
 
 ASYNCSCRIPT_SYNTAX_EXTENSIONS.future = function(column, line, terminators, callback){

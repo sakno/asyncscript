@@ -70,14 +70,6 @@ exports['Indexer'] = function(test){
 	});
 };
 
-exports['Async'] = function(test){
-	SyntaxAnalyzer.parse("async integer;", function(err, tree){
-		assert(tree instanceof ast.CodeAsyncExpression);
-		assert.strictEqual(tree.contract.value, "integer"); 
-		test.done();
-	});
-};
-
 exports['Expansion'] = function(test){
 	SyntaxAnalyzer.parse("expandq a(b, c);", function(err, tree){
 		assert(tree instanceof ast.CodeExpansionExpression);
@@ -152,7 +144,7 @@ exports['Repeat'] = function(test){
 exports['With'] = function(test){
 	SyntaxAnalyzer.parse('with a, b in c -> d;', function(err, tree){
 		assert(tree instanceof ast.CodeWithExpression);
-		assert.strictEqual(tree.layer.name, "c");
+		assert.strictEqual(tree.source.name, "c");
 		assert.strictEqual(tree.fields.length, 2);
 		assert.strictEqual(tree.fields[0], "a");
 		assert.strictEqual(tree.body.name, "d");
@@ -165,14 +157,6 @@ exports['Let'] = function(test){
 		assert(tree instanceof ast.CodeLetExpression);
 		assert.strictEqual(tree.name, "a");
 		assert.strictEqual(tree.value.value, 2);
-		test.done();
-	});
-};
-
-exports['Await'] = function(test){
-	SyntaxAnalyzer.parse('await(let a = b) -> d : e;', function(err, tree){
-		assert(tree instanceof ast.CodeAwaitExpression);
-		assert.strictEqual(tree.synchronizedValues.length, 1);
 		test.done();
 	});
 };
