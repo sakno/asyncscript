@@ -165,7 +165,7 @@ exports['Reactive write'] = function(test){
 };
 
 exports['Reactive read'] = function(test){
-	$asyncscript.run("let r{get 2}; return r.get() + 8;", null, function(err, result){
+	$asyncscript.run("let r{get 2}; return r + 8;", null, function(err, result){
 		assert.strictEqual(result, 10);
 		return test.done();
 	});
@@ -286,6 +286,24 @@ exports['Filter contract binding 2'] = function(test){
 exports['Filter contract binding 2'] = function(test){
 	$asyncscript.run("let c = typedef.filter(@a: integer -> a % 2 == 0); return 11 is c;", null, function(err, result){
 		assert.strictEqual(result, false);
+		return test.done();
+	});
+};
+
+exports['Transformation #1'] = function(test){
+	$asyncscript.run("let obj = <let a = 2 with object>; return obj;", null, function(err, result){
+		assert.ok(result);
+		assert.ok("with" in result);
+		assert.ok(("a" in result) === false);
+		return test.done();
+	});
+};
+
+exports['Transformation #2'] = function(test){
+	$asyncscript.run("let obj = <let a = (2 + _ctx_.b) with object>; return obj with <let b = 20>;", null, function(err, result){
+		assert.ok(result);
+		assert.ok("a" in result);
+		assert.strictEqual(result.a, 22);
 		return test.done();
 	});
 };
