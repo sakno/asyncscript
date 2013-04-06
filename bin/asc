@@ -14,15 +14,17 @@ catch(e){	//uglify-js not installed
 	console.error('UglifyJS is not installed');
 }
 
-function compile(input, output){
+function compile(input, output, callback){
 	console.info('Compiling source %s...', input);
-	compiler.compile(fs.readFileSync(input, 'utf8'), cli.debug, function(err, source){
+	var source = fs.readFileSync(input, 'utf8');
+	if(!cli.nostd) source = '"extension std";' + source;	//attaches standard extensions
+	compiler.compile(source, cli.debug, function(err, source){
 		if(err) return err.fileName = input, console.error(err);
 		var options = {};
 		if(this.beautify) options.beautify = true;
 		if(jsbeautify && Object.keys(options).length > 0)
 			source = jsbeautify.gen_code(jsparser.parse(source), options);
-		if(cli.executable) source = "#!/usr/bin/env node \n" + source;
+		if(cli.executable) source = "#!/usr/bin/env nodejs \n" + source;
 		console.info('Writing output to %s', output);
 		return fs.writeFileSync(output, source, 'utf8');
 	}.bind(cli));
@@ -30,8 +32,25 @@ function compile(input, output){
 
 function run(input){
 	require('../lib/rtl.js');
-	$asyncscript.run(null, fs.readFileSync(input, 'utf8'), cli.debug, function(err, result){
-		return err ? (err.fileName = input, console.error(err)) : console.log("Execution result %s", result);
+	if(cli.debug) //attach debugger
+		$asyncscript.debugger = require('./debugger.js');
+	function completeExecution(err, result){
+		if(err !== undefined){
+			err.fileName = input;
+			return console.error(err);
+		}
+		return console.log($asyncscript.toString(result));
+	}
+	//execute script
+	var source = fs.readFileSync(input, 'utf8');
+	if(!cli.nostd) source = '"extension std";' + source;	//attaches standard extensions
+	compiler.run(null, source, cli.debug, function(err, result){
+		if(err !== undefined) return completeExecution(err);
+		else if(result instanceof $asyncscript.Promise)
+			if(result.isError) return completeExecution(result.result);
+			else if(result.isCompleted) return completeExecution(undefined, result.result);
+			else return result.on('success', function(v){ completeExecution(undefined, v); }).on('error', completeExecution);
+		else return completeExecution(undefined, result);
 	});
 }
 
@@ -42,5 +61,6 @@ cli.command('compile').description('Compiles AsyncScript.').action(compile);
 cli.command('run').description('Executes AsyncScript program.').action(run);
 cli.option('-b, --beautify', 'Beautifies output JavaScript.');
 cli.option('-d, --debug', 'Enables program debugging and emits debug information to the output JavaScript.');
-cli.option('e, --executable', 'Inserts shibana(#!) into the output file. Linux only.');
+cli.option('-e, --executable', 'Inserts shibana(#!) into the output file. Linux only.');
+cli.option('-n, --nostd', 'Do not use standard extensions such as require, future, await, fork.');
 cli.parse(process.argv);

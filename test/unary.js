@@ -103,8 +103,8 @@ exports['Typeof(<< >>)'] = function(test){
 
 exports['Typeof(typedef = SIGNATURE)'] = function(test){
 	$asyncscript.run("return $(@a, b);", null, function(err, result){
-		assert.strictEqual(result, $asyncscript.typedef);
-			return test.done();	
+		assert.ok(result === $asyncscript.typedef);
+		return test.done();	
 	});
 };
 
