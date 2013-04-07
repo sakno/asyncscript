@@ -1,5 +1,7 @@
 A new programming language especially designed for NodeJS platform that natively supports the asynchronous programming.
 
+[Project Documentation](https://github.com/sakno/asyncscript/wiki)
+
 # Features
   * Declarative;
   * Synchronous-like programming style with asynchronous non-blocking execution;
@@ -8,6 +10,19 @@ A new programming language especially designed for NodeJS platform that natively
   * Compact syntax, easy to use and learn;
   * Written on pure JavaScript;
   * Custom syntax extensions for creating DSL languages
+
+```
+let http = require 'http';
+
+let server = http createServer @@request, response -> {
+  response.writeHead(200, <let `Content-Type` = 'text/plain'>);
+  response end 'Hello World\n';
+};
+
+sever listen 8124;
+
+console log 'Server running at http://127.0.0.1:8124/';
+```
 
 # How to install
 
@@ -31,77 +46,6 @@ asc compile ./program.as ./program.js -b
 ```
 Open `program.js` with text editor and you will see the equivalent JavaScript code.
 
-# Short examples
-
-1. Optional typing
-```
-let a = 2; 
-let b = "str": string;
-```
-
-1. Lambda expressions and one-way lambdas:
-```
-let fact = @i -> (i > 1 ? i * callee(i - 1) : 1);
-let oneWay = @@str1, str2 -> puts(str1 + str2); //no return value
-//fast signature (specify the signature length, not names)
-let sum = @4 -> _0 + _1 + _2 + _3;
-```
-
-1. Lambda types (delegates)
-```
-let Callback = @a, b;
-let f = @@a: integer, cb: Callback -> cb(a, a + 20);
-```
-
-1. Code quotation, templating and compilation on-the-fly
-```
-let expr = quoted %%0 + 20 - %%1;
-let result = (expandq expr(10, 5)).compile(); //10 + 20 - 5 = 25
-```
-
-1. Simple object construction and complex type definition
-```
-let Point = <<let x: integer, let y: integer>>; //type definition
-let pt1 = Point(1, 2); 
-let pt2 = <let x = 1 : integer, let y = 10 : integer>; //inline construction
-console.info(pt1 is Point); //true
-console.info(pt2 is Point); //also true
-```
-
-1. Context-oriented programming
-```
-let OutStream = <<let write: (@@str: string)>>; //contract for output stream
-let Logger = <<let out: OutStream>>; //contract for logging subsystem
-let obj = <
-  let log = (@@str -> _ctx_.out.write(this.name + str)) with Logger, 
-  let name = "object name"
->;
-//obj.log is not available directly, only inside of the Logger context
-let stdout = OutStream(@@str -> console.log(str));
-let onlyLogging = obj with <let out = stdout>; //specify the context for the obj
-onlyLogging.log("Some log entry"); //obj representation inside of the Logger-compliant context
-//onlyLogging.name is not available
-```
-
-1. Everything is object
-```
-let a = "str";
-let a_type = $a; //obtains type of the 'a' (== string)
-let b = "str2": $a; //declares 'b' with the same type as 'a'
-```
-
-1. Compact syntax for conditional expression and 'switch-case'
-```
-let cond = i > 10 ? "str" : false;
-let switch_case = cond ??
-  10, 20: "str2", //if cond == 10 OR cond == 20 then return "str2"
-  any: "str3";    //default branch
-//switch-case supports overriding comparison mechanism
-let switch_case2 = 20 ??
-  == : @a, b -> a - b < 10, //override comparison mechanism
-  12: "str2", //20 - 12 = 8, 8 < 10 = true, "str2" returned
-  any: "str3";
-```
 
 # License (MIT)
 Copyright (C) 2013 Sakno Roman
