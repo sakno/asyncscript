@@ -1,12 +1,28 @@
-A new programming language especially designed for NodeJS platform that supports asynchrony natively.
+A new programming language especially designed for NodeJS platform that natively supports the asynchronous programming.
+
+[Project Documentation](https://github.com/sakno/asyncscript/wiki)
 
 # Features
   * Declarative;
   * Synchronous-like programming style with asynchronous non-blocking execution;
-  * Native supporting of Promise programming pattern;
+  * Native support for Promise programming pattern;
   * Integration with native JavaScript objects (and existed NodeJS libraries);
-  * Easy to use and learn;
+  * Compact syntax, easy to use and learn;
   * Written on pure JavaScript;
+  * Custom syntax extensions for creating DSL languages
+
+```
+let http = require 'http';
+
+let server = http createServer @@request, response -> {
+  response.writeHead(200, <let `Content-Type` = 'text/plain'>);
+  response end 'Hello World\n';
+};
+
+sever listen 8124;
+
+console log 'Server running at http://127.0.0.1:8124/';
+```
 
 # How to install
 
@@ -14,7 +30,7 @@ A new programming language especially designed for NodeJS platform that supports
     
 # How to run
 
-```js
+```
 //save into program.as
 let helloWorld = "Hello, world!";
 console.info(helloWorld);
@@ -29,6 +45,7 @@ You will see `Hello, world!` on the screen
 asc compile ./program.as ./program.js -b 
 ```
 Open `program.js` with text editor and you will see the equivalent JavaScript code.
+
 
 # License (MIT)
 Copyright (C) 2013 Sakno Roman
