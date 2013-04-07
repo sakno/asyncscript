@@ -15,7 +15,7 @@ A new programming language especially designed for NodeJS platform that natively
     
 # How to run
 
-```js
+```
 //save into program.as
 let helloWorld = "Hello, world!";
 console.info(helloWorld);
@@ -30,6 +30,25 @@ You will see `Hello, world!` on the screen
 asc compile ./program.as ./program.js -b 
 ```
 Open `program.js` with text editor and you will see the equivalent JavaScript code.
+
+# Overview
+The short overview of the language:
+1. Optional typing
+```
+let a = 2; let b = "str": string;
+```
+1. Lambda expressions and one-way lambdas:
+```
+let fact = @i -> (i > 1 ? i * callee(i - 1) : 1);
+let oneWay = @@str1, str2 -> puts(str1 + str2); //no return value
+//fast signature (specify the signature length, not names)
+let sum = @4 -> _0 + _1 + _2 + _3;
+```
+1. Code quotation, templating and compilation on-the-fly
+```
+let expr = quoted %%0 + 20 - %%1;
+let result = (expandq expr(10, 5)).compile(); //10 + 20 - 5 = 25
+```
 
 # License (MIT)
 Copyright (C) 2013 Sakno Roman
