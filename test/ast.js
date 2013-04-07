@@ -207,3 +207,14 @@ exports['Quouted id'] = function(test){
 		test.done();
 	});
 };
+
+exports['Custom binary operator'] = function(test){
+	SyntaxAnalyzer.parse('a contains b;', function(err, tree){
+		assert(tree instanceof ast.CodeInvocationExpression);
+		assert.strictEqual(tree.self.name, "a");
+		assert.strictEqual(tree.method.name, "contains");
+		assert.strictEqual(tree.arguments.length, 1);
+		assert.strictEqual(tree.arguments[0].name, 'b');
+		test.done();
+	});
+};
