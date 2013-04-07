@@ -1,12 +1,13 @@
-A new programming language especially designed for NodeJS platform that supports asynchrony natively.
+A new programming language especially designed for NodeJS platform that natively supports the asynchronous programming.
 
 # Features
   * Declarative;
   * Synchronous-like programming style with asynchronous non-blocking execution;
-  * Native supporting of Promise programming pattern;
+  * Native support for Promise programming pattern;
   * Integration with native JavaScript objects (and existed NodeJS libraries);
   * Easy to use and learn;
   * Written on pure JavaScript;
+  * Custom syntax extensions for creating DSL languages
 
 # How to install
 
